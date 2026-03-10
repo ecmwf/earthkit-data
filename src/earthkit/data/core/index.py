@@ -14,6 +14,7 @@ from abc import abstractmethod
 from earthkit.utils.decorators import thread_safe_cached_property
 
 import earthkit.data
+from earthkit.data.core import Encodable
 from earthkit.data.core.order import build_remapping
 from earthkit.data.core.order import normalise_order_by
 from earthkit.data.core.select import normalise_selection
@@ -268,7 +269,7 @@ class Order(OrderBase):
 #         pass
 
 
-class Index(Source):
+class Index(Source, Encodable):
     @classmethod
     def _new_mask_index(self, *args, **kwargs):
         return MaskIndex(*args, **kwargs)
@@ -835,9 +836,9 @@ class MultiIndex(Index):
             ",".join(repr(i) for i in self._indexes),
         )
 
-    def _default_encoder(self):
-        for i in self._indexes:
-            encoder = i._default_encoder()
-            if encoder is not None:
-                return encoder
-        return None
+    # def _default_encoder(self):
+    #     for i in self._indexes:
+    #         encoder = i._default_encoder()
+    #         if encoder is not None:
+    #             return encoder
+    #     return None

@@ -1076,13 +1076,15 @@ class Field(Base):
         to_target(target, *args, data=self, **kwargs)
 
     def _default_encoder(self):
-        # TODO: improve this to support more formats and to be more robust
+        val = self._private.get("default_encoder") if self._private else None
+        if val is not None:
+            return val
         if self._get_grib():
             return "grib"
         else:
             return None
 
-    def _encode(self, encoder, **kwargs):
+    def _encode(self, encoder, hints=None, **kwargs):
         """Double dispatch to the encoder"""
         return encoder._encode_field(self, **kwargs)
 

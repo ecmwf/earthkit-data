@@ -18,6 +18,7 @@ from earthkit.data.utils.humanize import list_to_human
 
 from . import EncodedData
 from . import Encoder
+from . import FilePathEncodedData
 
 LOG = logging.getLogger(__name__)
 
@@ -428,11 +429,17 @@ class GribEncoder(Encoder):
         kwargs["missing_value"] = missing_value
         kwargs["can_infer_time"] = can_infer_time
 
+        path_allowed = (
+            target is not None and target._name == "file" and not metadata and not values and not template
+        )
+
+        hints = {"path_allowed": path_allowed}
+
         if data is not None:
             from earthkit.data.data.wrappers import from_object
 
             data = from_object(data)
-            return data._encode(self, template=template, **kwargs)
+            return data._encode(self, hints=hints, target=target, template=template, **kwargs)
         else:
             handle = self._get_handle(template=template, values=values, metadata=metadata)
             return self._make_message(handle, **kwargs)
@@ -447,10 +454,10 @@ class GribEncoder(Encoder):
 
         return False
 
-    def _encode(self, data, **kwargs):
+    def _encode(self, data, *, target=None, **kwargs):
         raise NotImplementedError
 
-    def _encode_field(self, field, values=None, template=None, metadata=None, **kwargs):
+    def _encode_field(self, field, *, target=None, values=None, template=None, metadata=None, **kwargs):
         # check if the field is already encoded in the desired format
 
         r = {}
@@ -495,16 +502,29 @@ class GribEncoder(Encoder):
 
         return self._make_message(handle, values=values, metadata=metadata, **kwargs)
 
-    def _encode_fieldlist(self, fs, **kwargs):
+    def _encode_fieldlist(self, fs, *, target=None, **kwargs):
         for f in fs:
-            yield f._encode(self, **kwargs)
+            yield f._encode(self, target=target, **kwargs)
 
-    def _encode_xarray(self, data, **kwargs):
+    def _encode_xarray(self, data, *, target=None, **kwargs):
         accessor = data.earthkit
-        return self._encode_fieldlist(accessor._generator(), **kwargs)
+        return self._encode_fieldlist(accessor._generator(), target=target, **kwargs)
 
-    def _encode_featurelist(self, data, **kwargs):
+    def _encode_featurelist(self, data, *, target=None, **kwargs):
         raise NotImplementedError
+
+    def _encode_path(self, path_info, *, target=None, **kwargs):
+        # Write file as is if target is file and path is provided.
+        if (
+            path_info is not None
+            and path_info.path is not None
+            and path_info.default_encoder == "grib"
+            and target is not None
+            and target._name == "file"
+        ):
+            return FilePathEncodedData(path_info.path, binary=path_info.binary)
+        else:
+            return None
 
     def _make_message(
         self, handle, values=None, check_nans=True, metadata=None, missing_value=9999, can_infer_time=False

@@ -10,14 +10,15 @@
 from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.indexing.simple import SimpleFieldListBase
-from earthkit.data.readers import Reader
 from earthkit.data.sources import Source
 from earthkit.data.utils.parts import Part
 
+from .. import Reader
+from .core import GRIBReaderBase
 from .scan import GribCodesMessagePositionIndex
 
 
-class GribFieldListInFile(SimpleFieldListBase):
+class GribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
     handle_cache = None
 
     def __init__(
@@ -30,7 +31,8 @@ class GribFieldListInFile(SimpleFieldListBase):
         use_grib_metadata_cache=None,
     ):
         assert isinstance(path, str), path
-        self.path = path
+        GRIBReaderBase.__init__(self, self, path)
+        # self.path = path
         self._file_parts = parts
         self.__positions = positions
 
@@ -165,7 +167,7 @@ class GribFieldListInFile(SimpleFieldListBase):
         return r
 
 
-class GRIBReader(Source, Reader):
+class GRIBReader(Source, GRIBReaderBase):
     def __init__(self, source, path, parts=None, positions=None):
         self._ori_source = source
         self._kwargs = {"parts": parts, "positions": positions}
@@ -177,7 +179,7 @@ class GRIBReader(Source, Reader):
         ]:
             self._kwargs[k] = source._kwargs.get(k, None)
 
-        Reader.__init__(self, source, path)
+        GRIBReaderBase.__init__(self, source, path)
 
     def to_fieldlist(self, *args, **kwargs):
         return GribFieldListInFile(self.path, **self._kwargs, **kwargs)
@@ -195,8 +197,8 @@ class GRIBReader(Source, Reader):
         # A GRIBReader is a source itself
         return self
 
-    def mutate(self):
-        return self
+    # def mutate(self):
+    #     return self
 
     def is_streamable_file(self):
         return True
@@ -211,15 +213,13 @@ class GRIBReader(Source, Reader):
         assert all(isinstance(s, GRIBReader) for s in sources)
         return MultiGRIBReader(sources)
 
-    def _default_encoder(self):
-        return "grib"
-
-    def _encode(self, encoder, *args, **kwargs):
-        return self.to_fieldlist()._encode(encoder, *args, **kwargs)
+    def _encode_default(self, encoder, *args, **kwargs):
+        return encoder._encode_fieldlist(self.to_xarray(), *args, **kwargs)
 
 
-class MultiGRIBReader(GRIBReader):
+class MultiGRIBReader(Source, GRIBReaderBase):
     def __init__(self, sources):
+        Reader.__init__(self, self, "")
         self.sources = list(self._flatten(sources))
 
     def _flatten(self, sources):
@@ -236,17 +236,10 @@ class MultiGRIBReader(GRIBReader):
         if merged is not None:
             return merged.mutate()
 
-        # fs = [s.to_fieldlist() for s in self.sources]
-        # from earthkit.data.mergers import merge_by_class
-
-        # merged = merge_by_class(fs)
-        # if merged is not None:
-        #     return merged.mutate()
-
         raise NotImplementedError("Conversion of MultiGRIBReader to fieldlist is not implemented")
 
     def to_xarray(self, *args, **kwargs):
-        pass
+        return self.to_fieldlist().to_xarray(*args, **kwargs)
 
     def __repr__(self):
         return f"MultiGRIBReader({self.sources})"
@@ -271,3 +264,9 @@ class MultiGRIBReader(GRIBReader):
             return MultiGRIBReader(r)
 
         raise ValueError("No GRIBReader found in sources to merge")
+
+    def _encode(self, encoder, hints=None, **kwargs):
+        return self.to_fieldlist()._encode(encoder, **kwargs)
+
+    def _encode_default(self, encoder, **kwargs):
+        return self.to_fieldlist()._encode(encoder, **kwargs)

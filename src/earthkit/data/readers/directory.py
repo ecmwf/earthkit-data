@@ -107,6 +107,9 @@ class DirectoryReader(Reader):
     def write(self, f, **kwargs):
         raise NotImplementedError()
 
+    def _encode_default(self, encoder, **kwargs):
+        return None
+
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if (

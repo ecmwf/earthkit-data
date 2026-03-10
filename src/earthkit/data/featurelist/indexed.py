@@ -171,6 +171,24 @@ class IndexFeatureListBase(Index, FeatureList):
             raise ValueError("n must be > 0")
         return self.ls(n=-n, **kwargs)
 
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self, **kwargs)
+
+    def _default_encoder(self):
+        return self[0]._default_encoder() if len(self) > 0 else None
+
+    def _encode(self, encoder, hints=None, **kwargs):
+        if hints and hints.get("path_allowed", False) and hasattr(self, "_encode_path"):
+            result = self._encode_path(encoder, **kwargs)
+            if result is not None:
+                return result
+        return self._encode_default(encoder, **kwargs)
+
+    def _encode_default(self, encoder, *args, **kwargs):
+        return encoder._encode_featurelist(self, *args, **kwargs)
+
     # def describe(self, *args, **kwargs):
     #     r"""Generate a summary of the fieldlist."""
     #     from earthkit.data.utils.summary import format_describe
@@ -182,11 +200,7 @@ class IndexFeatureListBase(Index, FeatureList):
 
     #     return format_describe(_proc(), *args, **kwargs)
 
-    def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
-        pass
-        # return encoder._encode_fieldlist(self, **kwargs)
-
+    # retur
     # def _normalise_sel_input(self, **kwargs):
     #     from .field import Field
 

@@ -7,14 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-from . import SimpleData
+from .source import SourceData
 
 
-class GeoTIFFData(SimpleData):
+class GeoTIFFData(SourceData):
     _TYPE_NAME = "GeoTIFF"
-
-    def __init__(self, reader):
-        self._reader = reader
 
     @property
     def available_types(self):

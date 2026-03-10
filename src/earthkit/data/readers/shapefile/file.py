@@ -13,10 +13,12 @@ from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.featurelist.simple import IndexFeatureListBase
 
+from .core import ShapefileReaderBase
 
-class ShapeFileList(IndexFeatureListBase):
+
+class ShapeFileList(IndexFeatureListBase, ShapefileReaderBase):
     def __init__(self, path):
-        self._path = path
+        ShapefileReaderBase.__init__(self, self, path)
 
     def _getitem(self, index):
         return self._df.iloc[index]
@@ -51,7 +53,7 @@ class ShapeFileList(IndexFeatureListBase):
 
         import numpy as np
 
-        geo_df = gpd.read_file(self._path, **kwargs)
+        geo_df = gpd.read_file(self.path, **kwargs)
         return geo_df.set_index(np.arange(len(geo_df)))
 
     def to_geopandas(self, **kwargs):
@@ -81,7 +83,7 @@ class ShapeFileList(IndexFeatureListBase):
         try:
             import geopandas as gpd
         except ImportError:
-            raise ImportError("Geojson handling requires 'geopandas' to be installed")
+            raise ImportError("shapefile handling requires 'geopandas' to be installed")
 
         geo_df = gpd.pd.concat([gpd.read_file(path, **kwargs) for path in paths])
 
@@ -97,3 +99,6 @@ class ShapeFileList(IndexFeatureListBase):
         from earthkit.data.data.shapefile import ShapeFileData
 
         return ShapeFileData(self)
+
+    def _encode_default(self, encoder, *args, **kwargs):
+        return None

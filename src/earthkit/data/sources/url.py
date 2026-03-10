@@ -316,7 +316,6 @@ class Url(UrlBase):
 
         self.path = self.downloader.local_path()
 
-        print(f"URL {self.url} local path {self.path}")
         if self.path is not None:
             return
 
@@ -333,8 +332,6 @@ class Url(UrlBase):
             extension=extension,
             force=self.force,
         )
-
-        print(f"URL {self.url} cached path {self.path}")
 
         # cache data may contain the result of the http HEAD request
         h = self.downloader.cache_data()

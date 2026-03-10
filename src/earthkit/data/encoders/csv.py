@@ -11,6 +11,7 @@ import logging
 
 from . import EncodedData
 from . import Encoder
+from . import FilePathEncodedData
 
 LOG = logging.getLogger(__name__)
 
@@ -54,14 +55,27 @@ class CSVEncoder(Encoder):
     def _encode_field(self, field, **kwargs):
         return self._encode(field, **kwargs)
 
-    def _encode_fieldlist(self, data, **kwargs):
+    def _encode_fieldlist(self, data, *, target=None, **kwargs):
         raise NotImplementedError
 
-    def _encode_xarray(self, data, **kwargs):
+    def _encode_xarray(self, data, *, target=None, **kwargs):
         raise NotImplementedError
 
-    def _encode_featurelist(self, data, **kwargs):
+    def _encode_featurelist(self, data, *, target=None, **kwargs):
         raise NotImplementedError
+
+    def _encode_path(self, path_info, target=None, **kwargs):
+        # Write file as is if target is file and path is provided.
+        if (
+            path_info is not None
+            and path_info.path is not None
+            and path_info.default_encoder == "csv"
+            and target is not None
+            and target._name == "file"
+        ):
+            return FilePathEncodedData(path_info.path, binary=path_info.binary)
+        else:
+            return None
 
 
 encoder = CSVEncoder

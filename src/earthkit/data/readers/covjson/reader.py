@@ -7,8 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.readers import Reader
+from earthkit.data.core import Encodable
 from earthkit.data.sources import Source
+
+from .core import CovJsonReaderBase
 
 
 class XarrayMixIn:
@@ -33,9 +35,9 @@ class GeojsonMixIn:
         return decoder.to_geojson()
 
 
-class CovjsonReader(XarrayMixIn, GeojsonMixIn, Reader):
+class CovjsonReader(XarrayMixIn, GeojsonMixIn, CovJsonReaderBase):
     def __init__(self, source, path):
-        super().__init__(source, path)
+        CovJsonReaderBase.__init__(self, source, path)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.path})"
@@ -59,9 +61,13 @@ class CovjsonReader(XarrayMixIn, GeojsonMixIn, Reader):
 
         return CovjsonData(self)
 
+    def _encode_default(self, encoder, **kwargs):
+        return encoder._encode_xarray(self.to_xarray(), **kwargs)
 
-class CovjsonStreamReader(Source, Reader):
+
+class CovjsonStreamReader(Source, CovJsonReaderBase):
     def __init__(self, stream):
+        CovJsonReaderBase.__init__(self, self, "")
         self._stream = stream
 
     def __iter__(self):
@@ -91,8 +97,11 @@ class CovjsonStreamReader(Source, Reader):
     def is_stream(self):
         return True
 
+    def _encode_default(self, encoder, **kwargs):
+        return encoder._encode_xarray(self.to_xarray(), **kwargs)
 
-class CovjsonMemoryReader(Reader):
+
+class CovjsonMemoryReader(Source):
     def __init__(self, buf):
         self.buf = buf
 
@@ -114,8 +123,11 @@ class CovjsonMemoryReader(Reader):
 
         return CovjsonData(self)
 
+    # def _encode_default(self, encoder, **kwargs):
+    #     return encoder._encode_xarray(self.to_xarray(), **kwargs)
 
-class CovjsonInMemory(Source, XarrayMixIn, Reader):
+
+class CovjsonInMemory(Source, XarrayMixIn, Encodable):
     def __init__(self, data):
         self.data = data
 
@@ -133,3 +145,17 @@ class CovjsonInMemory(Source, XarrayMixIn, Reader):
         from earthkit.data.data.covjson import CovjsonData
 
         return CovjsonData(self)
+
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self, **kwargs)
+
+    def _default_encoder(self):
+        return "covjson"
+
+    def _encode(self, encoder, *, hints=None, **kwargs):
+        return encoder._encode_xarray(self.to_xarray(), **kwargs)
+
+    def _encode_default(self, encoder, **kwargs):
+        return encoder._encode_xarray(self.to_xarray(), **kwargs)

@@ -15,6 +15,8 @@ LOG = logging.getLogger(__name__)
 
 
 class ODBReader(Reader):
+    _format = "odb"
+
     def to_pandas(self, **kwargs):
         try:
             import codc as odc
@@ -32,3 +34,6 @@ class ODBReader(Reader):
         from earthkit.data.data.odb import ODBData
 
         return ODBData(self)
+
+    def _encode_default(self, encoder, *args, **kwargs):
+        return None

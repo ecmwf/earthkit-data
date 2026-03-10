@@ -11,7 +11,7 @@ from .source import SourceData
 
 
 class NetCDFData(SourceData):
-    _TYPE_NAME = "NETCDF"
+    _TYPE_NAME = "NetCDF"
 
     @property
     def available_types(self):

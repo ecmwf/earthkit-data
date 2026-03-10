@@ -7,14 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-from . import SimpleData
+from .source import SourceData
 
 
-class CSVData(SimpleData):
+class CSVData(SourceData):
     _TYPE_NAME = "CSV"
-
-    def __init__(self, reader):
-        self._reader = reader
 
     @property
     def available_types(self):

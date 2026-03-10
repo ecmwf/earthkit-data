@@ -27,13 +27,9 @@ class MultiSource(Source):
         if len(sources) == 1 and isinstance(sources[0], list):
             sources = sources[0]
 
-        print("MultiSource: sources=", sources)
         sources = self._from_sources(sources)
-        print("MultiSource: sources after _from_sources=", sources)
         self.sources = [s.mutate() for s in self._flatten(sources) if not s.ignore()]
 
-        # self.sources = [s.mutate() for s in sources if not s.ignore()]
-        print("MultiSource: sources after mutate and ignore=", self.sources)
         self.filter = filter
         self.merger = merger
         self._lengths = [None] * len(self.sources)

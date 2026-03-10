@@ -41,6 +41,9 @@ class UnknownReaderBase(Reader):
 
         return UnknownData(self)
 
+    def _encode_default(self, encoder, *args, **kwargs):
+        return None
+
 
 class UnknownReader(UnknownReaderBase):
     def __init__(self, source, path, **kwargs):

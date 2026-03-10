@@ -141,10 +141,14 @@ class SimpleData(Data):
         to_target(target, *args, data=self._to_default(), **kwargs)
 
     def _default_encoder(self):
-        return self._reader._default_encoder()
+        if hasattr(self._source, "_default_encoder"):
+            return self._source._default_encoder()
+        elif hasattr(self._reader, "_default_encoder"):
+            return self._reader._default_encoder()
+        raise NotImplementedError("No default encoder found for this data object")
 
     def _encode(self, *args, **kwargs):
-        return self._to_default()._encode(*args, **kwargs)
+        return self._reader._encode(*args, **kwargs)
 
     def _conversion_not_implemented(self):
         import inspect

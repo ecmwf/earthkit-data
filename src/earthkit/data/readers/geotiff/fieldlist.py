@@ -12,21 +12,15 @@ from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.indexing.simple import SimpleFieldListBase
 
+from .core import DEFAULT_XARRAY_KWARGS
+from .reader import GeoTIFFReaderBase
 
-class GeoTIFFFieldList(SimpleFieldListBase):
+
+class GeoTIFFFieldList(SimpleFieldListBase, GeoTIFFReaderBase):
     """A list of GeoTIFF bands"""
 
-    DEFAULT_XARRAY_KWARGS = {
-        # Splitting bands into individual variables preserves band-specific metadata.
-        "band_as_variable": True,
-        # Mask and scale values by default to match xarray's default behaviour.
-        # Note: masked values are set to NaN, so all values are returned as floats.
-        "mask_and_scale": True,
-        "decode_times": True,
-    }
-
     def __init__(self, path, **kwargs):
-        self.path = path
+        GeoTIFFReaderBase.__init__(self, self, path)
         self._ds = self._rioxarray_read()
         # Shared geography instance for all fields/bands
         # self._geo = GeoTIFFGeography(self._ds)
@@ -37,7 +31,7 @@ class GeoTIFFFieldList(SimpleFieldListBase):
         except ImportError:
             raise ImportError("geotiff handling requires 'rioxarray' to be installed")
 
-        options = dict(**self.DEFAULT_XARRAY_KWARGS)
+        options = dict(**DEFAULT_XARRAY_KWARGS)
         # Read options from dedicated kwarg if exists, otherwise use all kwargs
         options.update(kwargs.get("rioxarray_open_rasterio_kwargs", kwargs))
 
@@ -71,9 +65,3 @@ class GeoTIFFFieldList(SimpleFieldListBase):
             fields.append(f)
             # fields.append(self.FIELD_TYPE(da, band, geography=self._geo))
         return fields
-
-    def describe(self, *args, **kwargs):
-        self._not_implemented()
-
-    def _default_encoder(self):
-        return "internal-pass-through"

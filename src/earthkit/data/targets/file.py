@@ -126,7 +126,6 @@ class FileTarget(SimpleTarget):
             return
 
         r = self._encode(data, suffix=self.ext, **kwargs)
-        print("Encoded data", r)
         if hasattr(r, "__iter__"):
             f = self._f()
             for d in r:

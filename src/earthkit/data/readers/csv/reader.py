@@ -15,6 +15,10 @@ LOG = logging.getLogger(__name__)
 
 
 class CSVReader(Reader):
+    _format = "csv"
+    _binary = False
+    _appendable = False
+
     r"""Class representing CSV data"""
 
     def __init__(self, source, path, compression=None):
@@ -86,3 +90,6 @@ class CSVReader(Reader):
         from earthkit.data.data.csv import CSVData
 
         return CSVData(self)
+
+    def _encode_default(self, encoder, *args, **kwargs):
+        return encoder._encode(self, *args, **kwargs)

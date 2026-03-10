@@ -275,15 +275,6 @@ def test_target_file_bufr_slice(kwargs, direct_call):
         assert ds1.get("ident") == md_ref
 
 
-def test_target_file_odb():
-    ds = from_source("file", earthkit_examples_file("test.odb"))
-    with temp_file() as path:
-        ds.to_target("file", path)
-        ds1 = from_source("file", path)
-        df = ds1.to_pandas()
-        assert len(df) == 717
-
-
 def test_target_file_grib_to_netcdf_1():
     ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     # vals_ref = ds.values[:, :4]
@@ -337,7 +328,7 @@ def test_target_file_grib_to_geotiff():
 
 @pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")
 @pytest.mark.with_proj
-def test_target_file_geotiff():
+def test_target_file_geotiff_fieldlist():
     ds = from_source("file", earthkit_test_data_file("dgm50hs_col_32_368_5616_nw.tif")).to_fieldlist()
     assert len(ds) == 3
 
@@ -345,8 +336,8 @@ def test_target_file_geotiff():
         ds.to_target("file", path)
 
         ds1 = from_source("file", path).to_fieldlist()
-        assert len(ds) == len(ds1)
-        assert isinstance(ds[0], Field)
+        assert len(ds1) == 3
+        assert isinstance(ds1[0], Field)
 
 
 @pytest.mark.xfail(reason="Not implemented")

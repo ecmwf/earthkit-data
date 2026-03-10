@@ -9,6 +9,7 @@
 
 from abc import abstractmethod
 
+from earthkit.data.core import Encodable
 from earthkit.data.sources import Source
 
 
@@ -22,7 +23,7 @@ def create_fieldlist(fields=None):
         return SimpleFieldList(fields)
 
 
-class FieldList(Source):
+class FieldList(Source, Encodable):
     """Base class for a FieldList.
 
     A FieldList is a collection of Fields. It provides methods to access the field values and metadata."""
@@ -818,10 +819,10 @@ class FieldList(Source):
     # def _default_encoder(self):
     #     pass
 
-    @abstractmethod
-    def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
-        pass
+    # @abstractmethod
+    # def _encode(self, encoder, **kwargs):
+    #     """Double dispatch to the encoder"""
+    #     pass
 
     @abstractmethod
     def _unary_op(self, oper):

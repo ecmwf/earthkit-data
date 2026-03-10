@@ -12,14 +12,15 @@
 
 import numpy as np
 
-from earthkit.data.readers import Reader
 from earthkit.data.sources import Source
 
+from .core import GeoJsonReaderBase
 
-class GeojsonReader(Source, Reader):
+
+class GeojsonReader(Source, GeoJsonReaderBase):
     def __init__(self, source, path):
         self._ori_source = source
-        Reader.__init__(self, source, path)
+        GeoJsonReaderBase.__init__(self, source, path)
 
     def to_pandas(self, **kwargs):
         # TODO: handle multiple paths
@@ -51,3 +52,6 @@ class GeojsonReader(Source, Reader):
         from earthkit.data.data.geojson import GeoJsonData
 
         return GeoJsonData(self)
+
+    def _encode_default(self, encoder, *args, **kwargs):
+        return None

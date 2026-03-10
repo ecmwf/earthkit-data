@@ -12,6 +12,7 @@ import glob
 import logging
 import os
 
+from earthkit.data.core import Encodable
 from earthkit.data.core.caching import CACHE
 from earthkit.data.readers import reader
 from earthkit.data.utils.parts import PathAndParts
@@ -36,7 +37,7 @@ class FileSourcePathAndParts(PathAndParts):
 
 
 # class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
-class FileSource(Source, os.PathLike):
+class FileSource(Source, Encodable, os.PathLike):
     _reader_ = None
     content_type = None
 
@@ -217,6 +218,15 @@ class FileSource(Source, os.PathLike):
 
     # def group_by(self, *args):
     #     return self._reader.group_by(*args)
+
+    def _default_encoder(self):
+        return self._reader._default_encoder()
+
+    def _encode_default(self, encoder, *args, **kwargs):
+        return self._reader._encode_default(encoder, *args, **kwargs)
+
+    def _encode(self, encoder, *args, **kwargs):
+        return self._reader._encode(encoder, *args, **kwargs)
 
 
 class IndexedFileSource(FileSource):

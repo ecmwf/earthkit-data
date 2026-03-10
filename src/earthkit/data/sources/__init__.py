@@ -13,6 +13,7 @@ import weakref
 from abc import abstractmethod
 from importlib import import_module
 
+from earthkit.data.core import Encodable
 from earthkit.data.core import Loader
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.plugins import find_plugin
@@ -54,11 +55,11 @@ class Source(Loader):
     def graph(self, depth=0):
         print(" " * depth, self)
 
-    def _encode(self, encoder, **kwargs):
-        return encoder._encode(self, **kwargs)
+    # def _encode(self, encoder, **kwargs):
+    #     return encoder._encode(self, **kwargs)
 
-    def _default_encoder(self):
-        return None
+    # def _default_encoder(self):
+    #     return None
 
     def to_data_object(self):
         from earthkit.data.data.source import DefaultSourceData
@@ -126,7 +127,6 @@ def from_source_internal(name: str, *args, lazily=False, **kwargs) -> Source:
     if lazily:
         return from_source_lazily(name, *args, **kwargs)
 
-    print("from_source_internal: name=", name)
     prev = None
     src = get_source(name, *args, **kwargs)
     while src is not prev:

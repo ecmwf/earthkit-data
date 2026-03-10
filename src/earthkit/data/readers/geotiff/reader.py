@@ -10,28 +10,16 @@
 
 from earthkit.data.sources import Source
 
-from .. import Reader
+from .core import DEFAULT_XARRAY_KWARGS
+from .core import GeoTIFFReaderBase
 
 
-class GeoTIFFReader(Source, Reader):
-    DEFAULT_XARRAY_KWARGS = {
-        # Splitting bands into individual variables preserves band-specific metadata.
-        "band_as_variable": True,
-        # Mask and scale values by default to match xarray's default behaviour.
-        # Note: masked values are set to NaN, so all values are returned as floats.
-        "mask_and_scale": True,
-        "decode_times": True,
-    }
-
+class GeoTIFFReader(Source, GeoTIFFReaderBase):
     def __init__(self, source, path):
-        Reader.__init__(self, source, path)
-        # GeoTIFFFieldList.__init__(self, path)
+        GeoTIFFReaderBase.__init__(self, source, path)
 
     def __repr__(self):
         return f"GeoTIFFReader({self.path})"
-
-    # def mutate_source(self):
-    #     return self
 
     def rioxarray_read(self, **kwargs):
         try:
@@ -39,7 +27,7 @@ class GeoTIFFReader(Source, Reader):
         except ImportError:
             raise ImportError("geotiff handling requires 'rioxarray' to be installed")
 
-        options = dict(**self.DEFAULT_XARRAY_KWARGS)
+        options = dict(DEFAULT_XARRAY_KWARGS)
         # Read options from dedicated kwarg if exists, otherwise use all kwargs
         options.update(kwargs.get("rioxarray_open_rasterio_kwargs", kwargs))
 
@@ -58,8 +46,8 @@ class GeoTIFFReader(Source, Reader):
 
         return GeoTIFFData(self)
 
-    def mutate(self):
+    def mutate_source(self):
         return self
 
-    def _default_encoder(self):
-        return Reader._default_encoder(self)
+    def _encode_default(self, encoder, *args, **kwargs):
+        return encoder._encode_xarray(self.to_xarray(), *args, **kwargs)

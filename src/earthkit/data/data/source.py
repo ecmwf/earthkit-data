@@ -36,6 +36,18 @@ class SourceData(SimpleData):
         if self._reader is None:
             raise ValueError(f"SourceData no Source or Reader found in {source_or_reader=}")
 
+    def _default_encoder(self):
+        if hasattr(self._source, "_default_encoder"):
+            return self._source._default_encoder()
+        elif hasattr(self._reader, "_default_encoder"):
+            return self._reader._default_encoder()
+        raise NotImplementedError("No default encoder found for this data object")
+
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self._source, **kwargs)
+
 
 class DefaultSourceData(SourceData):
     def __init__(self, source_or_reader):

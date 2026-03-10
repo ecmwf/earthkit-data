@@ -22,6 +22,7 @@ _SUFFIXES = {
     (".nc", ".nc3", ".nc4", ".netcdf"): "netcdf",
     (".tiff", ".tif"): "geotiff",
     (".bufr",): "bufr",
+    (".odb",): "odb",
 }
 
 
@@ -73,7 +74,6 @@ class FilePathEncodedData(EncodedData):
         raise NotImplementedError
 
     def to_file(self, f, **kwargs):
-        print("FilePathEncodedData.to_file", self.path, self.binary)
         mode = "rb" if self.binary else "r"
         with open(self.path, mode) as g:
             while True:
@@ -150,7 +150,7 @@ class Encoder(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _encode(self, data, **kwargs) -> EncodedData:
+    def _encode(self, data, *, target=None, **kwargs) -> EncodedData:
         """Subclass implementation of the encoding logic.
 
         Parameters:
@@ -162,7 +162,7 @@ class Encoder(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _encode_field(self, field, **kwargs) -> EncodedData:
+    def _encode_field(self, field, *, target=None, **kwargs) -> EncodedData:
         """Subclass implementation of the encoding logic for a Field.
 
         Parameters:
@@ -174,7 +174,7 @@ class Encoder(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _encode_fieldlist(self, fieldlist, **kwargs) -> EncodedData:
+    def _encode_fieldlist(self, fieldlist, *, target=None, **kwargs) -> EncodedData:
         """Subclass implementation of the encoding logic for a FieldList.
 
         Parameters:
@@ -186,7 +186,7 @@ class Encoder(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _encode_xarray(self, data, **kwargs) -> EncodedData:
+    def _encode_xarray(self, data, *, target=None, **kwargs) -> EncodedData:
         """Subclass implementation of the encoding logic for Xarray data.
 
         Parameters:
@@ -198,7 +198,7 @@ class Encoder(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _encode_featurelist(self, featurelist, **kwargs) -> EncodedData:
+    def _encode_featurelist(self, featurelist, *, target=None, **kwargs) -> EncodedData:
         """Subclass implementation of the encoding logic for a FeatureList.
 
         Parameters:
@@ -210,13 +210,13 @@ class Encoder(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _encode_featurelist(self, featurelist, **kwargs) -> EncodedData:
-        """Subclass implementation of the encoding logic for a FeatureList.
+    def _encode_path(self, path_info, *, target=None, **kwargs) -> EncodedData:
+        """Subclass implementation of the encoding logic for a path.
 
         Parameters:
         -----------
-        featurelist: :obj:`FeatureList`
-            The FeatureList to encode
+        path_info: :obj:`PathInfo`
+            The PathInfo to encode
 
         Double dispatch method that called from ``featurelist`` to encode itself."""
         pass
@@ -276,17 +276,22 @@ def make_encoder(data, encoder=None, suffix=None, metadata=None, **kwargs):
         encoder.metadata.update(metadata or {})
         return encoder
 
+    # print("make_encoder", data, encoder, suffix, metadata, kwargs)
+
     if encoder is None:
         if suffix is not None:
             encoder = _suffix_to_encoder(suffix)
         if encoder is None:
             from earthkit.data.data import Data
 
+            # print("make_encoder1", data, suffix)
             if hasattr(data, "_default_encoder"):
-                # print("data._default_encoder", data._default_encoder())
+                print("data._default_encoder", data._default_encoder())
                 encoder = data._default_encoder()
+            # print("make_encoder2", encoder, data)
             if (
-                isinstance(data, Data)
+                encoder is None
+                and isinstance(data, Data)
                 and hasattr(data, "_source")
                 and hasattr(data._source, "_default_encoder")
             ):

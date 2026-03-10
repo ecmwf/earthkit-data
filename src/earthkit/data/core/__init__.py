@@ -28,11 +28,12 @@ class Encodable(Base):
         pass
 
     @abstractmethod
-    def _encode(self, encoder, *args, **kwargs):
+    def _encode(self, encoder, *, hints=None, **kwargs):
+        """Double dispatch to the encoder"""
         pass
 
 
-class Loader(Encodable):
+class Loader(Base):
     """Base class for all objects that can be loaded using a loader."""
 
     @abstractmethod
@@ -62,10 +63,54 @@ class Loader(Encodable):
     def to_data_object(self):
         pass
 
-    def to_target(self, target, *args, **kwargs):
-        from earthkit.data.targets import to_target
+    # def to_target(self, target, *args, **kwargs):
+    #     from earthkit.data.targets import to_target
 
-        to_target(target, *args, data=self, **kwargs)
+    #     to_target(target, *args, data=self, **kwargs)
 
-    def _encode(self, encoder, **kwargs):
-        return encoder._encode(self, **kwargs)
+    # def _encode(self, encoder, **kwargs):
+    #     return encoder._encode(self, **kwargs)
+
+
+class FileLoaderMixin:
+    _format = None
+    _binary = True
+    _appendable = True
+
+    def __init__(self, *args, **kwargs):
+        print("FileLoaderMixin.__init__", self._format, self._default_encoder())
+
+    def _default_encoder(self):
+        print("FileLoaderMixin._default_encoder", self._format)
+        return self._format
+
+    def _encode(self, encoder, *args, **kwargs):
+        result = self._encode_path(encoder, *args, **kwargs)
+        if result is not None:
+            return result
+        return encoder._encode_default(self, *args, **kwargs)
+
+    @abstractmethod
+    def _encode_default(self, encoder, *args, **kwargs):
+        pass
+
+    def _encode_path(self, encoder, *args, **kwargs):
+        path_info = self._path_info()
+        if path_info is not None:
+            target = kwargs.get("target", None)
+            if target is not None and target._name == "file":
+                path_info = self._path_info()
+                return encoder._encode_path(path_info, **kwargs)
+        return None
+
+    def _path_info(self):
+        if hasattr(self, "_path"):
+            from earthkit.data.utils.path_info import LoaderPathInfo
+
+            return LoaderPathInfo(
+                self._path,
+                binary=self._binary,
+                appendable=self._appendable,
+                default_encoder=self._default_encoder(),
+            )
+        return None

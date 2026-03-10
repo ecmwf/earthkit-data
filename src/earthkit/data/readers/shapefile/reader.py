@@ -97,3 +97,6 @@ class ShapeFileReader(Source, Reader):
         from earthkit.data.data.shapefile import ShapeFileData
 
         return ShapeFileData(self)
+
+    def _encode_default(self, encoder, **kwargs):
+        return None

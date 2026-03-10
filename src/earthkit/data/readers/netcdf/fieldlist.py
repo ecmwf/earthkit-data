@@ -11,15 +11,17 @@ import logging
 
 from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
 
+from .core import NetCDFReaderBase
+
 LOG = logging.getLogger(__name__)
 
 
 class NetCDFFieldList(XArrayFieldList):
     def __init__(self, path, *args, **kwargs):
-        self.path = path
+        # self.path = path
         import xarray as xr
 
-        ds = xr.open_dataset(self.path, decode_timedelta=True)
+        ds = xr.open_dataset(path, decode_timedelta=True)
         ds = XArrayFieldList.from_xarray(ds)
         super().__init__(ds.ds, ds.variables)
 
@@ -107,9 +109,10 @@ class NetCDFFieldList(XArrayFieldList):
 #         return "NetCDFFieldListFromURL(%s)" % (self.path_or_url,)
 
 
-class NetCDFFieldListFromFile(NetCDFFieldList):
+class NetCDFFieldListFromFile(NetCDFFieldList, NetCDFReaderBase):
     def __init__(self, path):
-        super().__init__(path)
+        NetCDFFieldList.__init__(self, path)
+        NetCDFReaderBase.__init__(self, self, path)
 
     def __repr__(self):
         return f"NetCDFFieldListFromFile({self.path})"
@@ -125,10 +128,11 @@ class NetCDFFieldListFromFile(NetCDFFieldList):
     #         shutil.copyfileobj(s, f, 1024 * 1024)
 
 
-class NetCDFFieldListFromURL(NetCDFFieldList):
+class NetCDFFieldListFromURL(NetCDFFieldList, NetCDFReaderBase):
     def __init__(self, url):
         self.url = url
-        super().__init__(url)
+        NetCDFFieldList.__init__(self, url)
+        NetCDFReaderBase.__init__(self, self, url)
 
     def __repr__(self):
         return f"NetCDFFieldListFromURL({self.url})"

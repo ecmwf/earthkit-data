@@ -27,6 +27,10 @@ def is_text(path, prob_lines=1000, probe_size=4096):
 
 
 class TextReader(Reader):
+    _format = "text"
+    _binary = False
+    _appendable = True
+
     def __init__(self, source, path):
         super().__init__(source, path)
 
@@ -47,6 +51,9 @@ class TextReader(Reader):
         from earthkit.data.data.text import TextData
 
         return TextData(self)
+
+    def _encode_default(self, encoder, *args, **kwargs):
+        return None
 
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):

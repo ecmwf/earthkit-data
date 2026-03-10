@@ -17,7 +17,7 @@ from earthkit.data.utils.testing import earthkit_test_data_file
 def test_hl_netcdf_single_core():
     ds = from_source("file", earthkit_examples_file("test.nc"))
 
-    assert ds._TYPE_NAME == "NETCDF"
+    assert ds._TYPE_NAME == "NetCDF"
     assert ds.is_stream() is False
     assert "xarray" in ds.available_types
     assert "fieldlist" in ds.available_types
@@ -37,7 +37,7 @@ def test_hl_netcdf_multi_core():
     paths = [earthkit_test_data_file("era5_2t_1.nc"), earthkit_test_data_file("era5_2t_2.nc")]
     ds = from_source("file", paths)
 
-    assert ds._TYPE_NAME == "NETCDF"
+    assert ds._TYPE_NAME == "NetCDF"
     assert ds.is_stream() is False
     assert "xarray" in ds.available_types
     assert "fieldlist" in ds.available_types
