@@ -14,7 +14,6 @@ from typing import Tuple
 from typing import Union
 
 from earthkit.data import concat
-from earthkit.data.data import SourceData
 from earthkit.data.sources import Source
 from earthkit.data.sources import from_source_internal
 from earthkit.data.sources.empty import EmptySource
@@ -24,68 +23,11 @@ from earthkit.data.utils.patterns import HivePattern
 from earthkit.data.utils.patterns import Pattern
 
 
-class HiveFilePatternData(SourceData):
-    _TYPE_NAME = "HiveFilePattern"
-
-    @property
-    def available_types(self):
-        return [self._FIELDLIST]
-
-    def describe(self):
-        pass
-
-    def to_source(self):
-        return self._source
-
-    def to_fieldlist(self, *args, **kwargs):
-        return self._source.to_fieldlist(*args, **kwargs)
-
-
-# class StreamFieldList(FieldList, Source):
-#     def __init__(self, source, **kwargs):
-#         IndexFieldListBase.__init__(self, **kwargs)
-#         self._source = source
-
-#     def mutate(self):
-#         return self
-
-#     def __len__(self):
-#         raise NotImplementedError("StreamFieldList does not support __len__")
-
-#     def _getitem(self, item):
-#         raise NotImplementedError("StreamFieldList does not support _getitem")
-
-#     def __iter__(self):
-#         return iter(self._source)
-
-#     def batched(self, n):
-#         raise
-
-#     def group_by(self, *keys, **kwargs):
-#         raise NotImplementedError("StreamFieldList does not support group_by")
-
-#     def __getstate__(self):
-#         raise NotImplementedError("StreamFieldList cannot be pickled")
-
-#     def to_xarray(self, **kwargs):
-#         raise NotImplementedError("StreamFieldList does not support to_xarray")
-
-#     @classmethod
-#     def merge(cls, sources):
-#         raise NotImplementedError("StreamFieldList does not support merge")
-
-#     def _default_encoder(self):
-#         return None
-
-#     def to_data_object(self):
-#         return HiveFilePatternData(self)
-
-
 class HiveFilePattern(Source):
     def __init__(self, pattern: str, params: Dict[str, TypingAny], **kwargs: TypingAny) -> None:
         self.scanner = HivePattern(pattern, params)
 
-    def sel(
+    def to_fieldlist(
         self,
         *args: Tuple[Dict[str, TypingAny]],
         _hive_diag: Optional[TypingAny] = None,
@@ -123,9 +65,10 @@ class HiveFilePattern(Source):
                 src = src.mutate()
 
             return src.to_fieldlist()
-            return src
 
     def to_data_object(self):
+        from earthkit.data.data.hive import HiveFilePatternData
+
         return HiveFilePatternData(self)
 
 

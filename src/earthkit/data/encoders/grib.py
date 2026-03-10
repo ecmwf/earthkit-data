@@ -430,7 +430,12 @@ class GribEncoder(Encoder):
         kwargs["can_infer_time"] = can_infer_time
 
         path_allowed = (
-            target is not None and target._name == "file" and not metadata and not values and not template
+            target is not None
+            and target._name == "file"
+            and not metadata
+            and values is not None
+            and template is not None
+            and missing_value == 9999
         )
 
         hints = {"path_allowed": path_allowed}
