@@ -28,7 +28,7 @@ def test_grib_url_stream_iter():
         "url",
         earthkit_remote_examples_file("test6.grib"),
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -66,7 +66,7 @@ def test_grib_url_stream_batched(_kwargs, expected_meta):
         "url",
         earthkit_remote_examples_file("test6.grib"),
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -86,7 +86,7 @@ def test_grib_url_stream_batched(_kwargs, expected_meta):
 
 @pytest.mark.parametrize("group", ["vertical.level", ["vertical.level", "metadata.gridType"]])
 def test_grib_url_stream_group_by(group):
-    ds = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True)
+    ds = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True).to_fieldlist()
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -114,8 +114,7 @@ def test_grib_url_stream_in_memory():
         "url",
         earthkit_remote_examples_file("test6.grib"),
         stream=True,
-        read_all=True,
-    )
+    ).to_fieldlist(read_all=True)
 
     assert len(ds) == 6
 
@@ -153,12 +152,11 @@ def test_grib_save_when_loaded_from_url_stream():
         "url",
         earthkit_remote_examples_file("test6.grib"),
         stream=True,
-        read_all=True,
-    )
+    ).to_fieldlist(read_all=True)
     assert len(ds) == 6
     with temp_file() as tmp:
         ds.to_target("file", tmp)
-        ds_saved = from_source("file", tmp)
+        ds_saved = from_source("file", tmp).to_fieldlist()
         assert len(ds) == len(ds_saved)
 
 
@@ -177,7 +175,7 @@ def test_grib_url_stream_multi_urls_iter():
             earthkit_remote_examples_file("test4.grib"),
         ],
         stream=True,
-    )
+    ).to_fieldlist()
 
     assert isinstance(ds, StreamFieldList)
     assert len(ds._source.sources) == 2
@@ -222,7 +220,7 @@ def test_grib_url_stream_multi_urls_batched(_kwargs, expected_meta):
             earthkit_remote_examples_file("test4.grib"),
         ],
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -248,8 +246,7 @@ def test_grib_url_stream_multi_urls_memory():
             earthkit_remote_examples_file("test4.grib"),
         ],
         stream=True,
-        read_all=True,
-    )
+    ).to_fieldlist(read_all=True)
 
     assert len(ds) == 6
 
@@ -333,7 +330,7 @@ def test_grib_url_stream_single_url_parts_core(path, parts, expected_meta):
         earthkit_remote_file(path),
         parts=parts,
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -365,7 +362,7 @@ def test_grib_url_stream_single_url_parts_as_arg_valid(parts, expected_meta):
         "url",
         [earthkit_remote_examples_file("test6.grib"), parts],
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -389,7 +386,7 @@ def test_grib_url_stream_single_url_parts_as_arg_invalid():
             [earthkit_remote_examples_file("test6.grib"), [(0, 150)]],
             parts=[(0, 160)],
             stream=True,
-        )
+        ).to_fieldlist()
 
 
 @pytest.mark.parametrize(
@@ -433,7 +430,7 @@ def test_grib_url_stream_multi_urls_parts(parts1, parts2, expected_meta):
             [earthkit_remote_examples_file("test.grib"), parts2],
         ],
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):

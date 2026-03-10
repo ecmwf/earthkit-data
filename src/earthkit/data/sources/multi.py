@@ -28,11 +28,18 @@ class MultiSource(Source):
             sources = sources[0]
 
         sources = self._from_sources(sources)
+        self.sources = [s.mutate() for s in self._flatten(sources) if not s.ignore()]
 
-        self.sources = [s.mutate() for s in sources if not s.ignore()]
         self.filter = filter
         self.merger = merger
         self._lengths = [None] * len(self.sources)
+
+    def _flatten(self, sources):
+        for s in sources:
+            if isinstance(s, MultiSource):
+                yield from self._flatten(s.sources)
+            else:
+                yield s
 
     def ignore(self):
         return len(self.sources) == 0
@@ -45,16 +52,18 @@ class MultiSource(Source):
             return EmptySource()
 
         if self.merger is None:
-            merged = merge_by_class(self.sources)
-            if merged is not None:
-                return merged.mutate()
-
+            try:
+                merged = merge_by_class(self.sources)
+                if merged is not None:
+                    return merged.mutate()
+            except Exception:
+                pass
         return self
 
-    def _set_dataset(self, dataset):
-        super()._set_dataset(dataset)
-        for s in self.sources:
-            s._set_dataset(dataset)
+    # def _set_dataset(self, dataset):
+    #     super()._set_dataset(dataset)
+    #     for s in self.sources:
+    #         s._set_dataset(dataset)
 
     def __iter__(self):
         return itertools.chain(*self.sources)
@@ -103,6 +112,9 @@ class MultiSource(Source):
         for s in self.sources:
             s.graph(depth + 3)
 
+    def to_fieldlist(self, **kwargs):
+        return make_merger(self.merger, self.sources).to_fieldlist(**kwargs)
+
     def to_xarray(self, **kwargs):
         return make_merger(self.merger, self.sources).to_xarray(**kwargs)
 
@@ -115,19 +127,33 @@ class MultiSource(Source):
     def _from_sources(self, sources):
         callables = []
         has_callables = False
-        for s in sources:
+        sources_in = sources
+        sources = []
+        for s in sources_in:
             if callable(s):
                 has_callables = True
                 callables.append(s)
+                sources.append(s)
             else:
+                if not isinstance(s, Source):
+                    if hasattr(s, "_source"):
+                        s = s._source
+                    if s is None or not isinstance(s, Source):
+                        raise ValueError(f"MultiSource: expected Source or callable, got {type(s)}")
+
+                sources.append(s)
                 callables.append(lambda *args, **kwargs: s)
+
+        assert len(sources) == len(callables)
 
         if not has_callables:
             return sources
+        from earthkit.data.core.config import CONFIG
 
-        nthreads = min(self.config("number-of-download-threads"), len(callables))
+        nthreads = min(CONFIG.get("number-of-download-threads"), len(callables))
+
         if nthreads < 2:
-            return [s() for s in sources]
+            return [s() for s in callables]
 
         def _call(s, *args, **kwargs):
             return s(*args, **kwargs)
@@ -135,8 +161,7 @@ class MultiSource(Source):
         from earthkit.data.utils.progbar import tqdm
 
         with SoftThreadPool(nthreads=nthreads) as pool:
-            futures = [pool.submit(_call, s, observer=pool) for s in sources]
-
+            futures = [pool.submit(_call, s, observer=pool) for s in callables]
             iterator = (f.result() for f in futures)
             sources = list(tqdm(iterator, leave=False, total=len(futures)))
 
@@ -150,6 +175,11 @@ class MultiSource(Source):
 
     def bounding_box(self):
         return BoundingBox.union([s.bounding_box() for s in self.sources])
+
+    def to_data_object(self):
+        from earthkit.data.data.multi import MultiData
+
+        return MultiData(self)
 
 
 source = MultiSource

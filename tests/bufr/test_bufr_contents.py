@@ -15,7 +15,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
 def test_bufr_iteration():
-    ds = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    ds = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
     assert len(ds) == 10
     assert len([x for x in ds]) == 10
     for f in ds:
@@ -23,12 +23,12 @@ def test_bufr_iteration():
 
 
 def test_bufr_message_repr():
-    ds = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    ds = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
     assert "BUFRMessage" in ds[0].__repr__()
 
 
 def test_bufr_metadata():
-    ds = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    ds = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
     assert ds[0].subset_count() == 1
     assert ds[0].is_compressed() is False
     assert ds[0].is_uncompressed() is False
@@ -42,7 +42,7 @@ def test_bufr_metadata_uncompressed():
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("synop_multi_subset_uncompressed.bufr"),
-    )
+    ).to_featurelist()
     assert len(ds) == 1
     f = ds[0]
     assert f.subset_count() == 12
@@ -54,7 +54,7 @@ def test_bufr_metadata_compressed():
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("ens_multi_subset_compressed.bufr"),
-    )
+    ).to_featurelist()
     assert len(ds) == 1
     f = ds[0]
     assert f.subset_count() == 51
@@ -63,7 +63,7 @@ def test_bufr_metadata_compressed():
 
 
 def test_bufr_metadata_tc_compressed():
-    ds = from_source("url", earthkit_remote_test_data_file("ens_tropical_cyclon.bufr3"))
+    ds = from_source("url", earthkit_remote_test_data_file("ens_tropical_cyclon.bufr3")).to_featurelist()
     assert len(ds) == 1
     f = ds[0]
     assert f.subset_count() == 3

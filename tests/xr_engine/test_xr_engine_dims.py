@@ -51,7 +51,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
     ],
 )
 def test_xr_rename_dims(allow_holes, lazy_load, kwargs, dim_keys):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     num = len(ds)
 
@@ -115,7 +115,7 @@ def test_xr_rename_dims(allow_holes, lazy_load, kwargs, dim_keys):
     ],
 )
 def test_xr_fixed_dims(allow_holes, lazy_load, kwargs, dim_keys):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     num = len(ds)
 
@@ -175,7 +175,7 @@ def test_xr_fixed_dims(allow_holes, lazy_load, kwargs, dim_keys):
     ],
 )
 def test_xr_drop_dims(allow_holes, lazy_load, kwargs, dim_keys):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     num = len(ds)
 
@@ -267,7 +267,7 @@ def test_xr_drop_dims(allow_holes, lazy_load, kwargs, dim_keys):
     ],
 )
 def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, var_attrs, global_attrs):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path))
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path)).to_fieldlist()
     if sel:
         ds0 = ds0.sel(**sel)
     ds = ds0.to_xarray(lazy_load=lazy_load, allow_holes=allow_holes, **kwargs)
@@ -495,7 +495,7 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
     ],
 )
 def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, var_attrs, global_attrs):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path))
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path)).to_fieldlist()
     if sel:
         ds0 = ds0.sel(**sel)
     ds = ds0.to_xarray(lazy_load=lazy_load, allow_holes=allow_holes, **kwargs)
@@ -653,7 +653,7 @@ def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, 
     ],
 )
 def test_xr_engine_level_per_type_dim(lazy_load, path, sel, kwargs, coords, dims, var_attrs, global_attrs):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path))
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path)).to_fieldlist()
     if sel:
         ds0 = ds0.sel(**sel)
     ds = ds0.to_xarray(lazy_load=lazy_load, **kwargs)
@@ -757,7 +757,7 @@ def test_xr_engine_level_per_type_dim(lazy_load, path, sel, kwargs, coords, dims
 def test_xr_engine_dims_as_attrs_1(
     allow_holes, lazy_load, path, sel, idx, kwargs, coords, dims, var_attrs, global_attrs
 ):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path))
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path)).to_fieldlist()
     if sel:
         ds0 = ds0.sel(**sel)
     if idx:
@@ -950,7 +950,7 @@ def test_xr_engine_dims_as_attrs_1(
     ],
 )
 def test_xr_engine_dims_as_attrs2(lazy_load, path, sel, idx, kwargs, coords, dims, var_attrs, global_attrs):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path))
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path)).to_fieldlist()
     if sel:
         ds0 = ds0.sel(**sel)
     if idx:

@@ -147,7 +147,7 @@ def test_hive_sel_core_1():
     # assert ds.root == path
     diag = HiveDiag()
     # using hive partitioning keys
-    r = ds.sel(variable="t", step=12, _hive_diag=diag)
+    r = ds.to_fieldlist(variable="t", step=12, _hive_diag=diag)
     assert diag.file_count == 1
     assert diag.sel_count == 0
     assert len(r) == 6
@@ -166,7 +166,7 @@ def test_hive_sel_core_1():
 
     # using hive partitioning keys + extra keys from GRIB header
     diag.reset()
-    r = ds.sel(
+    r = ds.to_fieldlist(
         {
             "variable": "t",
             "step": 12,
@@ -185,7 +185,7 @@ def test_hive_sel_core_2():
 
     ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True)
 
-    r = ds.sel(variable="t", step=12)
+    r = ds.to_fieldlist(variable="t", step=12)
     assert len(r) == 0
 
 
@@ -198,7 +198,7 @@ def test_hive_sel_grib_1():
     # assert ds.root == path
     diag = HiveDiag()
     # using hive partitioning keys
-    r = ds.sel(shortName="t", step=12, _hive_diag=diag)
+    r = ds.to_fieldlist(shortName="t", step=12, _hive_diag=diag)
     assert diag.file_count == 1
     assert diag.sel_count == 0
     assert len(r) == 6
@@ -217,7 +217,7 @@ def test_hive_sel_grib_1():
 
     # using hive partitioning keys + extra keys from GRIB header
     diag.reset()
-    r = ds.sel(
+    r = ds.to_fieldlist(
         {
             "shortName": "t",
             "step": 12,
@@ -236,7 +236,7 @@ def test_hive_sel_grib_2():
 
     ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True)
 
-    r = ds.sel(shortName="t", step=12)
+    r = ds.to_fieldlist(shortName="t", step=12)
     assert len(r) == 0
 
 

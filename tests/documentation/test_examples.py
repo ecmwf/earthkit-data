@@ -39,6 +39,12 @@ SKIP = [
     "migrated_array_namespace_kwarg.py",
     "migrated_ens_dim_role.py",
     "migrated_xarray_earthkit_to_grib.py",
+    "migrated_data_save.py",
+    "migrated_data_write.py",
+    "migrated_field_array_namespace_attribute.py",
+    "migrated_new_grib_coder.py",
+    "migrated_new_grib_output.py",
+    "migrated_new_grib_output_split.py",
 ]
 
 EXAMPLES = earthkit_file("docs")

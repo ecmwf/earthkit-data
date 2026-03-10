@@ -136,7 +136,7 @@ def test_grib_serialise_array_fieldlist(fl_type, representation):
     with temp_file() as tmp:
         r1.to_target("file", tmp)
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
         assert len(r1) == len(r_tmp)
         v_tmp = r_tmp[0].to_numpy()
         assert np.allclose(r1[0].to_numpy(), v_tmp)
@@ -239,14 +239,14 @@ def test_grib_serialise_file_fieldlist_concat(fl_type):
 
 def test_grib_serialise_stream_1():
     with open(earthkit_examples_file("test.grib"), "rb") as f:
-        ds = from_source("stream", f)
+        ds = from_source("stream", f).to_fieldlist()
         with pytest.raises(NotImplementedError):
             pickle.dumps(ds)
 
 
 def test_grib_serialise_stream_2():
     with open(earthkit_examples_file("test.grib"), "rb") as f:
-        ds = from_source("stream", f, read_all=True)
+        ds = from_source("stream", f).to_fieldlist(read_all=True)
         pickled_f = pickle.dumps(ds)
 
     ds2 = pickle.loads(pickled_f)
@@ -259,7 +259,7 @@ def test_grib_serialise_stream_2():
 def test_grib_serialise_file_parts():
     parts = (240, 150)
 
-    ds = from_source("file", earthkit_examples_file("test6.grib"), parts=parts)
+    ds = from_source("file", earthkit_examples_file("test6.grib"), parts=parts).to_fieldlist()
     assert len(ds) == 1
 
     pickled_f = pickle.dumps(ds)

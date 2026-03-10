@@ -73,7 +73,7 @@ def test_grib_iter_multi_group_by(fl_type, group):
     ],
 )
 def test_grib_iter_batched(_kwargs, expected_meta):
-    ds = from_source("file", earthkit_examples_file("test6.grib"))
+    ds = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
 
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
@@ -97,7 +97,7 @@ def test_grib_iter_multi_batched(_kwargs, expected_meta):
     ds = from_source(
         "file",
         [earthkit_examples_file("test.grib"), earthkit_examples_file("test4.grib")],
-    )
+    ).to_fieldlist()
 
     cnt = 0
     n = _kwargs["n"]

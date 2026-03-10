@@ -21,7 +21,7 @@ from earthkit.data.core.temporary import temp_file
 @pytest.mark.download
 def test_netcdf_opendap():
     url = "https://psl.noaa.gov/thredds/dodsC/Datasets/noaa.oisst.v2/sst.mnmean.nc"
-    ds = from_source("opendap", url)
+    ds = from_source("opendap", url).to_fieldlist()
 
     assert len(ds) == 494
     assert ds[0:2].get("parameter.variable") == ["sst", "sst"]
@@ -40,7 +40,7 @@ def test_netcdf_opendap():
     with temp_file() as path:
         ds.to_target("file", path)
 
-        ds1 = from_source("file", path)
+        ds1 = from_source("file", path).to_fieldlist()
         assert len(ds1) == 494
         assert isinstance(ds1[0], Field)
         assert ds1[0:2].get("parameter.variable") == ["sst", "sst"]

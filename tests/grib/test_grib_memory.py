@@ -19,7 +19,7 @@ from earthkit.data.utils.testing import earthkit_test_data_file
 def test_grib_from_memory_single():
     with open(earthkit_test_data_file("test_single.grib"), "rb") as f:
         data = f.read()
-        fs = from_source("memory", data)
+        fs = from_source("memory", data).to_fieldlist()
         assert len(fs) == 1
         sn = fs.get("parameter.variable")
         assert sn == ["2t"]
@@ -29,7 +29,7 @@ def test_grib_from_memory_single():
 def test_grib_from_memory_multi():
     with open(earthkit_examples_file("test.grib"), "rb") as f:
         data = f.read()
-        fs = from_source("memory", data)
+        fs = from_source("memory", data).to_fieldlist()
         assert len(fs) == 2
         sn = fs.get("parameter.variable")
         assert sn == ["2t", "msl"]
@@ -40,7 +40,7 @@ def test_grib_from_memory_multi():
 def test_grib_from_memory_padding():
     with open(earthkit_test_data_file("test_padding.grib"), "rb") as f:
         data = f.read()
-        fs = from_source("memory", data)
+        fs = from_source("memory", data).to_fieldlist()
         assert len(fs) == 2
         sn = fs.get("parameter.variable")
         assert sn == ["2t", "msl"]
@@ -51,10 +51,10 @@ def test_grib_from_memory_padding():
 def test_grib_save_when_loaded_from_memory():
     with open(earthkit_test_data_file("test_single.grib"), "rb") as f:
         data = f.read()
-        fs = from_source("memory", data)
+        fs = from_source("memory", data).to_fieldlist()
         with temp_file() as tmp:
             fs.to_target("file", tmp)
-            fs_saved = from_source("file", tmp)
+            fs_saved = from_source("file", tmp).to_fieldlist()
             assert len(fs) == len(fs_saved)
 
 

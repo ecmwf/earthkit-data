@@ -83,3 +83,8 @@ def stream_reader(
             fields = [f for f in r]
             r = SimpleFieldList(fields)
         return r
+
+
+READER = reader
+MEMORY_READER = memory_reader
+STREAM_READER = stream_reader

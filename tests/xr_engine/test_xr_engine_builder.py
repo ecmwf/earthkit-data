@@ -48,7 +48,7 @@ def timedelta_to_hours(x):
 @pytest.mark.cache
 @pytest.mark.parametrize("representation", ["file", "memory"])
 def test_xr_engine_builder_fieldlist(representation):
-    ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
+    ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib")).to_fieldlist()
 
     from earthkit.data.xr_engine.fieldlist import XArrayInputFieldList
 

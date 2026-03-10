@@ -32,7 +32,7 @@ def test_netcdf_fieldlist_string_coord():
     # sanity check
     assert np.allclose(a.sel(level="500", x=2).values, np.array([21, 22, 23]))
 
-    ds = earthkit.data.from_object(a)
+    ds = earthkit.data.from_object(a).to_fieldlist()
 
     assert ds
     assert len(ds) == 2
@@ -59,7 +59,7 @@ def test_netcdf_fieldlist_bounds():
         name="dummyvar",
     )
 
-    ds = earthkit.data.from_object(a)
+    ds = earthkit.data.from_object(a).to_fieldlist()
     assert ds
     assert len(ds) == 2
 
@@ -68,7 +68,7 @@ def test_netcdf_fieldlist_ctime():
     ds = earthkit.data.from_source(
         "url",
         earthkit_remote_test_data_file("zgrid_rhgmet_metop_200701_R_2305_0010.nc"),
-    )
+    ).to_fieldlist()
 
     assert len(ds) == 1506
     assert ds[0].get("time.valid_datetime") == datetime.datetime.fromisoformat("2007-01-16T00:00:00")

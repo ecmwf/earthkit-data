@@ -81,7 +81,7 @@ def test_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metad
             "use-grib-metadata-cache": True,
         }
     ):
-        ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+        ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
 
         if serialise:
             pickled_f = pickle.dumps(ds)
@@ -152,7 +152,7 @@ def test_grib_cache_basic_file_non_patched():
             "use-grib-metadata-cache": True,
         }
     ):
-        ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+        ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
         assert len(ds) == FIELD_NUM
 
         # unique values
@@ -268,7 +268,7 @@ def test_grib_cache_options_1(patch_metadata_cache):
             "use-grib-metadata-cache": True,
         }
     ):
-        ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+        ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
         assert len(ds) == FIELD_NUM
 
         # unique values
@@ -338,7 +338,7 @@ def test_grib_cache_options_2(patch_metadata_cache):
             "use-grib-metadata-cache": True,
         }
     ):
-        ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+        ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
         assert len(ds) == FIELD_NUM
 
         # unique values
@@ -409,7 +409,7 @@ def test_grib_cache_options_3(patch_metadata_cache):
             "use-grib-metadata-cache": True,
         }
     ):
-        ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+        ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
         assert len(ds) == FIELD_NUM
 
         # unique values

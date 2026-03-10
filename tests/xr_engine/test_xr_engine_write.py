@@ -36,7 +36,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
     ],
 )
 def test_xr_engine_write_1(allow_holes, lazy_load, kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds_ek = ds_ek.sel({"metadata.param": ["t", "r"], "metadata.level": [500, 850]})
 
     ref_t_vals = ds_ek.sel({"metadata.param": "t", "metadata.step": 6, "metadata.level": 500}).to_numpy()
@@ -127,7 +127,7 @@ def test_xr_engine_write_1(allow_holes, lazy_load, kwargs):
     ],
 )
 def test_xr_engine_write_2(allow_holes, lazy_load, kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds_ek = ds_ek.sel(
         {
             "metadata.date": 20240603,
@@ -208,7 +208,7 @@ def test_xr_engine_write_2(allow_holes, lazy_load, kwargs):
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_write_level_and_type(allow_holes, lazy_load):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds_ek = ds_ek.sel(
         {
             "metadata.date": 20240603,
@@ -278,7 +278,7 @@ def test_xr_write_seasonal(allow_holes, lazy_load):
     ds_ek = from_source(
         "url",
         earthkit_remote_test_data_file("xr_engine/date/jma_seasonal_fc_ref_time_per_member.grib"),
-    )
+    ).to_fieldlist()
     ds_ek = ds_ek.sel({"metadata.param": "2t"})
     assert len(ds_ek) == 60
 
@@ -312,13 +312,13 @@ def test_xr_write_seasonal(allow_holes, lazy_load):
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_write_bits_per_value(allow_holes, lazy_load):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds_ek = ds_ek.sel({"metadata.param": ["t", "r"], "metadata.level": [500, 850]})
 
     ref_bpm = ds_ek[0].metadata("bitsPerValue")
     assert ref_bpm == 16
 
-    ds_ek = ds_ek.to_fieldlist()
+    # ds_ek = ds_ek.to_fieldlist()
 
     encoder = create_encoder("grib")
     ds_ek = ds_ek.from_fields(
@@ -335,6 +335,8 @@ def test_xr_engine_write_bits_per_value(allow_holes, lazy_load):
         allow_holes=allow_holes, lazy_load=lazy_load, **{"profile": "mars", "time_dim_mode": "raw"}
     )
     ds += 1
+
+    # assert ds["t"].earthkit._reference_field.metadata("bitsPerValue") == 8
 
     # data-array
     r = ds["t"].earthkit.to_fieldlist()
@@ -354,7 +356,7 @@ def test_xr_engine_write_bits_per_value(allow_holes, lazy_load):
     ],
 )
 def test_xr_engine_write_to_grib_file_dataarray(allow_holes, lazy_load, method, kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds_ek = ds_ek.sel({"metadata.param": ["t", "r"], "metadata.level": [500, 850]})
 
     ref_t_vals = ds_ek.sel({"metadata.param": "t", "metadata.step": 6, "metadata.level": 500}).to_numpy()
@@ -373,7 +375,7 @@ def test_xr_engine_write_to_grib_file_dataarray(allow_holes, lazy_load, method, 
         elif method == "to_target_func":
             to_target("file", path, data=ds["t"], encoder="grib")
 
-        r = from_source("file", path)
+        r = from_source("file", path).to_fieldlist()
 
         assert len(r) == 16
         assert r.unique("metadata.shortName", unwrap_single=True) == ("t",)
@@ -441,7 +443,7 @@ def test_xr_engine_write_to_grib_file_dataarray(allow_holes, lazy_load, method, 
     ],
 )
 def test_xr_engine_write_to_grib_file_dataset(allow_holes, lazy_load, method, kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds_ek = ds_ek.sel({"metadata.param": ["t", "r"], "metadata.level": [500, 850]})
 
     ref_t_vals = ds_ek.sel({"metadata.param": "t", "metadata.step": 6, "metadata.level": 500}).to_numpy()
@@ -461,7 +463,7 @@ def test_xr_engine_write_to_grib_file_dataset(allow_holes, lazy_load, method, kw
         elif method == "to_target_func":
             to_target("file", path, data=ds, encoder="grib")
 
-        r = from_source("file", path)
+        r = from_source("file", path).to_fieldlist()
         assert len(r) == 16 * 2
         assert set(r.unique("metadata.shortName", unwrap_single=True)) == set(["t", "r"])
         assert np.allclose(
@@ -488,7 +490,7 @@ def test_xr_engine_write_to_grib_file_dataset(allow_holes, lazy_load, method, kw
     ],
 )
 def test_xr_write_to_netcdf_file_dataarray(allow_holes, lazy_load, method, kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds_ek = ds_ek.sel({"metadata.param": ["t"], "metadata.level": [500, 850]})
 
     ref_t_vals = (
@@ -533,7 +535,7 @@ def test_xr_write_to_netcdf_file_dataarray(allow_holes, lazy_load, method, kwarg
     ],
 )
 def test_xr_engine_write_to_netcdf_file_dataset(allow_holes, lazy_load, method, kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds_ek = ds_ek.sel({"metadata.param": ["t", "r"], "metadata.level": [500, 850]})
 
     ref_t_vals = (
@@ -573,7 +575,9 @@ def test_xr_engine_write_to_netcdf_file_dataset(allow_holes, lazy_load, method, 
 
 @pytest.mark.cache
 def test_xr_engine_write_forecast_per_month():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib"))
+    ds_ek = from_source(
+        "url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib")
+    ).to_fieldlist()
 
     ds = ds_ek.to_xarray(profile="mars", time_dim_mode="valid_time")
     r = ds.earthkit.to_fieldlist()

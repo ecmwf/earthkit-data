@@ -61,7 +61,7 @@ def test_grib_set_ensemble(fl_type, _kwargs, ref_ori, ref_set, ref_saved):
 
     with temp_file() as tmp:
         f.to_target("file", tmp)
-        f_saved = from_source("file", tmp)
+        f_saved = from_source("file", tmp).to_fieldlist()
         assert len(f_saved) == 1
         for k, v in ref_saved.items():
             assert f_saved[0].get(k) == v, f"key {k} expected {v} got {f_saved[0].get(k)}"

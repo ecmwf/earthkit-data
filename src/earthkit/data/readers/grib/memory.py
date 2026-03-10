@@ -107,6 +107,8 @@ class GribStreamReader(GribMemoryReader):
     using _next_handle
     """
 
+    _format = "grib"
+
     def __init__(self, stream, **kwargs):
         super().__init__(**kwargs)
         self._stream = stream
@@ -130,6 +132,14 @@ class GribStreamReader(GribMemoryReader):
 
     def mutate_source(self):
         return self
+
+    def to_data_object(self):
+        from earthkit.data.data.stream import StreamFieldListData
+
+        return StreamFieldListData(self)
+
+    def _encode_default(self, encoder, *args, **kwargs):
+        return encoder._encode_fieldlist(self.to_xarray(), *args, **kwargs)
 
 
 class GribFieldListInMemory(SimpleFieldList):

@@ -1076,13 +1076,15 @@ class Field(Base):
         to_target(target, *args, data=self, **kwargs)
 
     def _default_encoder(self):
-        # TODO: improve this to support more formats and to be more robust
+        val = self._private.get("default_encoder") if self._private else None
+        if val is not None:
+            return val
         if self._get_grib():
             return "grib"
         else:
             return None
 
-    def _encode(self, encoder, **kwargs):
+    def _encode(self, encoder, hints=None, **kwargs):
         """Double dispatch to the encoder"""
         return encoder._encode_field(self, **kwargs)
 
@@ -1342,16 +1344,16 @@ class Field(Base):
 
     def _binary_op(self, oper, y):
         from earthkit.data.core.fieldlist import FieldList
+        from earthkit.data.data.wrappers import from_object
         from earthkit.data.indexing.indexed import IndexFieldListBase
-        from earthkit.data.wrappers import get_wrapper
 
-        y = get_wrapper(y)
+        y = from_object(y)
         if isinstance(y, FieldList):
             x = IndexFieldListBase.from_fields([self])
             return x._binary_op(oper, y)
 
         vx = self.values
-        vy = y.values
+        vy = y.to_numpy(flatten=True)
         v = oper(vx, vy)
         r = self.set(values=v)
         return r

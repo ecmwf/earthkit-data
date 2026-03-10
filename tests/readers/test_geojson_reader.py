@@ -17,11 +17,15 @@ from earthkit.data.utils.testing import earthkit_test_data_file
 def test_geojson():
     s = from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.geojson"))
     assert s
-    for _s in s:
-        assert _s is not None
-        assert _s.geometry
+    ds = s.to_featurelist()
+    assert ds
+    assert len(ds) == 2010
+    for f in ds:
+        assert f is not None
+        assert f.geometry
 
 
+@pytest.mark.migrate
 @pytest.mark.with_proj
 def test_geojson_bounding_box():
     s = from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.geojson"))

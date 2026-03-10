@@ -170,7 +170,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
     ],
 )
 def test_xr_engine_time_basic(allow_holes, kwargs, dims, step_units):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
     ds = ds_ek.to_xarray(allow_holes=allow_holes, **kwargs)
 
@@ -298,7 +298,7 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
     ds_ek = from_source(
         "url",
         earthkit_remote_test_data_file("xr_engine/date/jma_seasonal_fc_ref_time_per_member.grib"),
-    )
+    ).to_fieldlist()
 
     ds = ds_ek.to_xarray(allow_holes=allow_holes, **kwargs)
 
@@ -454,7 +454,7 @@ def test_xr_engine_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_
     ds_ek = from_source(
         "url",
         earthkit_remote_test_data_file("xr_engine/date/seasonal_monthly.grib"),
-    )
+    ).to_fieldlist()
 
     ds = ds_ek.to_xarray(allow_holes=allow_holes, **kwargs)
 
@@ -572,7 +572,7 @@ def test_xr_engine_time_valid_time_coord(allow_holes, kwargs, dims, step_units, 
         # not yet implemented
         return
 
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib")).to_fieldlist()
     ds_ek = ds_ek.sel({"metadata.date": 20240603, "metadata.time": [0, 1200]})
 
     ds = ds_ek.to_xarray(allow_holes=allow_holes, **kwargs)
@@ -667,7 +667,9 @@ def test_xr_engine_time_step_range_1(allow_holes, lazy_load, kwargs, dims, step_
     ],
 )
 def test_xr_engine_time_step_range_2(allow_holes, lazy_load, kwargs, dims, step_units):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/lsp_step_range.grib2"))
+    ds_ek = from_source(
+        "url", earthkit_remote_test_data_file("xr_engine/date/lsp_step_range.grib2")
+    ).to_fieldlist()
 
     ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     compare_dims(ds, dims, order_ref_var="lsp")
@@ -682,7 +684,9 @@ def test_xr_engine_time_step_range_2(allow_holes, lazy_load, kwargs, dims, step_
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_time_forecast_per_month(allow_holes, lazy_load):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib"))
+    ds_ek = from_source(
+        "url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib")
+    ).to_fieldlist()
 
     ds = ds_ek.to_xarray(
         profile="mars", allow_holes=allow_holes, lazy_load=lazy_load, time_dim_mode="valid_time"
@@ -747,7 +751,7 @@ def test_xr_engine_time_forecast_per_month(allow_holes, lazy_load):
     ],
 )
 def test_xr_engine_time_step_seconds(allow_holes, lazy_load, kwargs, dims, step_units):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("t_30s.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("t_30s.grib")).to_fieldlist()
 
     ds = ds_ek.to_xarray(profile="mars", allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     compare_dims(ds, dims, order_ref_var="t")

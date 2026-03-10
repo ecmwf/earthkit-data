@@ -156,7 +156,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
     ],
 )
 def test_xr_engine_split(allow_holes, url_suffix, kwargs, num, variables, dim_keys, split_values):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", *url_suffix))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", *url_suffix)).to_fieldlist()
 
     dim_keys = dim_keys + ["latitude", "longitude"]
     ds_lst, split_coords_lst = ds_ek.to_xarray(profile="mars", allow_holes=allow_holes, **kwargs)

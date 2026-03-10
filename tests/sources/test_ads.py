@@ -31,7 +31,7 @@ def test_ads_grib_1_prompt(prompt):
         date="2012-12-12",
         prompt=prompt,
         time="12:00",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -47,7 +47,7 @@ def test_ads_grib_2():
         date="2012-12-12",
         time="12:00",
         split_on="variable",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -62,7 +62,7 @@ def test_ads_grib_3():
         area=[50, -50, 20, 50],
         date="2012-12-12/to/2012-12-15",
         time="12:00",
-    )
+    ).to_fieldlist()
     assert len(s) == 8
 
 
@@ -78,7 +78,7 @@ def test_ads_netcdf():
         date="2012-12-12",
         time="12:00",
         format="netcdf",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 

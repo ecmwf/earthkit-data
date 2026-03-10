@@ -85,15 +85,21 @@ class VariableBuilder:
 
         if add_earthkit_attrs:
             f = self.tensor.source[0]
+            bpv = None
             try:
                 md = f._get_grib().message(deflate=True)
+                bpv = f._get_grib().get_extra_key("bitsPerValue", default=None)
+                if bpv is None:
+                    bpv = f.get("metadata.bitsPerValue", default=None)
             except Exception:
                 md = ""
 
             attrs = {
                 "message": md,
-                "bitsPerValue": f.get("metadata.bitsPerValue", 0),
             }
+
+            if bpv is not None and bpv != 0:
+                attrs["bitsPerValue"] = bpv
 
             if grid_spec is not None:
                 attrs["grid_spec"] = grid_spec

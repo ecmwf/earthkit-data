@@ -365,7 +365,7 @@ def test_grib_set_time_1(fl_type, write_method, _kwargs, ref_set, ref_saved, edi
     #         _encoder_kwargs = {"edition": edition_saved}
 
     #     f.to_target("file", tmp, **_encoder_kwargs)
-    #     f_saved = from_source("file", tmp)
+    #     f_saved = from_source("file", tmp).to_fieldlist()
     #     assert len(f_saved) == 1
 
     #     # print("Metadata after setting to handle:", f_saved[0]._time.to_dict())

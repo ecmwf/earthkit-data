@@ -171,7 +171,6 @@ class S3Source(FileSource):
         self,
         *args,
         stream=False,
-        read_all=False,
         anon=True,
         aws_access_key=None,
         aws_secret_access_key=None,
@@ -183,7 +182,7 @@ class S3Source(FileSource):
         self.anon = anon
 
         self.stream = stream
-        self._stream_kwargs = dict(read_all=read_all)
+        self._stream_kwargs = dict()
 
         def _collect(r):
             if isinstance(r, dict):

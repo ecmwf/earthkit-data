@@ -46,7 +46,7 @@ def test_multi_graph_1():
         from_source("multi", b21, b22),
     )
 
-    ds = from_source("multi", m1, m2)
+    ds = from_source("multi", m1, m2).to_fieldlist()
     # ds.graph()
 
     assert len(ds) == 8
@@ -82,7 +82,7 @@ def test_multi_graph_2():
         def filter(path_or_url):
             return path_or_url.endswith("2.grib")
 
-        ds = from_source("file", tmpdir, filter=filter)
+        ds = from_source("file", tmpdir, filter=filter).to_fieldlist()
         # ds.graph()
 
         assert len(ds) == 4
@@ -92,26 +92,26 @@ def test_multi_graph_2():
 def test_multi_directory_1():
     with temp_directory() as directory:
         for date in (20000101, 20000102):
-            ds = from_source("dummy-source", kind="grib", date=date)
+            ds = from_source("dummy-source", kind="grib", date=date).to_fieldlist()
             ds.to_target("file", os.path.join(directory, f"{date}.grib"))
 
-        ds = from_source("file", directory)
+        ds = from_source("file", directory).to_fieldlist()
         print(ds)
         assert len(ds) == 2
         ds.graph()
 
         with temp_file() as filename:
             ds.to_target("file", filename)
-            ds = from_source("file", filename)
+            ds = from_source("file", filename).to_fieldlist()
             assert len(ds) == 2
 
 
-def test_multi_grib():
+def test_multi_grib_1():
     ds = from_source(
         "multi",
         from_source("dummy-source", kind="grib", date=20000101),
         from_source("dummy-source", kind="grib", date=20000102),
-    )
+    ).to_fieldlist()
     assert len(ds) == 2
     ds.to_xarray()
     # ds.statistics()
@@ -120,10 +120,11 @@ def test_multi_grib():
 def test_multi_grib_mixed():
     ds = from_source(
         "multi",
-        from_source("dummy-source", kind="grib", date=20000101),
-        from_source("dummy-source", kind="grib", date=20000102),
+        from_source("dummy-source", kind="grib", date=20000101).to_fieldlist(),
+        from_source("dummy-source", kind="grib", date=20000102).to_fieldlist(),
         from_source("dummy-source", kind="unknown", hello="world"),
-    )
+    ).to_fieldlist()
+
     assert len(ds) == 2
 
 

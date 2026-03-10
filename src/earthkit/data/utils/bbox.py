@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.wrappers import get_wrapper
-
 
 def _normalise(lon, minimum):
     while lon < minimum:
@@ -257,7 +255,9 @@ def bounding_box(obj, check=True):
             check=check,
         )
 
-    obj = get_wrapper(obj)
+    from earthkit.data.data.wrappers import from_object
+
+    obj = from_object(obj)
 
     if hasattr(obj, "geography"):
         return bounding_box(obj.geography.bounding_box())

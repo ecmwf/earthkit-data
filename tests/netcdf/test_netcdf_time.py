@@ -19,7 +19,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
 def test_netcdf_time_1():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+    ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
 
     assert len(ds) == 2
     assert ds[0].get("time.base_datetime") == datetime.datetime(2020, 5, 13, 12, 0, 0)
@@ -49,7 +49,7 @@ def test_netcdf_time_2():
                 datetime.datetime(1990, 1, 2, 12, 0),
             ]
         ),
-    )
+    ).to_fieldlist()
 
     assert ds[0].get("time.base_datetime") == datetime.datetime(1990, 1, 1, 12, 0)
     assert ds[0].get("time.valid_datetime") == datetime.datetime(1990, 1, 1, 12, 0)
@@ -60,7 +60,7 @@ def test_netcdf_time_2():
 
 
 def test_netcdf_time_analysis():
-    ds = from_source("url", earthkit_examples_file("test.nc"))
+    ds = from_source("url", earthkit_examples_file("test.nc")).to_fieldlist()
 
     f = ds[0]
     assert f.time.base_datetime() == datetime.datetime(2020, 5, 13, 12, 0, 0)
@@ -72,7 +72,7 @@ def test_netcdf_time_analysis():
 @pytest.mark.download
 @pytest.mark.cache
 def test_netcdf_valid_time_and_lead_time():
-    ds = from_source("url", earthkit_remote_test_data_file("fa_ta850.nc"))
+    ds = from_source("url", earthkit_remote_test_data_file("fa_ta850.nc")).to_fieldlist()
 
     assert ds[0].time.base_datetime() == datetime.datetime(2020, 1, 23, 0, 0, 0)
     assert ds[0].time.forecast_reference_time() == datetime.datetime(2020, 1, 23, 0, 0, 0)

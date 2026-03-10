@@ -37,7 +37,7 @@ all_params = [
 
 
 def load_forcings_fs(params=None, first_step=6, last_step=72, input_data="grib"):
-    sample = from_source("file", earthkit_examples_file("test.grib"))
+    sample = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     if params is None:
         params = [
@@ -63,7 +63,7 @@ def load_forcings_fs(params=None, first_step=6, last_step=72, input_data="grib")
             sample,
             date=dates,
             param=params,
-        )
+        ).to_fieldlist()
     elif input_data == "latlon":
         d = {}
         d["latitudes"] = sample[0].geography.latitudes()
@@ -75,7 +75,7 @@ def load_forcings_fs(params=None, first_step=6, last_step=72, input_data="grib")
             **d,
             date=dates,
             param=params,
-        )
+        ).to_fieldlist()
     else:
         raise ValueError(f"Unknown input_data: {input_data}")
 

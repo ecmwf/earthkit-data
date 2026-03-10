@@ -49,7 +49,7 @@ def make_fdb_config(path):
 
 
 def make_fdb(path):
-    ds = from_source("sample", "pl.grib")
+    ds = from_source("sample", "pl.grib").to_fieldlist()
     config = make_fdb_config(path)
     ds.to_target("fdb", config=config)
     return ds, config
@@ -67,7 +67,7 @@ def test_lazy_fdb():
     with temp_directory() as tmpdir:
         ds_in, config = make_fdb(os.path.join(tmpdir, "_fdb"))
 
-        ds = from_source("fdb", TEST_GRIB_REQUEST, config=config, stream=False, lazy=True)
+        ds = from_source("fdb", TEST_GRIB_REQUEST, config=config, stream=False, lazy=True).to_fieldlist()
         assert len(ds) == 32
 
         assert ds[0].shape == (19, 36)

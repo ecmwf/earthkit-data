@@ -32,5 +32,5 @@ def create_geotiff_field(band, da):
         labels=labels,
     )
 
-    # r._set_private_data("grib", grib)
+    r._set_private_data("default_encoder", "geotiff")
     return r

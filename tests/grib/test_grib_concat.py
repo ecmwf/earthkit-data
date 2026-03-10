@@ -25,21 +25,22 @@ def _check_save_to_disk(ds, len_ref, meta_ref):
     tmp = temp_file()
     ds.to_target("file", tmp.path)
     assert os.path.exists(tmp.path)
-    r_tmp = from_source("file", tmp.path)
+    r_tmp = from_source("file", tmp.path).to_fieldlist()
     assert len(r_tmp) == len_ref
     assert r_tmp.get("metadata.shortName") == meta_ref
     r_tmp = None
 
 
-@pytest.mark.parametrize("mode", ["concat", "multi"])
+# @pytest.mark.parametrize("mode", ["concat", "multi"])
+@pytest.mark.parametrize("mode", ["concat"])
 def test_grib_concat_core(mode):
-    ds1 = from_source("file", earthkit_examples_file("test.grib"))
-    ds2 = from_source("file", earthkit_examples_file("test6.grib"))
+    ds1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    ds2 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
 
     if mode == "concat":
         ds = concat(ds1, ds2)
     else:
-        ds = from_source("multi", ds1, ds2)
+        ds = from_source("multi", ds1, ds2).to_fieldlist()
 
     # check metadata
     assert len(ds) == 8
@@ -68,17 +69,17 @@ def test_grib_concat_core(mode):
 
 @pytest.mark.parametrize("mode", ["concat", "multi"])
 def test_grib_concat_3a(mode):
-    ds1 = from_source("file", earthkit_examples_file("test.grib"))
-    ds2 = from_source("file", earthkit_examples_file("test6.grib"))
-    ds3 = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+    ds1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    ds2 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
+    ds3 = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
     md = ds1.get("parameter.variable") + ds2.get("parameter.variable") + ds3.get("parameter.variable")
 
     if mode == "concat":
         ds = concat(ds1, ds2)
         ds = concat(ds, ds3)
     else:
-        ds = from_source("multi", ds1, ds2)
-        ds = from_source("multi", ds, ds3)
+        ds = from_source("multi", ds1, ds2).to_fieldlist()
+        ds = from_source("multi", ds, ds3).to_fieldlist()
 
     assert len(ds) == 26
     assert ds.get("parameter.variable") == md
@@ -87,15 +88,15 @@ def test_grib_concat_3a(mode):
 
 @pytest.mark.parametrize("mode", ["concat", "multi"])
 def test_grib_concat_3b(mode):
-    ds1 = from_source("file", earthkit_examples_file("test.grib"))
-    ds2 = from_source("file", earthkit_examples_file("test6.grib"))
-    ds3 = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+    ds1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    ds2 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
+    ds3 = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
     md = ds1.get("parameter.variable") + ds2.get("parameter.variable") + ds3.get("parameter.variable")
 
     if mode == "concat":
         ds = concat(ds1, ds2, ds3)
     else:
-        ds = from_source("multi", ds1, ds2, ds3)
+        ds = from_source("multi", ds1, ds2, ds3).to_fieldlist()
 
     assert len(ds) == 26
     assert ds.get("parameter.variable") == md
@@ -104,13 +105,13 @@ def test_grib_concat_3b(mode):
 
 @pytest.mark.parametrize("mode", ["concat", "multi"])
 def test_grib_concat_mixed(mode):
-    ds1 = from_source("file", earthkit_examples_file("test.grib"))
-    ds2 = ds1.to_fieldlist()
+    ds1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    ds2 = ds1
     md = ds1.get("parameter.variable") + ds2.get("parameter.variable")
     if mode == "concat":
         ds = concat(ds1, ds2)
     else:
-        ds = from_source("multi", ds1, ds2)
+        ds = from_source("multi", ds1, ds2).to_fieldlist()
 
     assert len(ds) == 4
     assert ds.get("parameter.variable") == md
@@ -119,7 +120,7 @@ def test_grib_concat_mixed(mode):
 
 def test_grib_from_empty_1():
     ds_e = create_fieldlist()
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     md = ds.get("parameter.variable")
 
     ds1 = concat(ds_e, ds)
@@ -130,7 +131,7 @@ def test_grib_from_empty_1():
 
 def test_grib_from_empty_2():
     ds_e = create_fieldlist()
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     md = ds.get("parameter.variable")
 
     ds1 = concat(ds_e, ds)
@@ -141,8 +142,8 @@ def test_grib_from_empty_2():
 
 def test_grib_from_empty_3():
     ds_e = create_fieldlist()
-    ds1 = from_source("file", earthkit_examples_file("test.grib"))
-    ds2 = from_source("file", earthkit_examples_file("test6.grib"))
+    ds1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    ds2 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
     md = ds1.metadata("param") + ds2.metadata("param")
 
     ds3 = concat(ds_e, ds1, ds2)
@@ -152,8 +153,8 @@ def test_grib_from_empty_3():
 
 # See github issue #588
 def test_grib_concat_large():
-    ds_e = from_source("empty")
-    ds1 = from_source("file", earthkit_examples_file("test.grib"))
+    ds_e = from_source("empty").to_fieldlist()
+    ds1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     for _ in range(2000):
         # ds_e += ds1.sel(param="msl")

@@ -13,6 +13,8 @@ import logging
 
 import numpy as np
 
+from earthkit.data.data import Data
+from earthkit.data.data.fieldlist import FieldListData
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalise
 from earthkit.data.field.handler.data import DataFieldComponentHandler
@@ -236,7 +238,7 @@ def index_to_coords(index: int, shape):
     return result
 
 
-class ForcingsData:
+class ForcingsInnerData:
     def __init__(self, source_or_dataset=None, request={}, **kwargs):
         # self.source_or_dataset = source_or_dataset
         request = dict(**request)
@@ -251,12 +253,14 @@ class ForcingsData:
             if lons is None:
                 raise ValueError("longitudes must be specified when no source or dataset provided")
 
-            from earthkit.data import from_source
+            from earthkit.data.sources import from_source_internal
 
             vals = np.ones(lats.shape)
             d = {"values": vals, "geography": {"latitudes": lats, "longitudes": lons}}
             # d.update(self.request)
-            source_or_dataset = from_source("list-of-dicts", [d])
+            source_or_dataset = from_source_internal("list-of-dicts", [d]).to_fieldlist()
+        elif isinstance(source_or_dataset, Data):
+            source_or_dataset = source_or_dataset.to_fieldlist()
 
         self.field = source_or_dataset[0]
 
@@ -365,7 +369,7 @@ class ForcingsFieldData(DataFieldComponentHandler):
 
 class ForcingsFieldList(SimpleFieldList):
     def __init__(self, source_or_dataset=None, *, request={}, **kwargs):
-        self._data = ForcingsData(source_or_dataset, request, **kwargs)
+        self._data = ForcingsInnerData(source_or_dataset, request, **kwargs)
 
         self.maker = ForcingMaker(field=self._data.field)
         self.procs = {param: getattr(self.maker, param) for param in self._data.params}
@@ -410,6 +414,17 @@ class ForcingsFieldList(SimpleFieldList):
         )
 
         return field
+
+    def to_data_object(self):
+        return ForcingsData(self)
+
+
+class ForcingsData(FieldListData):
+    def __init__(self, forcings):
+        super().__init__(forcings)
+
+    def describe():
+        pass
 
 
 source = ForcingsFieldList

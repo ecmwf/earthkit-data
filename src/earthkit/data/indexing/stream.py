@@ -54,3 +54,8 @@ class StreamFieldList(IndexFieldListBase, Source):
 
     def _default_encoder(self):
         return None
+
+    def to_data_object(self):
+        from earthkit.data.data.stream import StreamFieldListData
+
+        return StreamFieldListData(self)

@@ -55,7 +55,7 @@ def test_mars_grib_1_prompt(prompt):
         grid=[2, 2],
         prompt=prompt,
         date="2023-05-10",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -71,7 +71,7 @@ def test_mars_grib_split_on():
         grid=[2, 2],
         date="2023-05-10",
         split_on="param",
-    )
+    ).to_fieldlist()
     assert len(ds) == 2
     assert ds.get("parameter.variable") == ["2t", "msl"]
     assert not hasattr(ds, "path")
@@ -88,7 +88,7 @@ def test_mars_grib_multi(_args, req, _kwargs):
         *_args,
         request=req,
         **_kwargs,
-    )
+    ).to_fieldlist()
     assert len(ds) == 2
     assert ds.get("parameter.variable") == ["2t", "msl"]
 
@@ -104,7 +104,7 @@ def test_mars_grib_parallel():
         ds = from_source(
             "mars",
             request=req,
-        )
+        ).to_fieldlist()
         assert len(ds) == 4
         assert ds.get("parameter.variable") == ["t"] * 4
         assert ds.get("vertical.level") == [925, 850, 700, 500]
@@ -127,7 +127,7 @@ def test_mars_grib_expect_any_1():
         area=[50, -50, 20, 50],
         grid=[2, 2],
         date="1054-05-10",
-    )
+    ).to_fieldlist()
 
     assert len(ds) == 0
 
@@ -160,7 +160,7 @@ def test_mars_grib_log_1():
         area=[50, -50, 20, 50],
         grid=[2, 2],
         date="2023-05-10",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -177,7 +177,7 @@ def test_mars_grib_log_2():
         area=[50, -50, 20, 50],
         grid=[2, 2],
         date="2023-05-10",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -200,7 +200,7 @@ def test_mars_grib_log_3():
         area=[50, -50, 20, 50],
         grid=[2, 2],
         date="2023-05-10",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -219,7 +219,7 @@ def test_mars_grib_log_4():
                 area=[50, -50, 20, 50],
                 grid=[2, 2],
                 date="2023-05-10",
-            )
+            ).to_fieldlist()
             assert len(s) == 2
 
         t = ""
@@ -238,7 +238,7 @@ def test_mars_grib_save():
         levtype="sfc",
         grid=[30, 30],
         date=-1,
-    )
+    ).to_fieldlist()
     assert len(ds) == 1
 
     with temp_file() as tmp:

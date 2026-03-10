@@ -122,7 +122,9 @@ def _get_attrs_for_key_2(key, field):
     ],
 )
 def test_xr_engine_dims_as_attrs_1(allow_holes, lazy_load, kwargs, coords, dims, attrs):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
+    ds0 = from_source(
+        "url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib")
+    ).to_fieldlist()
 
     ds = ds0.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     compare_coords(ds, coords)
@@ -253,7 +255,9 @@ def test_xr_engine_dims_as_attrs_1(allow_holes, lazy_load, kwargs, coords, dims,
 def test_xr_engine_dims_as_attrs_2(
     allow_holes, lazy_load, idx, kwargs, coords, dims, var_attrs, global_attrs
 ):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
+    ds0 = from_source(
+        "url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib")
+    ).to_fieldlist()
 
     ds = ds0[idx].to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     compare_coords(ds, coords)
@@ -353,7 +357,9 @@ def test_xr_engine_dims_as_attrs_2(
 def test_xr_engine_dims_as_attrs_3(
     lazy_load, allow_holes, idx, kwargs, coords, dims, var_attrs, global_attrs
 ):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
+    ds0 = from_source(
+        "url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib")
+    ).to_fieldlist()
 
     ds = ds0[idx].to_xarray(lazy_load=lazy_load, allow_holes=allow_holes, **kwargs)
     compare_coords(ds, coords)
@@ -424,7 +430,9 @@ def test_xr_engine_dims_as_attrs_3(
     ],
 )
 def test_xr_engine_attrs_types(lazy_load, kwargs, coords, dims, attrs):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
+    ds0 = from_source(
+        "url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib")
+    ).to_fieldlist()
 
     ds = ds0.to_xarray(lazy_load=lazy_load, **kwargs)
     compare_coords(ds, coords)
@@ -439,7 +447,9 @@ def test_xr_engine_attrs_types(lazy_load, kwargs, coords, dims, attrs):
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_global_attrs(allow_holes, lazy_load):
-    ds_fl = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
+    ds_fl = from_source(
+        "url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib")
+    ).to_fieldlist()
     ds = ds_fl.to_xarray(
         profile="mars",
         attrs_mode="fixed",

@@ -37,7 +37,7 @@ def test_wekeo_download_single_1(prompt):
         "EO:CLMS:DAT:CLMS_GLOBAL_BA_300M_V3_MONTHLY_NETCDF",
         prompt=prompt,
         request=REQ_1,
-    )
+    ).to_fieldlist()
     assert len(ds) == 1
 
 
@@ -62,7 +62,7 @@ def test_wekeo_download_single_2(_args, req, _kwargs):
         prompt=False,
         request=req,
         **_kwargs,
-    )
+    ).to_fieldlist()
     assert len(ds) == 1
 
 
@@ -78,7 +78,7 @@ def test_wekeo_download_multi(_args, req, _kwargs):
         request=req,
         prompt=False,
         **_kwargs,
-    )
+    ).to_fieldlist()
     assert len(ds) == 2
 
 

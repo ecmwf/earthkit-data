@@ -141,9 +141,9 @@ class SimpleTarget(Target):
         self._raise_if_closed()
 
         if data is not None:
-            if hasattr(data, "sources"):
-                for d in data.sources:
-                    self.write(d, **kwargs)
+            # if hasattr(data, "sources"):
+            #     for d in data.sources:
+            #         self.write(d, **kwargs)
 
             self._write(data, **kwargs)
         else:
@@ -182,7 +182,7 @@ class SimpleTarget(Target):
         if template is None:
             template = self._template
 
-        return encoder.encode(data, template=template, **kwargs)
+        return encoder.encode(data, target=self, template=template, **kwargs)
 
     def __enter__(self):
         return self
@@ -262,8 +262,6 @@ def to_target(target, *args, **kwargs):
     target: str
         The target to write to. Must be a string.
     """
-
-    # data = kwargs.pop("data", None)
 
     with create_target(target, *args, **kwargs) as t:
         for k in [*target_kwargs(type(t)), *target_kwargs(Target)]:

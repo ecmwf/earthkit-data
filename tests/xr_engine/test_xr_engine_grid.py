@@ -44,7 +44,7 @@ def grid_list(files=None):
     grid_list(),
 )
 def test_xr_engine_grid(allow_holes, lazy_load, file, dims, coords, distinct_ll):
-    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file)).to_fieldlist()
 
     a = ds.to_xarray(profile="mars", allow_holes=allow_holes, lazy_load=lazy_load)
     assert a is not None
@@ -76,7 +76,9 @@ def test_xr_engine_grid(allow_holes, lazy_load, file, dims, coords, distinct_ll)
     [False, True],
 )
 def test_xr_engine_add_geo_coords(allow_holes, lazy_load, add_geo_coords):
-    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", "reduced_gg_O32.grib1"))
+    ds = from_source(
+        "url", earthkit_remote_test_data_file("xr_engine", "grid", "reduced_gg_O32.grib1")
+    ).to_fieldlist()
 
     a = ds.to_xarray(
         profile="mars", add_geo_coords=add_geo_coords, allow_holes=allow_holes, lazy_load=lazy_load
@@ -96,7 +98,9 @@ def test_xr_engine_add_geo_coords(allow_holes, lazy_load, add_geo_coords):
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_gridspec(allow_holes, lazy_load):
-    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", "reduced_gg_O32.grib1"))
+    ds = from_source(
+        "url", earthkit_remote_test_data_file("xr_engine", "grid", "reduced_gg_O32.grib1")
+    ).to_fieldlist()
 
     r = ds.to_xarray(profile="mars", allow_holes=allow_holes, lazy_load=lazy_load)
 

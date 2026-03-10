@@ -27,11 +27,11 @@ def test_normalise_dates_from_source():
     dates_3 = normalise("d", "date")(f)
     dates_list_3 = normalise("d", "date", multiple=True)(f)
 
-    source = from_source("file", earthkit_examples_file("test.grib"))
+    source = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     assert dates_3(source[0]) == datetime.datetime(2020, 5, 13, 12, 0)
     assert dates_list_3(source[0]) == [datetime.datetime(2020, 5, 13, 12, 0)]
 
-    source = from_source("file", earthkit_examples_file("test.nc"))
+    source = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
 
     #  For now
     with pytest.raises(NotImplementedError):

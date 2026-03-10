@@ -268,10 +268,10 @@ class Url(UrlBase):
 
     def mutate(self):
         if self.other_source:
-            from earthkit.data import from_source
+            from earthkit.data.sources import from_source_internal
 
             source, url, kwargs = self.other_source
-            return from_source(source, url, **kwargs)
+            return from_source_internal(source, url, **kwargs)
 
         if self.stream:
             s = []
@@ -315,6 +315,7 @@ class Url(UrlBase):
             extension = self.downloader.extension()
 
         self.path = self.downloader.local_path()
+
         if self.path is not None:
             return
 
@@ -377,9 +378,9 @@ class SingleUrlStream(UrlBase):
             raise NotImplementedError(f"Streams are not supported for scheme={o.scheme} urls")
 
     def mutate(self):
-        from .stream import _from_source
+        from .stream import from_source_internal
 
-        return _from_source(self, **self._kwargs)
+        return from_source_internal(self, **self._kwargs)
 
     def to_stream(self):
         from earthkit.data.utils.stream import RequestIterStreamer

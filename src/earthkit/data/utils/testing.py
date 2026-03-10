@@ -218,11 +218,11 @@ def check_unsafe_archives(extension):
 
 def load_nc_or_xr_source(path, mode):
     if mode == "nc":
-        return from_source("file", path)
+        return from_source("file", path).to_fieldlist()
     else:
         import xarray
 
-        return from_object(xarray.open_dataset(path))
+        return from_object(xarray.open_dataset(path)).to_fieldlist()
 
 
 class ArrayBackend:

@@ -19,7 +19,7 @@ from earthkit.data.utils.testing import earthkit_test_data_file
 
 @pytest.mark.parametrize("group", ["parameter.variable"])
 def test_netcdf_group_by(group):
-    ds = from_source("file", earthkit_test_data_file("test6.nc"))
+    ds = from_source("file", earthkit_test_data_file("test6.nc")).to_fieldlist()
 
     ref = [
         [("t", 1000), ("t", 850)],
@@ -40,7 +40,7 @@ def test_netcdf_multi_group_by(group):
     ds = from_source(
         "file",
         [earthkit_test_data_file("test4.nc"), earthkit_test_data_file("test6.nc")],
-    )
+    ).to_fieldlist()
 
     ref = [
         [("t", 500), ("z", 500)],
@@ -64,7 +64,7 @@ def test_netcdf_multi_group_by(group):
     ],
 )
 def test_netcdf_batched(_kwargs, expected_meta):
-    ds = from_source("file", earthkit_test_data_file("test6.nc"))
+    ds = from_source("file", earthkit_test_data_file("test6.nc")).to_fieldlist()
 
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
@@ -88,7 +88,7 @@ def test_netcdf_multi_batched(_kwargs, expected_meta):
     ds = from_source(
         "file",
         [earthkit_examples_file("test.nc"), earthkit_test_data_file("test4.nc")],
-    )
+    ).to_fieldlist()
 
     cnt = 0
     n = _kwargs["n"]

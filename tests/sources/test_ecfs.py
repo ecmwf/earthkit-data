@@ -23,7 +23,7 @@ def test_ecfs_download():
     s = from_source(
         "ecfs",
         "ec:/cgr/test.grib",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 

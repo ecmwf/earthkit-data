@@ -93,7 +93,7 @@ def test_grib_set_geo_grid_spec(fl_type, _kwargs, shape, grid_spec, area, grid_t
 
     with temp_file() as tmp:
         f.to_target("file", tmp)
-        f_saved = from_source("file", tmp)
+        f_saved = from_source("file", tmp).to_fieldlist()
         assert len(f_saved) == 1
 
         assert f_saved[0].shape == shape

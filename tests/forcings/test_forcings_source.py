@@ -26,7 +26,7 @@ from forcings_fixtures import all_params  # noqa: E402
 
 
 def test_forcings_source_1():
-    sample = from_source("file", earthkit_examples_file("test.grib"))
+    sample = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     start = sample[0].time.valid_datetime()
     first_step = 6
@@ -43,7 +43,7 @@ def test_forcings_source_1():
         sample,
         date=dates,
         param=all_params,
-    )
+    ).to_fieldlist()
 
     num = len(params) * len(dates)
     assert len(ds) == num
@@ -56,7 +56,7 @@ def test_forcings_source_1():
 
 
 def test_forcings_source_2():
-    sample = from_source("file", earthkit_examples_file("test.grib"))
+    sample = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     start = sample[0].time.valid_datetime()
     start = datetime.datetime(start.year, start.month, start.day)
@@ -76,7 +76,7 @@ def test_forcings_source_2():
         date=dates,
         time=f"0/to/18/by/{24//ntimes}",
         param=params,
-    )
+    ).to_fieldlist()
 
     num = len(params) * len(dates) * 4
     assert len(ds) == num
@@ -89,7 +89,7 @@ def test_forcings_source_2():
 
 
 def test_forcings_source_3():
-    sample = from_source("file", earthkit_test_data_file("t_time_series.grib"))
+    sample = from_source("file", earthkit_test_data_file("t_time_series.grib")).to_fieldlist()
 
     dates = [
         datetime.datetime(2020, 12, 21, 12, 0),
@@ -106,7 +106,7 @@ def test_forcings_source_3():
         sample,
         date=dates,
         param=params,
-    )
+    ).to_fieldlist()
 
     num = len(dates) * len(params)
     assert len(ds) == num
@@ -123,7 +123,7 @@ def test_forcings_source_3():
     "filename", ["t_time_series.grib", "rgg_small_subarea_cellarea_ref.grib", "mercator.grib"]
 )
 def test_forcings_from_lat_lon_core(lat_key, lon_key, filename):
-    sample = from_source("file", earthkit_test_data_file(filename))
+    sample = from_source("file", earthkit_test_data_file(filename)).to_fieldlist()
 
     dates = [
         datetime.datetime(2020, 12, 21, 12, 0),
@@ -139,7 +139,7 @@ def test_forcings_from_lat_lon_core(lat_key, lon_key, filename):
     d[lat_key] = sample[0].geography.latitudes()
     d[lon_key] = sample[0].geography.longitudes()
 
-    ds = from_source("forcings", **d, date=dates, param=params)
+    ds = from_source("forcings", **d, date=dates, param=params).to_fieldlist()
 
     num = len(dates) * len(params)
     assert len(ds) == num
@@ -153,7 +153,7 @@ def test_forcings_from_lat_lon_core(lat_key, lon_key, filename):
 
 
 def test_forcings_from_lat_lon_bad():
-    sample = from_source("file", earthkit_test_data_file("t_time_series.grib"))
+    sample = from_source("file", earthkit_test_data_file("t_time_series.grib")).to_fieldlist()
 
     params = all_params
 

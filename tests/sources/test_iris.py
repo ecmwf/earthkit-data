@@ -21,7 +21,7 @@ from earthkit.data.utils.testing import earthkit_test_data_file
 @pytest.mark.skip("Disabled at the moment")
 @pytest.mark.skipif(NO_IRIS, reason="Iris or ncdata not installed")
 def test_iris_source():
-    ds = from_source("iris", earthkit_examples_file("air_temp.pp"))
+    ds = from_source("iris", earthkit_examples_file("air_temp.pp")).to_fieldlist()
     assert len(ds) == 1
     assert isinstance(ds[0], Field)
     assert ds[0].metadata("standard_name") == "air_temperature"
@@ -30,7 +30,7 @@ def test_iris_source():
 @pytest.mark.skip("Disabled at the moment")
 @pytest.mark.skipif(NO_IRIS, reason="Iris or ncdata not installed")
 def test_iris_source_wind():
-    ds = from_source("iris", earthkit_test_data_file("wind_speed.pp"))
+    ds = from_source("iris", earthkit_test_data_file("wind_speed.pp")).to_fieldlist()
     assert len(ds) == 2
     assert isinstance(ds[0], Field)
     assert isinstance(ds[1], Field)

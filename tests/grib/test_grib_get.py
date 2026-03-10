@@ -401,7 +401,7 @@ def test_grib_get_generic(fl_type):
     assert lg == [[1000, "t"]]
 
     # single field
-    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))[0]
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()[0]
     lg = f.get(["vertical.level", "metadata.cfVarName"])
     assert lg == [1000, "t"]
 
@@ -809,6 +809,7 @@ def test_grib_get_tilde_shortname(fl_type):
 
 def test_grib_get_gridspec_key():
     ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = ds.to_fieldlist()
 
     ds[0].get("gridSpec", default=None)  # Should not raise an error
 

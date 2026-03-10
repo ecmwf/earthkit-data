@@ -45,7 +45,7 @@ def test_grib_set_data(fl_type):
     # write back to grib
     with temp_file() as tmp:
         f.to_target("file", tmp)
-        f_saved = from_source("file", tmp)[0]
+        f_saved = from_source("file", tmp).to_fieldlist()[0]
         assert f_saved.get("parameter.variable") == "t"
         assert f_saved.get("metadata.shortName") == "t"
         assert f_saved.get("vertical.level") == 500
@@ -89,7 +89,7 @@ def test_grib_set_data(fl_type):
     # write back to grib
     with temp_file() as tmp:
         ds.to_target("file", tmp)
-        ds_saved = from_source("file", tmp)
+        ds_saved = from_source("file", tmp).to_fieldlist()
         assert ds_saved.get("parameter.variable") == ["t", "z"]
         assert ds_saved.get("metadata.shortName") == ["t", "z"]
         assert ds_saved.get("vertical.level") == [500, 500]

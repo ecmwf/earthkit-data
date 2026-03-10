@@ -33,7 +33,7 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
     [(None, np.float64), (np.float32, np.float32), (np.float64, np.float64)],
 )
 def test_netcdf_points_1(dtype, expected_dtype):
-    ds = from_source("file", earthkit_test_data_file("test_single.nc"))
+    ds = from_source("file", earthkit_test_data_file("test_single.nc")).to_fieldlist()
 
     eps = 1e-5
 
@@ -69,7 +69,7 @@ def test_netcdf_points_1(dtype, expected_dtype):
 
 @pytest.mark.skip(reason="To be seen if this case should be supported")
 def test_netcdf_points_2():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+    ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
 
     assert len(ds) == 2
 
@@ -104,7 +104,7 @@ def test_netcdf_points_2():
 
 
 def test_netcdf_latlon():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+    ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
 
     assert len(ds) == 2
 
@@ -137,25 +137,25 @@ def test_netcdf_latlon():
 
 
 def test_netcdf_bbox():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+    ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
     bb = ds.geography.bounding_box()
     assert bb.as_tuple() == (73, -27, 33, 45)
 
 
 def test_netcdf_area():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+    ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
     ref = [73, -27, 33, 45]
     assert np.allclose(np.asarray(ds[0].geography.area()), np.asarray(ref))
 
 
 def test_netcdf_proj_string_non_cf():
-    f = from_source("file", earthkit_examples_file("test.nc"))
+    f = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
     assert f[0].geography.projection() is None
 
 
 @pytest.mark.cache
 def test_netcdf_projection_laea():
-    f = from_source("url", earthkit_remote_examples_file("efas.nc"))
+    f = from_source("url", earthkit_remote_examples_file("efas.nc")).to_fieldlist()
     projection = f[0].geography.projection()
     assert isinstance(projection, projections.LambertAzimuthalEqualArea)
     assert projection.parameters == {
@@ -171,7 +171,7 @@ def test_netcdf_projection_laea():
 
 @pytest.mark.cache
 def test_netcdf_proj_string_laea():
-    f = from_source("url", earthkit_remote_examples_file("efas.nc"))
+    f = from_source("url", earthkit_remote_examples_file("efas.nc")).to_fieldlist()
     r = f[0].geography.projection()
     assert (
         r.to_proj_string()
@@ -181,7 +181,7 @@ def test_netcdf_proj_string_laea():
 
 @pytest.mark.cache
 def test_netcdf_to_points_laea():
-    ds = from_source("url", earthkit_remote_examples_file("efas.nc"))
+    ds = from_source("url", earthkit_remote_examples_file("efas.nc")).to_fieldlist()
 
     assert len(ds) == 3
 
@@ -210,7 +210,7 @@ def test_netcdf_to_points_laea():
 
 @pytest.mark.cache
 def test_netcdf_latlon_laea():
-    ds = from_source("url", earthkit_remote_examples_file("efas.nc"))
+    ds = from_source("url", earthkit_remote_examples_file("efas.nc")).to_fieldlist()
 
     assert len(ds) == 3
 
@@ -284,7 +284,7 @@ def test_netcdf_geography_2d_1(lat_name, lon_name):
     v = {"a": a}
     ds_in = xr.Dataset(v, coords=coords)
 
-    ds = from_object(ds_in)
+    ds = from_object(ds_in).to_fieldlist()
     assert len(ds) == 2
     assert np.allclose(ds.get("vertical.level"), coords["level"])
 
@@ -326,7 +326,7 @@ def test_netcdf_geography_2d_2(lat_name, lon_name):
     v = {"a": a}
     ds_in = xr.Dataset(v, coords=coords)
 
-    ds = from_object(ds_in)
+    ds = from_object(ds_in).to_fieldlist()
     assert len(ds) == 2
     assert np.allclose(ds.get("vertical.level"), coords["level"])
 
@@ -369,7 +369,7 @@ def test_netcdf_geography_2d_3(lat_name, lon_name):
     v = {"a": a, lat_name: lat, lon_name: lon}
     ds_in = xr.Dataset(v, coords=coords)
 
-    ds = from_object(ds_in)
+    ds = from_object(ds_in).to_fieldlist()
     assert len(ds) == 2
     assert np.allclose(ds.get("vertical.level"), coords["level"])
 
@@ -411,7 +411,7 @@ def test_netcdf_geography_1d_1(lat_name, lon_name):
     v = {"a": a}
     ds_in = xr.Dataset(v, coords=coords)
 
-    ds = from_object(ds_in)
+    ds = from_object(ds_in).to_fieldlist()
     assert len(ds) == 2
     assert np.allclose(ds.get("vertical.level"), coords["level"])
 

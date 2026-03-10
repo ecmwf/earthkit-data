@@ -15,8 +15,8 @@ except ImportError:  # pragma: no cover
     # Local copy or not installed with setuptools
     __version__ = "999"
 
+from earthkit.data.data.wrappers import from_object
 from earthkit.data.translators import transform
-from earthkit.data.wrappers import get_wrapper as from_object
 
 from .arguments.transformers import ALL
 from .core.caching import CACHE as cache

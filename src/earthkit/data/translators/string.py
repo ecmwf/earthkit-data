@@ -6,16 +6,21 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
-from earthkit.data.translators import Translator
+from . import Translator
 
 
 class StrTranslator(Translator):
+    _name = "str"
+
     def __init__(self, data, *args, **kwargs):
-        self.data = data.to_string(*args, **kwargs)
+        super().__init__(data.to_string(*args, **kwargs))
+
+    def __call__(self):
+        return self._data
 
 
 def translator(data, cls, *args, **kwargs):
-    if cls in [str, "string"]:
+    if cls in [str, "string", "str"]:
         return StrTranslator(data, *args, **kwargs)
 
     return None

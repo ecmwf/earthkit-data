@@ -31,7 +31,7 @@ if not NO_TORCH:
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_torch_core_1(allow_holes, lazy_load):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
     ds = ds_ek.to_xarray(profile="mars", array_backend="torch", allow_holes=allow_holes, lazy_load=lazy_load)
     check_array_type(ds["t"].data, _TORCH)
@@ -43,7 +43,7 @@ def test_xr_engine_torch_core_1(allow_holes, lazy_load):
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_torch_core_compat(allow_holes, lazy_load):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
     ds = ds_ek.to_xarray(profile="mars", array_module="torch", allow_holes=allow_holes, lazy_load=lazy_load)
     check_array_type(ds["t"].data, _TORCH)
@@ -55,7 +55,7 @@ def test_xr_engine_torch_core_compat(allow_holes, lazy_load):
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_torch_dtype(allow_holes, lazy_load):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
     def _check_dtype(dtype, expected_dtype):
         ds = ds_ek.to_xarray(

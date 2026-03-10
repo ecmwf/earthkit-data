@@ -53,7 +53,7 @@ def test_grib_save_when_loaded_from_file_core(fl_type):
     assert len(fs) == 6
     with temp_file() as tmp:
         fs.to_target("file", tmp)
-        fs_saved = from_source("file", tmp)
+        fs_saved = from_source("file", tmp).to_fieldlist()
         assert len(fs) == len(fs_saved)
 
 
@@ -65,13 +65,13 @@ def test_grib_save_bits_per_value_fieldlist(
     _kwargs,
     expected_value,
 ):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     assert ds[0].get("metadata.bitsPerValue") == 16
 
     with temp_file() as tmp:
         ds.to_target("file", tmp, **_kwargs)
-        ds1 = from_source("file", tmp)
+        ds1 = from_source("file", tmp).to_fieldlist()
         assert ds1.get("metadata.bitsPerValue") == [expected_value] * len(ds)
 
 
@@ -81,14 +81,14 @@ def test_grib_save_bits_per_value_fieldlist(
     [({}, 16), ({"metadata.bitsPerValue": 12}, 12)],
 )
 def test_grib_save_bits_per_value_single_field(array, _kwargs, expected_value):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     assert ds[0].get("metadata.bitsPerValue") == 16
     if array:
         ds = ds.to_fieldlist()
 
     with temp_file() as tmp:
         ds[0].to_target("file", tmp, **_kwargs)
-        ds1 = from_source("file", tmp)
+        ds1 = from_source("file", tmp).to_fieldlist()
         assert ds1.get("metadata.bitsPerValue") == [expected_value]
 
 
@@ -98,7 +98,7 @@ def test_grib_save_bits_per_value_single_field(array, _kwargs, expected_value):
 # @pytest.mark.parametrize("mode", ["target"])
 # @pytest.mark.parametrize("missing_value", [100000.0])
 def test_grib_output_missing_value_1(mode, missing_value):
-    fld = from_source("file", earthkit_examples_file("test.grib"))[0]
+    fld = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()[0]
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         path = os.path.join(tmp, "a.grib")
@@ -124,7 +124,7 @@ def test_grib_output_missing_value_1(mode, missing_value):
                 check_nans=True,
                 missing_value=missing_value,
             )
-        ds = earthkit.data.from_source("file", path)
+        ds = earthkit.data.from_source("file", path).to_fieldlist()
         assert ds[0].get("metadata.bitmapPresent") == 1
         assert np.isnan(ds[0].values[0])
         assert not np.isnan(values[1])
@@ -157,7 +157,7 @@ def test_grib_output_latlon(mode):
                 values=data,
             )
 
-        ds = earthkit.data.from_source("file", path)
+        ds = earthkit.data.from_source("file", path).to_fieldlist()
 
         assert ds[0].get("metadata.shortName") == "2t"
         assert ds[0].get("metadata.date") == 20010101
@@ -196,7 +196,7 @@ def test_grib_output_o96_sfc(mode):
                 values=data,
             )
 
-        ds = earthkit.data.from_source("file", path)
+        ds = earthkit.data.from_source("file", path).to_fieldlist()
 
         ref = {
             "metadata.date": 20010101,
@@ -241,7 +241,7 @@ def test_grib_output_o160_sfc(mode):
                 metadata=dict(date=20010101, generatingProcessIdentifier=255, param="2t"),
                 values=data,
             )
-        ds = earthkit.data.from_source("file", path)
+        ds = earthkit.data.from_source("file", path).to_fieldlist()
 
         ref = {
             "metadata.date": 20010101,
@@ -286,7 +286,7 @@ def test_grib_output_n96_sfc(mode):
                 metadata=dict(date=20010101, generatingProcessIdentifier=255, param="2t"),
                 values=data,
             )
-        ds = earthkit.data.from_source("file", path)
+        ds = earthkit.data.from_source("file", path).to_fieldlist()
 
         ref = {
             "metadata.date": 20010101,
@@ -339,7 +339,7 @@ def test_grib_output_mars_labeling(mode):
                 values=data,
             )
 
-        ds = earthkit.data.from_source("file", path)
+        ds = earthkit.data.from_source("file", path).to_fieldlist()
 
         assert ds[0].get("metadata.date") == 20010101
         assert ds[0].get("metadata.edition") == 2
@@ -386,7 +386,7 @@ def test_grib_output_o96_pl(mode, levtype):
             _kwargs.update(levtype)
             to_target("file", path, metadata=_kwargs, values=data)
 
-        ds = earthkit.data.from_source("file", path)
+        ds = earthkit.data.from_source("file", path).to_fieldlist()
 
         assert ds[0].get("metadata.date") == 20010101
         assert ds[0].get("metadata.edition") == 2
@@ -430,7 +430,7 @@ def test_grib_output_tp(mode, levtype):
                 metadata=dict(date=20010101, generatingProcessIdentifier=255, param="tp", step=48, edition=1),
                 values=data,
             )
-        ds = earthkit.data.from_source("file", path)
+        ds = earthkit.data.from_source("file", path).to_fieldlist()
 
         assert ds[0].get("metadata.date") == 20010101
         assert ds[0].get("metadata.shortName") == "tp"
@@ -455,7 +455,7 @@ def test_grib_output_field_template(array):
     data = np.random.random((7, 12))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
-        ds = from_source("file", earthkit_examples_file("test6.grib"))
+        ds = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
         if array:
             ds = ds.to_fieldlist()
 
@@ -482,7 +482,7 @@ def test_grib_output_field_template(array):
             template=ds[0],
         )
 
-        ds = earthkit.data.from_source("file", path)
+        ds = earthkit.data.from_source("file", path).to_fieldlist()
 
         assert ds[0].get("metadata.date") == 20010101
         assert ds[0].get("metadata.shortName") == "pt"
@@ -508,7 +508,7 @@ def test_grib_output_field_template(array):
     ],
 )
 def test_grib_output_filename_pattern(mode, pattern, expected_value):
-    ds = from_source("file", earthkit_examples_file("test6.grib"))
+    ds = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
 
     with temp_directory() as tmp:
         path = os.path.join(tmp, f"{pattern}.grib")
@@ -535,7 +535,7 @@ def test_grib_output_filename_pattern(mode, pattern, expected_value):
         for k, count in expected_value.items():
             path = os.path.join(tmp, f"{k}.grib")
             assert os.path.exists(path)
-            assert len(from_source("file", path)) == count
+            assert len(from_source("file", path).to_fieldlist()) == count
 
 
 if __name__ == "__main__":

@@ -54,8 +54,8 @@ def test_polytope_odb():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_POLYTOPE, reason="No access to Polytope Web API")
-@pytest.mark.parametrize("kwargs", [{"stream": False}, {"stream": True, "read_all": True}])
-def test_polytope_grib_all_single(kwargs):
+@pytest.mark.parametrize("kwargs,kwargs1", [({"stream": False}, {}), ({"stream": True}, {"read_all": True})])
+def test_polytope_grib_all_single(kwargs, kwargs1):
     request = {
         "stream": "oper",
         "levtype": "pl",
@@ -70,7 +70,7 @@ def test_polytope_grib_all_single(kwargs):
         "domain": "g",
     }
 
-    ds = from_source("polytope", "ecmwf-mars", request, **kwargs)
+    ds = from_source("polytope", "ecmwf-mars", request, **kwargs).to_fieldlist(**kwargs1)
 
     assert len(ds) == 2
     assert ds.metadata("level") == [500, 500]
@@ -112,7 +112,7 @@ def test_polytope_grib_all_multi(kwargs):
         },
     ]
 
-    ds = from_source("polytope", "ecmwf-mars", request, **kwargs)
+    ds = from_source("polytope", "ecmwf-mars", request, **kwargs).to_fieldlist()
 
     assert len(ds) == 4
     assert ds.metadata("level") == [500, 500, 500, 500]
@@ -137,7 +137,7 @@ def test_polytope_grib_stream():
         "domain": "g",
     }
 
-    ds = from_source("polytope", "ecmwf-mars", request, stream=True)
+    ds = from_source("polytope", "ecmwf-mars", request, stream=True).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):

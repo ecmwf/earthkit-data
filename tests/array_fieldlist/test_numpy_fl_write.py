@@ -37,7 +37,7 @@ def test_array_fl_grib_write_to_path(array_backend):
 
     array_namespace, device, dtype = array_backend
 
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     ds = ds.to_fieldlist(
         array_namespace=array_namespace,
         device=device,
@@ -55,7 +55,7 @@ def test_array_fl_grib_write_to_path(array_backend):
     with temp_file() as tmp:
         r.to_target("file", tmp)
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
         r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
         v_tmp = r_tmp[0].values
         assert array_namespace.allclose(v1, v_tmp)
@@ -68,7 +68,7 @@ def test_array_fl_grib_write_missing(array_backend, _kwargs):
     array_namespace, device, dtype = array_backend
     xp = array_namespace
 
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     ds = ds.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
 
     assert ds[0].get("metadata.shortName") == "2t"
@@ -93,7 +93,7 @@ def test_array_fl_grib_write_missing(array_backend, _kwargs):
     with temp_file() as tmp:
         r.to_target("file", tmp, **_kwargs)
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
         v_tmp = r_tmp[0].values
         assert np.isnan(v_tmp[0])
         r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
@@ -103,7 +103,7 @@ def test_array_fl_grib_write_missing(array_backend, _kwargs):
 
 
 def test_array_fl_grib_write_check_nans_bad():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     assert ds[0].get("metadata.shortName") == "2t"
 
@@ -132,7 +132,7 @@ def test_array_fl_grib_write_check_nans_bad():
 
 
 def test_array_fl_grib_write_append():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     assert ds[0].get("metadata.shortName") == "2t"
 
@@ -150,7 +150,7 @@ def test_array_fl_grib_write_append():
     tmp = temp_file()
     r1.to_target("file", tmp.path)
     assert os.path.exists(tmp.path)
-    r_tmp = from_source("file", tmp.path)
+    r_tmp = from_source("file", tmp.path).to_fieldlist()
     assert len(r_tmp) == 1
     assert r_tmp.get("metadata.shortName") == ["msl"]
     r_tmp = None
@@ -158,13 +158,13 @@ def test_array_fl_grib_write_append():
     # append
     r2.to_target("file", tmp.path, append=True)
     assert os.path.exists(tmp.path)
-    r_tmp = from_source("file", tmp.path)
+    r_tmp = from_source("file", tmp.path).to_fieldlist()
     assert len(r_tmp) == 2
     assert r_tmp.get("metadata.shortName") == ["msl", "2d"]
 
 
 def test_array_fl_grib_write_generating_proc_id():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     assert ds[0].get("metadata.shortName") == "2t"
 
@@ -183,7 +183,7 @@ def test_array_fl_grib_write_generating_proc_id():
             t.write(r1[1])
 
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
         assert len(r_tmp) == 2
         assert r_tmp.get("metadata.shortName") == ["msl", "2d"]
         assert r_tmp.get("metadata.generatingProcessIdentifier") == [
@@ -205,7 +205,7 @@ def test_array_fl_grib_write_bits_per_value(array_backend, _kwargs, expected_val
 
     with temp_file() as tmp:
         ds.to_target("file", tmp, **_kwargs)
-        ds1 = from_source("file", tmp)
+        ds1 = from_source("file", tmp).to_fieldlist()
         assert ds1.get("metadata.bitsPerValue") == [expected_value] * len(ds)
 
 
@@ -218,7 +218,7 @@ def test_array_fl_grib_write_bits_per_value(array_backend, _kwargs, expected_val
     ],
 )
 def test_array_fl_grib_single_write_to_path(filename, shape):
-    ds = from_source("file", filename)
+    ds = from_source("file", filename).to_fieldlist()
 
     assert len(ds) >= 1
     v1 = ds[0].values + 1
@@ -231,7 +231,7 @@ def test_array_fl_grib_single_write_to_path(filename, shape):
     with temp_file() as tmp:
         r.to_target("file", tmp)
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
         # r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace)
         assert r_tmp[0].shape == shape
         assert r_tmp[0].get("metadata.shortName") == "msl"
@@ -252,7 +252,7 @@ def test_array_fl_grib_single_write_to_path(filename, shape):
     [({}, 16), ({"bitsPerValue": 8}, 8)],
 )
 def test_array_fl_grib_single_write_bits_per_value(filename, shape, _kwargs, expected_value):
-    ds0 = from_source("file", filename)
+    ds0 = from_source("file", filename).to_fieldlist()
 
     # ds = ds0.from_fields([ds0[0].copy()])
     ds = ds0.to_fieldlist()
@@ -263,7 +263,7 @@ def test_array_fl_grib_single_write_bits_per_value(filename, shape, _kwargs, exp
 
     with temp_file() as tmp:
         ds.to_target("file", tmp, **_kwargs)
-        ds1 = from_source("file", tmp)
+        ds1 = from_source("file", tmp).to_fieldlist()
         assert ds1.get("metadata.bitsPerValue") == [expected_value] * len(ds)
 
 

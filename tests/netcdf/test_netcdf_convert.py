@@ -36,7 +36,7 @@ def test_netcdf_to_xarray_args():
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("20220401-C3S-L3S_FIRE-BA-OLCI-AREA_3-fv1.1.nc"),
-    )
+    ).to_fieldlist()
 
     r = ds.to_xarray(xarray_open_mfdataset_kwargs=dict(decode_cf=False, decode_times=False))
     assert r["JD"].dtype == "int16"

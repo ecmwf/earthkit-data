@@ -63,7 +63,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 def test_xr_engine_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, dims, or_mask_spec, nfields):
     kwargs["lazy_load"] = lazy_load
 
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
     md = ds_ek.get(["metadata.param"] + dim_keys)
     md_df = pd.DataFrame.from_records(md, columns=["metadata.param"] + dim_keys)
@@ -151,7 +151,7 @@ def test_xr_engine_incomplete_tensor_holes_2(
 ):
     kwargs["lazy_load"] = lazy_load
 
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
     md = ds_ek.get(["metadata.param"] + dim_keys)
     md_df = pd.DataFrame.from_records(md, columns=["metadata.param"] + dim_keys)
@@ -247,7 +247,7 @@ def test_xr_engine_incomplete_tensor_coordinates_trimmed_plus_holes(
 ):
     kwargs["lazy_load"] = lazy_load
 
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
     md = ds_ek.get(["metadata.param"] + dim_keys)
     md_df = pd.DataFrame.from_records(md, columns=["metadata.param"] + dim_keys)
@@ -349,7 +349,7 @@ def test_xr_engine_incomplete_tensor_select_hole(
 ):
     kwargs = dict(profile="mars", squeeze=False, allow_holes=True, lazy_load=lazy_load)
 
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file)).to_fieldlist()
 
     ds = ds_ek[1:].to_xarray(**kwargs).squeeze()
     assert set(ds) == set(variables)

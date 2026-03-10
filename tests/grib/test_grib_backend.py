@@ -24,7 +24,7 @@ from earthkit.data.utils.testing import earthkit_examples_file
 def test_grib_file_numpy_backend(_kwargs):
     _NUMPY = eku_array_namespace("numpy")
 
-    ds = from_source("file", earthkit_examples_file("test6.grib"))
+    ds = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
     ds = ds.to_fieldlist(**_kwargs)
 
     assert getattr(ds, "path", None) is None
@@ -64,7 +64,7 @@ def test_grib_file_numpy_backend(_kwargs):
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 def test_grib_file_pytorch_backend():
     _TORCH = eku_array_namespace("torch")
-    ds = from_source("file", earthkit_examples_file("test6.grib"))
+    ds = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
     ds = ds.to_fieldlist(array_namespace="torch")
 
     assert getattr(ds, "path", None) is None
@@ -111,7 +111,7 @@ def test_grib_file_pytorch_backend():
 def test_grib_file_cupy_backend():
     _CUPY = eku_array_namespace("cupy")
 
-    ds = from_source("file", earthkit_examples_file("test6.grib"))
+    ds = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
     ds = ds.to_fieldlist(array_namespace="cupy")
 
     import cupy as cp
@@ -153,7 +153,7 @@ def test_grib_file_cupy_backend():
 
 
 def test_grib_array_numpy_backend():
-    s = from_source("file", earthkit_examples_file("test6.grib"))
+    s = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
 
     # ds = FieldList.from_array(
     #     s.values,
@@ -191,7 +191,7 @@ def test_grib_array_numpy_backend():
 @pytest.mark.migrate
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 def test_grib_array_torch_backend():
-    s = from_source("file", earthkit_examples_file("test6.grib"))
+    s = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
 
     import torch
 
@@ -228,7 +228,7 @@ def test_grib_array_torch_backend():
 @pytest.mark.migrate
 @pytest.mark.skipif(NO_CUPY, reason="No cupy installed")
 def test_grib_array_cupy_backend():
-    s = from_source("file", earthkit_examples_file("test6.grib"))
+    s = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
 
     import cupy as cp
 

@@ -22,7 +22,7 @@ from earthkit.data.utils.testing import earthkit_examples_file
 
 @pytest.mark.skip(reason="Some runners crash in Xarray")
 def test_netcdf_fieldlist_save():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+    ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
 
     # the file must be saved without loading the fields
     # assert ds._reader._fields is None
@@ -33,12 +33,12 @@ def test_netcdf_fieldlist_save():
         # assert ds._reader._fields is None
         assert ds._fields is None
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
         assert len(r_tmp) == 2
 
 
 def test_netcdf_fieldlist_subset_save_1():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+    ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
     assert len(ds) == 2
     r = ds[1]
 
@@ -48,7 +48,7 @@ def test_netcdf_fieldlist_subset_save_1():
 
 
 def test_netcdf_fieldlist_subset_save_2():
-    ds = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+    ds = from_source("file", earthkit_examples_file("tuv_pl.nc")).to_fieldlist()
     assert len(ds) == 18
     r = ds[1:4]
 
@@ -60,8 +60,8 @@ def test_netcdf_fieldlist_subset_save_2():
 @pytest.mark.skip(reason="Some runners crash in Xarray")
 @pytest.mark.skipif(IN_GITHUB, reason="Some runners crash in Xarray")
 def test_netcdf_fieldlist_multi_subset_save_1():
-    ds1 = from_source("file", earthkit_examples_file("test.nc"))
-    ds2 = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+    ds1 = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
+    ds2 = from_source("file", earthkit_examples_file("tuv_pl.nc")).to_fieldlist()
 
     ds = concat(ds1, ds2)
     assert len(ds) == 20
@@ -69,14 +69,14 @@ def test_netcdf_fieldlist_multi_subset_save_1():
     with temp_file() as tmp:
         ds.to_target("file", tmp)
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
         assert len(r_tmp) == 20
 
 
 @pytest.mark.skipif(IN_GITHUB, reason="Some runners crash in Xarray")
 def test_netcdf_fieldlist_multi_subset_save_bad():
-    ds1 = from_source("file", earthkit_examples_file("test.nc"))
-    ds2 = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+    ds1 = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
+    ds2 = from_source("file", earthkit_examples_file("tuv_pl.nc")).to_fieldlist()
 
     ds = concat(ds1, ds2[1:5])
     assert len(ds) == 6

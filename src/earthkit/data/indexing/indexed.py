@@ -284,9 +284,9 @@ class IndexFieldListBase(Index, FieldList):
 
         return FieldCube(self, *args, **kwargs)
 
-    def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
-        return encoder._encode_fieldlist(self, **kwargs)
+    # def _encode(self, encoder, **kwargs):
+    #     """Double dispatch to the encoder"""
+    #     return encoder._encode_fieldlist(self, **kwargs)
 
     # def _normalise_sel_input(self, **kwargs):
     #     from .field import Field
@@ -346,6 +346,29 @@ class IndexFieldListBase(Index, FieldList):
         r = get_method(method).binary_op(oper, self, y)
         return r
 
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self, **kwargs)
+
+    def _default_encoder(self):
+        return self[0]._default_encoder() if len(self) > 0 else None
+
+    def _encode(self, encoder, hints=None, **kwargs):
+        if hints and hints.get("path_allowed", False) and hasattr(self, "_encode_path"):
+            result = self._encode_path(encoder, **kwargs)
+            if result is not None:
+                return result
+        return self._encode_default(encoder, **kwargs)
+
+    def _encode_default(self, encoder, **kwargs):
+        return encoder._encode_fieldlist(self, **kwargs)
+
+    def to_data_object(self):
+        from earthkit.data.data.fieldlist import FieldListData
+
+        return FieldListData(self)
+
     @classmethod
     def new_mask_index(cls, *args, **kwargs):
         return MaskFieldList(*args, **kwargs)
@@ -364,3 +387,10 @@ class MaskFieldList(IndexFieldListBase, MaskIndex):
 class MultiFieldList(IndexFieldListBase, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
+
+    def _default_encoder(self):
+        for i in self._indexes:
+            encoder = i._default_encoder()
+            if encoder is not None:
+                return encoder
+        return None

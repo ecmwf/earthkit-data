@@ -34,7 +34,7 @@ def test_wekeo_grib_1_prompt(prompt):
         prompt=prompt,
         data_format="grib",
         download_format="zip",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -54,7 +54,7 @@ def test_wekeo_grib_2():
         data_format="grib",
         download_format="zip",
         split_on="variable",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -73,7 +73,7 @@ def test_wekeo_grib_3():
         time=["13:00"],
         data_format="grib",
         download_format="zip",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -92,7 +92,7 @@ def test_wekeo_netcdf():
         time=["13:00"],
         data_format="netcdf",
         download_format="zip",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 

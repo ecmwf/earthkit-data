@@ -25,7 +25,7 @@ from earthkit.data.utils.testing import earthkit_test_data_file
     "fname", [("dgm50hs_col_32_368_5616_nw.tif"), ("dgm50hs_col_32_368_5616_nw_bigtiff.tiff")]
 )
 def test_geotiff_reader_with_multiband(fname):
-    s = from_source("file", earthkit_test_data_file(fname))
+    s = from_source("file", earthkit_test_data_file(fname)).to_fieldlist()
     assert len(s) == 3
     assert isinstance(s[0], Field)
     assert isinstance(s[1], Field)

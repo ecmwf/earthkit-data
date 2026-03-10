@@ -10,11 +10,12 @@
 import logging
 import os
 import weakref
+from abc import abstractmethod
 from importlib import import_module
 
-import deprecation
-
-from earthkit.data.core import Base
+from earthkit.data.core import Encodable
+from earthkit.data.core import FileLoaderMixin
+from earthkit.data.core import Loader
 from earthkit.data.core.config import CONFIG
 from earthkit.data.decorators import detect_out_filename
 from earthkit.data.decorators import locked
@@ -22,20 +23,18 @@ from earthkit.data.decorators import locked
 LOG = logging.getLogger(__name__)
 
 
-# class ReaderMeta(type(Base), type(os.PathLike)):
-#     pass
+class Reader(Loader, Encodable, os.PathLike):
+    _format = None
+    _binary = True
+    _appendable = True
 
-
-# class Reader(Base, os.PathLike, metaclass=ReaderMeta):
-class Reader(Base, os.PathLike):
-    appendable = False  # Set to True if the data can be appended to and existing file
-    binary = True
-
-    def __init__(self, source, path):
+    def __init__(self, source, path, **kwargs):
         LOG.debug("Reader for %s is %s", path, self.__class__.__name__)
         self._source = weakref.ref(source)
         self.path = path
         self.source_filename = self.source.source_filename
+        # self._binary = binary
+        # self._appendable = appendable  # Set to True if the data can be appended to and existing file
 
     @property
     def source(self):
@@ -60,17 +59,13 @@ class Reader(Base, os.PathLike):
     def merger(self):
         return self.source.merger
 
-    def mutate(self):
-        # Give a chance to `directory` or `zip` to change the reader
-        return self
+    @property
+    def appendable(self):
+        return self._appendable
 
-    def mutate_source(self):
-        # The source may ask if it needs to mutate
-        return None
-
-    def ignore(self):
-        # Used by multi-source
-        return False
+    @property
+    def binary(self):
+        return self._binary
 
     def cache_file(self, *args, **kwargs):
         return self.source.cache_file(*args, **kwargs)
@@ -80,21 +75,155 @@ class Reader(Base, os.PathLike):
 
         to_target(target, *args, data=self, **kwargs)
 
-    def _encode(self, encoder, **kwargs):
-        return encoder._encode(self, **kwargs)
+    # def _default_encoder(self):
+    #     return self._format
 
-    def _default_encoder(self):
-        return "internal-pass-through"
+    # def _encode(self, encoder, *args, **kwargs):
+    #     result = self._encode_path(encoder, *args, **kwargs)
+    #     if result is not None:
+    #         return result
+    #     return self._default_encoder(encoder, *args, **kwargs)
+
+    # def _encode_path(self, encoder, *args, **kwargs):
+    #     path_info = self._path_info()
+    #     if path_info is not None:
+    #         target = kwargs.get("target", None)
+    #         if target is not None and target._name == "file":
+    #             path_info = self._path_info()
+    #             return encoder._encode_path(path_info, **kwargs)
+    #     return None
+
+    # @abstractmethod
+    # def _encode_default(self, encoder, *args, **kwargs):
+    #     pass
 
     def __fspath__(self):
         return self.path
 
-    # def index_content(self):
-    #     LOG.warning(f"index-content(): Ignoring {self.path}")
-    #     return []
+    def to_data_object(self):
+        return None
 
-    # def ranges(self):
-    #     self.source._kw
+    def _default_encoder(self):
+        return self._format
+
+    def _encode(self, encoder, hints=None, **kwargs):
+        print("Reader._encode", encoder, kwargs)
+        if hints and hints.get("path_allowed", False):
+            result = self._encode_path(encoder, **kwargs)
+            if result is not None:
+                return result
+        return self._encode_default(encoder, **kwargs)
+
+    @abstractmethod
+    def _encode_default(self, encoder, **kwargs):
+        pass
+
+    def _encode_path(self, encoder, *, target=None, **kwargs):
+        path_info = self._path_info()
+        print("Reader._encode_path", path_info, encoder, target, kwargs)
+        if path_info is not None:
+            print("target", target)
+            if target is not None and target._name == "file":
+                path_info = self._path_info()
+                return encoder._encode_path(path_info, target=target, **kwargs)
+        return None
+
+    def _path_info(self):
+        if self.path and os.path.exists(self.path):
+
+            from earthkit.data.utils.path_info import LoaderPathInfo
+
+            return LoaderPathInfo(
+                self.path,
+                binary=self._binary,
+                appendable=self._appendable,
+                default_encoder=self._default_encoder(),
+            )
+        return None
+
+
+class Reader1(Loader, os.PathLike):
+    _format = None
+    _binary = True
+    _appendable = True
+
+    def __init__(self, source, path, **kwargs):
+        LOG.debug("Reader for %s is %s", path, self.__class__.__name__)
+        self._source = weakref.ref(source)
+        self.path = path
+        self.source_filename = self.source.source_filename
+        # self._binary = binary
+        # self._appendable = appendable  # Set to True if the data can be appended to and existing file
+
+    @property
+    def source(self):
+        return self._source()
+
+    @property
+    def filter(self):
+        return self.source.filter
+
+    @property
+    def parts(self):
+        if hasattr(self.source, "parts"):
+            return self.source.parts
+
+    @property
+    def stream(self):
+        if hasattr(self.source, "stream"):
+            return self.source.stream
+        return False
+
+    @property
+    def merger(self):
+        return self.source.merger
+
+    @property
+    def appendable(self):
+        return self._appendable
+
+    @property
+    def binary(self):
+        return self._binary
+
+    def cache_file(self, *args, **kwargs):
+        return self.source.cache_file(*args, **kwargs)
+
+    def _default_encoder(self):
+        return self._format
+
+    def _encode(self, encoder, *args, **kwargs):
+        result = self._encode_path(encoder, *args, **kwargs)
+        if result is not None:
+            return result
+        return self._default_encoder(encoder, *args, **kwargs)
+
+    def _encode_path(self, encoder, *args, **kwargs):
+        path_info = self._path_info()
+        if path_info is not None:
+            target = kwargs.get("target", None)
+            if target is not None and target._name == "file":
+                path_info = self._path_info()
+                return encoder._encode_path(path_info, **kwargs)
+        return None
+
+    @abstractmethod
+    def _encode_default(self, encoder, *args, **kwargs):
+        pass
+
+    def __fspath__(self):
+        return self.path
+
+    def to_data_object(self):
+        return None
+
+    def path_info(self):
+        return PathInfo(
+            self.path,
+            binary=self.binary,
+            appendable=self.appendable,
+            default_encoder=self._default_encoder(),
+        )
 
 
 _READERS = {}
@@ -112,14 +241,16 @@ def _readers(method_name):
             if path.endswith(".py") or os.path.isdir(os.path.join(here, path)):
                 name, _ = os.path.splitext(path)
                 try:
-                    for method in ["reader", "memory_reader", "stream_reader"]:
+                    for method in ["READER", "MEMORY_READER", "STREAM_READER"]:
                         module = import_module(f".{name}", package=__name__)
                         if hasattr(module, method):
-                            _READERS[(name, method)] = getattr(module, method)
-                            if hasattr(module, "aliases"):
-                                for a in module.aliases:
-                                    assert a not in _READERS
-                                    _READERS[(a, method_name)] = getattr(module, method)
+                            func = getattr(module, method)
+                            if func is not None:
+                                _READERS[(name, method.lower())] = func
+                                if hasattr(module, "aliases"):
+                                    for a in module.aliases:
+                                        assert a not in _READERS
+                                        _READERS[(a, method.lower())] = func
                 except Exception:
                     LOG.exception("Error loading reader %s", name)
 
@@ -194,7 +325,10 @@ def reader(source, path, **kwargs):
             r = _empty(source, path, **kwargs)
             if r is not None:
                 return r
-            raise Exception(f"File is empty: '{path}'")
+
+            from earthkit.data.utils.exceptions import EmptyFileError
+
+            raise EmptyFileError(f"File is empty: '{path}'")
 
         n_bytes = CONFIG.get("reader-type-check-bytes")
         with open(path, "rb") as f:

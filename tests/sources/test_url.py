@@ -30,7 +30,7 @@ from earthkit.data.utils.testing import network_off
 )
 def test_url_file_source():
     filename = os.path.abspath(earthkit_examples_file("test.nc"))
-    s = from_source("url", f"file://{filename}")
+    s = from_source("url", f"file://{filename}").to_fieldlist()
     assert len(s) == 2
 
 
@@ -47,7 +47,7 @@ def test_url_source_check_out_of_date():
         from_source(
             "url",
             earthkit_remote_examples_file("test.grib"),
-        )
+        ).to_fieldlist()
 
     with temp_directory() as tmpdir:
         with config.temporary():
@@ -77,7 +77,7 @@ def test_url_source_tar():
     ds = from_source(
         "url",
         earthkit_remote_examples_file("test_gribs.tar"),
-    )
+    ).to_fieldlist()
     assert len(ds) == 6
 
 
@@ -85,13 +85,13 @@ def test_parts_url():
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("temp.bufr"),
-    )
+    ).to_featurelist()
 
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("temp.bufr"),
         parts=((0, 4),),
-    )
+    ).to_featurelist()
 
     assert os.path.getsize(ds.path) == 4
 
@@ -102,7 +102,7 @@ def test_parts_url():
         "url",
         earthkit_remote_test_data_file("temp.bufr"),
         parts=((0, 10), (50, 10), (60, 10)),
-    )
+    ).to_featurelist()
 
     print(ds.path)
 
@@ -119,7 +119,7 @@ def test_parts_as_arg_url_1():
             earthkit_remote_test_data_file("temp.bufr"),
             [(0, 4)],
         ],
-    )
+    ).to_featurelist()
 
     assert os.path.getsize(ds.path) == 4
 
@@ -134,7 +134,7 @@ def test_parts_as_arg_url_2():
             earthkit_remote_test_data_file("temp.bufr"),
             None,
         ],
-    )
+    ).to_featurelist()
 
     assert os.path.getsize(ds.path) > 4
 
@@ -151,7 +151,7 @@ def test_multi_url_parts_as_arg_invalid_1():
                 [(0, 4)],
             ],
             parts=[(0, 5)],
-        )
+        ).to_featurelist()
 
 
 def test_multi_url_parts_invalid():
@@ -183,7 +183,7 @@ def test_url_part_file_source():
             (526, 4),
             (1048, 4),
         ],
-    )
+    ).to_fieldlist()
 
     assert os.path.getsize(ds.path) == 16
 

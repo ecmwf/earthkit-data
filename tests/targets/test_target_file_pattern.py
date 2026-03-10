@@ -30,7 +30,7 @@ from earthkit.data.utils.testing import earthkit_examples_file
 )
 @pytest.mark.parametrize("direct_call", [True, False])
 def test_target_file_pattern_grib_core(kwargs, direct_call):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     with temp_directory() as tmp:
         path = os.path.join(tmp, "{metadata.shortName}.grib")
@@ -43,7 +43,7 @@ def test_target_file_pattern_grib_core(kwargs, direct_call):
         for name in ("msl", "2t"):
             path = os.path.join(tmp, f"{name}.grib")
             assert os.path.exists(path)
-            ds1 = from_source("file", path)
+            ds1 = from_source("file", path).to_fieldlist()
             assert len(ds1) == 1
             assert ds1.get("metadata.shortName") == [name]
 
@@ -63,7 +63,7 @@ def test_target_file_pattern_grib_core(kwargs, direct_call):
     ],
 )
 def test_target_file_pattern_grib_keys(pattern, expected_value):
-    ds = from_source("file", earthkit_examples_file("test6.grib"))
+    ds = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
 
     with temp_directory() as tmp:
         path = os.path.join(tmp, f"{pattern}.grib")
@@ -77,11 +77,11 @@ def test_target_file_pattern_grib_keys(pattern, expected_value):
         for k, count in expected_value.items():
             path = os.path.join(tmp, f"{k}.grib")
             assert os.path.exists(path)
-            assert len(from_source("file", path)) == count
+            assert len(from_source("file", path).to_fieldlist()) == count
 
 
 def test_target_file_pattern_grib_metadata():
-    ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+    ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
 
     with temp_directory() as tmp:
         # setting GRIB keys for the output
@@ -95,7 +95,7 @@ def test_target_file_pattern_grib_metadata():
         for p in ["t", "u", "v"]:
             path = os.path.join(tmp, f"{p}_850.grib")
             assert os.path.exists(path)
-            ds1 = from_source("file", path)
+            ds1 = from_source("file", path).to_fieldlist()
             assert len(ds1) == 1
             assert ds1.get("metadata.shortName") == [p]
             assert ds1.get("metadata.level") == [850]
