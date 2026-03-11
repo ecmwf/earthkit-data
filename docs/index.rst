@@ -38,6 +38,7 @@ Quick start
     import earthkit.data as ekd
 
     data = ekd.from_source("sample", "test.grib")
+    fl = data.to_fieldlist()
     arr = data.to_numpy()
     df = data.to_pandas()
     dataset = data.to_xarray()
