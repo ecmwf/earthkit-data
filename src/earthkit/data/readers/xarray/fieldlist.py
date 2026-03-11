@@ -299,8 +299,6 @@ class XArrayFieldList(IndexFieldListBase):
             match, rest = v.match(**kwargs)
 
             if match:
-
-                print("Match: rest=", rest)
                 count += 1
                 missing: Dict[str, Any] = {}
 

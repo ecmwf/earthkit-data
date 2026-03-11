@@ -458,7 +458,6 @@ class MaskBUFRList(BUFRList, MaskIndex):
         return FeatureListData(self)
 
     def _encode(self, encoder, **kwargs):
-        print("MaskBUFRList._encode", encoder, kwargs)
         return encoder._encode_featurelist(self, **kwargs)
 
 
