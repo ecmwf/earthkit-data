@@ -53,7 +53,6 @@ class _InternalPassThroughEncoder(Encoder):
             from earthkit.data.data.wrappers import from_object
 
             data = from_object(data)
-            print("Data to encode:", data)
             return data._encode(self, **kwargs)
         else:
             raise ValueError("No data to encode")

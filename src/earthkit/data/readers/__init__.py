@@ -14,7 +14,6 @@ from abc import abstractmethod
 from importlib import import_module
 
 from earthkit.data.core import Encodable
-from earthkit.data.core import FileLoaderMixin
 from earthkit.data.core import Loader
 from earthkit.data.core.config import CONFIG
 from earthkit.data.decorators import detect_out_filename
@@ -83,7 +82,6 @@ class Reader(Loader, Encodable, os.PathLike):
         return self._format
 
     def _encode(self, encoder, hints=None, **kwargs):
-        print("Reader._encode", encoder, kwargs)
         if hints and hints.get("path_allowed", False):
             result = self._encode_path(encoder, **kwargs)
             if result is not None:
@@ -96,9 +94,7 @@ class Reader(Loader, Encodable, os.PathLike):
 
     def _encode_path(self, encoder, *, target=None, **kwargs):
         path_info = self._path_info()
-        print("Reader._encode_path", path_info, encoder, target, kwargs)
         if path_info is not None:
-            print("target", target)
             if target is not None and target._name == "file":
                 path_info = self._path_info()
                 return encoder._encode_path(path_info, target=target, **kwargs)

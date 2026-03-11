@@ -241,7 +241,6 @@ class StreamFileSource(FileSource):
 
     def mutate(self):
         assert self.stream
-        print("Creating stream source for", self._path_and_parts)
         if isinstance(self.path, (list, tuple)):
             if len(self.path) == 1:
                 self.path = self.path[0]
@@ -265,7 +264,6 @@ class StreamFileSource(FileSource):
         # Give a chance to directories and zip files
         # to return a multi-source
         source = self._reader.mutate_source()
-        print("StreamFileSource: source after mutate_source=", self._reader)
         if source not in (None, self):
             if hasattr(source, "is_streamable_file") and source.is_streamable_file():
                 # when we reach this stage the source must be a file that can be streamed
