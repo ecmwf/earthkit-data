@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from ..readers.zarr.fieldlist import ZarrReader
+from ..readers.zarr.reader import ZarrReader
 from . import Source
 
 
