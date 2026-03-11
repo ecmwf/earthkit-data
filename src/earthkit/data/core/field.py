@@ -1022,6 +1022,10 @@ class Field(Base):
             raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
 
         _kwargs = defaultdict(dict)
+
+        if not kwargs:
+            return self
+
         _components = dict()
         for k, v in kwargs.items():
             if k in self._components:

@@ -24,8 +24,8 @@ sys.path.insert(0, here)
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
-# @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
-@pytest.mark.parametrize("fl_type", ["file"])
+@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+# @pytest.mark.parametrize("fl_type", ["file"])
 def test_grib_set_detailed(fl_type):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
@@ -166,8 +166,7 @@ def test_grib_set_detailed(fl_type):
     # assert ds_1.metadata("levelist") == [600, 600]x
 
 
-# @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
-@pytest.mark.parametrize("fl_type", ["file"])
+@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 def test_grib_set_combined(fl_type):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
@@ -435,3 +434,12 @@ def test_grib_copy_to_field(fl_type):
         assert ds_saved.get("levelist") == [600, 600]
         assert np.allclose(ds_saved[0].values, vals_ori + 1)
         assert np.allclose(ds_saved[1].values, vals_ori + 2)
+
+
+@pytest.mark.parametrize("fl_type", ["file"])
+def test_grib_set_no_args(fl_type):
+    ds, _ = load_grib_data("test4.grib", fl_type)
+
+    f = ds[0]
+    r = f.set()
+    assert r is f
