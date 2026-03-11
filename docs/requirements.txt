@@ -3,7 +3,7 @@ ipykernel
 docutils
 Pygments>=2.6.1
 Sphinx>=7.3.7
-sphinx-rtd-theme
+furo
 nbsphinx
 setuptools
 sphinx-autoapi
