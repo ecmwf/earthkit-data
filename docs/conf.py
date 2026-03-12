@@ -31,7 +31,6 @@ copyright = "%s, European Centre for Medium-Range Weather Forecasts (ECMWF)" % (
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx_rtd_theme",
     "nbsphinx",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
