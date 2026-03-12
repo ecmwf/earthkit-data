@@ -95,6 +95,63 @@ body[data-theme="dark"] {
 }
 
 
+/* ── pandas DataFrame dark-mode fix for Furo "auto" theme ────────────
+   Pandas HTML tables use class="dataframe" with no dark-mode awareness.
+   Override text, background, and border colours so tables stay readable.
+   ─────────────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) table.dataframe {
+        color: rgba(255, 255, 255, 0.87);
+        border-color: #555;
+    }
+
+    body:not([data-theme="light"]) table.dataframe th {
+        background-color: var(--color-background-secondary, #1a1c1e);
+        color: rgba(255, 255, 255, 0.87);
+        border-color: #555;
+    }
+
+    body:not([data-theme="light"]) table.dataframe td {
+        background-color: var(--color-background-primary, #131416);
+        color: rgba(255, 255, 255, 0.87);
+        border-color: #555;
+    }
+
+    body:not([data-theme="light"]) table.dataframe tbody tr:nth-child(odd) td {
+        background-color: var(--color-background-hover, #1e2124);
+    }
+
+    body:not([data-theme="light"]) table.dataframe tbody tr:hover td {
+        background-color: #2a2d31;
+    }
+}
+
+body[data-theme="dark"] table.dataframe {
+    color: rgba(255, 255, 255, 0.87);
+    border-color: #555;
+}
+
+body[data-theme="dark"] table.dataframe th {
+    background-color: var(--color-background-secondary, #1a1c1e);
+    color: rgba(255, 255, 255, 0.87);
+    border-color: #555;
+}
+
+body[data-theme="dark"] table.dataframe td {
+    background-color: var(--color-background-primary, #131416);
+    color: rgba(255, 255, 255, 0.87);
+    border-color: #555;
+}
+
+body[data-theme="dark"] table.dataframe tbody tr:nth-child(odd) td {
+    background-color: var(--color-background-hover, #1e2124);
+}
+
+body[data-theme="dark"] table.dataframe tbody tr:hover td {
+    background-color: #2a2d31;
+}
+
+
 .nboutput .stderr {
     display: none;
 }
