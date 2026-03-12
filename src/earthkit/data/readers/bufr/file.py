@@ -394,7 +394,7 @@ class BUFRList(IndexFeatureListBase):
     def _normalise_key_values(self, **kwargs):
         return kwargs
 
-    def to_pandas(self, columns=COLUMNS, filters=None, **kwargs):
+    def to_pandas(self, columns=None, filters=None, **kwargs):
         """Extract BUFR data into a pandas DataFrame using :xref:`pdbufr`.
 
         Parameters
@@ -420,6 +420,7 @@ class BUFRList(IndexFeatureListBase):
         """
         import pdbufr
 
+        columns = [] if columns is None else columns
         filters = {} if filters is None else filters
 
         return pdbufr.read_bufr(self, columns=columns, filters=filters, **kwargs)
