@@ -322,6 +322,20 @@ class FieldList(Source, Encodable):
         """
         pass
 
+    def set(self, *args, **kwargs):
+        r"""Set the metadata values for each field.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments defining the metadata keys and values. Passed to
+            :obj:`GribField.set_metadata() <data.readers.grib.codes.GribField.set_metadata>`
+        **kwargs: dict, optional
+            Keyword arguments passed to
+            :obj:`GribField.set_metadata() <data.readers.grib.codes.GribField.set_metadata>`
+        """
+        pass
+
     @abstractmethod
     def ls(self, n=None, keys=None, extra_keys=None, namespace=None):
         r"""Generate a list like summary using a set of metadata keys.

@@ -189,6 +189,21 @@ class IndexFieldListBase(Index, FieldList):
 
         return self.get(keys, raise_on_missing=True, **kwargs)
 
+    def set(self, *args, **kwargs):
+        kwargs = kwargs.copy()
+        for a in args:
+            if a is None:
+                continue
+            if isinstance(a, dict):
+                kwargs.update(a)
+                continue
+            raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
+
+        if not kwargs:
+            return self
+
+        return self.from_fields([f.set(**kwargs) for f in self])
+
     def _default_ls_keys(self):
         if len(self) > 0:
             return self[0].default_ls_keys
