@@ -36,3 +36,8 @@ class GeoJsonData(SimpleData):
         from earthkit.data.readers.geojson.file import GeoJsonList
 
         return GeoJsonList(self._reader.path)
+
+    def _repr_html_(self):
+        from earthkit.data.utils.summary import make_data_repr_html
+
+        return make_data_repr_html(title="GeoJSON file", path=self._reader.path, types=self.available_types)

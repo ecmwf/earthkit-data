@@ -25,3 +25,8 @@ class CSVData(SourceData):
 
     def to_xarray(self, **kwargs):
         return self._reader.to_xarray(**kwargs)
+
+    def _repr_html_(self):
+        from earthkit.data.utils.summary import make_data_repr_html
+
+        return make_data_repr_html(title="CSV file", path=self._reader.path, types=self.available_types)

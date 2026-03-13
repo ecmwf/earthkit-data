@@ -31,3 +31,8 @@ class ODBData(SourceData):
             from earthkit.data import to_target
 
             return to_target(target, *args, data=self._reader, **kwargs)
+
+    def _repr_html_(self):
+        from earthkit.data.utils.summary import make_data_repr_html
+
+        return make_data_repr_html(title="ODB file", path=self._reader.path, types=self.available_types)

@@ -73,6 +73,17 @@ class BaseDataFieldComponentHandler(FieldComponentHandler):
 
         return default
 
+    def to_dict(self):
+        values = self.get_values(copy=False)
+        if values is None:
+            return dict()
+        else:
+            return {
+                "number_of_values": values.size,
+                "array_type": type(values).__name__,
+                "array_dtype": str(values.dtype),
+            }
+
 
 class DataFieldComponentHandler(BaseDataFieldComponentHandler):
     """Data component handler for Field that provides implementation
@@ -156,9 +167,15 @@ class DataFieldComponentHandler(BaseDataFieldComponentHandler):
             return self.set_values(values)
         raise ValueError("Invalid arguments")
 
-    def dump(self, *args, **kwargs):
-        """This field component has no dump."""
-        return None
+    def dump(self, owner: Any, name: str, result: dict, prefix_keys=False) -> None:
+        """Populate the namespace dictionary for this SpecFieldComponent."""
+
+        def _prefix(key):
+            return f"{self.NAME}.{key}" if prefix_keys else key
+
+        if name is None or name == self.NAME or (isinstance(name, (list, tuple)) and self.NAME in name):
+            r = {_prefix(k): v for k, v in self.to_dict().items()}
+            result[self.NAME] = r
 
     def check(self, owner):
         """Check that the data is consistent with the field's shape."""

@@ -17,6 +17,19 @@ from .core import GRIBReaderBase
 from .scan import GribCodesMessagePositionIndex
 
 
+def first_field_from_grib_file(path, parts=None):
+    offset = GribCodesMessagePositionIndex(path, parts=parts, max_count=1).offsets[0]
+    if offset < 0 or offset is None:
+        return None
+    from .memory import GribStreamReader
+
+    with open(path, "rb") as f:
+        if parts:
+            f.seek(offset)
+        reader = GribStreamReader(f)
+        return next(reader, None)
+
+
 class GribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
     handle_cache = None
 
@@ -191,6 +204,9 @@ class GRIBReader(Source, GRIBReaderBase):
 
     def to_array(self, *args, **kwargs):
         return self.to_fieldlist().to_array(*args, **kwargs)
+
+    def peek(self):
+        return first_field_from_grib_file(self.path, parts=self._kwargs.get("parts", None))
 
     def mutate_source(self):
         # A GRIBReader is a source itself

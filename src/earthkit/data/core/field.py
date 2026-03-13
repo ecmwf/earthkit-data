@@ -51,13 +51,17 @@ LABELS = "labels"
 METADATA = "metadata"
 
 DESCRIBE_ORDER = [
+    DATA,
     PARAMETER,
     TIME,
     VERTICAL,
     ENSEMBLE,
     GEOGRAPHY,
     PROC,
+    LABELS,
 ]
+
+DEFAULT_DESCRIBE_SELECTION = PARAMETER
 
 
 class _ComponentMaker:
@@ -1240,7 +1244,9 @@ class Field(Base):
                     }
                 )
 
-        return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
+        return format_namespace_dump(
+            r, selected=DEFAULT_DESCRIBE_SELECTION, details=self.__class__.__name__, **kwargs
+        )
 
     @property
     def default_ls_keys(self):

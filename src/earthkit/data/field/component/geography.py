@@ -356,9 +356,6 @@ class BaseGeography(SimpleFieldComponent):
         """
         pass
 
-    def to_dict(self):
-        return {"grid_spec": self.grid_spec()}
-
     # @classmethod
     # def from_dict(cls, data, shape_hint=None):
     #     from ..dict.geography import create_geography
@@ -455,6 +452,14 @@ class BaseGeography(SimpleFieldComponent):
     @classmethod
     def from_dict(cls, data, shape_hint=None):
         return create_geography_from_dict(data, shape_hint=shape_hint)
+
+    def to_dict(self):
+        return {
+            "grid_spec": self.grid_spec(),
+            "grid_type": self.grid_type(),
+            "shape": self.shape(),
+            "area": self.area(),
+        }
 
     def __getstate__(self):
         return super().__getstate__()
@@ -566,16 +571,16 @@ class LatLonGeography(BaseGeography):
         return None
 
     def _north(self):
-        return np.amax(self.latitudes())
+        return float(np.amax(self.latitudes()))
 
     def _south(self):
-        return np.amin(self.latitudes())
+        return float(np.amin(self.latitudes()))
 
-    def west(self):
-        return np.amin(self.longitudes())
+    def _west(self):
+        return float(np.amin(self.longitudes()))
 
     def _east(self):
-        return np.amax(self.longitudes())
+        return float(np.amax(self.longitudes()))
 
     def projection(self):
         if self._proj_str:
@@ -595,7 +600,7 @@ class LatLonGeography(BaseGeography):
         return None
 
     def area(self) -> tuple:
-        return (self.north(), self.west(), self.south(), self.east())
+        return (self._north(), self._west(), self._south(), self._east())
 
     def grid_type(self):
         return "_unstructured"

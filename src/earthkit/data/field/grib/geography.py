@@ -152,8 +152,8 @@ class GribGeography(BaseGeography):
     def from_dict(*args, **kwargs):
         raise NotImplementedError("GribGeography cannot be created from a dictionary")
 
-    def to_dict(self):
-        return dict()
+    # def to_dict(self):
+    #     return dict()
 
     def __getstate__(self):
         state = {}

@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+
 from .source import SourceData
 
 
@@ -19,6 +20,9 @@ class GribData(SourceData):
 
     def describe(self):
         return f"GRIB data from {self._reader.path}"
+
+    def __repr__(self):
+        return "GribData(path={self._reader.path})"
 
     def to_fieldlist(self, *args, **kwargs):
         return self._reader.to_fieldlist(*args, **kwargs)
@@ -34,3 +38,8 @@ class GribData(SourceData):
 
     def to_array(self, *args, **kwargs):
         return self._reader.to_array(*args, **kwargs)
+
+    def _repr_html_(self):
+        from earthkit.data.utils.summary import make_data_repr_html
+
+        return make_data_repr_html(title="GRIB file", path=self._reader.path, types=self.available_types)

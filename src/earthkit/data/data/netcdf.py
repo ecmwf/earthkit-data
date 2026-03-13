@@ -42,3 +42,8 @@ class NetCDFData(SourceData):
 
     def _default_encoder(self):
         return self._source._default_encoder()
+
+    def _repr_html_(self):
+        from earthkit.data.utils.summary import make_data_repr_html
+
+        return make_data_repr_html(title="NetCDF file", path=self._reader.path, types=self.available_types)

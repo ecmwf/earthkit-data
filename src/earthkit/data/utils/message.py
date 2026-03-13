@@ -83,11 +83,12 @@ class CodesMessagePositionIndex:
     VERSION = 1
     MAGIC = None
 
-    def __init__(self, path, parts=None):
+    def __init__(self, path, parts=None, max_count=None):
         self.path = path
         self.offsets = None
         self.lengths = None
         self.parts = parts
+        self.max_count = max_count
         self._cache_file = None
         self._load()
 
@@ -99,11 +100,11 @@ class CodesMessagePositionIndex:
 
         try:
             if parts is None:
-                yield from self._get_message_positions_part(fd, (0, -1))
+                yield from self._get_message_positions_part(fd, (0, -1), max_count=self.max_count)
             else:
                 for part in parts:
                     try:
-                        yield from self._get_message_positions_part(fd, part)
+                        yield from self._get_message_positions_part(fd, part, max_count=self.max_count)
                     except Exception:
                         pass
         except Exception:
@@ -111,7 +112,7 @@ class CodesMessagePositionIndex:
         finally:
             os.close(fd)
 
-    def _get_message_positions_part(self, path, part):
+    def _get_message_positions_part(self, path, part, max_count=None):
         raise NotImplementedError
 
     @staticmethod

@@ -16,7 +16,7 @@ class BufrCodesMessagePositionIndex(CodesMessagePositionIndex):
     MAGIC = b"BUFR"
 
     # This does not belong here, should be in the C library
-    def _get_message_positions_part(self, fd, part):
+    def _get_message_positions_part(self, fd, part, max_count=None):
         assert part is not None
         assert len(part) == 2
 
@@ -26,6 +26,7 @@ class BufrCodesMessagePositionIndex(CodesMessagePositionIndex):
         if os.lseek(fd, offset, os.SEEK_SET) != offset:
             return
 
+        count = 0
         while True:
             code = os.read(fd, 4)
             if len(code) < 4:
@@ -43,5 +44,9 @@ class BufrCodesMessagePositionIndex(CodesMessagePositionIndex):
 
             if edition in [3, 4]:
                 yield offset, length
+                count += 1
+
+                if max_count is not None and count >= max_count:
+                    return
 
             offset = os.lseek(fd, offset + length, os.SEEK_SET)
