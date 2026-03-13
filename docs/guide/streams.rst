@@ -77,7 +77,7 @@ We can load the whole stream into memory by using ``read_all=True`` in :func:`fr
 Further examples
 -----------------
 
-- :ref:`/examples/data_from_stream.ipynb`
-- :ref:`/examples/file_stream.ipynb`
-- :ref:`/examples/fdb.ipynb`
-- :ref:`/examples/url_stream.ipynb`
+- :ref:`/examples/source/data_from_stream.ipynb`
+- :ref:`/examples/source/file_stream.ipynb`
+- :ref:`/examples/source/fdb.ipynb`
+- :ref:`/examples/source/url_stream.ipynb`

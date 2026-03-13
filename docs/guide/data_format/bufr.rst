@@ -48,5 +48,5 @@ A :obj:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>` represent a single BUF
 
 Examples:
 
-    - :ref:`/examples/bufr_temp.ipynb`
-    - :ref:`/examples/bufr_synop.ipynb`
+    - :ref:`/examples/bufr/bufr_temp.ipynb`
+    - :ref:`/examples/bufr/bufr_synop.ipynb`

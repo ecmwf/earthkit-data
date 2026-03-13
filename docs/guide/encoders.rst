@@ -47,4 +47,4 @@ Built in encoders
 
 Examples
 ----------
-    - :ref:`/examples/grib_encoder.ipynb`
+    - :ref:`/examples/target/grib_encoder.ipynb`

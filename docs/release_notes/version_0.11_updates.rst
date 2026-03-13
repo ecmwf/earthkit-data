@@ -71,28 +71,28 @@ API changes
 - Removed :py:class:`ArrayFieldList`. Its functionality is covered by :py:class:`SimpleFieldList` (:pr:`471`).
 - :meth:`~data.core.fieldlist.FieldList.from_array` and :meth:`~data.core.fieldlist.FieldList.to_fieldlist` now return an :py:class:`SimpleFieldList`
 
-See :ref:`/examples/grib_array_backends.ipynb` for more details.
+See :ref:`/examples/grib/grib_array_namespace.ipynb` for more details.
 
 
 Changes
 ++++++++
 - Added the :ref:`data-sources-s3` source to access AWS S3 buckets (:pr:`484`). See the notebook examples:
 
-  - :ref:`/examples/s3.ipynb`
+  - :ref:`/examples/source/s3.ipynb`
 
 - Added support for geotiff files (:pr:`503`). See the notebook examples:
 
-  - :ref:`/examples/geotiff.ipynb`
+  - :ref:`/examples/geotiff/geotiff.ipynb`
 
 - Added :ref:`stream <streams>` support for the :ref:`data-sources-file` source (:pr:`500`)
 - Allowed concatenation of :ref:`stream <streams>` sources (:pr:`500`)
 - Added :py:class:`SimpleFieldList`, which can store a list of arbitrary Fields (:pr:`471`). See the notebook examples:
 
-  - :ref:`/examples/grib_array_backends.ipynb`
+  - :ref:`/examples/grib/grib_array_namespace.ipynb`
 
 - Added :meth:`~data.core.fieldlist.Field.clone` and :py:meth:`~data.core.fieldlist.Field.copy` to alter field metadata and values (:pr:`493`, :pr:`496`, :pr:`522`). See the notebook examples:
 
-  - :ref:`/examples/grib_modification.ipynb`
+  - :ref:`/examples/legacy/grib_modification.ipynb`
 
 - Reimplemented and documented the :ref:`data-sources-lod` source, which is now generating a :py:class:`SimpleFieldList` and is not bound to GRIB specific metadata (:pr:`461`, :pr:`511`). See the notebook examples:
 

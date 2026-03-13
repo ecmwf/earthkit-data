@@ -142,15 +142,15 @@ file
 
   Further examples:
 
-    - :ref:`/examples/files.ipynb`
-    - :ref:`/examples/multi_files.ipynb`
-    - :ref:`/examples/file_parts.ipynb`
-    - :ref:`/examples/file_stream.ipynb`
-    - :ref:`/examples/tar_files.ipynb`
-    - :ref:`/examples/grib_overview.ipynb`
-    - :ref:`/examples/bufr_temp.ipynb`
-    - :ref:`/examples/netcdf.ipynb`
-    - :ref:`/examples/odb.ipynb`
+    - :ref:`/examples/source/files.ipynb`
+    - :ref:`/examples/source/multi_files.ipynb`
+    - :ref:`/examples/source/file_parts.ipynb`
+    - :ref:`/examples/source/file_stream.ipynb`
+    - :ref:`/examples/source/tar_files.ipynb`
+    - :ref:`/examples/grib/grib_overview.ipynb`
+    - :ref:`/examples/bufr/bufr_temp.ipynb`
+    - :ref:`/examples/netcdf/netcdf.ipynb`
+    - :ref:`/examples/odb/odb.ipynb`
 
 .. _data-sources-file-pattern:
 
@@ -305,9 +305,9 @@ url
 
   Further examples:
 
-    - :ref:`/examples/url.ipynb`
-    - :ref:`/examples/url_parts.ipynb`
-    - :ref:`/examples/url_stream.ipynb`
+    - :ref:`/examples/source/url.ipynb`
+    - :ref:`/examples/source/url_parts.ipynb`
+    - :ref:`/examples/source/url_stream.ipynb`
 
 
 .. _data-sources-url-pattern:
@@ -456,9 +456,9 @@ stream
 
   See the following notebook examples for further details:
 
-    - :ref:`/examples/data_from_stream.ipynb`
-    - :ref:`/examples/fdb.ipynb`
-    - :ref:`/examples/url_stream.ipynb`
+    - :ref:`/examples/source/data_from_stream.ipynb`
+    - :ref:`/examples/source/fdb.ipynb`
+    - :ref:`/examples/source/url_stream.ipynb`
 
 
 .. _data-sources-memory:
@@ -559,7 +559,7 @@ list-of-dicts
     When other GRIB related geography keys are present, no attempt is made to check if they are consistent
     with the grid defined by "latitudes" and "longitudes". Therefore their usage is strongly discouraged.
 
-    See: :ref:`/examples/list_of_dicts_geography.ipynb` for more details.
+    See: :ref:`/examples/dict/list_of_dicts_geography.ipynb` for more details.
 
   Parameter keys:
 
@@ -603,9 +603,9 @@ list-of-dicts
 
   Further examples:
 
-      - :ref:`/examples/fields_from_dict_in_loop.ipynb`
-      - :ref:`/examples/list_of_dicts_overview.ipynb`
-      - :ref:`/examples/list_of_dicts_geography.ipynb`
+      - :ref:`/examples/dict/fields_from_dict_in_loop.ipynb`
+      - :ref:`/examples/dict/list_of_dicts_overview.ipynb`
+      - :ref:`/examples/dict/list_of_dicts_geography.ipynb`
 
 .. _data-sources-multi:
 
@@ -683,7 +683,7 @@ ads
 
   Further examples:
 
-      - :ref:`/examples/ads.ipynb`
+      - :ref:`/examples/source/ads.ipynb`
 
 
 .. _data-sources-cds:
@@ -738,7 +738,7 @@ cds
 
   Further examples:
 
-      - :ref:`/examples/cds.ipynb`
+      - :ref:`/examples/source/cds.ipynb`
 
 
 .. _data-sources-ecfs:
@@ -794,7 +794,7 @@ ecmwf-open-data
 
   Further examples:
 
-      - :ref:`/examples/ecmwf_open_data.ipynb`
+      - :ref:`/examples/source/ecmwf_open_data.ipynb`
 
 
 .. _data-sources-fdb:
@@ -901,8 +901,8 @@ fdb
 
   Further examples:
 
-      - :ref:`/examples/fdb.ipynb`
-      - :ref:`/examples/grib_fdb_write.ipynb`
+      - :ref:`/examples/source/fdb.ipynb`
+      - :ref:`/examples/grib/grib_fdb_write.ipynb`
 
 
 
@@ -984,7 +984,7 @@ gribjump
 
   Further examples:
 
-      - :ref:`/examples/gribjump.ipynb`
+      - :ref:`/examples/source/gribjump.ipynb`
 
 
 .. _data-sources-mars:
@@ -1067,7 +1067,7 @@ mars
 
   Further examples:
 
-      - :ref:`/examples/mars.ipynb`
+      - :ref:`/examples/source/mars.ipynb`
 
 
 .. _data-sources-opendap:
@@ -1084,7 +1084,7 @@ opendap
 
   Examples:
 
-      - :ref:`/examples/netcdf_opendap.ipynb`
+      - :ref:`/examples/source/netcdf_opendap.ipynb`
 
 
 .. _data-sources-polytope:
@@ -1143,11 +1143,11 @@ polytope
 
   Further examples:
 
-      - :ref:`/examples/polytope.ipynb`
-      - :ref:`/examples/polytope_feature.ipynb`
-      - :ref:`/examples/polytope_time_series.ipynb`
-      - :ref:`/examples/polytope_polygon_coverage.ipynb`
-      - :ref:`/examples/polytope_vertical_profile.ipynb`
+      - :ref:`/examples/source/polytope.ipynb`
+      - :ref:`/examples/source/polytope_feature.ipynb`
+      - :ref:`/examples/covjson/polytope_time_series.ipynb`
+      - :ref:`/examples/covjson/polytope_polygon_coverage.ipynb`
+      - :ref:`/examples/covjson/polytope_vertical_profile.ipynb`
 
 .. _data-sources-s3:
 
@@ -1250,7 +1250,7 @@ s3
 
   Further examples:
 
-      - :ref:`/examples/s3.ipynb`
+      - :ref:`/examples/source/s3.ipynb`
 
 
 .. _data-sources-wekeo:
@@ -1300,7 +1300,7 @@ wekeo
 
   Further examples:
 
-      - :ref:`/examples/wekeo.ipynb`
+      - :ref:`/examples/source/wekeo.ipynb`
 
 
 .. _data-sources-wekeocds:
@@ -1353,7 +1353,7 @@ wekeocds
 
   Further examples:
 
-      - :ref:`/examples/wekeo.ipynb`
+      - :ref:`/examples/source/wekeo.ipynb`
 
 
 

@@ -127,7 +127,7 @@ The generated GRIB fieldlist can be saved to disk using the :func:`to_target` me
 
 For further details see the following notebook:
 
-- :ref:`/examples/xarray_engine_to_grib.ipynb`
+- :ref:`/examples/xr_engine/xarray_engine_to_grib.ipynb`
 
 
 .. _xr_grib_to_netcdf:
@@ -191,4 +191,4 @@ To control the Xarray conversion we can pass options to the earthkit Xarray engi
 
 For further details see the following notebook:
 
-- :ref:`/examples/grib_to_netcdf.ipynb`
+- :ref:`/examples/grib/grib_to_netcdf.ipynb`

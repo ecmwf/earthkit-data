@@ -83,4 +83,4 @@ The integration is performed by ``entry_points`` defined in  ``pyproject.toml``.
     entry-points."earthkit.data.sources".demo-source = "earthkit_data_demo_source:DemoSource"
 
 
-See the :ref:`/examples/demo_sources_plugin.ipynb` notebook for the full example.
+See the :ref:`/examples/misc/demo_sources_plugin.ipynb` notebook for the full example.

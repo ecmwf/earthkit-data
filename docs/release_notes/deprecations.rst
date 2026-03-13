@@ -33,7 +33,7 @@ The name of the ensemble member :ref:`dimension role <_xr_dim_roles>` changed to
 The "to_grib" method on the earthkit Xarray accessor is deprecated
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The :func:`to_grib` method on the ``earthkit`` Xarray accessor is deprecated. Use :func:`to_target` instead. The method is still available for backward compatibility but will be removed in a future release. See :ref:`/examples/xarray_engine_to_grib.ipynb` notebook for details on how to use the new API.
+The :func:`to_grib` method on the ``earthkit`` Xarray accessor is deprecated. Use :func:`to_target` instead. The method is still available for backward compatibility but will be removed in a future release. See :ref:`/examples/xr_engine/xarray_engine_to_grib.ipynb` notebook for details on how to use the new API.
 
 .. list-table::
    :header-rows: 0

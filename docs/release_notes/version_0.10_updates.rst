@@ -95,7 +95,7 @@ New features
 ++++++++++++++++
 
 - Refined :ref:`GRIB` data memory management when reading from a file (:pr:`428`). See :ref:`grib-memory` for an overview.
-- Refined how GRIB the metadata object manages the GRIB handle (:pr:`430`). See the :ref:`/examples/grib_metadata_object.ipynb` notebook example for details.
+- Refined how GRIB the metadata object manages the GRIB handle (:pr:`430`). See the :ref:`/examples/legacy/grib_metadata_object.ipynb` notebook example for details.
 - Added the ``index`` keyword argument for data subsetting to the following methods (:pr:`407`):
 
   -  field:  :meth:`~data.core.fieldlist.Field.to_numpy`, :meth:`~data.core.fieldlist.Field.to_array`, :meth:`~data.core.fieldlist.Field.data`, :meth:`~data.core.fieldlist.Field.to_latlon`, :meth:`~data.core.fieldlist.Field.to_points`

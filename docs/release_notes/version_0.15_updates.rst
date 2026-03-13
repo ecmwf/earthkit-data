@@ -76,7 +76,7 @@ Breaking xarray engine changes
   - allows handling cases when the ``step`` key contains ranges as a str in the form of e.g.  "12-24"
   - allows proper sorting of the "step" dimension values when building the dataset
 
- Please note that due to this change when ``dim_name_from_role_name=False`` is used the step dimension will be called "step_timedelta" instead of "step". You can still reproduce the old behaviour by using: ``dim_roles={"step": "step"}``. See the following notebook example: :ref:`/examples/xarray_engine_step_ranges.ipynb`.
+ Please note that due to this change when ``dim_name_from_role_name=False`` is used the step dimension will be called "step_timedelta" instead of "step". You can still reproduce the old behaviour by using: ``dim_roles={"step": "step"}``. See the following notebook example: :ref:`/examples/xr_engine/xarray_engine_step_ranges.ipynb`.
 
 
 Other Xarray engine changes
@@ -94,19 +94,19 @@ Other Xarray engine changes
        }
 
 
-- Improved the serialisation of GRIB fieldlists to reduce memory usage when Xarray is generated with chunks (:pr:`700`). See the :ref:`/examples/xarray_engine_chunks.ipynb` notebook example.
+- Improved the serialisation of GRIB fieldlists to reduce memory usage when Xarray is generated with chunks (:pr:`700`). See the :ref:`/examples/xr_engine/xarray_engine_chunks.ipynb` notebook example.
 - TensorBackendArray, which implements the lazy loading of DataArrays in the Xarray engine, now uses a ``dask.utils.SerializableLock`` when accessing the data (:pr:`700`).
-- Enabled converting :ref:`data-sources-lod` fieldlists into Xarray (:pr:`701`). See the :ref:`/examples/list_of_dicts_to_xarray.ipynb` notebook example.
-- Enabled converting Xarray generated with the earthkit engine into GRIB using :func:`to_target` (:pr:`730`). See :ref:`xr_to_grib` and the related :ref:`/examples/xarray_engine_to_grib.ipynb` notebook example.
+- Enabled converting :ref:`data-sources-lod` fieldlists into Xarray (:pr:`701`). See the :ref:`/examples/dict/list_of_dicts_to_xarray.ipynb` notebook example.
+- Enabled converting Xarray generated with the earthkit engine into GRIB using :func:`to_target` (:pr:`730`). See :ref:`xr_to_grib` and the related :ref:`/examples/xr_engine/xarray_engine_to_grib.ipynb` notebook example.
 
 New Xarray engine notebooks
 ------------------------------
 
-- :ref:`/examples/xarray_engine_step_ranges.ipynb`
-- :ref:`/examples/xarray_engine_ensemble.ipynb`
-- :ref:`/examples/xarray_engine_squeeze.ipynb`
-- :ref:`/examples/xarray_engine_chunks.ipynb`
-- :ref:`/examples/list_of_dicts_to_xarray.ipynb`
+- :ref:`/examples/xr_engine/xarray_engine_step_ranges.ipynb`
+- :ref:`/examples/xr_engine/xarray_engine_ensemble.ipynb`
+- :ref:`/examples/xr_engine/xarray_engine_squeeze.ipynb`
+- :ref:`/examples/xr_engine/xarray_engine_chunks.ipynb`
+- :ref:`/examples/dict/list_of_dicts_to_xarray.ipynb`
 
 
 
@@ -114,10 +114,10 @@ New features
 +++++++++++++++++
 
 - Added the :ref:`zarr <data-sources-zarr>` source to read Zarr data (:pr:`675`).
-- Added the :ref:`targets-zarr` target (:pr:`716`). See the :ref:`/examples/grib_to_zarr_target.ipynb` notebook example.
+- Added the :ref:`targets-zarr` target (:pr:`716`). See the :ref:`/examples/target/grib_to_zarr_target.ipynb` notebook example.
 - Added new config option ``grib-file-serialisation-policy`` to control how GRIB data on disk is pickled. The options are "path" and "memory". The default is "path". Previously, only "memory" was implemented (:pr:`700`).
 - Added serialisation to GRIB fields (both on disk and in-memory) (:pr:`700`)
-- Enabled specifying earthkit Xarray engine options via the ``earthkit_to_xarray_kwargs`` kwarg in :func:`to_target` when converting GRIB to NetCDF. See :ref:`xr_grib_to_netcdf` and related the :ref:`/examples/grib_to_netcdf.ipynb` notebook example. (:pr:`729`) E.g.
+- Enabled specifying earthkit Xarray engine options via the ``earthkit_to_xarray_kwargs`` kwarg in :func:`to_target` when converting GRIB to NetCDF. See :ref:`xr_grib_to_netcdf` and related the :ref:`/examples/grib/grib_to_netcdf.ipynb` notebook example. (:pr:`729`) E.g.
 
     .. code-block:: python
 

@@ -230,7 +230,7 @@ class BUFRList(IndexFeatureListBase):
 
         Examples
         --------
-        :ref:`/examples/bufr_temp.ipynb`
+        :ref:`/examples/bufr/bufr_temp.ipynb`
 
         """
         from earthkit.data.utils.summary import ls as summary_ls
@@ -414,8 +414,8 @@ class BUFRList(IndexFeatureListBase):
 
         Examples
         --------
-        - :ref:`/examples/bufr_temp.ipynb`
-        - :ref:`/examples/bufr_synop.ipynb`
+        - :ref:`/examples/bufr/bufr_temp.ipynb`
+        - :ref:`/examples/bufr/bufr_synop.ipynb`
 
         """
         import pdbufr

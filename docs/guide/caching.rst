@@ -41,7 +41,7 @@ The cache location can be read and modified with Python (see the details below).
 
 .. tip::
 
-   See the :ref:`/examples/cache.ipynb` notebook for examples.
+   See the :ref:`/examples/misc/cache.ipynb` notebook for examples.
 
 .. note::
 

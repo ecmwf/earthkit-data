@@ -64,7 +64,7 @@ Xarray engine ``split_dims``
 
 When :meth:`~data.core.fieldlist.FieldList.to_xarray` is called with ``split_dims``, the engine will now return a tuple with two lists: the first list contains the Xarray datasets, while the second one contains the corresponding dictionaries with the spitting keys/values (one dictionary per dataset) (:pr:`688`). Previously, a list of datasets was returned so this is a **breaking change**.
 
-See the :ref:`/examples/xarray_engine_split.ipynb` notebook example.
+See the :ref:`/examples/xr_engine/xarray_engine_split.ipynb` notebook example.
 
 
 Patterns

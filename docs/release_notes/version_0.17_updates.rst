@@ -21,11 +21,11 @@ New features
 
 - Implemented the ``allow_holes`` option in the Xarray engine to allow using GRIB input not forming a complete hypercube (:pr:`780`). The default is ``allow_holes=False``. See the notebook example:
 
-    - :ref:`/examples/xarray_engine_holes.ipynb`
+    - :ref:`/examples/xr_engine/xarray_engine_holes.ipynb`
 
 - Added the experimental :ref:`data-sources-gribjump` source for fast retrievals of GRIB message subsets from the FDB (Fields DataBase) using the :xref:`gribjump` library (:pr:`689`). See the notebook example:
 
-    - :ref:`/examples/gribjump.ipynb`
+    - :ref:`/examples/source/gribjump.ipynb`
 
 - Added the :func:`to_geojson` method to CovjsonReader for conversion to geojson from covjson (:pr:`794`). Requires ``covjsonkit>=0.2.2``.
 - Allowed reading multiple GRIB messages from a memory buffer with the :ref:`data-sources-memory` source (:pr:`740`).

@@ -94,9 +94,9 @@ while ``dim_roles`` (together with ``dim_name_from_role_name``) controls their n
 
 The following examples demonstrate the temporal dimensions modes:
 
-- :ref:`/examples/xarray_engine_temporal.ipynb`
+- :ref:`/examples/xr_engine/xarray_engine_temporal.ipynb`
 
-- :ref:`/examples/xarray_engine_seasonal.ipynb`
+- :ref:`/examples/xr_engine/xarray_engine_seasonal.ipynb`
 
 
 .. list-table:: Vertical dimensions modes
@@ -125,7 +125,7 @@ The following examples demonstrate the temporal dimensions modes:
 
 The following example demonstrates the vertical dimensions modes:
 
-- :ref:`/examples/xarray_engine_level.ipynb`
+- :ref:`/examples/xr_engine/xarray_engine_level.ipynb`
 
 
 .. _xr_squeeze_and_ensure_dims:
@@ -141,7 +141,7 @@ even if they have only one value. This is useful when you want to keep the dimen
 
 See the following notebook for examples of how this works:
 
-- :ref:`/examples/xarray_engine_squeeze.ipynb`
+- :ref:`/examples/xr_engine/xarray_engine_squeeze.ipynb`
 
 
 .. _xr_dims_as_attrs:
@@ -167,7 +167,7 @@ exposed as a variable attribute.
 
 For a detailed discussion and examples, see the following notebook:
 
-- :ref:`/examples/xarray_engine_dims_as_attrs.ipynb`
+- :ref:`/examples/xr_engine/xarray_engine_dims_as_attrs.ipynb`
 
 
 Extra dimensions
@@ -202,4 +202,4 @@ In particular, a virtual metadata key can be used:
 
 For a detailed discussion and examples, see the following notebook:
 
-- :ref:`/examples/xarray_engine_remapping.ipynb`
+- :ref:`/examples/xr_engine/xarray_engine_remapping.ipynb`

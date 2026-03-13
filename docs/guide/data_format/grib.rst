@@ -66,10 +66,10 @@ A :class:`~data.readers.grib.codes.GribField` represent a single GRIB field. It 
 
 Examples:
 
-    - :ref:`/examples/grib_overview.ipynb`
-    - :ref:`/examples/grib_metadata.ipynb`
-    - :ref:`/examples/grib_selection.ipynb`
-    - :ref:`/examples/grib_missing.ipynb`
+    - :ref:`/examples/grib/grib_overview.ipynb`
+    - :ref:`/examples/legacy/grib_metadata.ipynb`
+    - :ref:`/examples/grib/grib_selection.ipynb`
+    - :ref:`/examples/grib/grib_missing.ipynb`
 
 
 Memory management

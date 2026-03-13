@@ -9,17 +9,17 @@ Version 0.2.0
 New features
 ++++++++++++++++
 
-- added new source :ref:`data-sources-eod` to retrieve ECMWF open data. See the :ref:`/examples/ecmwf_open_data.ipynb` notebook example.
-- added new method :func:`from_object` to use a objects like numpy arrays or xarray datasets as an input. See the :ref:`/examples/from_object.ipynb` notebook example.
+- added new source :ref:`data-sources-eod` to retrieve ECMWF open data. See the :ref:`/examples/source/ecmwf_open_data.ipynb` notebook example.
+- added new method :func:`from_object` to use a objects like numpy arrays or xarray datasets as an input. See the :ref:`/examples/other/from_object.ipynb` notebook example.
 - redesigned :ref:`bufr` handling. :ref:`bufr` data is now represented by a :class:`BUFRList <data.readers.bufr.bufr.BUFRList>` made up of :class:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>` objects. In many aspects it behaves similarly to a :obj:`FieldList <data.core.fieldlist.FieldList>` offering iteration, slicing, selection and message dump. For details see :ref:`here <bufr>` and also check the notebook examples:
 
-     - :ref:`/examples/bufr_temp.ipynb`
-     - :ref:`/examples/bufr_synop.ipynb`
+     - :ref:`/examples/bufr/bufr_temp.ipynb`
+     - :ref:`/examples/bufr/bufr_synop.ipynb`
 
-- added the ``group_by`` option to :ref:`data-sources-fdb` stream source. With this option we can read data in groups from a stream. See the :ref:`/examples/fdb.ipynb` notebook example.
+- added the ``group_by`` option to :ref:`data-sources-fdb` stream source. With this option we can read data in groups from a stream. See the :ref:`/examples/source/fdb.ipynb` notebook example.
 - changed how the field geography can be accessed. On a Field object we can now call the following methods:
 
-   - :meth:`projection() <data.core.fieldlist.Field.projection>`: returns an object describing the projection. See the :ref:`/examples/projection.ipynb` notebook example.
+   - :meth:`projection() <data.core.fieldlist.Field.projection>`: returns an object describing the projection. See the :ref:`/examples/misc/projection.ipynb` notebook example.
    - :meth:`to_latlon() <data.core.fieldlist.Field.to_latlon>`: returns the latitudes and longitudes for all the gridpoints
    - :meth:`to_points() <data.core.fieldlist.Field.to_points>`: returns the geographical coordinates of all the gridpoints in the data's original Coordinate Reference System (CRS)
 

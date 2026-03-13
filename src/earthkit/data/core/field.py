@@ -569,7 +569,7 @@ class Field(Base):
 
         Examples
         --------
-        - :ref:`/examples/grib_lat_lon_value.ipynb`
+        - :ref:`/examples/grib/grib_lat_lon_value_ll.ipynb`
 
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
@@ -1156,7 +1156,7 @@ class Field(Base):
 
         Examples
         --------
-        :ref:`/examples/grib_metadata.ipynb`
+        :ref:`/examples/grib/grib_contents.ipynb`
 
         See Also
         --------
@@ -1213,7 +1213,7 @@ class Field(Base):
 
         Examples
         --------
-        :ref:`/examples/grib_metadata.ipynb`
+        :ref:`/examples/grib/grib_contents.ipynb`
 
         See Also
         --------
