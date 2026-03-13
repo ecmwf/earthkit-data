@@ -28,3 +28,8 @@ class BUFRData(SimpleData):
 
     def to_featurelist(self, *args, **kwargs):
         return self._reader.to_featurelist(*args, **kwargs)
+
+    def _repr_html_(self):
+        from earthkit.data.utils.summary import make_data_repr_html
+
+        return make_data_repr_html(title="BUFR file", path=self._reader.path, types=self.available_types)

@@ -425,3 +425,17 @@ def ncdump(path):
     t = result.stdout.decode("utf-8").split("\n")
     for line in t:
         print(line)
+
+
+def make_data_repr_html(title=None, path=None, types=None):
+    import os
+
+    from earthkit.data.utils.humanize import bytes
+
+    t = f"<p><b>{title}</b></br>"
+    if path is not None:
+        t += f"<b>Path</b>: {path} <b>size</b>: {bytes(os.path.getsize(path))}</br>"
+
+    t += f"<b>Available types</b>: {', '.join(types)}</p>"
+
+    return t

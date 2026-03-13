@@ -69,10 +69,10 @@ class ZarrEncoder(Encoder):
     ):
         return ZarrEncodedData(data.to_xarray(add_earthkit_attrs=False))
 
-    def _encode_field(self, field, **kwargs):
+    def _encode_field(self, field, *, target=None, **kwargs):
         raise NotImplementedError("ZarrEncoder does not support encoding individual fields.")
 
-    def _encode_fieldlist(self, data, **kwargs):
+    def _encode_fieldlist(self, data, *, target=None, **kwargs):
         earthkit_to_xarray_kwargs = kwargs.pop("earthkit_to_xarray_kwargs", {})
         # earthkit_to_xarray_kwargs.update(kwargs)
         earthkit_to_xarray_kwargs["add_earthkit_attrs"] = False
@@ -81,11 +81,14 @@ class ZarrEncoder(Encoder):
         ds = data.to_xarray(**kwargs)
         return ZarrEncodedData(ds)
 
-    def _encode_xarray(self, data, **kwargs):
+    def _encode_xarray(self, data, *, target=None, **kwargs):
         raise NotImplementedError
 
-    def _encode_featurelist(self, data, **kwargs):
+    def _encode_featurelist(self, data, *, target=None, **kwargs):
         raise NotImplementedError
+
+    def _encode_path(self, path_info, *, target=None, **kwargs):
+        raise
 
 
 encoder = ZarrEncoder

@@ -53,3 +53,8 @@ class StreamFieldListData(SourceData):
             return r
 
         return self._reader
+
+    def _repr_html_(self):
+        from earthkit.data.utils.summary import make_data_repr_html
+
+        return make_data_repr_html(title="Stream of fields", path=None, types=self.available_types)
