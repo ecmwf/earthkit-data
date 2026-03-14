@@ -317,6 +317,12 @@ class CodesHandle(eccodes.Message):
                 f.seek(offset)
                 return f.read(length)
 
+    def is_defined(self, key):
+        try:
+            return bool(eccodes.codes_is_defined(self._handle, key))
+        except Exception:
+            return False
+
 
 class ReaderLRUCache(dict):
     def __init__(self, size):

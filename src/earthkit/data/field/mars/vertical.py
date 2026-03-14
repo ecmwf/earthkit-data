@@ -14,13 +14,25 @@ from earthkit.data.field.component.level_type import LevelTypes
 
 
 class Converter:
-    def from_mars(self, value):
+    def _to_number(self, value):
+        if isinstance(value, str):
+            try:
+                if value.isdecimal():
+                    return float(value)
+                elif value.isdigit():
+                    return int(value)
+            except (ValueError, TypeError):
+                pass
         return value
+
+    def from_mars(self, value):
+        return self._to_number(value)
 
 
 class PressurePaConverter(Converter):
     def from_mars(self, value):
-        if value is not None:
+        value = self._to_number(value)
+        if value is not None and isinstance(value, (int, float)):
             return value / 100.0
         return value
 

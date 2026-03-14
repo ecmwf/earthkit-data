@@ -20,6 +20,7 @@ from earthkit.data import from_source
 # from earthkit.data.specs.time_span import TimeSpan
 # from earthkit.data.specs.time_span import TimeSpanMethod
 from earthkit.data.utils.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -100,11 +101,12 @@ def test_grib_time_seasonal():
     assert f.time.base_datetime() == datetime.datetime(2014, 8, 29)
     assert f.time.step() == datetime.timedelta(days=33)
     assert f.time.valid_datetime() == datetime.datetime(2014, 10, 1)
-    # assert f.time.indexing_datetime() == datetime.datetime(2014, 9, 1)
+    assert f.time.forecast_month() == 1
+    assert f.time.indexing_datetime() == datetime.datetime(2014, 9, 1)
 
 
 @pytest.mark.cache
-def test_grib_time_monthly():
+def test_grib_time_monthly_1():
     ds = from_source(
         "url", earthkit_remote_test_data_file("xr_engine/date/seasonal_monthly.grib")
     ).to_fieldlist()
@@ -113,6 +115,22 @@ def test_grib_time_monthly():
     assert f.time.base_datetime() == datetime.datetime(1993, 10, 1)
     assert f.time.step() == datetime.timedelta(days=31)
     assert f.time.valid_datetime() == datetime.datetime(1993, 11, 1)
+    assert f.time.forecast_month() == 1
+    assert f.time.indexing_datetime() is None
+
+
+@pytest.mark.cache
+def test_grib_time_monthly_2():
+    ds = from_source(
+        "url", earthkit_remote_test_data_file("xr_engine/date/ncep-seasonal-monthly.grib")
+    ).to_fieldlist()
+
+    f = ds[0]
+    assert f.time.base_datetime() == datetime.datetime(2021, 9, 1)
+    assert f.time.step() == datetime.timedelta(hours=720)
+    assert f.time.valid_datetime() == datetime.datetime(2021, 10, 1)
+    assert f.time.forecast_month() == 1
+    assert f.time.indexing_datetime() == datetime.datetime(2021, 9, 1)
 
 
 @pytest.mark.cache
@@ -134,3 +152,14 @@ def test_grib_time_step_in_seconds():
     assert f.time.valid_datetime() == datetime.datetime(2023, 8, 20, 12, 0, 30)
     assert f.time.step() == datetime.timedelta(seconds=30)
     assert f.get("metadata.step") == "30s"
+
+
+def test_grib_time_hdate():
+    ds = from_source("file", earthkit_test_data_file("hdate.grib")).to_fieldlist()
+    f = ds[0]
+
+    assert f.time.base_datetime() == datetime.datetime(2021, 6, 15, 0, 0, 0)
+    assert f.time.valid_datetime() == datetime.datetime(2021, 6, 15, 6, 0, 0)
+    assert f.time.step() == datetime.timedelta(hours=6)
+    assert f.get("metadata.hdate") == 20210615
+    assert f.get("metadata.step") == 6

@@ -35,12 +35,11 @@ def concat(*args):
                 raise ValueError(f"Cannot concatenate type={type(arg)} object")
         elif isinstance(arg, Source):
             data.append(arg)
-    print(f"concat: data={data}, has_data={has_data}")
 
     from earthkit.data.sources import from_source
 
     result = from_source("multi", *data)
-    print(f"concat: result={result}")
+
     if not has_data:
         if result is None or not hasattr(result, "_source"):
             raise ValueError("concat could not create a valid Data object from the provided arguments")

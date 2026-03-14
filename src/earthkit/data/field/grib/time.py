@@ -10,7 +10,6 @@
 from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import datetime_to_grib
 from earthkit.data.utils.dates import step_to_grib
-from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
 from .collector import GribContextCollector
@@ -41,15 +40,7 @@ class GribTimeBuilder:
                     return datetime_from_grib(date, time)
             return None
 
-        hdate = _get("hdate")
-        if hdate is not None:
-            time = _get("dataTime")
-            base = datetime_from_grib(hdate, time)
-        else:
-            base = _datetime("dataDate", "dataTime")
-
-        end = None
-        # time_span = ZERO_TIMEDELTA
+        base = _datetime("dataDate", "dataTime")
 
         end = _get("endStep")
         if end is None:
@@ -59,25 +50,22 @@ class GribTimeBuilder:
             end = ZERO_TIMEDELTA
         else:
             end = to_timedelta(end)
-            # start = _get("startStep")
-            # if start is not None:
-            #     start = to_timedelta(start)
-            #     time_span = end - start
 
-        # indexing = _datetime("indexingDate", "indexingTime")
-        # reference = _datetime("referenceDate", "referenceTime")
-
-        # time_span_method = _get("stepType", "instant").lower()
-        # time_span_method = _GRIB_TO_METHOD.get(time_span_method, TimeSpanMethod.INSTANT)
-        # time_span = TimeSpan(time_span, time_span_method)
-
-        return dict(
-            base_datetime=to_datetime(base),
+        r = dict(
+            base_datetime=base,
             step=end,
-            # time_span=time_span,
-            # indexing_datetime=indexing,
-            # reference_datetime=reference,
         )
+
+        fc_month = None
+        indexing = None
+        if handle.is_defined("forecastMonth"):
+            fc_month = _get("forecastMonth")
+            if fc_month is not None:
+                indexing = _datetime("indexingDate", "indexingTime")
+                r["forecast_month"] = fc_month
+                r["indexing_datetime"] = indexing
+
+        return r
 
 
 class GribTimeContextCollector(GribContextCollector):
@@ -92,15 +80,13 @@ class GribTimeContextCollector(GribContextCollector):
         r["time"] = time
         r["step"] = step
 
-        # if spec.time_span.value != ZERO_TIMEDELTA:
-        #     start = spec.step - spec.time_span.value
-        #     start = step_to_grib(start)
-        #     end = step
-        #     r["stepRange"] = step_range_to_grib(start, end)
-        # else:
-        #     r["stepRange"] = str(step)
+        if component.forecast_month is not None:
+            r["forecastMonth"] = component.forecast_month
+            if component.indexing_datetime is not None:
+                idate, itime = datetime_to_grib(component.indexing_datetime)
+                r["indexingDate"] = idate
+                r["indexingTime"] = itime
 
-        # r["stepType"] = _METHOD_TO_GRIB[spec.time_span.method]
         context.update(r)
 
 
