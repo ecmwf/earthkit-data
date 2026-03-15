@@ -61,7 +61,7 @@ def table_from_dict(vals, title=None):
 
     t = ""
     if title is not None and title:
-        t = f"<h4>{title}</h4>"
+        t = f"""<div class="eh-description">{title}</div><hr>"""
 
     t += """
 <table class="eh-table">
