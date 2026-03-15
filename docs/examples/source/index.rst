@@ -6,6 +6,7 @@ Data sources
 .. toctree::
     :maxdepth: 1
 
+    data.ipynb
     files.ipynb
     multi_files.ipynb
     file_parts.ipynb

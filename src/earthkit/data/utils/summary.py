@@ -430,6 +430,7 @@ def ncdump(path):
 def make_data_repr_html(title=None, path=None, types=None):
     import os
 
+    from earthkit.data.utils.html import table_from_dict
     from earthkit.data.utils.humanize import bytes
 
     t = f"<p><b>{title}</b></br>"
@@ -438,4 +439,5 @@ def make_data_repr_html(title=None, path=None, types=None):
 
     t += f"<b>Available types</b>: {', '.join(types)}</p>"
 
-    return t
+    d = {"path": path, "size": bytes(os.path.getsize(path)), "types": ", ".join(types)}
+    return table_from_dict(d, title=title)

@@ -152,6 +152,62 @@ body[data-theme="dark"] table.dataframe tbody tr:hover td {
 }
 
 
+
+@media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) table.eh-table {
+        color: rgba(255, 255, 255, 0.87);
+        border-color: #555;
+    }
+
+    body:not([data-theme="light"]) table.eh-table th {
+        background-color: var(--color-background-secondary, #1a1c1e);
+        color: rgba(255, 255, 255, 0.87);
+        border-color: #555;
+    }
+
+    body:not([data-theme="light"]) table.eh-table td {
+        background-color: var(--color-background-primary, #131416);
+        color: rgba(255, 255, 255, 0.87);
+        border-color: #555;
+    }
+
+    body:not([data-theme="light"]) table.eh-table tbody tr:nth-child(odd) td {
+        background-color: var(--color-background-hover, #1e2124);
+    }
+
+    body:not([data-theme="light"]) table.eh-table tbody tr:hover td {
+        background-color: #2a2d31;
+    }
+}
+
+body[data-theme="dark"] table.eh-table {
+    color: rgba(255, 255, 255, 0.87);
+    border-color: #555;
+}
+
+body[data-theme="dark"] table.eh-table th {
+    background-color: var(--color-background-secondary, #1a1c1e);
+    color: rgba(255, 255, 255, 0.87);
+    border-color: #555;
+}
+
+body[data-theme="dark"] table.eh-table td {
+    background-color: var(--color-background-primary, #131416);
+    color: rgba(255, 255, 255, 0.87);
+    border-color: #555;
+}
+
+body[data-theme="dark"] table.eh-table tbody tr:nth-child(odd) td {
+    background-color: var(--color-background-hover, #1e2124);
+}
+
+body[data-theme="dark"] table.eh-table tbody tr:hover td {
+    background-color: #2a2d31;
+}
+
+
+
+
 .nboutput .stderr {
     display: none;
 }
