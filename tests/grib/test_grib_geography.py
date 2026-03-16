@@ -14,7 +14,6 @@ import sys
 
 import numpy as np
 import pytest
-from earthkit.utils.array import convert as array_convert
 
 import earthkit.data
 from earthkit.data.testing import NO_GEO
@@ -23,6 +22,7 @@ from earthkit.data.testing import check_array_type
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import projections
+from earthkit.utils.array import convert as array_convert
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)

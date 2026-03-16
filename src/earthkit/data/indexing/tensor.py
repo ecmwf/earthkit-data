@@ -14,10 +14,10 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 import numpy as np
-from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data.core.index import Selection
 from earthkit.data.core.index import normalize_selection
+from earthkit.utils.array import array_namespace as eku_array_namespace
 
 LOG = logging.getLogger(__name__)
 
