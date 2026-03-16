@@ -951,7 +951,7 @@ class Field(Base):
 
     @staticmethod
     def _flatten(v):
-        """Flatten the array without copying the data.".
+        """Flatten the array without copying the data.
 
         Parameters
         ----------

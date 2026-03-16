@@ -13,10 +13,14 @@ from collections import defaultdict
 
 
 def bytes(n):
-    """>>> bytes(4096)
+    """Convert a number of bytes to a human readable string.
+
+    Examples
+    --------
+    >>> bytes(4096)
     '4 KiB'
     >>> bytes(4000)
-    '3.9 KiB'.
+    '3.9 KiB'
     """
     if n < 0:
         sign = "-"
