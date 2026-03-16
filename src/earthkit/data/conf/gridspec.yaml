@@ -44,62 +44,62 @@ grib_key_map:
 definitions:
   _1: &area
     area:
-    - north
-    - west
-    - south
-    - east
+      - north
+      - west
+      - south
+      - east
   _2: &rotation
     rotation:
-    - lat_south_pole
-    - lon_south_pole
+      - lat_south_pole
+      - lon_south_pole
   _3:
     first_point:
-    - first_lat
-    - first_lon
+      - first_lat
+      - first_lon
 shared_keys: &shared_keys
-- type
-- *rotation
-- angle_of_rotation
-- j_points_consecutive
-- i_scans_negatively
-- j_scans_positively
+  - type
+  - *rotation
+  - angle_of_rotation
+  - j_points_consecutive
+  - i_scans_negatively
+  - j_scans_positively
 rotation_keys:
-- rotation
-- angle_of_rotation
+  - rotation
+  - angle_of_rotation
 types:
   sh:
     grid_type: sh
     spec:
-    - type
-    - J
-    - K
-    - M
+      - type
+      - J
+      - K
+      - M
   regular_ll:
     grid_type: regular_ll
     rotated_type: rotated_ll
     spec:
-    - *shared_keys
-    - grid:
-      - dx
-      - dy
-    - *area
+      - *shared_keys
+      - grid:
+          - dx
+          - dy
+      - *area
   regular_gg:
     grid_type: regular_gg
     rotated_type: rotated_gg
     spec:
-    - *shared_keys
-    - grid:
-      - N
-    - *area
+      - *shared_keys
+      - grid:
+          - N
+      - *area
     N_label: F
   reduced_gg:
     grid_type: reduced_gg
     rotated_type: reduced_rotated_gg
     spec:
-    - *shared_keys
-    - grid:
-      - N
-    - *area
+      - *shared_keys
+      - grid:
+          - N
+      - *area
     N_label:
       octahedral:
         0: N
@@ -107,7 +107,7 @@ types:
   healpix:
     grid_type: healpix
     spec:
-    - type
-    - grid:
-      - H
-    - order
+      - type
+      - grid:
+          - H
+      - order
