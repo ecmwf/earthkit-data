@@ -42,7 +42,8 @@ class RequestBuilder:
         owner : Any
             The owner of the request builder.
         *args : tuple
-            Positional arguments representing request dictionaries. Each item can be dictionary or a list/tuple of dictionaries.
+            Positional arguments representing request dictionaries. Each item can be dictionary
+            or a list/tuple of dictionaries.
         **kwargs : dict
             Keyword arguments representing request parameters.
         request : dict or list/tuple of dict, optional
@@ -106,9 +107,7 @@ class RequestBuilder:
 
             if not isinstance(split_on, dict):
                 split_on = {k: 1 for k in ensure_iterable(split_on)}
-            for values in itertools.product(
-                *[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]
-            ):
+            for values in itertools.product(*[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]):
                 subrequest = dict(zip(split_on, values))
                 requests.append({**request, **subrequest})
         return requests

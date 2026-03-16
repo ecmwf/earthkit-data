@@ -13,9 +13,7 @@ import warnings
 class GlobalIndex:
     def __init__(self, index_location, baseurl) -> None:
         warnings.warn("GlobalIndex is obsolete. Please update your code and use the 'directory' source")
-        raise NotImplementedError(
-            "GlobalIndex is obsolete. Please update your code and use the 'directory' source"
-        )
+        raise NotImplementedError("GlobalIndex is obsolete. Please update your code and use the 'directory' source")
         """The GloblaIndex has one index managing multiple urls/files.
         This unique index is found at "index_location"
         The path of each file is written in the index as a relative path.

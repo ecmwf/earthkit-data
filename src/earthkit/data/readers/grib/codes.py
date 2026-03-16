@@ -12,7 +12,6 @@ import os
 
 import eccodes
 import numpy as np
-from earthkit.utils.array.convert import convert_dtype
 
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.decorators import thread_safe_cached_property
@@ -21,6 +20,7 @@ from earthkit.data.readers.grib.metadata import GribFieldMetadata
 from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex
 from earthkit.data.utils.message import CodesReader
+from earthkit.utils.array.convert import convert_dtype
 
 LOG = logging.getLogger(__name__)
 

@@ -12,8 +12,6 @@ import logging
 import warnings
 from abc import abstractmethod
 
-from earthkit.utils.array import array_namespace
-
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
 from earthkit.data.core.metadata import MetadataAccessor
@@ -25,6 +23,7 @@ from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import to_timedelta
+from earthkit.utils.array import array_namespace
 
 LOG = logging.getLogger(__name__)
 
@@ -241,9 +240,7 @@ class GeoBasedGribFieldGeography(Geography):
             try:
                 from earthkit.geo.rotate import unrotate
             except ImportError:
-                raise ImportError(
-                    "GribFieldGeography.latitudes_unrotated requires 'earthkit-geo' to be installed"
-                )
+                raise ImportError("GribFieldGeography.latitudes_unrotated requires 'earthkit-geo' to be installed")
 
             grid_type = self.metadata.get("gridType")
             warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
@@ -263,9 +260,7 @@ class GeoBasedGribFieldGeography(Geography):
             try:
                 from earthkit.geo.rotate import unrotate
             except ImportError:
-                raise ImportError(
-                    "GribFieldGeography.longitudes_unrotated requires 'earthkit-geo' to be installed"
-                )
+                raise ImportError("GribFieldGeography.longitudes_unrotated requires 'earthkit-geo' to be installed")
 
             grid_type = self.metadata.get("gridType")
             warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
@@ -481,9 +476,7 @@ class GribFieldGeography(Geography):
             try:
                 from earthkit.geo.rotate import unrotate
             except ImportError:
-                raise ImportError(
-                    "GribFieldGeography.latitudes_unrotated requires 'earthkit-geo' to be installed"
-                )
+                raise ImportError("GribFieldGeography.latitudes_unrotated requires 'earthkit-geo' to be installed")
 
             grid_type = self.metadata.get("gridType")
             warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
@@ -503,9 +496,7 @@ class GribFieldGeography(Geography):
             try:
                 from earthkit.geo.rotate import unrotate
             except ImportError:
-                raise ImportError(
-                    "GribFieldGeography.longitudes_unrotated requires 'earthkit-geo' to be installed"
-                )
+                raise ImportError("GribFieldGeography.longitudes_unrotated requires 'earthkit-geo' to be installed")
 
             grid_type = self.metadata.get("gridType")
             warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")

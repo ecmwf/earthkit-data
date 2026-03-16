@@ -11,9 +11,9 @@
 
 import numpy as np
 import pytest
-from earthkit.utils.array.testing.testing import NO_TORCH
 
 from earthkit.data import SimpleFieldList
+from earthkit.utils.array.testing.testing import NO_TORCH
 
 
 def test_empty_fieldlist_values_numpy():

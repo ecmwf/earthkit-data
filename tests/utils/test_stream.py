@@ -1,6 +1,6 @@
 # Test RequestIterStreamer object from sources/url.py
 
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 
 # (C) Copyright 2020 ECMWF.
 #

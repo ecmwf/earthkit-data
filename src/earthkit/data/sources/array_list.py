@@ -10,10 +10,9 @@
 import logging
 import math
 
-from earthkit.utils.array import array_namespace as eku_array_namespace
-
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
+from earthkit.utils.array import array_namespace as eku_array_namespace
 
 LOG = logging.getLogger(__name__)
 

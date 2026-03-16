@@ -36,11 +36,7 @@ class ApiClient(WekeoClient):
         rq = {"dataset_id": name}
         rq.update(
             {
-                _name: (
-                    _value
-                    if isinstance(_value, list) or _name in ("data_format", "download_format")
-                    else [_value]
-                )
+                _name: (_value if isinstance(_value, list) or _name in ("data_format", "download_format") else [_value])
                 for _name, _value in request.items()
             }
         )
@@ -63,9 +59,7 @@ class WekeoCdsRetriever(FileSource):
 
         self.prompt = prompt
 
-        request_builder = RequestBuilder(
-            self, *args, request=request, normaliser=self._normalise_request, **kwargs
-        )
+        request_builder = RequestBuilder(self, *args, request=request, normaliser=self._normalise_request, **kwargs)
         self.request = request_builder.requests
 
         self.client(self.prompt)  # Trigger password prompt before threading

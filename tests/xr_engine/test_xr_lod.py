@@ -203,9 +203,7 @@ def test_xr_engine_lod_forecast(allow_holes, lazy_load, xr_lod_forecast):
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_lod_valid_time_from_valid_datetime_single(allow_holes, lazy_load, xr_lod_latlon):
     ds_in = xr_lod_latlon
-    ds = ds_in.to_xarray(
-        time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, squeeze=False
-    )
+    ds = ds_in.to_xarray(time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, squeeze=False)
 
     dims = {
         "valid_time": [np.datetime64("2018-08-01T09:00:00", "ns")],
@@ -247,9 +245,7 @@ def test_xr_engine_lod_valid_time_from_valid_datetime_multi(allow_holes, lazy_lo
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_lod_valid_time_from_forecast(allow_holes, lazy_load, xr_lod_forecast):
     ds_in = xr_lod_forecast
-    ds = ds_in.to_xarray(
-        time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, squeeze=False
-    )
+    ds = ds_in.to_xarray(time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, squeeze=False)
 
     assert ds is not None
     assert ds["t"].shape == (2, 1, 3, 2)

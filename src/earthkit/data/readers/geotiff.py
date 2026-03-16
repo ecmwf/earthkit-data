@@ -33,9 +33,7 @@ class GeoTIFFGeography(Geography):
         except ImportError:
             raise ImportError("geotiff handling requires 'pyproj' to be installed")
 
-        return Transformer.from_crs(self._ds.rio.crs, "EPSG:4326", always_xy=True).transform(
-            *self._xy_coords()
-        )
+        return Transformer.from_crs(self._ds.rio.crs, "EPSG:4326", always_xy=True).transform(*self._xy_coords())
 
     def latitudes(self, dtype=None):
         return self._latlon_coords()[0]

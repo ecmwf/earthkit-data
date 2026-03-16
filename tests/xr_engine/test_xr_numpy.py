@@ -12,11 +12,11 @@
 
 import numpy as np
 import pytest
-from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data import from_source
 from earthkit.data.testing import check_array_type
 from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.utils.array import array_namespace as eku_array_namespace
 
 _NUMPY = eku_array_namespace("numpy")
 
@@ -54,9 +54,7 @@ def test_xr_engine_numpy_dtype(allow_holes, lazy_load):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
     def _check_dtype(dtype, expected_dtype):
-        ds = ds_ek.to_xarray(
-            array_namespace="numpy", dtype=dtype, allow_holes=allow_holes, lazy_load=lazy_load
-        )
+        ds = ds_ek.to_xarray(array_namespace="numpy", dtype=dtype, allow_holes=allow_holes, lazy_load=lazy_load)
         ds["t"].data.dtype == expected_dtype
 
     dtype = np.float32

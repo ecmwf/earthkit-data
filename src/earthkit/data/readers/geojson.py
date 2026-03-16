@@ -32,9 +32,7 @@ class GeojsonReader(Reader):
         # return self.to_pandas().__repr__()
 
     def _repr_html_(self):
-        html_repr = (
-            f"<h3>GeojsonReader(represented as a geopandas object):</h3>" f"{self.to_pandas()._repr_html_()}"
-        )
+        html_repr = f"<h3>GeojsonReader(represented as a geopandas object):</h3>" f"{self.to_pandas()._repr_html_()}"
 
         return html_repr
 
