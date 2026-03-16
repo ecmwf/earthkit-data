@@ -1,4 +1,6 @@
-"""Utilities for wrapping module inputs and handling their signatures."""
+"""Module containing methods to transform the inputs of functions based on the function type setting,
+common signitures or mapping defined at call time.
+"""
 # (C) Copyright 2020 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
@@ -7,10 +9,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
-
-"""Module containing methods to transform the inputs of functions based on the function type setting,
-common signitures or mapping defined at call time.
-"""
 
 import inspect
 import types
