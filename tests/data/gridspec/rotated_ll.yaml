@@ -2,19 +2,19 @@
   gridspec:
     angle_of_rotation: 0.0
     area:
-    - 90.0
-    - 0.0
-    - -90.0
-    - 355.0
+      - 90.0
+      - 0.0
+      - -90.0
+      - 355.0
     grid:
-    - 5.0
-    - 5.0
+      - 5.0
+      - 5.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
     rotation:
-    - -24.0
-    - 10.0
+      - -24.0
+      - 10.0
     type: regular_ll
   metadata:
     Ni: 72
@@ -38,19 +38,19 @@
   gridspec:
     angle_of_rotation: 0.0
     area:
-    - 90.0
-    - 180.0
-    - -90.0
-    - 175.0
+      - 90.0
+      - 180.0
+      - -90.0
+      - 175.0
     grid:
-    - 5.0
-    - 5.0
+      - 5.0
+      - 5.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
     rotation:
-    - -24.0
-    - 10.0
+      - -24.0
+      - 10.0
     type: regular_ll
   metadata:
     Ni: 72
@@ -74,19 +74,19 @@
   gridspec:
     angle_of_rotation: 0.0
     area:
-    - 5.5
-    - 356.2
-    - -8.5
-    - 7.7
+      - 5.5
+      - 356.2
+      - -8.5
+      - 7.7
     grid:
-    - 0.02
-    - 0.02
+      - 0.02
+      - 0.02
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 1
     rotation:
-    - -47.0
-    - 10.0
+      - -47.0
+      - 10.0
     type: regular_ll
   metadata:
     Ni: 576
@@ -110,19 +110,19 @@
   gridspec:
     angle_of_rotation: 0.0
     area:
-    - 90.0
-    - 0.0
-    - -90.0
-    - 355.0
+      - 90.0
+      - 0.0
+      - -90.0
+      - 355.0
     grid:
-    - 5.0
-    - 5.0
+      - 5.0
+      - 5.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
     rotation:
-    - -24.0
-    - 10.0
+      - -24.0
+      - 10.0
     type: regular_ll
   metadata:
     Ni: 72
@@ -146,19 +146,19 @@
   gridspec:
     angle_of_rotation: 0.0
     area:
-    - 90.0
-    - -180.0
-    - -90.0
-    - 175.0
+      - 90.0
+      - -180.0
+      - -90.0
+      - 175.0
     grid:
-    - 5.0
-    - 5.0
+      - 5.0
+      - 5.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
     rotation:
-    - -24.0
-    - 10.0
+      - -24.0
+      - 10.0
     type: regular_ll
   metadata:
     Ni: 72

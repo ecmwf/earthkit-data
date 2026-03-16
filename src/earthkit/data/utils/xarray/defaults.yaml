@@ -3,7 +3,6 @@ variable_key: param
 drop_variables: []
 rename_variables: {}
 mono_variable: false
-
 # dimensions
 extra_dims: []
 drop_dims: []
@@ -15,7 +14,6 @@ dims_as_attrs: []
 time_dim_mode: forecast
 level_dim_mode: level
 squeeze: true
-
 # attributes
 attrs_mode: "fixed"
 attrs: []
@@ -25,17 +23,14 @@ add_earthkit_attrs: true
 rename_attrs:
   cfName: standard_name
   name: long_name
-
 add_valid_time_coord: false
 add_geo_coords: true
 decode_times: true
 decode_timedelta:
-
 # values
 flatten_values: false
 dtype: float64
 array_namespace: numpy
-
 # other
 lazy_load: true
 release_source: false
@@ -43,7 +38,6 @@ direct_backend: false
 strict: false
 errors: raise
 allow_holes: false
-
 dim_roles:
   number: number
   date: date
@@ -53,9 +47,7 @@ dim_roles:
   valid_time:
   level: level
   level_type: typeOfLevel
-
 dim_name_from_role_name: true
-
 coord_attrs:
   latitude:
     units: degrees_north
@@ -152,7 +144,6 @@ coord_attrs:
       positive: up
       long_name: air_potential_temperature
       standard_name: air_potential_temperature
-
   levelist:
     key: levtype
     ml:
