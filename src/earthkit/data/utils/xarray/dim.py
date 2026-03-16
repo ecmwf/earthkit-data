@@ -916,22 +916,20 @@ class DimHandler:
 
 
 PREDEFINED_DIMS = {}
-for i, d in enumerate(
-    [
-        NumberDim,
-        ForecastRefTimeDim,
-        DateDim,
-        TimeDim,
-        StepDim,
-        ValidTimeDim,
-        IndexingTimeDim,
-        ReferenceTimeDim,
-        LevelDim,
-        LevelTypeDim,
-        LevelPerTypeDim,
-        LevelAndTypeDim,
-    ]
-):
+for i, d in enumerate([
+    NumberDim,
+    ForecastRefTimeDim,
+    DateDim,
+    TimeDim,
+    StepDim,
+    ValidTimeDim,
+    IndexingTimeDim,
+    ReferenceTimeDim,
+    LevelDim,
+    LevelTypeDim,
+    LevelPerTypeDim,
+    LevelAndTypeDim,
+]):
     if d.name:
         PREDEFINED_DIMS[d.name] = d
     else:

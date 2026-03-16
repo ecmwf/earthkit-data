@@ -135,16 +135,14 @@ def test_grib_url_stream_in_memory():
     # data
     assert ds.to_numpy().shape == expected_shape
 
-    ref = np.array(
-        [
-            272.56417847,
-            -6.28688049,
-            7.83348083,
-            272.53916931,
-            -4.89837646,
-            8.66096497,
-        ]
-    )
+    ref = np.array([
+        272.56417847,
+        -6.28688049,
+        7.83348083,
+        272.53916931,
+        -4.89837646,
+        8.66096497,
+    ])
 
     vals = ds.to_numpy()[:, 0, 0]
     assert np.allclose(vals, ref)

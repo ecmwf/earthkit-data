@@ -958,13 +958,11 @@ class GribMetadata(Metadata):
         for ns in namespace:
             v = self.as_namespace(ns)
             if v:
-                r.append(
-                    {
-                        "title": ns if ns else "default",
-                        "data": v,
-                        "tooltip": f"Keys in the ecCodes {ns} namespace",
-                    }
-                )
+                r.append({
+                    "title": ns if ns else "default",
+                    "data": v,
+                    "tooltip": f"Keys in the ecCodes {ns} namespace",
+                })
 
         return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
 

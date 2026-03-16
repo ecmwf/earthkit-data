@@ -99,9 +99,10 @@ def test_formats():
 
     assert FormatTransformer(None, type=DateType, format="%Y").transform(datetime.datetime(2000, 1, 1)) == "2000"
 
-    assert FormatTransformer(None, type=DateListType, format="%d").transform(
-        (datetime.datetime(2000, 1, 1), datetime.datetime(2000, 1, 2))
-    ) == ["01", "02"]
+    assert FormatTransformer(None, type=DateListType, format="%d").transform((
+        datetime.datetime(2000, 1, 1),
+        datetime.datetime(2000, 1, 2),
+    )) == ["01", "02"]
 
     with pytest.raises(Exception):  # FIXME: Not sure what this should be
         assert FormatTransformer(None, type=VariableType, format="%4s").transform(42) == 0

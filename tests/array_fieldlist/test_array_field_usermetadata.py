@@ -20,14 +20,12 @@ from earthkit.data.utils.metadata.dict import UserMetadata
 
 def test_array_field_usermetadata_nogeom():
     vals = np.linspace(0, 1, 10)
-    meta = UserMetadata(
-        {
-            "shortName": "test",
-            "longName": "Test",
-            "date": 20180801,
-            "time": 300,
-        }
-    )
+    meta = UserMetadata({
+        "shortName": "test",
+        "longName": "Test",
+        "date": 20180801,
+        "time": 300,
+    })
 
     f = ArrayField(vals, meta)
 

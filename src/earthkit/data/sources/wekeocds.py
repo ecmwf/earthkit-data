@@ -34,12 +34,10 @@ class ApiClient(WekeoClient):
 
     def retrieve(self, name, request, target=None):
         rq = {"dataset_id": name}
-        rq.update(
-            {
-                _name: (_value if isinstance(_value, list) or _name in ("data_format", "download_format") else [_value])
-                for _name, _value in request.items()
-            }
-        )
+        rq.update({
+            _name: (_value if isinstance(_value, list) or _name in ("data_format", "download_format") else [_value])
+            for _name, _value in request.items()
+        })
 
         if "area" in request:
             rq.update({"bbox": request["area"]})

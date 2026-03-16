@@ -368,12 +368,10 @@ class FieldExtractList(SimpleFieldList):
         grid_latitudes = self._latitudes[indices]
         grid_longitudes = self._longitudes[indices]
 
-        metadata = metadata.override(
-            {
-                "latitudes": grid_latitudes,
-                "longitudes": grid_longitudes,
-            }
-        )
+        metadata = metadata.override({
+            "latitudes": grid_latitudes,
+            "longitudes": grid_longitudes,
+        })
         return metadata
 
     def to_xarray(self, *args, **kwargs):

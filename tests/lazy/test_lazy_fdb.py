@@ -99,12 +99,20 @@ def test_lazy_fdb():
         assert len(t_fdb) == 16
         assert len(r_fdb) == 16
 
-        assert t.metadata(["shortName", "date", "time", "step", "levelist"]) == t_fdb.metadata(
-            ["shortName", "date", "time", "step", "levelist"]
-        )
-        assert r.metadata(["shortName", "date", "time", "step", "levelist"]) == r_fdb.metadata(
-            ["shortName", "date", "time", "step", "levelist"]
-        )
+        assert t.metadata(["shortName", "date", "time", "step", "levelist"]) == t_fdb.metadata([
+            "shortName",
+            "date",
+            "time",
+            "step",
+            "levelist",
+        ])
+        assert r.metadata(["shortName", "date", "time", "step", "levelist"]) == r_fdb.metadata([
+            "shortName",
+            "date",
+            "time",
+            "step",
+            "levelist",
+        ])
 
         assert np.allclose(t.to_numpy(), t_fdb.to_numpy().reshape(16, 19, 36))
         assert np.allclose(r.to_numpy(), r_fdb.to_numpy().reshape(16, 19, 36))

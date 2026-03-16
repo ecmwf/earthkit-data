@@ -68,14 +68,12 @@ def _check_diag(diag, ref):
 @pytest.mark.parametrize("serialise", [True, False])
 def test_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metadata_cache):
 
-    with config.temporary(
-        {
-            "grib-field-policy": "persistent",
-            "grib-handle-policy": "cache",
-            "grib-handle-cache-size": handle_cache_size,
-            "use-grib-metadata-cache": True,
-        }
-    ):
+    with config.temporary({
+        "grib-field-policy": "persistent",
+        "grib-handle-policy": "cache",
+        "grib-handle-cache-size": handle_cache_size,
+        "use-grib-metadata-cache": True,
+    }):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
         if serialise:
@@ -153,14 +151,12 @@ def test_grib_cache_basic_file_non_patched():
     without the patch_metadata_cache fixture.
     So metadata cache hits and misses are not counted.
     """
-    with config.temporary(
-        {
-            "grib-field-policy": "persistent",
-            "grib-handle-policy": "cache",
-            "grib-handle-cache-size": 1,
-            "use-grib-metadata-cache": True,
-        }
-    ):
+    with config.temporary({
+        "grib-field-policy": "persistent",
+        "grib-handle-policy": "cache",
+        "grib-handle-cache-size": 1,
+        "use-grib-metadata-cache": True,
+    }):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == FIELD_NUM
 
@@ -225,14 +221,12 @@ def test_grib_cache_basic_file_non_patched():
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 def test_grib_cache_basic_metadata_patched(serialise, fl_type, patch_metadata_cache):
 
-    with config.temporary(
-        {
-            "grib-field-policy": "persistent",
-            "grib-handle-policy": "cache",
-            "grib-handle-cache-size": 1,
-            "use-grib-metadata-cache": True,
-        }
-    ):
+    with config.temporary({
+        "grib-field-policy": "persistent",
+        "grib-handle-policy": "cache",
+        "grib-handle-cache-size": 1,
+        "use-grib-metadata-cache": True,
+    }):
         ds, _ = load_grib_data("tuv_pl.grib", fl_type)
 
         if serialise:
@@ -291,14 +285,12 @@ def test_grib_cache_basic_metadata_patched(serialise, fl_type, patch_metadata_ca
 
 
 def test_grib_cache_options_1(patch_metadata_cache):
-    with config.temporary(
-        {
-            "grib-field-policy": "persistent",
-            "grib-handle-policy": "temporary",
-            "grib-handle-cache-size": 1,
-            "use-grib-metadata-cache": True,
-        }
-    ):
+    with config.temporary({
+        "grib-field-policy": "persistent",
+        "grib-handle-policy": "temporary",
+        "grib-handle-cache-size": 1,
+        "use-grib-metadata-cache": True,
+    }):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == FIELD_NUM
 
@@ -383,14 +375,12 @@ def test_grib_cache_options_1(patch_metadata_cache):
 
 
 def test_grib_cache_options_2(patch_metadata_cache):
-    with config.temporary(
-        {
-            "grib-field-policy": "persistent",
-            "grib-handle-policy": "persistent",
-            "grib-handle-cache-size": 1,
-            "use-grib-metadata-cache": True,
-        }
-    ):
+    with config.temporary({
+        "grib-field-policy": "persistent",
+        "grib-handle-policy": "persistent",
+        "grib-handle-cache-size": 1,
+        "use-grib-metadata-cache": True,
+    }):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == FIELD_NUM
 
@@ -477,14 +467,12 @@ def test_grib_cache_options_2(patch_metadata_cache):
 
 
 def test_grib_cache_options_3(patch_metadata_cache):
-    with config.temporary(
-        {
-            "grib-field-policy": "persistent",
-            "grib-handle-policy": "cache",
-            "grib-handle-cache-size": 1,
-            "use-grib-metadata-cache": True,
-        }
-    ):
+    with config.temporary({
+        "grib-field-policy": "persistent",
+        "grib-handle-policy": "cache",
+        "grib-handle-cache-size": 1,
+        "use-grib-metadata-cache": True,
+    }):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == FIELD_NUM
 
@@ -569,14 +557,12 @@ def test_grib_cache_options_3(patch_metadata_cache):
 
 
 def test_grib_cache_options_4(patch_metadata_cache):
-    with config.temporary(
-        {
-            "grib-field-policy": "temporary",
-            "grib-handle-policy": "temporary",
-            "grib-handle-cache-size": 1,
-            "use-grib-metadata-cache": True,
-        }
-    ):
+    with config.temporary({
+        "grib-field-policy": "temporary",
+        "grib-handle-policy": "temporary",
+        "grib-handle-cache-size": 1,
+        "use-grib-metadata-cache": True,
+    }):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == FIELD_NUM
 
@@ -666,14 +652,12 @@ def test_grib_cache_options_4(patch_metadata_cache):
 
 
 def test_grib_cache_options_5(patch_metadata_cache):
-    with config.temporary(
-        {
-            "grib-field-policy": "temporary",
-            "grib-handle-policy": "persistent",
-            "grib-handle-cache-size": 1,
-            "use-grib-metadata-cache": True,
-        }
-    ):
+    with config.temporary({
+        "grib-field-policy": "temporary",
+        "grib-handle-policy": "persistent",
+        "grib-handle-cache-size": 1,
+        "use-grib-metadata-cache": True,
+    }):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == FIELD_NUM
 
@@ -765,14 +749,12 @@ def test_grib_cache_options_5(patch_metadata_cache):
 
 
 def test_grib_cache_options_6(patch_metadata_cache):
-    with config.temporary(
-        {
-            "grib-field-policy": "temporary",
-            "grib-handle-policy": "cache",
-            "grib-handle-cache-size": 1,
-            "use-grib-metadata-cache": True,
-        }
-    ):
+    with config.temporary({
+        "grib-field-policy": "temporary",
+        "grib-handle-policy": "cache",
+        "grib-handle-cache-size": 1,
+        "use-grib-metadata-cache": True,
+    }):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == FIELD_NUM
 
@@ -898,14 +880,12 @@ def test_grib_cache_file_use_kwargs_2():
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 def test_grib_cache_metadata_use_kwargs_1(fl_type, patch_metadata_cache):
-    with config.temporary(
-        {
-            "grib-field-policy": "persistent",
-            "grib-handle-policy": "cache",
-            "grib-handle-cache-size": 1,
-            "use-grib-metadata-cache": False,
-        }
-    ):
+    with config.temporary({
+        "grib-field-policy": "persistent",
+        "grib-handle-policy": "cache",
+        "grib-handle-cache-size": 1,
+        "use-grib-metadata-cache": False,
+    }):
         _kwargs = {
             "use_grib_metadata_cache": True,
         }
@@ -939,14 +919,12 @@ def test_grib_cache_metadata_use_kwargs_1(fl_type, patch_metadata_cache):
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 def test_grib_cache_metadata_use_kwargs_2(fl_type, patch_metadata_cache):
-    with config.temporary(
-        {
-            "grib-field-policy": "persistent",
-            "grib-handle-policy": "cache",
-            "grib-handle-cache-size": 1,
-            "use-grib-metadata-cache": True,
-        }
-    ):
+    with config.temporary({
+        "grib-field-policy": "persistent",
+        "grib-handle-policy": "cache",
+        "grib-handle-cache-size": 1,
+        "use-grib-metadata-cache": True,
+    }):
         _kwargs = {
             "use_grib_metadata_cache": False,
         }

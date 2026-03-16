@@ -100,18 +100,16 @@ def tab(items, details=None, selected=None):
 </section>
 </div>
         """.format(
-        pages=" ".join(
-            [
-                tab_page(
-                    item["title"],
-                    item.get("tooltip", ""),
-                    str(uuid.uuid4()),
-                    item["text"],
-                    selected in (None, "") or item["title"] == selected,
-                )
-                for item in items
-            ]
-        ),
+        pages=" ".join([
+            tab_page(
+                item["title"],
+                item.get("tooltip", ""),
+                str(uuid.uuid4()),
+                item["text"],
+                selected in (None, "") or item["title"] == selected,
+            )
+            for item in items
+        ]),
     )
 
     style = css("tab")

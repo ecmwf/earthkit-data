@@ -19,14 +19,12 @@ from earthkit.data.utils.metadata.dict import UserMetadata
 
 
 def test_usermetadata_nogeom():
-    meta = UserMetadata(
-        {
-            "shortName": "test",
-            "longName": "Test",
-            "date": 20180801,
-            "time": 300,
-        }
-    )
+    meta = UserMetadata({
+        "shortName": "test",
+        "longName": "Test",
+        "date": 20180801,
+        "time": 300,
+    })
 
     assert meta["shortName"] == "test"
     assert meta["longName"] == "Test"
@@ -113,12 +111,10 @@ def test_usermetadata_override(initial, update, expected):
 
 def test_usermetadata_override_shape():
     meta = UserMetadata({}, shape=(10, 1))
-    new_meta = meta.override(
-        {
-            "shortName": "2t",
-            "longName": "Temperature",
-        }
-    )
+    new_meta = meta.override({
+        "shortName": "2t",
+        "longName": "Temperature",
+    })
     new_meta._shape = None
     assert new_meta._shape is None
     assert meta._shape is not None
@@ -222,20 +218,18 @@ def test_usermetadata_forecast(data, ref_base, ref_valid, ref_step):
 
 
 def test_usermetadata_hdate_from_mars():
-    meta = UserMetadata(
-        {
-            "class": "od",
-            "expver": "0001",
-            "stream": "enfh",
-            "type": "cf",
-            "levtype": "sfc",
-            "param": "167.128",
-            "date": "20180830",  # Model version
-            "hdate": "20100830",  # Start date of the forecasts
-            "time": "0000",  # Forecast starts at 0am
-            "step": 12,  # Forecast 12 hours ahead
-        }
-    )
+    meta = UserMetadata({
+        "class": "od",
+        "expver": "0001",
+        "stream": "enfh",
+        "type": "cf",
+        "levtype": "sfc",
+        "param": "167.128",
+        "date": "20180830",  # Model version
+        "hdate": "20100830",  # Start date of the forecasts
+        "time": "0000",  # Forecast starts at 0am
+        "step": 12,  # Forecast 12 hours ahead
+    })
 
     ref_base_dt = datetime.datetime(2010, 8, 30, 0, 0)
     ref_valid_dt = datetime.datetime(2010, 8, 30, 12, 0)

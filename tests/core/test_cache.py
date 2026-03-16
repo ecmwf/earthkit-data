@@ -109,12 +109,10 @@ def test_cache_policy():
 
             # cache = temporary with user defined root path
             with temp_directory() as root_dir:
-                with config.temporary(
-                    {
-                        "cache-policy": "temporary",
-                        "temporary-cache-directory-root": root_dir,
-                    }
-                ):
+                with config.temporary({
+                    "cache-policy": "temporary",
+                    "temporary-cache-directory-root": root_dir,
+                }):
                     assert config.get("cache-policy") == "temporary"
                     assert config.get("temporary-cache-directory-root") == root_dir
                     assert cache.policy.managed() is True
@@ -269,12 +267,10 @@ def test_cache_management(policy):
                 config.set({"cache-policy": "user", "user-cache-directory": tmp_dir_path})
                 assert cache.directory() == tmp_dir_path
             elif policy == "temporary":
-                config.set(
-                    {
-                        "cache-policy": "temporary",
-                        "temporary-cache-directory-root": tmp_dir_path,
-                    }
-                )
+                config.set({
+                    "cache-policy": "temporary",
+                    "temporary-cache-directory-root": tmp_dir_path,
+                })
                 assert os.path.dirname(cache.directory()) == tmp_dir_path
             else:
                 assert False

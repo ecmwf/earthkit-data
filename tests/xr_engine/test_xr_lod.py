@@ -172,12 +172,10 @@ def test_xr_engine_lod_nongeo(allow_holes, lazy_load, xr_lod_nongeo):
     assert ds["t"].shape == (2, 6)
     assert ds["u"].shape == (2, 6)
 
-    ref = np.array(
-        [
-            [1, 2, 3, 4, 5, 6],
-            [1, 2, 3, 4, 5, 6],
-        ]
-    )
+    ref = np.array([
+        [1, 2, 3, 4, 5, 6],
+        [1, 2, 3, 4, 5, 6],
+    ])
     assert np.allclose(ds["t"].values, ref)
     assert np.allclose(ds["u"].values, ref)
 

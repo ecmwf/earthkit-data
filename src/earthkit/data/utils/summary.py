@@ -224,13 +224,11 @@ class BUFRTree:
                 vals = v["value"]
                 if isinstance(vals, list):
                     vals = self._format_list(vals)
-                parent.append(
-                    {
-                        "key": v["key"],
-                        "value": vals,
-                        "units": v.get("units", None),
-                    }
-                )
+                parent.append({
+                    "key": v["key"],
+                    "value": vals,
+                    "units": v.get("units", None),
+                })
             else:
                 if arrayCnt > 1:
                     item = []

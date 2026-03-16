@@ -148,15 +148,13 @@ def test_grib_metadata_from_gridspec_valid(metadata, gridspec, name):
 
 @pytest.mark.parametrize(
     "metadata,gridspec,name",
-    gridspec_list(
-        [
-            "sh",
-            "reduced_ll",
-            "regular_gg",
-            "reduced_gg",
-            "healpix",
-        ]
-    ),
+    gridspec_list([
+        "sh",
+        "reduced_ll",
+        "regular_gg",
+        "reduced_gg",
+        "healpix",
+    ]),
 )
 def test_grib_metadata_from_gridspec_invalid(metadata, gridspec, name):
     if name in [
