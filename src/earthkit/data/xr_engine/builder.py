@@ -235,7 +235,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         return indexing.explicit_indexing_adapter(
             key,
             self.shape,
-            indexing.IndexingSupport.BASIC,
+            indexing.IndexingSupport.OUTER,
             self._raw_indexing_method,
         )
         # bug in xarray here? tries to create a NumpyIndexingAdapter instead of NdArrayLikeIndexingAdapter
