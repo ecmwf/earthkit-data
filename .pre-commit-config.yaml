@@ -30,10 +30,13 @@ repos:
   hooks:
   - id: mdformat
     exclude: cruft-update-template.md
-- repo: https://github.com/google/yamlfmt
-  rev: v0.13.0
+- repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+  rev: v2.16.0
   hooks:
-  - id: yamlfmt
+  - id: pretty-format-yaml
+    args: [--autofix, --preserve-quotes]
+  - id: pretty-format-toml
+    args: [--autofix]
 - repo: https://github.com/sphinx-contrib/sphinx-lint
   rev: v1.0.0
   hooks:
