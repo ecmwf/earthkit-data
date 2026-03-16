@@ -491,9 +491,7 @@ class WrappedMetadata:
                     return None
             return v
 
-        return self.metadata.get(
-            key, default=default, astype=astype, raise_on_missing=raise_on_missing, **kwargs
-        )
+        return self.metadata.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing, **kwargs)
 
     def _extra_value(self, key):
         v = self.extra[key]

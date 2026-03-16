@@ -94,9 +94,7 @@ class Coverage:
                             # dims.append(dim)
                             dims[ax] = dim
                 if len(dims) == 2:
-                    return GridCoverage(
-                        owner, da, x_dim=dims["x"], y_dim=dims["y"], dims=tuple(dims.values())
-                    )
+                    return GridCoverage(owner, da, x_dim=dims["x"], y_dim=dims["y"], dims=tuple(dims.values()))
 
         # try to find the x and y dimensions
         # 1D geographic coordinates using the dim='values/points' convention
@@ -145,9 +143,7 @@ class GridCoverage(Coverage):
         return self._xy(x, y, **kwargs)
 
     def to_latlon(self, **kwargs):
-        x, y = self.find_var_or_coord(
-            GEOGRAPHIC_COORDS_LATLON_FIRST["x"], GEOGRAPHIC_COORDS_LATLON_FIRST["y"]
-        )
+        x, y = self.find_var_or_coord(GEOGRAPHIC_COORDS_LATLON_FIRST["x"], GEOGRAPHIC_COORDS_LATLON_FIRST["y"])
 
         # print(f"x: {x}, y: {y}")
         # print(f"x.dims: {x.dims}, y.dims: {y.dims}")

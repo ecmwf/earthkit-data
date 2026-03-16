@@ -176,8 +176,7 @@ def test_netcdf_proj_string_laea():
     f = from_source("url", earthkit_remote_examples_file("efas.nc"))
     r = f[0].projection()
     assert (
-        r.to_proj_string()
-        == "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
+        r.to_proj_string() == "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
     )
 
 

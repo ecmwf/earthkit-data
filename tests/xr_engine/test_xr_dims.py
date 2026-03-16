@@ -108,9 +108,7 @@ def test_xr_dims_input_fieldlist():
         "_class": "_{class}",
         "level_and_type": "{level}_{levtype}",
     }
-    prof = Profile.make(
-        "mars", variable_key="param", remapping=remapping, extra_dims=["_class", "level_and_type"]
-    )
+    prof = Profile.make("mars", variable_key="param", remapping=remapping, extra_dims=["_class", "level_and_type"])
     ds = load_wrapped_fieldlist(DS_DATE_LEV, prof, remapping=prof.remapping.build())
     assert ds.index("param") == ["r", "t"]
     assert ds.index("_class") == ["_od"]
@@ -1014,9 +1012,7 @@ def test_xr_level_per_type_dim(lazy_load, path, sel, kwargs, coords, dims, var_a
         ),
     ],
 )
-def test_xr_dims_as_attrs(
-    allow_holes, lazy_load, path, sel, idx, kwargs, coords, dims, var_attrs, global_attrs
-):
+def test_xr_dims_as_attrs(allow_holes, lazy_load, path, sel, idx, kwargs, coords, dims, var_attrs, global_attrs):
     ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path))
     if sel:
         ds0 = ds0.sel(**sel)

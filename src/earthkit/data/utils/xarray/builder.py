@@ -344,9 +344,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
             for d in global_tensor_dims:
                 if isinstance(d, LevelPerTypeDim):
-                    raise NotImplementedError(
-                        "level_dim_mode='level_per_type' not yet supported when allow_holes=True"
-                    )
+                    raise NotImplementedError("level_dim_mode='level_per_type' not yet supported when allow_holes=True")
                 # Create coord for each dimension
                 # TODO: This does not work yet: Dimensions like "level_per_type" are templates and will be
                 #  added as multiple concrete dimensions to the dataset
@@ -409,9 +407,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
         return builders
 
     def pre_build_variable(self, ds_var, dims, name):
-        tensor_dims, tensor_coords, tensor_coords_component, dims_as_attrs_map = self.prepare_tensor(
-            ds_var, dims, name
-        )
+        tensor_dims, tensor_coords, tensor_coords_component, dims_as_attrs_map = self.prepare_tensor(ds_var, dims, name)
         tensor_dim_keys = [d.key for d in tensor_dims]
 
         if self.profile.allow_holes:
@@ -436,9 +432,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             # Create coord for each dimension
             # Dimensions like "level_per_type" are templates and will be
             # added as multiple concrete dimensions to the dataset
-            k, c = d.as_coord(
-                d.key, tensor.user_coords[d.key], tensor_coords_component.get(d.key, None), tensor.source
-            )
+            k, c = d.as_coord(d.key, tensor.user_coords[d.key], tensor_coords_component.get(d.key, None), tensor.source)
             if k not in self.tensor_coords:
                 assert not self.profile.allow_holes, (
                     f"allow_holes=True: the dimension {k} not found among dimensions "
@@ -472,9 +466,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         # LOG.debug(f"{name=} {dims=}")
 
-        vals, component_vals = ds.unique_values(
-            [d.key for d in dims], component=self.profile.add_earthkit_attrs
-        )
+        vals, component_vals = ds.unique_values([d.key for d in dims], component=self.profile.add_earthkit_attrs)
 
         # LOG.debug(f"unique_values={vals}")
         # LOG.debug(f"ensure_dims={self.profile.dims.ensure_dims}")
@@ -668,9 +660,7 @@ class SingleDatasetBuilder(DatasetBuilder):
             raise ValueError("SingleDatasetMaker does not support splitting")
 
         if from_xr and self.direct_backend:
-            raise ValueError(
-                "SingleDatasetMaker does not support direct_backend=True when invoked from xarray"
-            )
+            raise ValueError("SingleDatasetMaker does not support direct_backend=True when invoked from xarray")
 
     def build(self):
         ds_sorted, _ = self.parse(self.ds, self.profile)

@@ -232,8 +232,7 @@ class ExtractionRequestCollection(UserList):
 
         if sum(opt is not None for opt in (ranges, mask, indices)) != 1:
             raise ValueError(
-                "Exactly one of 'ranges', 'mask' or 'indices' must be set. "
-                f"Got {ranges=}, {mask=}, {indices=}"
+                "Exactly one of 'ranges', 'mask' or 'indices' must be set. " f"Got {ranges=}, {mask=}, {indices=}"
             )
 
         if mask is not None:
@@ -449,8 +448,7 @@ class GribJumpSource(Source):
 
         if sum(opt is not None for opt in (ranges, mask, indices)) != 1:
             raise ValueError(
-                "Exactly one of 'ranges', 'mask' or 'indices' must be set. "
-                f"Got {ranges=}, {mask=}, {indices=}"
+                "Exactly one of 'ranges', 'mask' or 'indices' must be set. " f"Got {ranges=}, {mask=}, {indices=}"
             )
         self._ranges = ranges
         self._mask = mask

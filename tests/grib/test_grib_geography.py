@@ -14,7 +14,6 @@ import sys
 
 import numpy as np
 import pytest
-from earthkit.utils.array import convert as array_convert
 
 import earthkit.data
 from earthkit.data.testing import NO_GEO
@@ -23,6 +22,7 @@ from earthkit.data.testing import check_array_type
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import projections
+from earthkit.utils.array import convert as array_convert
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -366,9 +366,7 @@ def test_grib_grid_points_rotated_ll():
 
     # grid points
     res = ds[0].grid_points()
-    ref1 = np.array([30.0, 29.351052, 27.504876, 24.734374]), np.array(
-        [140.0, 136.09296, 132.770576, 130.469424]
-    )
+    ref1 = np.array([30.0, 29.351052, 27.504876, 24.734374]), np.array([140.0, 136.09296, 132.770576, 130.469424])
 
     ref2 = np.array([-17.968188, -14.787578, -12.22927, -10.573044]), np.array(
         [-50.356844, -48.94784, -46.558096, -43.46374]
@@ -397,14 +395,10 @@ def test_grib_grid_points_rotated_rgg():
     res = ds[0].grid_points()
 
     # front
-    ref1 = np.array([85.489232, 84.81188, 83.171928, 81.086144]), np.array(
-        [140.0, 110.950144, 92.460416, 82.07156]
-    )
+    ref1 = np.array([85.489232, 84.81188, 83.171928, 81.086144]), np.array([140.0, 110.950144, 92.460416, 82.07156])
 
     # back
-    ref2 = np.array([44.011184, 42.14694, 40.199948, 38.1796]), np.array(
-        [4.244462, 7.003924, 9.575494, 11.973933]
-    )
+    ref2 = np.array([44.011184, 42.14694, 40.199948, 38.1796]), np.array([4.244462, 7.003924, 9.575494, 11.973933])
 
     assert np.allclose(res[0][:4], ref1[0])
     assert np.allclose(res[1][:4], ref1[1])
