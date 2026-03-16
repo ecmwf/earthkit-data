@@ -439,5 +439,13 @@ def make_data_repr_html(title=None, path=None, types=None):
 
     t += f"<b>Available types</b>: {', '.join(types)}</p>"
 
-    d = {"path": path, "size": bytes(os.path.getsize(path)), "types": ", ".join(types)}
+    d = dict()
+    if path is not None:
+        d["path"] = path
+        try:
+            d["size"] = bytes(os.path.getsize(path))
+        except Exception:
+            pass
+    if types is not None:
+        d["types"] = ", ".join(types)
     return table_from_dict(d, title=title)

@@ -525,6 +525,9 @@ class BUFRReader(Source, BUFRReaderBase):
     def to_featurelist(self, *args, **kwargs):
         return BUFRListInFile(self.path, **self._kwargs, **kwargs)
 
+    def to_pandas(self, *args, **kwargs):
+        return self.to_featurelist().to_pandas(*args, **kwargs)
+
     def mutate_source(self):
         # A BUFRReader is a source itself
         return self
@@ -566,6 +569,9 @@ class MultiBUFRReader(Source, BUFRReaderBase):
             return merged.mutate()
 
         raise NotImplementedError("Conversion of MultiBUFRReader to featurelist is not implemented")
+
+    def to_pandas(self, *args, **kwargs):
+        return self.to_featurelist().to_pandas(*args, **kwargs)
 
     def __repr__(self):
         return f"MultiBUFRReader({self.sources})"
