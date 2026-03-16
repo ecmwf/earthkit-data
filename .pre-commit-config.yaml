@@ -20,10 +20,8 @@ repos:
   - id: ruff-check
     exclude: '(dev/.*|.*_)\.py$'
     args:
-    - --line-length=120
     - --fix
     - --exit-non-zero-on-fix
-    - --preview
   - id: ruff-format
 - repo: https://github.com/executablebooks/mdformat
   rev: 0.7.14
