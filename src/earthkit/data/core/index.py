@@ -92,16 +92,6 @@ class Selection(OrderOrSelection):
         if self.remapping:
             get = self.remapping(get)
         return all(v(get(k, default=None)) for k, v in self.actions.items())
-        # metadata = self.remapping(element.metadata)
-        # get = self.remapping(element.get)
-        # print("MATCH", [(k, v(metadata(k, default=None)), element) for k, v in self.actions.items()])
-        # print("Matching element", element)
-        # for k, v in self.actions.items():
-        #     print(f"  -> {k=} {v=}, {get(k, default=None)=}")
-        # return all(v(get(k, default=None)) for k, v in self.actions.items())
-        # return all(
-        #     v(element._get_fast(k, default=None, remapping=self.remapping)) for k, v in self.actions.items()
-        # )
 
 
 class OrderBase(OrderOrSelection):
@@ -130,19 +120,6 @@ class OrderBase(OrderOrSelection):
             if n != 0:
                 return n
         return 0
-
-        # if self.remapping:
-        #     a_metadata = self.remapping(a.get)
-        #     b_metadata = self.remapping(b.get)
-        # else:
-        #     a_metadata = a.get
-        #     b_metadata = b.get
-
-        # for k, v in self.actions.items():
-        #     n = v(a_metadata(k, default=None), b_metadata(k, default=None))
-        #     if n != 0:
-        #         return n
-        # return 0
 
 
 class Order(OrderBase):
@@ -214,56 +191,6 @@ class Order(OrderBase):
         return actions
 
 
-# class IndexBase(Source):
-#     @abstractmethod
-#     def __len__(self):
-#         pass
-
-#     @abstractmethod
-#     def __getitem__(self, n):
-#         pass
-
-#     @abstractmethod
-#     def ls(self, *args, **kwargs):
-#         pass
-
-#     @abstractmethod
-#     def head(self, *args, **kwargs):
-#         pass
-
-#     @abstractmethod
-#     def tail(self, *args, **kwargs):
-#         pass
-
-#     @abstractmethod
-#     def get(self, *args, **kwargs):
-#         pass
-
-#     @abstractmethod
-#     def unique(self, *args, **kwargs):
-#         pass
-
-#     @abstractmethod
-#     def sel(self, *args, **kwargs):
-#         pass
-
-#     @abstractmethod
-#     def isel(self, *args, **kwargs):
-#         pass
-
-#     @abstractmethod
-#     def order_by(self, *args, **kwargs):
-#         pass
-
-#     @abstractmethod
-#     def batched(self, *args, **kwargs):
-#         pass
-
-#     @abstractmethod
-#     def group_by(self, *args, **kwargs):
-#         pass
-
-
 class Index(Source, Encodable):
     @classmethod
     def _new_mask_index(self, *args, **kwargs):
@@ -301,24 +228,10 @@ class Index(Source, Encodable):
 
     def _from_ndarray(self, a):
         return self._from_sequence(a.tolist())
-        # import numpy as np
-
-        # # will raise IndexError if an index is out of bounds
-        # n = len(self)
-        # indices = np.arange(0, n if n > 0 else 0)
-        # indices = indices[a].tolist()
-        # return self.new_mask_index(self, indices)
-
-    # def from_dict(self, dic):
-    #     return self.sel(dic)
 
     @abstractmethod
     def _getitem(self, n):
         pass
-
-    # @abstractmethod
-    # def _get_single(self, key, default=None, **kwargs):
-    #     pass
 
     @abstractmethod
     def _normalise_key_values(self, **kwargs):
@@ -722,9 +635,6 @@ class Index(Source, Encodable):
 
         return np.array([f.to_numpy(*args, **kwargs) for f in self])
 
-    # def full(self, *coords):
-    #     return FullIndex(self, *coords)
-
     def batched(self, n):
         """Iterate through the object in batches of ``n``.
 
@@ -831,10 +741,3 @@ class MultiIndex(Index):
             self.__class__.__name__,
             ",".join(repr(i) for i in self._indexes),
         )
-
-    # def _default_encoder(self):
-    #     for i in self._indexes:
-    #         encoder = i._default_encoder()
-    #         if encoder is not None:
-    #             return encoder
-    #     return None

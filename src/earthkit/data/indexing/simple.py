@@ -122,24 +122,8 @@ class SimpleFieldList(SimpleFieldListBase):
         fields = state.pop("_fields")
         self.__init__(fields)
 
-
-# class LazySimpleFieldList(SimpleFieldListCore):
-#     def __init__(self, maker):
-#         self._f = [None] * maker.size
-#         self._maker = maker
-
-#     @property
-#     def _fields(self):
-#         return self._f
-
-#     def _getitem(self, n):
-#         if isinstance(n, int):
-#             r = self._fields[n]
-#             if r is None:
-#                 r = self._maker(n)
-#                 self._fields[n] = r
-#             return r
-#         return None
+    def __repr__(self):
+        return f"SimpleFieldList, {len(self)} fields"
 
 
 class LazySimpleFieldList(SimpleFieldListBase):
