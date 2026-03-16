@@ -13,6 +13,9 @@ from abc import abstractmethod
 from collections import defaultdict
 
 import deprecation
+from earthkit.utils.array import array_namespace as eku_array_namespace
+from earthkit.utils.array import convert as convert_array
+from earthkit.utils.array.convert import convert_dtype
 
 from earthkit.data.core import Base
 from earthkit.data.core.index import Index
@@ -23,9 +26,6 @@ from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import detect_out_filename
 from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils.metadata.args import metadata_argument
-from earthkit.utils.array import array_namespace as eku_array_namespace
-from earthkit.utils.array import convert as convert_array
-from earthkit.utils.array.convert import convert_dtype
 
 
 def _bits_per_value_to_metadata(**kwargs):

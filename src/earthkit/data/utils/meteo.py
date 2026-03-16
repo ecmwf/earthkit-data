@@ -15,7 +15,6 @@
 import datetime
 
 import numpy as np
-
 from earthkit.utils.array import array_namespace
 
 DAYS_PER_YEAR = 365.25

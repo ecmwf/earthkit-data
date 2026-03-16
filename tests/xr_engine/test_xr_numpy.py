@@ -12,11 +12,11 @@
 
 import numpy as np
 import pytest
+from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data import from_source
 from earthkit.data.testing import check_array_type
 from earthkit.data.testing import earthkit_remote_test_data_file
-from earthkit.utils.array import array_namespace as eku_array_namespace
 
 _NUMPY = eku_array_namespace("numpy")
 

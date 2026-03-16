@@ -8,18 +8,18 @@ Conventions:
 _FillValue:
   type: D
   use:
-    - C
-    - D
+  - C
+  - D
 actual_range:
   type: N
   use:
-    - C
-    - D
+  - C
+  - D
 add_offset:
   type: N
   use:
-    - C
-    - D
+  - C
+  - D
 ancillary_variables:
   type: S
   use: D
@@ -47,9 +47,9 @@ climatology:
 comment:
   type: S
   use:
-    - G
-    - C
-    - D
+  - G
+  - C
+  - D
 compress:
   type: S
   use: C
@@ -59,8 +59,8 @@ computed_standard_name:
 coordinates:
   type: S
   use:
-    - D
-    - M
+  - D
+  - M
 external_variables:
   type: S
   use: G
@@ -82,29 +82,29 @@ formula_terms:
 geometry:
   type: S
   use:
-    - C
-    - D
+  - C
+  - D
 geometry_type:
   type: S
   use: M
 grid_mapping:
   type: S
   use:
-    - D
-    - M
+  - D
+  - M
 history:
   type: S
   use:
-    - G
-    - Gr
+  - G
+  - Gr
 instance_dimension:
   type: S
   use: "-"
 institution:
   type: S
   use:
-    - G
-    - D
+  - G
+  - D
 interior_ring:
   type: S
   use: M
@@ -117,13 +117,13 @@ leap_year:
 long_name:
   type: S
   use:
-    - C
-    - D
+  - C
+  - D
 missing_value:
   type: D
   use:
-    - C
-    - D
+  - C
+  - D
 month_lengths:
   type: N
   use: C
@@ -145,51 +145,51 @@ positive:
 references:
   type: S
   use:
-    - G
-    - D
+  - G
+  - D
 sample_dimension:
   type: S
   use: "-"
 scale_factor:
   type: N
   use:
-    - C
-    - D
+  - C
+  - D
 source:
   type: S
   use:
-    - G
-    - D
+  - G
+  - D
 standard_error_multiplier:
   type: N
   use: D
 standard_name:
   type: S
   use:
-    - C
-    - D
+  - C
+  - D
 title:
   type: S
   use:
-    - G
-    - Gr
+  - G
+  - Gr
 units:
   type: S
   use:
-    - C
-    - D
+  - C
+  - D
 valid_max:
   type: N
   use:
-    - C
-    - D
+  - C
+  - D
 valid_min:
   type: N
   use:
-    - C
-    - D
+  - C
+  - D
 valid_range:
   type: N
   use:
-    - C
-    - D
+  - C
+  - D

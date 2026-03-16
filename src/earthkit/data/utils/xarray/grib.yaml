@@ -8,10 +8,10 @@ dim_roles:
 variable_key: param
 attrs_mode: fixed
 variable_attrs:
-  - cfName
-  - name
-  - units
-  - typeOfLevel
+- cfName
+- name
+- units
+- typeOfLevel
 global_attrs:
-  - Conventions: CF-1.8
-  - institution: ECMWF
+- Conventions: CF-1.8
+- institution: ECMWF
