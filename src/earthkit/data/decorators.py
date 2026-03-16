@@ -57,9 +57,7 @@ def detect_out_filename(func):
             and os.path.isfile(self.path)
             and os.path.samefile(args[0], self.path)
         ):
-            warnings.warn(
-                UserWarning(f"Earthkit refusing to overwrite the file we are currently reading: {args[0]}")
-            )
+            warnings.warn(UserWarning(f"Earthkit refusing to overwrite the file we are currently reading: {args[0]}"))
             return
 
         return func(self, *args, **kwargs)
@@ -197,13 +195,9 @@ def normalise_grib_key_values(kwargs, accept_none=True, as_tuple=False):
     kwargs = f(**kwargs)
 
     if "time" in kwargs:
-        kwargs["time"] = {False: _normalise_time, True: _normalise_time_as_tuple}[as_tuple](
-            kwargs["time"], int
-        )
+        kwargs["time"] = {False: _normalise_time, True: _normalise_time_as_tuple}[as_tuple](kwargs["time"], int)
     if "expver" in kwargs:
-        kwargs["expver"] = {False: _normalise_expver, True: _normalise_expver_as_tuple}[as_tuple](
-            kwargs["expver"]
-        )
+        kwargs["expver"] = {False: _normalise_expver, True: _normalise_expver_as_tuple}[as_tuple](kwargs["expver"])
 
     return kwargs
 

@@ -58,9 +58,7 @@ def create_grib_field(handle, data=None, cache=False, extra_keys=None):
     return r
 
 
-def new_array_grib_field(
-    field, handle, array_namespace=None, device=None, flatten=False, dtype=None, cache=False
-):
+def new_array_grib_field(field, handle, array_namespace=None, device=None, flatten=False, dtype=None, cache=False):
     values = field.to_array(array_namespace=array_namespace, device=device, flatten=flatten, dtype=dtype)
     data = ArrayDataFieldComponentHandler(values)
 

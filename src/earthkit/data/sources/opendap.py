@@ -7,9 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.utils.decorators import thread_safe_cached_property
-
 from earthkit.data.sources import Source
+from earthkit.utils.decorators import thread_safe_cached_property
 
 
 class OpenDAP(Source):

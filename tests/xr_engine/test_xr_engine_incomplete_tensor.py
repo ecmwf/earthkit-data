@@ -344,9 +344,7 @@ def test_xr_engine_incomplete_tensor_coordinates_trimmed_plus_holes(
         ),
     ],
 )
-def test_xr_engine_incomplete_tensor_select_hole(
-    lazy_load, file, variables, sel_dicts, shapes, isnan_by_var_dicts
-):
+def test_xr_engine_incomplete_tensor_select_hole(lazy_load, file, variables, sel_dicts, shapes, isnan_by_var_dicts):
     kwargs = dict(profile="mars", squeeze=False, allow_holes=True, lazy_load=lazy_load)
 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file)).to_fieldlist()

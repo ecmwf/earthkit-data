@@ -90,9 +90,7 @@ def test_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metad
         assert len(ds) == FIELD_NUM
 
         # unique values
-        ref_vals = ds.unique(
-            "metadata.paramId", "metadata.levelist", "metadata.levtype", "metadata.valid_datetime"
-        )
+        ref_vals = ds.unique("metadata.paramId", "metadata.levelist", "metadata.levtype", "metadata.valid_datetime")
 
         ref = {
             "handle_cache_size": handle_cache_size,
@@ -110,9 +108,7 @@ def test_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metad
         _check_diag(ds._diag(), ref)
 
         # unique values repeated
-        vals = ds.unique(
-            "metadata.paramId", "metadata.levelist", "metadata.levtype", "metadata.valid_datetime"
-        )
+        vals = ds.unique("metadata.paramId", "metadata.levelist", "metadata.levtype", "metadata.valid_datetime")
 
         assert vals == ref_vals
 
@@ -156,9 +152,7 @@ def test_grib_cache_basic_file_non_patched():
         assert len(ds) == FIELD_NUM
 
         # unique values
-        ref_vals = ds.unique(
-            "metadata.paramId", "metadata.levelist", "metadata.levtype", "metadata.valid_datetime"
-        )
+        ref_vals = ds.unique("metadata.paramId", "metadata.levelist", "metadata.levtype", "metadata.valid_datetime")
 
         ref = {
             "handle_cache_size": 1,
@@ -171,9 +165,7 @@ def test_grib_cache_basic_file_non_patched():
         _check_diag(ds._diag(), ref)
 
         # unique values repeated
-        vals = ds.unique(
-            "metadata.paramId", "metadata.levelist", "metadata.levtype", "metadata.valid_datetime"
-        )
+        vals = ds.unique("metadata.paramId", "metadata.levelist", "metadata.levtype", "metadata.valid_datetime")
 
         assert vals == ref_vals
 
@@ -220,9 +212,7 @@ def test_grib_cache_basic_metadata_patched(serialise, fl_type, patch_metadata_ca
         assert len(ds) == FIELD_NUM
 
         # unique values
-        ref_vals = ds.unique(
-            "metadata.paramId", "metadata.levelist", "metadata.levtype", "metadata.valid_datetime"
-        )
+        ref_vals = ds.unique("metadata.paramId", "metadata.levelist", "metadata.levtype", "metadata.valid_datetime")
 
         ref = {
             "metadata_cache_hits": 0,
@@ -234,9 +224,7 @@ def test_grib_cache_basic_metadata_patched(serialise, fl_type, patch_metadata_ca
         _check_diag(diag, ref)
 
         # unique values repeated
-        vals = ds.unique(
-            "metadata.paramId", "metadata.levelist", "metadata.levtype", "metadata.valid_datetime"
-        )
+        vals = ds.unique("metadata.paramId", "metadata.levelist", "metadata.levtype", "metadata.valid_datetime")
 
         assert vals == ref_vals
 

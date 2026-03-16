@@ -201,9 +201,7 @@ class XArrayFieldList(IndexFieldListBase):
             # assert grid_coords <= 2, [c for c in coordinates if c.is_grid]
 
             if grid_coords < 2:
-                LOG.debug(
-                    "Skipping %s (not 2D): %s", variable, [(c, c.is_grid, c.is_dim) for c in coordinates]
-                )
+                LOG.debug("Skipping %s (not 2D): %s", variable, [(c, c.is_grid, c.is_dim) for c in coordinates])
                 continue
 
             grid = guess.grid(coordinates, variable)

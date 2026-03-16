@@ -196,9 +196,7 @@ class UniqueValuesCollector:
         self._post_proc(vals, sort=sort, drop_none=drop_none, squeeze=squeeze)
         return vals
 
-    def _collect_with_cache(
-        self, iterable, keys, cache, remapping=None, sort=False, drop_none=True, squeeze=False
-    ):
+    def _collect_with_cache(self, iterable, keys, cache, remapping=None, sort=False, drop_none=True, squeeze=False):
         assert isinstance(keys, tuple), keys
 
         ori_keys = keys

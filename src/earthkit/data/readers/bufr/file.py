@@ -64,8 +64,11 @@ class BUFRList(IndexFeatureListBase):
         keys: str, list, tuple
             Specify the metadata keys to extract. Can be a single key (str) or multiple
             keys as a list/tuple of str. Keys are assumed to be of the form
-            "component.key". For example, "time.valid_datetime" or "parameter.name". It is also allowed to specify just the component name like "time" or "parameter". In this case the corresponding component's ``to_dict()`` method is called and its result is returned. For other keys, the method looks for them in
-            the private components of the fields (if any) and returns the value from the first private component that contains it.
+            "component.key". For example, "time.valid_datetime" or "parameter.name". It is also allowed to specify
+            just the component name like "time" or "parameter". In this case the corresponding component's
+            ``to_dict()`` method is called and its result is returned. For other keys, the method looks for them in
+            the private components of the fields (if any) and returns the value from the first private component
+            that contains it.
         default: Any, None
             Specify the default value(s) for ``keys``. Returned when the given key
             is not found and ``raise_on_missing`` is False. When ``default`` is a single
@@ -77,7 +80,9 @@ class BUFRList(IndexFeatureListBase):
         raise_on_missing: bool
             When True, raises KeyError if any of ``keys`` is not found.
         output: type, str
-            Specify the output structure type in conjunction with ``group_by_key``.  When ``group_by`` is False (default) the output is a list with one item per field and ``output`` has the following effect on the items:
+            Specify the output structure type in conjunction with ``group_by_key``.  When ``group_by`` is False
+            (default) the output is a list with one item per field and ``output`` has the following effect on
+            the items:
 
             - "auto" (default):
                 - when ``keys`` is a str returns a single value per field
@@ -86,13 +91,17 @@ class BUFRList(IndexFeatureListBase):
             - tuple or "tuple": returns a tuple of values per field.
             - dict or "dict": returns a dictionary with keys and their values per field.
 
-            When ``group_by_key`` is True the output is grouped by key as follows and return an object with one item per key. The item contains the list of values for that key from all the fields. When ``output`` is dict a dict is returned otherwise list.
+            When ``group_by_key`` is True the output is grouped by key as follows and return an object with one
+            item per key. The item contains the list of values for that key from all the fields. When
+            ``output`` is dict a dict is returned otherwise list.
 
         group_by_key: bool
             When True the output is grouped by key as described in ``output``.
         flatten_dict: bool
             When True and ``output`` is dict, for each field if any of the values in the returned dict
-            is itself a dict, it is flattened to depth 1 by concatenating the keys with a dot. For example, if the returned dict is ``{"a": {"x": 1, "y": 2}, "b": 3}``, it becomes ``{"a.x": 1, "a.y": 2, "b": 3}``. This option is ignored when ``output`` is not dict.
+            is itself a dict, it is flattened to depth 1 by concatenating the keys with a dot. For example, if
+            the returned dict is ``{"a": {"x": 1, "y": 2}, "b": 3}``, it becomes ``{"a.x": 1, "a.y": 2, "b": 3}``. This
+            option is ignored when ``output`` is not dict.
         remapping: dict, optional
             Create new metadata keys from existing ones. E.g. to define a new
             key "param_level" as the concatenated value of the "parameter.variable" and "vertical.level" keys use::

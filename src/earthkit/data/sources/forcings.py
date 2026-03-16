@@ -207,10 +207,7 @@ def make_datetime(date, time):
         return date
     if date.hour or date.minute:
         raise ValueError(
-            (
-                f"Duplicate information about time time={time},"
-                f"and time={date.hour}:{date.minute} from date={date}"
-            )
+            (f"Duplicate information about time time={time}," f"and time={date.hour}:{date.minute} from date={date}")
         )
     assert date.hour == 0, (date, time)
     assert date.minute == 0, (date, time)
@@ -322,10 +319,7 @@ class ForcingsInnerData:
             return request["date"]
 
         if "date" in request and "time" in request:
-            dates = [
-                make_datetime(date, time)
-                for date, time in itertools.product(request["date"], request["time"])
-            ]
+            dates = [make_datetime(date, time) for date, time in itertools.product(request["date"], request["time"])]
             assert len(set(dates)) == len(dates), "Duplicates dates in forcings."
             return dates
 

@@ -36,9 +36,7 @@ TEST_DS["test2"] = TEST_DA2
 EK_XARRAY_WRAPPER = from_object(TEST_DS)
 EK_NUMPY_WRAPPER = from_object(TEST_NP)
 
-WRAPPED_XR_ONES_LIKE = module_inputs_wrapper.transform_function_inputs(
-    xr.ones_like, kwarg_types={"other": XR_TYPES}
-)
+WRAPPED_XR_ONES_LIKE = module_inputs_wrapper.transform_function_inputs(xr.ones_like, kwarg_types={"other": XR_TYPES})
 
 WRAPPED_XR_ONES_LIKE_TYPE_SETTING = module_inputs_wrapper.transform_function_inputs(
     dummy_module.xarray_ones_like,

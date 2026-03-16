@@ -112,9 +112,7 @@ def to_datetime_list(datetimes):  # noqa C901
             and datetimes[1].lower() == "to"
             and datetimes[3].lower() == "by"
         ):
-            return mars_like_date_list(
-                to_datetime(datetimes[0]), to_datetime(datetimes[2]), int(datetimes[4])
-            )
+            return mars_like_date_list(to_datetime(datetimes[0]), to_datetime(datetimes[2]), int(datetimes[4]))
 
         return [to_datetime(x) for x in datetimes]
 
@@ -310,11 +308,11 @@ def _timedelta_to_grib(step, units=None):
                 if minutes == 0:
                     return hours
                 else:
-                    return f"{hours*60+minutes}m"
+                    return f"{hours * 60 + minutes}m"
             else:
                 return f"{int(step.total_seconds())}s"
         elif units == "minutes":
-            return f"{hours*60+minutes}m"
+            return f"{hours * 60 + minutes}m"
         elif units == "hours":
             return hours
 
@@ -369,10 +367,7 @@ def datetime_from_date_and_time(date, time):
 
     if date.hour or date.minute:
         raise ValueError(
-            (
-                f"Duplicate information for time: time={time},"
-                f"and time={date.hour}:{date.minute} from date={date}"
-            )
+            (f"Duplicate information for time: time={time}," f"and time={date.hour}:{date.minute} from date={date}")
         )
 
     time = to_time(time)
@@ -384,10 +379,7 @@ def make_datetime(date, time):
         return date
     if date.hour or date.minute:
         raise ValueError(
-            (
-                f"Duplicate information about time time={time},"
-                f"and time={date.hour}:{date.minute} from date={date}"
-            )
+            (f"Duplicate information about time time={time}," f"and time={date.hour}:{date.minute} from date={date}")
         )
     assert date.hour == 0, (date, time)
     assert date.minute == 0, (date, time)

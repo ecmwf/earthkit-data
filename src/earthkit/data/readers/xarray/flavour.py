@@ -400,9 +400,7 @@ class CoordinateGuesser(ABC):
         pass
 
     @abstractmethod
-    def _is_longitude(
-        self, c: xr.DataArray, attributes: CoordinateAttributes
-    ) -> Optional[LongitudeCoordinate]:
+    def _is_longitude(self, c: xr.DataArray, attributes: CoordinateAttributes) -> Optional[LongitudeCoordinate]:
         """Checks if the coordinate is a longitude.
 
         Parameters
@@ -586,9 +584,7 @@ class DefaultCoordinateGuesser(CoordinateGuesser):
 
         return None
 
-    def _is_longitude(
-        self, c: xr.DataArray, attributes: CoordinateAttributes
-    ) -> Optional[LongitudeCoordinate]:
+    def _is_longitude(self, c: xr.DataArray, attributes: CoordinateAttributes) -> Optional[LongitudeCoordinate]:
         """Checks if the coordinate is a longitude.
 
         Parameters
@@ -889,9 +885,7 @@ class FlavourCoordinateGuesser(CoordinateGuesser):
 
         return None
 
-    def _is_longitude(
-        self, c: xr.DataArray, attributes: CoordinateAttributes
-    ) -> Optional[LongitudeCoordinate]:
+    def _is_longitude(self, c: xr.DataArray, attributes: CoordinateAttributes) -> Optional[LongitudeCoordinate]:
         """Checks if the coordinate is a longitude using the flavour rules.
 
         Parameters

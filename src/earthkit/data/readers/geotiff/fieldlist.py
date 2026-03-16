@@ -8,9 +8,8 @@
 #
 
 
-from earthkit.utils.decorators import thread_safe_cached_property
-
 from earthkit.data.indexing.simple import SimpleFieldListBase
+from earthkit.utils.decorators import thread_safe_cached_property
 
 from .core import DEFAULT_XARRAY_KWARGS
 from .reader import GeoTIFFReaderBase

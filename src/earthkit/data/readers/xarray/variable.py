@@ -18,6 +18,7 @@ from typing import Tuple
 
 import numpy as np
 import xarray as xr
+
 from earthkit.utils.decorators import thread_safe_cached_property
 
 # from .field import XArrayField
@@ -83,15 +84,11 @@ class Variable:
         self.time = time
 
         self.shape = tuple(
-            len(c.variable)
-            for c in coordinates
-            if c.is_dim and not c.scalar and not c.is_grid and not c.is_point
+            len(c.variable) for c in coordinates if c.is_dim and not c.scalar and not c.is_grid and not c.is_point
         )
 
         self.names = {
-            c.variable.name: c
-            for c in coordinates
-            if c.is_dim and not c.scalar and not c.is_grid and not c.is_point
+            c.variable.name: c for c in coordinates if c.is_dim and not c.scalar and not c.is_grid and not c.is_point
         }
 
         self.by_name = {c.variable.name: c for c in coordinates}
@@ -217,8 +214,6 @@ class Variable:
 
         c = self.by_name.get(k)
 
-        # assert c is not None, f"Could not find coordinate {k} in {self.variable.name} {self.coordinates} {list(self.by_name)}"
-
         if c is None:
             missing[k] = v
             return self.sel(missing, **kwargs)
@@ -315,9 +310,7 @@ class FilteredVariable:
     def fields(self):
         """Filter the fields of a variable based on metadata."""
         return [
-            field
-            for field in self.variable
-            if all(field.get(k, default=None) == v for k, v in self.kwargs.items())
+            field for field in self.variable if all(field.get(k, default=None) == v for k, v in self.kwargs.items())
         ]
 
     @property

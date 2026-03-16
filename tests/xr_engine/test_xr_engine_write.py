@@ -225,9 +225,7 @@ def test_xr_engine_write_level_and_type(allow_holes, lazy_load):
 
     xr.set_options(keep_attrs=True)
 
-    ds = ds_ek.to_xarray(
-        profile="mars", level_dim_mode="level_and_type", allow_holes=allow_holes, lazy_load=lazy_load
-    )
+    ds = ds_ek.to_xarray(profile="mars", level_dim_mode="level_and_type", allow_holes=allow_holes, lazy_load=lazy_load)
     ds += 1
 
     # TODO: currently base_time + step is lost when valid_time dim is used
@@ -321,9 +319,7 @@ def test_xr_engine_write_bits_per_value(allow_holes, lazy_load):
     # ds_ek = ds_ek.to_fieldlist()
 
     encoder = create_encoder("grib")
-    ds_ek = ds_ek.from_fields(
-        [encoder.encode(data=f, metadata={"bitsPerValue": 8}).to_field() for f in ds_ek]
-    )
+    ds_ek = ds_ek.from_fields([encoder.encode(data=f, metadata={"bitsPerValue": 8}).to_field() for f in ds_ek])
 
     assert ds_ek[0].metadata("bitsPerValue") == 8
 
@@ -331,9 +327,7 @@ def test_xr_engine_write_bits_per_value(allow_holes, lazy_load):
 
     xr.set_options(keep_attrs=True)
 
-    ds = ds_ek.to_xarray(
-        allow_holes=allow_holes, lazy_load=lazy_load, **{"profile": "mars", "time_dim_mode": "raw"}
-    )
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **{"profile": "mars", "time_dim_mode": "raw"})
     ds += 1
 
     # assert ds["t"].earthkit._reference_field.metadata("bitsPerValue") == 8
@@ -493,9 +487,7 @@ def test_xr_write_to_netcdf_file_dataarray(allow_holes, lazy_load, method, kwarg
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds_ek = ds_ek.sel({"metadata.param": ["t"], "metadata.level": [500, 850]})
 
-    ref_t_vals = (
-        ds_ek.sel({"metadata.param": "t", "metadata.step": 6, "metadata.level": 500}).to_numpy().flatten()
-    )
+    ref_t_vals = ds_ek.sel({"metadata.param": "t", "metadata.step": 6, "metadata.level": 500}).to_numpy().flatten()
 
     import xarray as xr
 
@@ -538,12 +530,8 @@ def test_xr_engine_write_to_netcdf_file_dataset(allow_holes, lazy_load, method, 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds_ek = ds_ek.sel({"metadata.param": ["t", "r"], "metadata.level": [500, 850]})
 
-    ref_t_vals = (
-        ds_ek.sel({"metadata.param": "t", "metadata.step": 6, "metadata.level": 500}).to_numpy().flatten()
-    )
-    ref_r_vals = (
-        ds_ek.sel({"metadata.param": "r", "metadata.step": 6, "metadata.level": 500}).to_numpy().flatten()
-    )
+    ref_t_vals = ds_ek.sel({"metadata.param": "t", "metadata.step": 6, "metadata.level": 500}).to_numpy().flatten()
+    ref_r_vals = ds_ek.sel({"metadata.param": "r", "metadata.step": 6, "metadata.level": 500}).to_numpy().flatten()
 
     import xarray as xr
 
@@ -575,9 +563,7 @@ def test_xr_engine_write_to_netcdf_file_dataset(allow_holes, lazy_load, method, 
 
 @pytest.mark.cache
 def test_xr_engine_write_forecast_per_month():
-    ds_ek = from_source(
-        "url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib")
-    ).to_fieldlist()
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib")).to_fieldlist()
 
     ds = ds_ek.to_xarray(profile="mars", time_dim_mode="valid_time")
     r = ds.earthkit.to_fieldlist()

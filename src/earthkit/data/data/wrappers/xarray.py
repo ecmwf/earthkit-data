@@ -101,9 +101,7 @@ class XarrayDatasetData(XarrayData):
         return fl
 
     def to_numpy(self, flatten=False, copy=True, dtype=None, index=None, **kwargs):
-        return self._to_numpy(
-            self._data.to_array(), flatten=flatten, copy=copy, dtype=dtype, index=index, **kwargs
-        )
+        return self._to_numpy(self._data.to_array(), flatten=flatten, copy=copy, dtype=dtype, index=index, **kwargs)
 
 
 # class XArrayDataArrayWrapper(Wrapper):

@@ -21,12 +21,12 @@ from typing import Optional
 from typing import Tuple
 
 import numpy as np
-from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.core.field import Field
 from earthkit.data.indexing.simple import SimpleFieldListBase
 from earthkit.data.sources import Source
 from earthkit.data.sources.fdb import FDBRetriever
+from earthkit.utils.decorators import thread_safe_cached_property
 
 
 def split_mars_requests(request: dict[str, Any]) -> list[dict[str, Any]]:
@@ -232,8 +232,7 @@ class ExtractionRequestCollection(UserList):
 
         if sum(opt is not None for opt in (ranges, mask, indices)) != 1:
             raise ValueError(
-                "Exactly one of 'ranges', 'mask' or 'indices' must be set. "
-                f"Got {ranges=}, {mask=}, {indices=}"
+                "Exactly one of 'ranges', 'mask' or 'indices' must be set. " f"Got {ranges=}, {mask=}, {indices=}"
             )
 
         if mask is not None:
@@ -446,8 +445,7 @@ class GribJumpSource(Source):
 
         if sum(opt is not None for opt in (ranges, mask, indices)) != 1:
             raise ValueError(
-                "Exactly one of 'ranges', 'mask' or 'indices' must be set. "
-                f"Got {ranges=}, {mask=}, {indices=}"
+                "Exactly one of 'ranges', 'mask' or 'indices' must be set. " f"Got {ranges=}, {mask=}, {indices=}"
             )
         self._ranges = ranges
         self._mask = mask

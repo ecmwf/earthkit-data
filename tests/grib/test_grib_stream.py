@@ -485,9 +485,7 @@ def test_grib_concat_stream_memory():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     ds1 = from_source("stream", stream1).to_fieldlist(read_all=True)
     ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True).to_fieldlist(read_all=True)
-    ds3 = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True).to_fieldlist(
-        read_all=True
-    )
+    ds3 = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True).to_fieldlist(read_all=True)
 
     ds = concat(ds1, ds2, ds3)
 

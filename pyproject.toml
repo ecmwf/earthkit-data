@@ -103,8 +103,11 @@ where = [ "src/" ]
 [tool.setuptools_scm]
 version_file = "src/earthkit/data/_version.py"
 
-[tool.isort]
-profile = "black"
+[tool.ruff]
+line-length = 120
+
+lint.select = [ "E", "F", "I" ]
+lint.isort.force-single-line = true
 
 [tool.coverage.run]
 branch = "true"

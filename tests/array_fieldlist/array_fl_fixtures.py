@@ -11,12 +11,11 @@
 
 import os
 
-from earthkit.utils.array import array_namespace as eku_array_namespace
-
 from earthkit.data import FieldList
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.utils.array import array_namespace as eku_array_namespace
 
 
 def load_array_fl(num, array_namespace=None):

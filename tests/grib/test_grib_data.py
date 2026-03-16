@@ -14,11 +14,11 @@ import sys
 
 import numpy as np
 import pytest
-from earthkit.utils.array import convert as array_convert
-from earthkit.utils.array.convert import convert_dtype
 
 from earthkit.data.utils.testing import check_array
 from earthkit.data.utils.testing import check_array_type
+from earthkit.utils.array import convert as array_convert
+from earthkit.utils.array.convert import convert_dtype
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)

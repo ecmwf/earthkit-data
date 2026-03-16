@@ -97,9 +97,7 @@ def test_formats():
         "2.7",
     ]
 
-    assert (
-        FormatTransformer(None, type=DateType, format="%Y").transform(datetime.datetime(2000, 1, 1)) == "2000"
-    )
+    assert FormatTransformer(None, type=DateType, format="%Y").transform(datetime.datetime(2000, 1, 1)) == "2000"
 
     assert FormatTransformer(None, type=DateListType, format="%d").transform(
         (datetime.datetime(2000, 1, 1), datetime.datetime(2000, 1, 2))
@@ -112,9 +110,9 @@ def test_formats():
         assert FormatTransformer(None, type=VariableListType, format="%4s").transform(42) == 0
 
     with pytest.raises(Exception):  # FIXME: Not sure what this should be
-        assert FormatTransformer(None, type=BoundingBoxType, format="%4s").transform(
-            (1, -1, -1, 1)
-        ) == BoundingBox(north=1, west=-1, south=-1, east=1)
+        assert FormatTransformer(None, type=BoundingBoxType, format="%4s").transform((1, -1, -1, 1)) == BoundingBox(
+            north=1, west=-1, south=-1, east=1
+        )
 
     b1 = BoundingBox(north=90, west=-45, south=-90, east=45)
     assert FormatTransformer(None, type=BoundingBoxType, format=tuple).transform(b1) == (

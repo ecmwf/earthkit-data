@@ -9,15 +9,14 @@
 
 from collections import defaultdict
 
-from earthkit.utils.array import array_namespace as eku_array_namespace
-from earthkit.utils.decorators import thread_safe_cached_property
-
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.index import Index
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
 from earthkit.data.core.order import build_remapping
 from earthkit.data.utils.compute import wrap_maths
+from earthkit.utils.array import array_namespace as eku_array_namespace
+from earthkit.utils.decorators import thread_safe_cached_property
 
 
 @wrap_maths

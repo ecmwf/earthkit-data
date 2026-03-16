@@ -52,9 +52,7 @@ def test_grib_time_forecast(fl_type):
 
 @pytest.mark.cache
 def test_grib_time_step_range_1():
-    ds = from_source(
-        "url", earthkit_remote_test_data_file("xr_engine/date/wgust_step_range.grib1")
-    ).to_fieldlist()
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/wgust_step_range.grib1")).to_fieldlist()
 
     f = ds[2]
     assert f.time.valid_datetime() == datetime.datetime(2011, 12, 16, 12, 0)
@@ -69,9 +67,7 @@ def test_grib_time_step_range_1():
 
 @pytest.mark.cache
 def test_grib_time_step_range_2():
-    ds = from_source(
-        "url", earthkit_remote_test_data_file("xr_engine/date/lsp_step_range.grib2")
-    ).to_fieldlist()
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/lsp_step_range.grib2")).to_fieldlist()
 
     f = ds[0]
     assert f.time.valid_datetime() == datetime.datetime(2025, 5, 30)
@@ -107,9 +103,7 @@ def test_grib_time_seasonal():
 
 @pytest.mark.cache
 def test_grib_time_monthly_1():
-    ds = from_source(
-        "url", earthkit_remote_test_data_file("xr_engine/date/seasonal_monthly.grib")
-    ).to_fieldlist()
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/seasonal_monthly.grib")).to_fieldlist()
 
     f = ds[0]
     assert f.time.base_datetime() == datetime.datetime(1993, 10, 1)
@@ -121,9 +115,7 @@ def test_grib_time_monthly_1():
 
 @pytest.mark.cache
 def test_grib_time_monthly_2():
-    ds = from_source(
-        "url", earthkit_remote_test_data_file("xr_engine/date/ncep-seasonal-monthly.grib")
-    ).to_fieldlist()
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/ncep-seasonal-monthly.grib")).to_fieldlist()
 
     f = ds[0]
     assert f.time.base_datetime() == datetime.datetime(2021, 9, 1)

@@ -13,10 +13,9 @@ import threading
 from abc import ABCMeta
 from abc import abstractmethod
 
-from earthkit.utils.decorators import thread_safe_cached_property
-
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
+from earthkit.utils.decorators import thread_safe_cached_property
 
 LOG = logging.getLogger(__name__)
 
@@ -347,9 +346,7 @@ class Profile:
             if "array_module" in data:
                 import warnings
 
-                warnings.warn(
-                    "'array_module' is deprecated. Use 'array_namespace' instead", DeprecationWarning
-                )
+                warnings.warn("'array_module' is deprecated. Use 'array_namespace' instead", DeprecationWarning)
                 array_module = kwargs.pop("array_module")
                 if data.get("array_namespace", None) is None:
                     data["array_namespace"] = array_module
@@ -359,9 +356,7 @@ class Profile:
             if "array_backend" in data:
                 import warnings
 
-                warnings.warn(
-                    "'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning
-                )
+                warnings.warn("'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning)
                 array_backend = kwargs.pop("array_backend")
                 if data.get("array_namespace", None) is None:
                     data["array_namespace"] = array_backend

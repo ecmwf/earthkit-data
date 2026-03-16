@@ -238,9 +238,7 @@ def test_settings_temporary_autosave_2():
             settings.auto_save_settings = v_ori
 
 
-@pytest.mark.parametrize(
-    "value,error", [("10000", None), (10000, None), ("1b", ValueError), ("A", ValueError)]
-)
+@pytest.mark.parametrize("value,error", [("10000", None), (10000, None), ("1b", ValueError), ("A", ValueError)])
 def test_settings_env(monkeypatch, value, error):
     env_key = "EARTHKIT_DATA_NUMBER_OF_DOWNLOAD_THREADS"
     monkeypatch.setenv(env_key, value)

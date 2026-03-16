@@ -515,8 +515,7 @@ class Config:
             default = config.default if config else ""
             if k in env:
                 html.append(
-                    "<tr><td>%s</td><td>%s=%r<br>(%r)</td><td>%r</td></tr>"
-                    % (k, env[k][0], env[k][1], v, default)
+                    "<tr><td>%s</td><td>%s=%r<br>(%r)</td><td>%r</td></tr>" % (k, env[k][0], env[k][1], v, default)
                 )
             else:
                 html.append("<tr><td>%s</td><td>%r</td><td>%r</td></tr>" % (k, v, default))

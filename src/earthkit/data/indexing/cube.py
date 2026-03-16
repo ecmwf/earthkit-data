@@ -114,7 +114,7 @@ class FieldCube:
             msg = (
                 f"Shape {self.user_shape} [{math.prod(self.user_shape):,}]"
                 + f" does not match number of available fields {len(self.source):,}. "
-                + f"Difference: {len(self.source)-math.prod(self.user_shape):,}\n"
+                + f"Difference: {len(self.source) - math.prod(self.user_shape):,}\n"
                 + "\n".join(details)
             )
             raise ValueError(msg)
@@ -220,8 +220,7 @@ class FieldCube:
         indexes = list(range(0, len(lst)) for lst in names)
 
         return (
-            Cubelet(self, i, coords_names=n)
-            for n, i in zip(itertools.product(*names), itertools.product(*indexes))
+            Cubelet(self, i, coords_names=n) for n, i in zip(itertools.product(*names), itertools.product(*indexes))
         )
 
     def chunking(self, chunks):

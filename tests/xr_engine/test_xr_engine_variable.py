@@ -42,9 +42,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
     ],
 )
 def test_xr_engine_mono_variable_1(allow_holes, lazy_load, _kwargs, dims, coords):
-    ds_in = from_source(
-        "url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib")
-    ).to_fieldlist()
+    ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib")).to_fieldlist()
 
     ds = ds_in.to_xarray(
         profile="mars",
@@ -84,9 +82,7 @@ def test_xr_engine_mono_variable_1(allow_holes, lazy_load, _kwargs, dims, coords
     ],
 )
 def test_xr_engine_mono_variable_2(allow_holes, lazy_load, _kwargs, dims, coords):
-    ds_in = from_source(
-        "url", earthkit_remote_test_data_file("xr_engine", "date", "t2_td2_1_year.grib")
-    ).to_fieldlist()
+    ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_td2_1_year.grib")).to_fieldlist()
 
     ds = ds_in.to_xarray(
         profile="mars",

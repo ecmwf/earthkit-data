@@ -11,8 +11,6 @@ import functools
 import logging
 from abc import abstractmethod
 
-from earthkit.utils.decorators import thread_safe_cached_property
-
 import earthkit.data
 from earthkit.data.core import Encodable
 from earthkit.data.core.order import build_remapping
@@ -21,6 +19,7 @@ from earthkit.data.core.select import normalise_selection
 from earthkit.data.core.select import selection_from_index
 from earthkit.data.sources import Source
 from earthkit.data.utils.unique import UniqueValuesCollector
+from earthkit.utils.decorators import thread_safe_cached_property
 
 LOG = logging.getLogger(__name__)
 
@@ -58,11 +57,7 @@ class Selection(OrderOrSelection):
                 if self.slc.start is None and self.slc.stop is None:
                     raise ValueError("Invalid selection value: slice(None, None)")
 
-                if (
-                    self.slc.start is not None
-                    and self.slc.stop is not None
-                    and self.slc.stop < self.slc.start
-                ):
+                if self.slc.start is not None and self.slc.stop is not None and self.slc.stop < self.slc.start:
                     self.slc = slice(self.slc.stop, self.slc.start)
 
             def __call__(self, x):
@@ -679,7 +674,8 @@ class Index(Source, Encodable):
         drop_none: bool, optional
             Whether to drop None values from the collected unique values. Default is True.
         squeeze: bool, optional
-            Whether to return a single value instead of a list if there is only one unique value for a key. Default is False.
+            Whether to return a single value instead of a list if there is only one unique
+            value for a key. Default is False.
         remapping: dict, optional
             A dictionary for remapping keys or values during collection. Default is None.
         patch: dict, optional

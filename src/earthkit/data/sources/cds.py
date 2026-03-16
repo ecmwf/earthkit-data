@@ -96,9 +96,7 @@ class CdsRetriever(FileSource):
 
         self.dataset = dataset
 
-        request_builder = RequestBuilder(
-            self, *args, request=request, normaliser=self._normalise_request, **kwargs
-        )
+        request_builder = RequestBuilder(self, *args, request=request, normaliser=self._normalise_request, **kwargs)
         self.request = request_builder.requests
 
         # Download each request in parallel when the config allows it

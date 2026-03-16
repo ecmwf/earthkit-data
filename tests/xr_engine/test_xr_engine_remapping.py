@@ -27,9 +27,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_remapping_1(allow_holes, lazy_load):
-    ds0 = from_source(
-        "url", earthkit_remote_test_data_file("xr_engine/level/mixed_pl_ml_small.grib")
-    ).to_fieldlist()
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine/level/mixed_pl_ml_small.grib")).to_fieldlist()
     ds = ds0.to_xarray(
         profile="mars",
         variable_key="_k",

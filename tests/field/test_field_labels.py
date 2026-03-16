@@ -84,9 +84,7 @@ def test_field_labels_from_dict_bad():
         SimpleLabels.from_dict(**d)
 
 
-@pytest.mark.parametrize(
-    "_kwargs, ref", [(dict(a="2"), dict(a="2", b="2")), (dict(c="3"), dict(a="1", b="2", c="3"))]
-)
+@pytest.mark.parametrize("_kwargs, ref", [(dict(a="2"), dict(a="2", b="2")), (dict(c="3"), dict(a="1", b="2", c="3"))])
 def test_field_labels_set(_kwargs, ref):
     d = dict(a="1", b="2")
     ori_id = id(d)

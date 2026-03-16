@@ -11,9 +11,8 @@ import math
 from abc import abstractmethod
 from typing import Any
 
-from earthkit.utils.array import array_namespace as eku_array_namespace
-
 from earthkit.data.utils.array import flatten_array
+from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from .core import FieldComponentHandler
 from .core import LazyFieldComponentHandler

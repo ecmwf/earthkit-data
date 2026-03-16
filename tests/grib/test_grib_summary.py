@@ -25,9 +25,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 def _check_ls_df(df, expected_values):
     df_ref = pd.DataFrame.from_dict(expected_values)
     df_ref.reset_index(drop=True, inplace=True)
-    pd.testing.assert_frame_equal(
-        df, df_ref, check_dtype=False, check_index_type=False, check_datetimelike_compat=True
-    )
+    pd.testing.assert_frame_equal(df, df_ref, check_dtype=False, check_index_type=False, check_datetimelike_compat=True)
 
 
 @pytest.mark.skip(reason="to be revisited")

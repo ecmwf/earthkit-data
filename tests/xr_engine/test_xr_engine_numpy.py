@@ -12,11 +12,11 @@
 
 import numpy as np
 import pytest
-from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data import from_source
 from earthkit.data.utils.testing import check_array_type
 from earthkit.data.utils.testing import earthkit_remote_test_data_file
+from earthkit.utils.array import array_namespace as eku_array_namespace
 
 _NUMPY = eku_array_namespace("numpy")
 
@@ -27,9 +27,7 @@ _NUMPY = eku_array_namespace("numpy")
 def test_xr_engine_numpy_core_1(allow_holes, lazy_load):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
-    ds = ds_ek.to_xarray(
-        profile="mars", array_namespace="numpy", allow_holes=allow_holes, lazy_load=lazy_load
-    )
+    ds = ds_ek.to_xarray(profile="mars", array_namespace="numpy", allow_holes=allow_holes, lazy_load=lazy_load)
     check_array_type(ds["t"].data, _NUMPY)
 
 

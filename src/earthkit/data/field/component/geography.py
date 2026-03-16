@@ -114,10 +114,7 @@ def create_geography_from_array(
 
             else:
                 raise ValueError(
-                    (
-                        "Number of points do not match expected size. "
-                        f"Expected=({expected_size}), got={lat.size}"
-                    )
+                    ("Number of points do not match expected size. " f"Expected=({expected_size}), got={lat.size}")
                 )
         else:
             shape = lat.shape
@@ -130,16 +127,12 @@ def create_geography_from_dict(d, shape_hint=None):
 
     if "grid_spec" in d:
         if len(d) > 1:
-            raise ValueError(
-                "When 'grid_spec' is provided no other keys should be present to create a geography"
-            )
+            raise ValueError("When 'grid_spec' is provided no other keys should be present to create a geography")
 
         if ECKIT_GRID_SUPPORT.has_grid:
             return GridsSpecBasedGeography(d["grid_spec"])
         else:
-            raise ValueError(
-                "Cannot create geography from 'grid_spec' since eckit-geo grid support is not available"
-            )
+            raise ValueError("Cannot create geography from 'grid_spec' since eckit-geo grid support is not available")
 
     elif "grid" in d:
         if len(d) > 1:
@@ -148,9 +141,7 @@ def create_geography_from_dict(d, shape_hint=None):
         if ECKIT_GRID_SUPPORT.has_grid:
             return GridsSpecBasedGeography(d["grid"])
         else:
-            raise ValueError(
-                "Cannot create geography from 'grid' since eckit-geo grid support is not available"
-            )
+            raise ValueError("Cannot create geography from 'grid' since eckit-geo grid support is not available")
 
     return create_geography_from_array(
         latitudes=d.get("latitudes", None),

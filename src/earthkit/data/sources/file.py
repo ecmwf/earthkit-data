@@ -248,9 +248,7 @@ class StreamFileSource(FileSource):
                 return from_source_internal(
                     "multi",
                     [
-                        from_source_internal(
-                            "file", p, parts=part, filter=self.filter, stream=True, **self._kwargs
-                        )
+                        from_source_internal("file", p, parts=part, filter=self.filter, stream=True, **self._kwargs)
                         for p, part in zip(self.path, self.parts)
                     ],
                     filter=self.filter,
@@ -269,9 +267,7 @@ class StreamFileSource(FileSource):
                 # when we reach this stage the source must be a file that can be streamed
                 from .stream import make_stream_source_from_other
 
-                return make_stream_source_from_other(
-                    [SingleStreamFileSource(source.path, self.parts)], **self._kwargs
-                )
+                return make_stream_source_from_other([SingleStreamFileSource(source.path, self.parts)], **self._kwargs)
             else:
                 return source
         return self

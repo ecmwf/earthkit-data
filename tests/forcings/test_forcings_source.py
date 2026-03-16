@@ -74,7 +74,7 @@ def test_forcings_source_2():
         "forcings",
         sample,
         date=dates,
-        time=f"0/to/18/by/{24//ntimes}",
+        time=f"0/to/18/by/{24 // ntimes}",
         param=params,
     ).to_fieldlist()
 
@@ -119,9 +119,7 @@ def test_forcings_source_3():
 
 
 @pytest.mark.parametrize("lat_key,lon_key", [("latitudes", "longitudes"), ("latitude", "longitude")])
-@pytest.mark.parametrize(
-    "filename", ["t_time_series.grib", "rgg_small_subarea_cellarea_ref.grib", "mercator.grib"]
-)
+@pytest.mark.parametrize("filename", ["t_time_series.grib", "rgg_small_subarea_cellarea_ref.grib", "mercator.grib"])
 def test_forcings_from_lat_lon_core(lat_key, lon_key, filename):
     sample = from_source("file", earthkit_test_data_file(filename)).to_fieldlist()
 

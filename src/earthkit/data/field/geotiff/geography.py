@@ -26,9 +26,7 @@ class GeoTIFFGeography(BaseGeography):
         except ImportError:
             raise ImportError("geotiff handling requires 'pyproj' to be installed")
 
-        return Transformer.from_crs(self._ds.rio.crs, "EPSG:4326", always_xy=True).transform(
-            *self._xy_coords()
-        )
+        return Transformer.from_crs(self._ds.rio.crs, "EPSG:4326", always_xy=True).transform(*self._xy_coords())
 
     def _xy_coords(self):
         x = self._ds.coords[self.x_dim].values

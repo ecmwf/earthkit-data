@@ -361,9 +361,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
             for d in global_tensor_dims:
                 if isinstance(d, LevelPerTypeDim):
-                    raise NotImplementedError(
-                        "level_dim_mode='level_per_type' not yet supported when allow_holes=True"
-                    )
+                    raise NotImplementedError("level_dim_mode='level_per_type' not yet supported when allow_holes=True")
                 # Create coord for each dimension
                 # TODO: This does not work yet: Dimensions like "level_per_type" are templates and will be
                 #  added as multiple concrete dimensions to the dataset
@@ -678,9 +676,7 @@ class SingleDatasetBuilder(DatasetBuilder):
             raise ValueError("SingleDatasetMaker does not support splitting")
 
         if from_xr and self.direct_backend:
-            raise ValueError(
-                "SingleDatasetMaker does not support direct_backend=True when invoked from xarray"
-            )
+            raise ValueError("SingleDatasetMaker does not support direct_backend=True when invoked from xarray")
 
     def build(self):
         ds_sorted, _ = self.parse(self.ds, self.profile)

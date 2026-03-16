@@ -15,9 +15,9 @@ from typing import Any
 from typing import Tuple
 
 import numpy as np
-from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.utils.bbox import BoundingBox
+from earthkit.utils.decorators import thread_safe_cached_property
 
 LOG = logging.getLogger(__name__)
 
@@ -147,9 +147,7 @@ class MeshedGrid(LatLonGrid):
             )
 
         else:
-            raise NotImplementedError(
-                f"MeshedGrid.grid_points: unrecognized variable_dims {self.variable_dims}"
-            )
+            raise NotImplementedError(f"MeshedGrid.grid_points: unrecognized variable_dims {self.variable_dims}")
 
         return lat.flatten(), lon.flatten()
 
@@ -242,9 +240,7 @@ class MeshedXYGrid(RawXYGrid):
             )
 
         else:
-            raise NotImplementedError(
-                f"MeshedGrid.grid_points: unrecognized variable_dims {self.variable_dims}"
-            )
+            raise NotImplementedError(f"MeshedGrid.grid_points: unrecognized variable_dims {self.variable_dims}")
 
         return x.flatten(), y.flatten()
 

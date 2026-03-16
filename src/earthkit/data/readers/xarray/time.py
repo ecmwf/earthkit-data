@@ -34,7 +34,8 @@ class Time(ABC):
 
         Returns
         -------
-        Union[ForecastFromValidTimeAndStep, Analysis, Constant, ForecastFromValidTimeAndBaseTime, ForecastFromBaseTimeAndDate]
+        Union[ForecastFromValidTimeAndStep, Analysis, Constant, ForecastFromValidTimeAndBaseTime,
+        ForecastFromBaseTimeAndDate]
             An instance of a subclass of Time.
 
         Args

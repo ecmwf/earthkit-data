@@ -51,9 +51,7 @@ ENS_KEYS = ["member"] + _get_component_keys("ensemble", _ENS_KEYS) + _get_metada
 
 _GRIB_LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels"]
 _VERTICAL_LEVEL_KEYS = ["level", "layer"]
-LEVEL_KEYS = (
-    ["level"] + _get_component_keys("vertical", _VERTICAL_LEVEL_KEYS) + _get_metadata_keys(_GRIB_LEVEL_KEYS)
-)
+LEVEL_KEYS = ["level"] + _get_component_keys("vertical", _VERTICAL_LEVEL_KEYS) + _get_metadata_keys(_GRIB_LEVEL_KEYS)
 
 _GRIB_LEVEL_TYPE_KEYS = ["typeOfLevel", "levtype"]
 _VERTICAL_LEVEL_TYPE_KEYS = ["level_type", "abbreviation"]
@@ -77,16 +75,12 @@ STEP_KEYS = ["step"] + _get_component_keys("time", _STEP_KEYS) + _get_metadata_k
 
 _GRIB_MONTH_KEYS = ["forecastMonth", "fcmonth"]
 _MONTH_KEYS = ["forecast_month"]
-MONTH_KEYS = (
-    ["forecast_month"] + _get_component_keys("time", _MONTH_KEYS) + _get_metadata_keys(_GRIB_MONTH_KEYS)
-)
+MONTH_KEYS = ["forecast_month"] + _get_component_keys("time", _MONTH_KEYS) + _get_metadata_keys(_GRIB_MONTH_KEYS)
 
 _GRIB_VALID_DATETIME_KEYS = ["valid_datetime"]
 _VALID_DATETIME_KEYS = ["valid_datetime"]
 VALID_DATETIME_KEYS = (
-    ["valid_time"]
-    + _get_component_keys("time", _VALID_DATETIME_KEYS)
-    + _get_metadata_keys(_GRIB_VALID_DATETIME_KEYS)
+    ["valid_time"] + _get_component_keys("time", _VALID_DATETIME_KEYS) + _get_metadata_keys(_GRIB_VALID_DATETIME_KEYS)
 )
 
 _GRIB_BASE_DATETIME_KEYS = [
@@ -245,9 +239,7 @@ class Dim:
 
         # sanity check
         if self.profile.variable.key in self:
-            raise ValueError(
-                (f"Variable key {self.profile.variable.key} cannot be in " f"dimension={self.name}")
-            )
+            raise ValueError((f"Variable key {self.profile.variable.key} cannot be in " f"dimension={self.name}"))
 
         # print(f"key={self.key} index={ds.index(self.key)}")
 
@@ -510,7 +502,10 @@ class ForecastTimeDimMode(DimMode):
         elif isinstance(ref_time_key, (tuple, list)):
             if len(ref_time_key) != 2:
                 raise ValueError(
-                    f"Invalid forecast_reference_time key={ref_time_key} in dim_roles. When it is a list or tuple it must have exactly two elements representing date and time keys."
+                    (
+                        f"Invalid forecast_reference_time key={ref_time_key} in dim_roles. When it is a list or tuple"
+                        f" it must have exactly two elements representing date and time keys."
+                    )
                 )
             date = ref_time_key[0]
             time = ref_time_key[1]
@@ -519,7 +514,10 @@ class ForecastTimeDimMode(DimMode):
             ref_time_dim = make_dim(owner, name=ref_time_name, key=ref_time_key, active=active)
         else:
             raise ValueError(
-                f"Invalid forecast_reference_time key={ref_time_key} in dim_roles. Must be a string, a dict with 'date' and 'time' or a list/tuple with two elements representing date and time keys."
+                (
+                    f"Invalid forecast_reference_time key={ref_time_key} in dim_roles. Must be a string, a dict"
+                    " with 'date' and 'time' or a list/tuple with two elements representing date and time keys."
+                )
             )
 
         step_key, step_name = owner.dim_roles.role("step")

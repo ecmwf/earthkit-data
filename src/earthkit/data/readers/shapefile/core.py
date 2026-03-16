@@ -10,7 +10,8 @@
 from .. import Reader
 
 
-# TODO: this data consists of multiple files and requires a special reader to handle this. The current implementation disables all encoding of this data.
+# TODO: this data consists of multiple files and requires a special reader to handle this. The
+# current implementation disables all encoding of this data.
 class ShapefileReaderBase(Reader):
     _format = None
     _binary = True

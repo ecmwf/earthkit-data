@@ -14,10 +14,10 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 import numpy as np
-from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data.core.index import Selection
 from earthkit.data.core.index import normalise_selection
+from earthkit.utils.array import array_namespace as eku_array_namespace
 
 LOG = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ class CubeCoords(dict):
         if len(self):
             max_len = max(len(k) for k in self.keys())
             for k, v in self.items():
-                t += f"  {k:<{max_len+4}}{self._format_item(v)}\n"
+                t += f"  {k:<{max_len + 4}}{self._format_item(v)}\n"
         else:
             t += "  *empty*"
         return t
@@ -181,9 +181,7 @@ class TensorCore(metaclass=ABCMeta):
         r = {}
         for k, v in kwargs.items():
             selection = CubeSelection(dict(k=v))
-            r[k] = list(
-                i for i, element in enumerate(self.user_coords[k]) if selection.match_element(element)
-            )
+            r[k] = list(i for i, element in enumerate(self.user_coords[k]) if selection.match_element(element))
             if len(r[k]) == 1:
                 v = r[k][0]
                 r[k] = slice(v, v + 1)
@@ -258,10 +256,7 @@ class TensorCore(metaclass=ABCMeta):
     def _check(self):
         if self._full_shape != self._user_shape + self._field_shape:
             raise ValueError(
-                (
-                    f"shape={self._full_shape} differs from expected shape="
-                    f"{self._user_shape} + {self._field_shape}"
-                )
+                (f"shape={self._full_shape} differs from expected shape=" f"{self._user_shape} + {self._field_shape}")
             )
 
         shape = self._coords_shape(self._user_coords) + self._dims_shape(self._field_dims)
@@ -571,9 +566,7 @@ class FieldListTensor(TensorCore):
 
                     import numpy as np
 
-                    other_coords = {
-                        k: next(iter(self.user_coords[k])) for k in other_dims if k in self.user_coords
-                    }
+                    other_coords = {k: next(iter(self.user_coords[k])) for k in other_dims if k in self.user_coords}
 
                     vals = np.array(
                         [x for x in self.source.sel(**other_coords).get("time.valid_datetime")],
@@ -631,9 +624,7 @@ class FieldListSparseTensor(FieldListTensor):
         flatten_values,
         user_coords_to_fl_idx,
     ):
-        super().__init__(
-            source, user_coords, field_coords, field_dims, flatten_values, check_if_tensor_is_full=False
-        )
+        super().__init__(source, user_coords, field_coords, field_dims, flatten_values, check_if_tensor_is_full=False)
         self._user_coords_to_fl_idx = user_coords_to_fl_idx
 
     @classmethod
@@ -697,8 +688,7 @@ class FieldListSparseTensor(FieldListTensor):
         j = 0
         for x in itertools.product(*user_icoords):
             user_coord = tuple(
-                user_coords_for_dim[x_coord]
-                for user_coords_for_dim, x_coord in zip(self.user_coords.values(), x)
+                user_coords_for_dim[x_coord] for user_coords_for_dim, x_coord in zip(self.user_coords.values(), x)
             )
             i = self._user_coords_to_fl_idx.get(user_coord)
             assert i is None or isinstance(i, int), i

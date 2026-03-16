@@ -96,9 +96,7 @@ def test_lazy_fdb():
         assert ds[1].get("vertical.level") == 500
 
         # compare all the fields
-        ds_in_sorted = ds_in.order_by(
-            ["parameter.variable", "time.base_datetime", "time.step", "vertical.level"]
-        )
+        ds_in_sorted = ds_in.order_by(["parameter.variable", "time.base_datetime", "time.step", "vertical.level"])
         ds_sorted = ds.order_by(["parameter.variable", "time.base_datetime", "time.step", "vertical.level"])
         t = ds_in_sorted.sel({"parameter.variable": "t"})
         r = ds_in_sorted.sel({"parameter.variable": "r"})

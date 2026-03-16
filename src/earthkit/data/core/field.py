@@ -9,11 +9,6 @@
 
 from collections import defaultdict
 
-from earthkit.utils.array import array_namespace as eku_array_namespace
-from earthkit.utils.array import convert as convert_array
-from earthkit.utils.array.convert import convert_dtype
-from earthkit.utils.decorators import thread_safe_cached_property
-
 from earthkit.data.core import Base
 from earthkit.data.core.order import Patch
 from earthkit.data.core.order import Remapping
@@ -24,6 +19,10 @@ from earthkit.data.utils.array import flatten_array
 from earthkit.data.utils.array import reshape_array
 from earthkit.data.utils.array import target_shape
 from earthkit.data.utils.compute import wrap_maths
+from earthkit.utils.array import array_namespace as eku_array_namespace
+from earthkit.utils.array import convert as convert_array
+from earthkit.utils.array.convert import convert_dtype
+from earthkit.utils.decorators import thread_safe_cached_property
 
 GRIB = "grib"
 
@@ -399,9 +398,7 @@ class Field(Base):
                 components[name] = component
 
         if isinstance(geography, dict):
-            components[GEOGRAPHY] = _COMPONENT_MAKER.default_cls(GEOGRAPHY).from_dict(
-                geography, shape_hint=shape_hint
-            )
+            components[GEOGRAPHY] = _COMPONENT_MAKER.default_cls(GEOGRAPHY).from_dict(geography, shape_hint=shape_hint)
         elif geography is not None:
             components[GEOGRAPHY] = _COMPONENT_MAKER.default_cls(GEOGRAPHY).from_any(geography)
         return cls(**components)
@@ -827,9 +824,7 @@ class Field(Base):
                     result = r
             elif isinstance(collections, (list, tuple)):
                 if output is not dict:
-                    r = [
-                        self._get_single_collection(k, raise_on_missing=raise_on_missing) for k in collections
-                    ]
+                    r = [self._get_single_collection(k, raise_on_missing=raise_on_missing) for k in collections]
                     # if output is tuple:
                     #     result = tuple(result)
                     if result is not None:
@@ -837,10 +832,7 @@ class Field(Base):
                     else:
                         result = r
                 else:
-                    r = {
-                        k: self._get_single_collection(k, raise_on_missing=raise_on_missing)
-                        for k in collections
-                    }
+                    r = {k: self._get_single_collection(k, raise_on_missing=raise_on_missing) for k in collections}
                     if result is not None:
                         result.update(r)
                     else:
@@ -881,7 +873,9 @@ class Field(Base):
         keys: str, list or tuple
             Specify the key(s) to extract. Can be a single key (str) or multiple
             keys as a list/tuple of str. Keys are assumed to be of the form
-            "component.key". For example, "time.valid_datetime" or "parameter.name". It is also allowed to specify just the component name like "time" or "parameter". In this case the corresponding component's ``to_dict()`` method is called and its result is returned. For other keys, the method looks for them in
+            "component.key". For example, "time.valid_datetime" or "parameter.name". It is also allowed to specify
+            just the component name like "time" or "parameter". In this case the corresponding component's
+            ``to_dict()`` method is called and its result is returned. For other keys, the method looks for them in
             the private components (if any) and returns the value from the first private component that contains it.
         default: Any, None
             Specify the default value(s) for ``keys``. Returned when the given key
@@ -906,7 +900,9 @@ class Field(Base):
             Other types are not supported.
         flatten_dict: bool
             When True and ``output`` is dict, if any of the values in the returned dict
-            is itself a dict, it is flattened to depth 1 by concatenating the keys with a dot. For example, if the returned dict is ``{"a": {"x": 1, "y": 2}, "b": 3}``, it becomes ``{"a.x": 1, "a.y": 2, "b": 3}``. This option is ignored when ``output`` is not dict.
+            is itself a dict, it is flattened to depth 1 by concatenating the keys with a dot. For example, if the
+            returned dict is ``{"a": {"x": 1, "y": 2}, "b": 3}``, it becomes ``{"a.x": 1, "a.y": 2, "b": 3}``.
+            This option is ignored when ``output`` is not dict.
         remapping: dict, optional
             Create new metadata keys from existing ones. E.g. to define a new
             key "param_level" as the concatenated value of the "parameter.variable" and "vertical.level" keys use::
@@ -919,7 +915,8 @@ class Field(Base):
         Returns
         -------
         single value, list, tuple or dict
-            The values for the specified ``keys``. The structure of the returned value(s) depends on the ``output`` and ``flatten_dict`` parameters.
+            The values for the specified ``keys``. The structure of the returned value(s) depends on the ``output``
+            and ``flatten_dict`` parameters.
 
         Raises
         ------
@@ -1244,9 +1241,7 @@ class Field(Base):
                     }
                 )
 
-        return format_namespace_dump(
-            r, selected=DEFAULT_DESCRIBE_SELECTION, details=self.__class__.__name__, **kwargs
-        )
+        return format_namespace_dump(r, selected=DEFAULT_DESCRIBE_SELECTION, details=self.__class__.__name__, **kwargs)
 
     @property
     def default_ls_keys(self):
@@ -1301,11 +1296,7 @@ class Field(Base):
         return self._private.get(name)
 
     def _get_grib(self):
-        if (
-            self._private
-            and "metadata" in self._private
-            and getattr(self._private["metadata"], "NAME", None) == GRIB
-        ):
+        if self._private and "metadata" in self._private and getattr(self._private["metadata"], "NAME", None) == GRIB:
             return self._private["metadata"]
 
         return None

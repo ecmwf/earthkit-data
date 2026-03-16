@@ -162,12 +162,12 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             - "time": metadata key interpreted as base  time. Used when ``time_dim_mode`` is "raw". When None,
                it is generated from the time part of ``forecast_reference_time``.
             - "step": metadata key interpreted as forecast step
-            - "forecast_reference_time": metadata key interpreted as forecast reference time. Can be a single metadata key,
-               or a list/tuple of two metadata keys representing the date and time parts of the forecast reference time.
-               Alternatively, it can be a dict with "date" and "time" keys specifying the corresponding metadata keys. Used
-               when ``time_dim_mode`` is "forecast".
-            - "valid_time": metadata key interpreted as valid time. Used when ``time_dim_mode`` is "valid_time" or
-               ``add_valid_time_coord`` is True.
+            - "forecast_reference_time": metadata key interpreted as forecast reference time. Can be a single
+               metadata key, or a list/tuple of two metadata keys representing the date and time parts of the
+               forecast reference time. Alternatively, it can be a dict with "date" and "time" keys specifying
+               the corresponding metadata keys. Used when ``time_dim_mode`` is "forecast".
+            - "valid_time": metadata key interpreted as valid time. Used when ``time_dim_mode`` is
+               "valid_time" or ``add_valid_time_coord`` is True.
             - "level": metadata key interpreted as level
             - "level_type": metadata key interpreted as level type
 
@@ -406,9 +406,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
                 return is_grib_file(filename_or_obj)
         except Exception:
-            LOG.debug(
-                "Failed to guess if %s can be opened by the earthkit backend", filename_or_obj, exc_info=True
-            )
+            LOG.debug("Failed to guess if %s can be opened by the earthkit backend", filename_or_obj, exc_info=True)
 
         return False
 
@@ -481,7 +479,10 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 
         if not isinstance(md, dict):
             raise ValueError(
-                f"The '_earthkit' attribute must be a dictionary containing the metadata of the reference field. Found: {type(md)}"
+                (
+                    "The '_earthkit' attribute must be a dictionary containing the metadata of the"
+                    f" reference field. Found: {type(md)}"
+                )
             )
 
         if "message" not in md:
