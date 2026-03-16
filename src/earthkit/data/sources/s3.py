@@ -165,7 +165,7 @@ class S3Resource:
 
 
 class S3Source(FileSource):
-    """Represent an AWS S3 bucket source"""
+    """Represent an AWS S3 bucket source."""
 
     def __init__(
         self,

@@ -127,7 +127,7 @@ def is_csv(path, probe_size=4096, compression=None):
 
 
 class CSVReader(Reader):
-    r"""Class representing CSV data"""
+    r"""Class representing CSV data."""
 
     def __init__(self, source, path, compression=None):
         super().__init__(source, path)

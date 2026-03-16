@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""ipython is not None when running a notebook"""
+"""ipython is not None when running a notebook."""
 
 import logging
 import sys

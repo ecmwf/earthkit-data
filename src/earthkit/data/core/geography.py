@@ -13,7 +13,7 @@ from abc import abstractmethod
 
 
 class Geography(metaclass=ABCMeta):
-    """Geographical information about a field or data unit"""
+    """Geographical information about a field or data unit."""
 
     @abstractmethod
     def latitudes(self, dtype=None):

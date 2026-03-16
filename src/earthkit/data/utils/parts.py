@@ -54,7 +54,7 @@ class Part:
 
 
 def check_urls_and_parts(urls, parts):
-    """Check if urls and parts are compatible
+    """Check if urls and parts are compatible.
 
     When any of the ``urls`` contain a part ``parts`` must be None.
     """

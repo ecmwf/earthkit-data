@@ -60,7 +60,7 @@ class FieldListInFilesWithSqlIndex(FieldListInFilesWithDBIndex):
 
     def unique_values(self, *coords, remapping=None, progress_bar=None):
         """Given a list of metadata attributes, such as date, param, levels,
-        returns the list of unique values for each attributes
+        returns the list of unique values for each attributes.
         """
         keys = coords
 

@@ -10,13 +10,13 @@ from earthkit.data.translators import Translator
 
 
 class PandasSeriesTranslator(Translator):
-    """Translator class for pandas `Series`"""
+    """Translator class for pandas `Series`."""
 
     def __init__(self, data, *args, **kwargs):
         self.data = data.to_pandas(*args, **kwargs)
 
     def __call__(self):
-        """Series requested, if DataFrame return the first column"""
+        """Series requested, if DataFrame return the first column."""
         import pandas as pd
 
         if isinstance(self.data, pd.DataFrame):
@@ -26,7 +26,7 @@ class PandasSeriesTranslator(Translator):
 
 
 class PandasDataFrameTranslator(PandasSeriesTranslator):
-    """Translator class for pandas `DataFrame`"""
+    """Translator class for pandas `DataFrame`."""
 
     def __call__(self):
         """Return DataFrame, if Series convert to DataFrame."""
@@ -39,7 +39,7 @@ class PandasDataFrameTranslator(PandasSeriesTranslator):
 
 
 class GeoPandasDataFrameTranslator(PandasSeriesTranslator):
-    """Translator class for geopandas `DataFrame`"""
+    """Translator class for geopandas `DataFrame`."""
 
     def __call__(self):
         """Return GeoDataFrame, if normal pandas convert to geopandas."""

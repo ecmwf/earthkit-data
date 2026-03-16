@@ -38,7 +38,7 @@ class _InternalPassThroughEncodedData(EncodedData):
 
 
 class _InternalPassThroughEncoder(Encoder):
-    """A pass-through encoder implemented for Readers"""
+    """A pass-through encoder implemented for Readers."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

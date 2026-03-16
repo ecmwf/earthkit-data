@@ -361,7 +361,7 @@ def test_grib_mars_grid(path, expected_value):
 
 @pytest.mark.skipif(NO_GEO, reason="No earthkit-geo support")
 def test_grib_grid_points_rotated_ll():
-    """The"""
+    """The."""
     ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_wind_20x20.grib"))
 
     # grid points

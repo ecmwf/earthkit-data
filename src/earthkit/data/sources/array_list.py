@@ -52,7 +52,7 @@ class ArrayField(Field):
         return self._array_
 
     def _values(self, dtype=None):
-        """Native array type"""
+        """Native array type."""
         if dtype is None:
             return self._array
         else:
@@ -80,7 +80,7 @@ class ArrayField(Field):
         )
 
     def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
+        """Double dispatch to the encoder."""
         values = kwargs.pop("values", None)
         if values is None:
             values = self.to_numpy(flatten=True)

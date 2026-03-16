@@ -101,7 +101,7 @@ def _gg_pl(N):
 
 
 class GribHandleMaker:
-    """Create a new GribCodesHandle from a template, field or metadata"""
+    """Create a new GribCodesHandle from a template, field or metadata."""
 
     def __init__(self, template=None):
         self.template = template
@@ -109,7 +109,7 @@ class GribHandleMaker:
 
     def make(self, field=None, values=None, metadata=None, template=None):
         """Create a new GribCodesHandle from a template, field or metadata
-        May modify existing metadata
+        May modify existing metadata.
 
         Parameters
         ----------
@@ -310,7 +310,7 @@ class GribHandleMaker:
 
 
 class GribEncoder(Encoder):
-    """Encode GRIB data"""
+    """Encode GRIB data."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

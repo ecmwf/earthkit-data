@@ -443,7 +443,7 @@ class CacheManager(threading.Thread):
         LOG.warning("earthkit-data cache: could not free %s", humanize.bytes(bytes))
 
     def _register_cache_file(self, path, owner, args, parent=None):
-        """Register a file in the cache
+        """Register a file in the cache.
 
         Parameters
         ----------

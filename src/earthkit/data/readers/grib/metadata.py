@@ -654,7 +654,7 @@ class GribMetadata(Metadata):
     @staticmethod
     def _handle_type():
         """Return the expected handle type. Implemented like this
-        to avoid cyclic import
+        to avoid cyclic import.
         """
         if GribMetadata.__handle_type is None:
             from earthkit.data.readers.grib.codes import GribCodesHandle

@@ -398,7 +398,7 @@ class GribFieldListInFiles(GribFieldList):
         return self.number_of_parts()
 
     def _cache_diag(self):
-        """For testing only"""
+        """For testing only."""
         r = defaultdict(int)
         r.update(self._field_manager.diag())
         r.update(self._handle_manager.diag())

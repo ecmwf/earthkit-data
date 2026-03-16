@@ -190,7 +190,7 @@ def _empty(source, path, **kwargs):
 
 
 def reader(source, path, **kwargs):
-    """Create the reader for a file/directory specified by path"""
+    """Create the reader for a file/directory specified by path."""
     assert isinstance(path, str), source
 
     if hasattr(source, "reader"):
@@ -236,7 +236,7 @@ def reader(source, path, **kwargs):
 
 
 def memory_reader(source, buffer, **kwargs):
-    """Create a reader for data held in a memory buffer"""
+    """Create a reader for data held in a memory buffer."""
     assert isinstance(buffer, (bytes, bytearray)), source
     n_bytes = CONFIG.get("reader-type-check-bytes")
     magic = buffer[: min(n_bytes, len(buffer) - 1)]
@@ -245,7 +245,7 @@ def memory_reader(source, buffer, **kwargs):
 
 
 def stream_reader(source, stream, memory, **kwargs):
-    """Create a reader for a stream"""
+    """Create a reader for a stream."""
     magic = None
     if hasattr(stream, "peek") and callable(stream.peek):
         try:

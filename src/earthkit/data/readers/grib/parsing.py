@@ -144,7 +144,7 @@ def _index_path(path):
 
 class PathParserIterator:
     """Delays parsing the directory for the list of files
-    until the iterator is actually used (calling __iter__)
+    until the iterator is actually used (calling __iter__).
     """
 
     def __init__(

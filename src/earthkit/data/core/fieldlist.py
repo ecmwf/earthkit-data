@@ -239,6 +239,13 @@ class Field(Base):
             of the field is used. When ``keys`` is a single value only the
             array belonging to the key is returned.
 
+        See Also
+        --------
+        to_latlon
+        to_points
+        to_numpy
+        values
+
         Examples
         --------
         - :ref:`/examples/grib_lat_lon_value.ipynb`
@@ -259,13 +266,6 @@ class Field(Base):
         (7, 12)
         >>> d[0, 0]  # first longitude
         0.0
-
-        See Also
-        --------
-        to_latlon
-        to_points
-        to_numpy
-        values
 
         """
         _keys = dict(
@@ -766,7 +766,7 @@ class Field(Base):
         return self._metadata.data_format()
 
     def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
+        """Double dispatch to the encoder."""
         return encoder._encode_field(self, **kwargs)
 
     def __getitem__(self, key):
@@ -951,7 +951,7 @@ class Field(Base):
 
     @staticmethod
     def _flatten(v):
-        """Flatten the array without copying the data."
+        """Flatten the array without copying the data.".
 
         Parameters
         ----------
@@ -1273,6 +1273,13 @@ class FieldList(Index):
         ValueError
             When not all the fields have the same grid geometry.
 
+        See Also
+        --------
+        to_latlon
+        to_points
+        to_numpy
+        values
+
         Examples
         --------
         - :ref:`/examples/grib_lat_lon_value.ipynb`
@@ -1296,13 +1303,6 @@ class FieldList(Index):
         (1, 7, 12)
         >>> d[0, 0, 0]  # first longitude
         0.0
-
-        See Also
-        --------
-        to_latlon
-        to_points
-        to_numpy
-        values
 
         """
         if isinstance(keys, str):
@@ -1749,7 +1749,7 @@ class FieldList(Index):
             return self[0]._metadata.data_format()
 
     def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
+        """Double dispatch to the encoder."""
         return encoder._encode_fieldlist(self, **kwargs)
 
     def to_tensor(self, *args, **kwargs):
@@ -1822,7 +1822,7 @@ class FieldList(Index):
         return MultiFieldList(sources)
 
     def _cache_diag(self):
-        """For testing only"""
+        """For testing only."""
         from earthkit.data.utils.diag import metadata_cache_diag
 
         return metadata_cache_diag(self)

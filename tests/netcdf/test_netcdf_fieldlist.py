@@ -43,7 +43,7 @@ def test_netcdf_fieldlist_string_coord():
 
 
 def test_netcdf_fieldlist_bounds():
-    """Check if having non string values in bounds does not cause a crash"""
+    """Check if having non string values in bounds does not cause a crash."""
     import xarray as xr
 
     a = xr.DataArray(

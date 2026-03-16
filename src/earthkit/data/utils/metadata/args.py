@@ -9,7 +9,7 @@
 
 
 def metadata_argument(*args, namespace=None, astype=None):
-    """Helps parsing the input arguments for the metadata methods"""
+    """Helps parsing the input arguments for the metadata methods."""
     key = []
     key_arg_type = None
     if len(args) == 1 and isinstance(args[0], str):

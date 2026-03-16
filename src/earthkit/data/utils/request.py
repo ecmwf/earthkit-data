@@ -42,7 +42,8 @@ class RequestBuilder:
         owner : Any
             The owner of the request builder.
         *args : tuple
-            Positional arguments representing request dictionaries. Each item can be dictionary or a list/tuple of dictionaries.
+            Positional arguments representing request dictionaries.
+            Each item can be dictionary or a list/tuple of dictionaries.
         **kwargs : dict
             Keyword arguments representing request parameters.
         request : dict or list/tuple of dict, optional

@@ -23,8 +23,7 @@ LOG = logging.getLogger(__name__)
 
 
 def coords_to_index(coords, shape) -> int:
-    """
-    Map user coords to field index"""
+    """Map user coords to field index."""
     index = 0
     n = 1
     for i in range(len(coords) - 1, -1, -1):

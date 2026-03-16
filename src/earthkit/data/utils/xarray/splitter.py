@@ -27,7 +27,7 @@ class Splitter(metaclass=ABCMeta):
 
     @staticmethod
     def make(split_dims, auto_split=False):
-        """TODO: auto_split is not implemented"""
+        """TODO: auto_split is not implemented."""
         if not auto_split and not split_dims:
             return NoSplitter()
         elif split_dims:

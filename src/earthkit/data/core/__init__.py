@@ -36,17 +36,17 @@ class MetaBase(type):
 class Base(metaclass=MetaBase):
     # Convertors
     def to_numpy(self, **kwargs):
-        """Convert into a numpy array"""
+        """Convert into a numpy array."""
         self._not_implemented()
 
     @abstractmethod
     def to_xarray(self, **kwargs):
-        """Convert into an xarray dataset"""
+        """Convert into an xarray dataset."""
         self._not_implemented()
 
     @abstractmethod
     def to_pandas(self, **kwargs):
-        """Convert into a pandas dataframe"""
+        """Convert into a pandas dataframe."""
         self._not_implemented()
 
     # Change class
@@ -95,7 +95,7 @@ class Base(metaclass=MetaBase):
 
     def unique_values(self, *coords, remapping=None, patches=None, progress_bar=False):
         """Given a list of metadata attributes, such as date, param, levels,
-        returns the list of unique values for each attributes
+        returns the list of unique values for each attributes.
         """
         from earthkit.data.core.order import build_remapping
 
@@ -170,9 +170,9 @@ class Base(metaclass=MetaBase):
         raise NotImplementedError(f"{module}.{name}.{func}(){extra}")
 
     def batched(self, *args):
-        """Return iterator for batches of data"""
+        """Return iterator for batches of data."""
         self._not_implemented()
 
     def group_by(self, *args):
-        """Return iterator for batches of data grouped by metadata keys"""
+        """Return iterator for batches of data grouped by metadata keys."""
         self._not_implemented()

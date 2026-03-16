@@ -11,9 +11,7 @@ LOG = logging.getLogger(__name__)
 
 class Translator(Base):
     def __call__(self):
-        """
-        Return unmodified data.
-        """
+        """Return unmodified data."""
         return self.data
 
 
@@ -39,5 +37,5 @@ def get_translator(source, cls, *args, **kwargs):
 
 
 def transform(*args, **kwargs):
-    """Executing wrapper for the get_translator class method"""
+    """Executing wrapper for the get_translator class method."""
     return get_translator(*args, **kwargs)()

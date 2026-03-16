@@ -488,7 +488,7 @@ class SqlDatabase(Database, VersionedDatabaseMixin):
 
     def unique_values(self, *coords, remapping=None, progress_bar=True):
         """Given a list of metadata attributes, such as date, param, levels,
-        returns the list of unique values for each attributes
+        returns the list of unique values for each attributes.
         """
         remapping = build_remapping(remapping)
         with self.connection as con:

@@ -262,7 +262,7 @@ for k, v in CONFIG_AND_HELP.items():
 
 @contextmanager
 def new_config(s):
-    """Context manager to create new config"""
+    """Context manager to create new config."""
     CONFIG._stack.append(s)
     CONFIG._notify()
     try:
@@ -329,7 +329,7 @@ class Config:
 
     @forward
     def get(self, name: str, default=NONE):
-        """[summary]
+        """[summary].
 
         Parameters
         ----------
@@ -367,7 +367,7 @@ class Config:
 
     @forward
     def set(self, *args, **kwargs):
-        """[summary]
+        """[summary].
 
         Parameters
         ----------
@@ -390,7 +390,7 @@ class Config:
         self._changed()
 
     def _set(self, name: str, *args, **kwargs):
-        """[summary]
+        """[summary].
 
         Parameters
         ----------

@@ -149,7 +149,7 @@ class ClonedFieldCore:
         return self._metadata._handle
 
     def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
+        """Double dispatch to the encoder."""
         md = {}
         # wrapped metadata
         if hasattr(self._metadata, "extra"):

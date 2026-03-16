@@ -114,7 +114,7 @@ class GeoTIFFMetadata(RawMetadata):
 
 
 class GeoTIFFField(Field):
-    """A GeoTIFF band"""
+    """A GeoTIFF band."""
 
     def __init__(self, da, band, geography=None):
         super().__init__()
@@ -146,7 +146,7 @@ class GeoTIFFField(Field):
 
 
 class GeoTIFFFieldList(FieldList):
-    """A list of GeoTIFF bands"""
+    """A list of GeoTIFF bands."""
 
     FIELD_TYPE = GeoTIFFField
 

@@ -96,14 +96,14 @@ class FileTarget(SimpleTarget):
         return self._tmp_fileobj
 
     def _guess_filename(self, data=None):
-        """Try to guess filename from data when not provided"""
+        """Try to guess filename from data when not provided."""
         if data is not None:
             for attr in ["source_filename", "path"]:
                 if hasattr(self, attr) and getattr(self, attr) is not None:
                     return [os.path.basename(getattr(self, attr))]
 
     def _check_overwrite(self, data):
-        """Ensure we do not overwrite file that is being read"""
+        """Ensure we do not overwrite file that is being read."""
         if (
             data is not None
             and self.filename is not None

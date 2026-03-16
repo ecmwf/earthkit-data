@@ -87,13 +87,13 @@ class BUFRCodesHandle(CodesHandle):
         self._unpacked = False
 
     def unpack(self):
-        """Decode data section"""
+        """Decode data section."""
         if not self._unpacked:
             eccodes.codes_set(self._handle, "unpack", 1)
             self._unpacked = True
 
     def pack(self):
-        """Encode data section"""
+        """Encode data section."""
         if self._unpacked:
             eccodes.codes_set(self._handle, "pack", 1)
             self._unpacked = False
@@ -128,7 +128,7 @@ class BUFRCodesHandle(CodesHandle):
         return _KeyIterator(self._handle)
 
     def keys(self, namespace=None):
-        """Iterate over all the available keys"""
+        """Iterate over all the available keys."""
         return self.__iter__()
 
     def as_namespace(self, namespace=None):
@@ -198,7 +198,7 @@ class BUFRMessage(Base):
         self._handle = None
 
     def __setitem__(self, key, value):
-        """Sets value associated with ``key``"""
+        """Sets value associated with ``key``."""
         if isinstance(value, list):
             return eccodes.codes_set_array(self.handle._handle, key, value)
         else:
@@ -300,7 +300,7 @@ class BUFRMessage(Base):
             return self.handle.as_namespace()
 
     def is_coord(self, key):
-        """Check if the specified key is a BUFR coordinate descriptor
+        """Check if the specified key is a BUFR coordinate descriptor.
 
         Parameters
         ----------
@@ -666,7 +666,7 @@ class BUFRInOneFile(BUFRInFiles):
 
 
 class BUFRReader(BUFRInOneFile, Reader):
-    """Represents a BUFR file"""
+    """Represents a BUFR file."""
 
     appendable = True  # BUFR messages can be added to the same file
 

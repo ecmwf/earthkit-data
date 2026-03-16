@@ -65,7 +65,7 @@ class PandasSeriesWrapper(Wrapper):
 
     def to_netcdf(self, *args, **kwargs):
         """
-        Write the pandas object to a netCDF file
+        Write the pandas object to a netCDF file.
 
         Returns
         -------
@@ -75,7 +75,7 @@ class PandasSeriesWrapper(Wrapper):
 
     def to_json(self, *args, **kwargs):
         """
-        Write the pandas object to a netCDF file
+        Write the pandas object to a netCDF file.
 
         Returns
         -------
@@ -86,7 +86,7 @@ class PandasSeriesWrapper(Wrapper):
 
     def describe(self):
         """
-        A pandas is tabular, therefore return itself
+        A pandas is tabular, therefore return itself.
 
         Returns
         -------
@@ -146,7 +146,7 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
         self.fields = None
 
     def __iter__(self):
-        """Iterate over features in geojson via pandas"""
+        """Iterate over features in geojson via pandas."""
         self._scan()
         return iter(self.fields)
 
@@ -162,11 +162,11 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
             self.fields = self.get_fields()
 
     def get_fields(self):
-        """For geopandas, a field is a feature"""
+        """For geopandas, a field is a feature."""
         return [row[1] for row in self.data.iterrows()]
 
     def bounding_box(self):
-        """For geopandas, get bounding box and convert to EK.BoundingBox type"""
+        """For geopandas, get bounding box and convert to EK.BoundingBox type."""
         return BoundingBox(north=self.north, south=self.south, east=self.east, west=self.west)
 
 

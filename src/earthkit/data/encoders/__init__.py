@@ -44,7 +44,7 @@ class EncodedData(metaclass=ABCMeta):
 
     @abstractmethod
     def to_bytes(self):
-        """Return the data as a bytesarray"""
+        """Return the data as a bytesarray."""
         pass
 
     @abstractmethod

@@ -341,7 +341,7 @@ class Profile:
         opt = copy.deepcopy(PROFILE_CONF.defaults)
 
         def _deprec_array_module(data):
-            """Deprecated: use 'array_namespace' instead"""
+            """Deprecated: use 'array_namespace' instead."""
             if "array_module" in data:
                 import warnings
 
@@ -351,7 +351,7 @@ class Profile:
                     data["array_namespace"] = array_module
 
         def _deprec_array_backend(data):
-            """Deprecated: use 'array_namespace' instead"""
+            """Deprecated: use 'array_namespace' instead."""
             if "array_backend" in data:
                 import warnings
 
@@ -401,7 +401,7 @@ class Profile:
 
     @classmethod
     def to_docs(cls, name):
-        """Used to generate documentation"""
+        """Used to generate documentation."""
         import copy
 
         if name is None:

@@ -149,7 +149,8 @@ def test_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metad
 
 
 def test_grib_cache_basic_file_non_patched():
-    """This test is the same as test_grib_cache_basic but without the patch_metadata_cache fixture.
+    """The test is the same as test_grib_cache_basic but
+    without the patch_metadata_cache fixture.
     So metadata cache hits and misses are not counted.
     """
     with config.temporary(

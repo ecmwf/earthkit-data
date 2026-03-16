@@ -11,6 +11,6 @@ from earthkit.data.core.metadata import RawMetadata
 
 
 class GridSpec(RawMetadata):
-    """Geographical information about a field or data unit"""
+    """Geographical information about a field or data unit."""
 
     pass
