@@ -62,11 +62,7 @@ def check_urls_and_parts(urls, parts):
         urls = [urls]
 
     # a single url as [url, parts] is not allowed
-    if (
-        len(urls) == 2
-        and isinstance(urls[0], str)
-        and (urls[1] is None or isinstance(urls[1], (list, tuple)))
-    ):
+    if len(urls) == 2 and isinstance(urls[0], str) and (urls[1] is None or isinstance(urls[1], (list, tuple))):
         if parts is not None:
             raise ValueError("Cannot specify parts both as arg and kwarg")
         urls = [urls]
@@ -152,7 +148,8 @@ class PathAndParts:
 
     def __init__(self, path, parts):
         """Should not be instantiated directly.
-        The public API are the factory methods."""
+        The public API are the factory methods.
+        """
         self.path = path
         self.parts = parts
 

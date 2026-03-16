@@ -351,7 +351,6 @@ def test_file_netcdf_zip_with_single_file_2():
     # print(ds_in)
 
     with temp_directory() as tmpdir:
-
         path = os.path.join(tmpdir, "a.nc")
         ds_in["foo"].to_netcdf(path)
 

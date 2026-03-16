@@ -100,7 +100,6 @@ def test_mars_grib_multi(_args, req, _kwargs):
 @pytest.mark.skipif(NO_MARS, reason="No access to MARS")
 def test_mars_grib_parallel():
     with config.temporary("number-of-download-threads", 4):
-
         req = dict(param="t", levelist=[925, 850, 700, 500], date=YESTERDAY, split_on="levelist")
 
         ds = from_source(

@@ -14,7 +14,6 @@ from .netcdf.fieldlist import XArrayFieldList
 
 
 class ZarrReader(XArrayFieldList, Reader):
-
     def __init__(self, source, path, **kwargs):
         Reader.__init__(self, source, path, **kwargs)
         XArrayFieldList.__init__(self, self._open_zarr(**kwargs))

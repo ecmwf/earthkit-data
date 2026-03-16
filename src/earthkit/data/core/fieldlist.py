@@ -165,9 +165,7 @@ class Field(Base):
             v = v[index]
         return v
 
-    def to_array(
-        self, flatten=False, dtype=None, array_backend=None, array_namespace=None, device=None, index=None
-    ):
+    def to_array(self, flatten=False, dtype=None, array_backend=None, array_namespace=None, device=None, index=None):
         r"""Return the values stored in the field.
 
         Parameters
@@ -636,7 +634,6 @@ class Field(Base):
         >>> r["name"]
         '2 metre temperature'
         """
-
         if remapping is not None or patches is not None:
             remapping = build_remapping(remapping, patches)
             return remapping(self.metadata)(*keys, astype=astype, **kwargs)
@@ -999,10 +996,7 @@ class FieldList(Index):
             import warnings
 
             warnings.warn(
-                (
-                    "array_backend option is not supported any longer in FieldList!"
-                    " Use to_fieldlist() instead"
-                ),
+                ("array_backend option is not supported any longer in FieldList! Use to_fieldlist() instead"),
                 DeprecationWarning,
             )
             kwargs.pop("array_backend", None)

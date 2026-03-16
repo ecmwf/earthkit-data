@@ -94,9 +94,7 @@ class _EnumType(Type):
             if same(value, v):
                 return v
 
-        raise ValueError(
-            f"Invalid value '{value}', possible values are {self.values} ({self.__class__.__name__})"
-        )
+        raise ValueError(f"Invalid value '{value}', possible values are {self.values} ({self.__class__.__name__})")
 
     def update(self, availability):
         # TODO: if value is none : use availability w

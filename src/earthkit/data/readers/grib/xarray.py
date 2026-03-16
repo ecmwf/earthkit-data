@@ -54,7 +54,6 @@ class IndexWrapperForCfGrib:
 
 
 class XarrayMixIn:
-
     @staticmethod
     def _kwargs_for_xarray():
         import inspect

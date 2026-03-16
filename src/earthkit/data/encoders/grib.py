@@ -306,7 +306,6 @@ class GribHandleMaker:
         if octahedral or levtype == "sfc":
             return f"reduced_gg_{levtype}_grib{edition}"
         else:
-
             return f"reduced_gg_{levtype}_{N}_grib{edition}"
 
 
@@ -338,7 +337,6 @@ class GribEncoder(Encoder):
         """
         Parameters
         ----------
-
         data: Field
             The data to encode
         values: numpy.ndarray

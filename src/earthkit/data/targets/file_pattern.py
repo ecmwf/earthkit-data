@@ -20,8 +20,8 @@ class FilePatternTarget(SimpleTarget):
     """
     File target with a pattern for the output file names.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     path: str
         The file path to write to. The output file name defines a pattern containing metadata keys in the
         format of ``{key}``. Each data item (e.g. a field) will be written into a file
@@ -63,8 +63,8 @@ class FilePatternTarget(SimpleTarget):
 
         The target will not be able to write anymore.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         self._mark_closed()

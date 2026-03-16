@@ -355,9 +355,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             if array_module is not None:
                 import warnings
 
-                warnings.warn(
-                    "'array_module' is deprecated. Use 'array_namespace' instead", DeprecationWarning
-                )
+                warnings.warn("'array_module' is deprecated. Use 'array_namespace' instead", DeprecationWarning)
                 if array_namespace is None:
                     array_namespace = array_module
                 else:
@@ -366,9 +364,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             if array_backend is not None:
                 import warnings
 
-                warnings.warn(
-                    "'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning
-                )
+                warnings.warn("'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning)
                 if array_namespace is None:
                     array_namespace = array_backend
                 else:
@@ -427,9 +423,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
                 return is_grib_file(filename_or_obj)
         except Exception:
-            LOG.debug(
-                "Failed to guess if %s can be opened by the earthkit backend", filename_or_obj, exc_info=True
-            )
+            LOG.debug("Failed to guess if %s can be opened by the earthkit backend", filename_or_obj, exc_info=True)
 
         return False
 
@@ -464,8 +458,7 @@ class XarrayEarthkit:
         import warnings
 
         warnings.warn(
-            "The `to_grib` is deprecated in 0.15.0 and will be removed in a future version. "
-            "Use `to_target` instead.",
+            "The `to_grib` is deprecated in 0.15.0 and will be removed in a future version. Use `to_target` instead.",
             DeprecationWarning,
         )
         from earthkit.data.targets import create_target

@@ -136,9 +136,7 @@ def test_xr_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, or_mask_spec, n
         ),
     ],
 )
-def test_xr_incomplete_tensor_holes2(
-    lazy_load, kwargs, dim_keys, or_mask_spec, expected_dims_by_param, nfields
-):
+def test_xr_incomplete_tensor_holes2(lazy_load, kwargs, dim_keys, or_mask_spec, expected_dims_by_param, nfields):
     kwargs["lazy_load"] = lazy_load
 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))

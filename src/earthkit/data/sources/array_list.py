@@ -145,16 +145,11 @@ def from_array(array, metadata):
                 array = array_ns.stack([array])
             else:
                 raise ValueError(
-                    (
-                        f"first array dimension={array.shape[0]} differs "
-                        f"from number of metadata objects={len(metadata)}"
-                    )
+                    (f"first array dimension={array.shape[0]} differs from number of metadata objects={len(metadata)}")
                 )
     else:
         if len(array) != len(metadata):
-            raise ValueError(
-                (f"array len=({len(array)}) differs " f"from number of metadata objects=({len(metadata)})")
-            )
+            raise ValueError((f"array len=({len(array)}) differs from number of metadata objects=({len(metadata)})"))
 
     fields = []
     for i, a in enumerate(array):

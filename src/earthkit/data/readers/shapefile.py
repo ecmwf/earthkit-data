@@ -24,8 +24,7 @@ class ShapeFileReader(Reader):
 
     def _repr_html_(self):
         html_repr = (
-            f"<h4>{self.__class__.__name__}(represented as a geopandas object):</h3>"
-            f"{self.to_pandas()._repr_html_()}"
+            f"<h4>{self.__class__.__name__}(represented as a geopandas object):</h3>{self.to_pandas()._repr_html_()}"
         )
 
         return html_repr

@@ -106,9 +106,7 @@ class RequestBuilder:
 
             if not isinstance(split_on, dict):
                 split_on = {k: 1 for k in ensure_iterable(split_on)}
-            for values in itertools.product(
-                *[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]
-            ):
+            for values in itertools.product(*[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]):
                 subrequest = dict(zip(split_on, values))
                 requests.append({**request, **subrequest})
         return requests

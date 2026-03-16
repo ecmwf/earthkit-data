@@ -195,9 +195,7 @@ class Dim:
 
         # sanity check
         if self.profile.variable.key in self:
-            raise ValueError(
-                (f"Variable key {self.profile.variable.key} cannot be in " f"dimension={self.name}")
-            )
+            raise ValueError((f"Variable key {self.profile.variable.key} cannot be in dimension={self.name}"))
 
         # print(f"key={self.key} index={ds.index(self.key)}")
 

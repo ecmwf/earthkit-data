@@ -223,9 +223,9 @@ class XArrayInputFieldList(FieldList):
                     if k in self.remapping:
                         indices[k] = [x[0] for x in v]
                         components[k] = self.remapping.components(k), [x[1] for x in v]
-                        assert len(indices[k]) == len(
-                            components[k][1]
-                        ), f"{len(indices[k])} != {len(components[k])} {indices[k]=} {components[k]=}"
+                        assert len(indices[k]) == len(components[k][1]), (
+                            f"{len(indices[k])} != {len(components[k])} {indices[k]=} {components[k]=}"
+                        )
                     else:
                         indices[k] = v
             else:

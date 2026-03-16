@@ -21,7 +21,6 @@ from . import Reader
 
 
 class GeoTIFFGeography(Geography):
-
     def __init__(self, ds):
         self._ds = ds
         self.x_dim = ds.rio.x_dim
@@ -33,9 +32,7 @@ class GeoTIFFGeography(Geography):
         except ImportError:
             raise ImportError("geotiff handling requires 'pyproj' to be installed")
 
-        return Transformer.from_crs(self._ds.rio.crs, "EPSG:4326", always_xy=True).transform(
-            *self._xy_coords()
-        )
+        return Transformer.from_crs(self._ds.rio.crs, "EPSG:4326", always_xy=True).transform(*self._xy_coords())
 
     def latitudes(self, dtype=None):
         return self._latlon_coords()[0]
@@ -99,7 +96,6 @@ class GeoTIFFGeography(Geography):
 
 
 class GeoTIFFMetadata(RawMetadata):
-
     LS_KEYS = ["variable", "band"]
 
     def __init__(self, field, band, geography=None):

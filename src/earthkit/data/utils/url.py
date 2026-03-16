@@ -55,7 +55,8 @@ class UrlSourcePathAndParts(PathAndParts):
 class UrlSpec:
     def __init__(self, spec, urls_and_parts):
         """Should not be instantiated directly.
-        The public API are the factory methods."""
+        The public API are the factory methods.
+        """
         self.spec = spec
         self.url_and_parts = urls_and_parts
 

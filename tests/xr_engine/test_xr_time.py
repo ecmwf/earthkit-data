@@ -166,9 +166,9 @@ def test_xr_time_basic(allow_holes, kwargs, dims, step_units):
     compare_dims(ds, dims, order_ref_var="t")
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )
 
 
 @pytest.mark.cache
@@ -252,9 +252,9 @@ def test_xr_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims, step_
     compare_dims(ds, dims, order_ref_var="2t")
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )
 
 
 @pytest.mark.cache
@@ -397,9 +397,9 @@ def test_xr_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_units):
     compare_dims(ds, dims, order_ref_var="2t")
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )
 
 
 @pytest.mark.cache
@@ -520,9 +520,9 @@ def test_xr_valid_time_coord(allow_holes, kwargs, dims, step_units, coords):
     compare_coords(ds, coords)
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )
 
 
 @pytest.mark.cache
@@ -559,9 +559,9 @@ def test_xr_time_step_range_1(allow_holes, lazy_load, kwargs, dims, step_units):
     compare_dims(ds, dims, order_ref_var="10fg6")
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )
 
 
 @pytest.mark.cache
@@ -605,9 +605,9 @@ def test_xr_time_step_range_2(allow_holes, lazy_load, kwargs, dims, step_units):
     compare_dims(ds, dims, order_ref_var="lsp")
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )
 
 
 @pytest.mark.cache
@@ -683,6 +683,6 @@ def test_xr_time_step_seconds(allow_holes, lazy_load, kwargs, dims, step_units):
     compare_dims(ds, dims, order_ref_var="t")
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )

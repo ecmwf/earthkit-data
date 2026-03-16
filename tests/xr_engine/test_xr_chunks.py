@@ -55,9 +55,7 @@ def test_xr_engine_chunk_1(allow_holes, lazy_load, field_policy, handle_policy, 
     with config.temporary(**field_policy, **handle_policy):
         ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"))
 
-        ds = ds_in.to_xarray(
-            time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, **_kwargs
-        )
+        ds = ds_in.to_xarray(time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, **_kwargs)
 
         assert ds is not None
 
@@ -89,9 +87,7 @@ def test_xr_engine_chunk_2(allow_holes, lazy_load, _kwargs):
     with config.temporary(**field_policy, **handle_policy):
         ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"))
 
-        ds = ds_in.to_xarray(
-            time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, **_kwargs
-        )
+        ds = ds_in.to_xarray(time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, **_kwargs)
 
         assert ds is not None
 

@@ -143,7 +143,6 @@ def data_array_to_fields(da, metadata=None):
             step_len = None
 
     for values in product(*[coords[dim] for dim in dims]):
-
         # field
         local_coords = dict(zip(dims, values))
         for k in components:

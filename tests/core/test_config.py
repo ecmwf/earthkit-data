@@ -236,9 +236,7 @@ def test_config_temporary_autosave_2():
             config.autosave = v_ori
 
 
-@pytest.mark.parametrize(
-    "value,error", [("10000", None), (10000, None), ("1b", ValueError), ("A", ValueError)]
-)
+@pytest.mark.parametrize("value,error", [("10000", None), (10000, None), ("1b", ValueError), ("A", ValueError)])
 def test_config_env(monkeypatch, value, error):
     env_key = "EARTHKIT_DATA_URL_DOWNLOAD_TIMEOUT"
     monkeypatch.setenv(env_key, value)

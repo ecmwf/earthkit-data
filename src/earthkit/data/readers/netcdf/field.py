@@ -241,9 +241,7 @@ class XArrayField(Field):
 
     def __repr__(self):
         return (
-            f"{self.__class__.__name__}({self.variable},"
-            + ",".join([f"{s.name}={s.value}" for s in self.slices])
-            + ")"
+            f"{self.__class__.__name__}({self.variable}," + ",".join([f"{s.name}={s.value}" for s in self.slices]) + ")"
         )
 
     @thread_safe_cached_property

@@ -20,7 +20,7 @@ CARTOPY_WARNING = "This feature requires 'cartopy' to be installed"
 
 
 DEFAULT_LATLON_PROJ_STRING = (
-    "+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 " "+no_defs +type=crs"
+    "+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs"
 )
 
 

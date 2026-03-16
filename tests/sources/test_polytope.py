@@ -18,7 +18,7 @@ from earthkit.data.testing import NO_POLYTOPE
 
 
 def test_no_polytope_client(monkeypatch):
-    "Check that a useful message is given in the absence of the polytope-client library"
+    """Check that a useful message is given in the absence of the polytope-client library"""
     monkeypatch.setitem(sys.modules, "polytope", None)
     with pytest.raises(ImportError) as excinfo:
         from_source("polytope", None, None)

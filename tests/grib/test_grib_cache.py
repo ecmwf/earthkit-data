@@ -150,8 +150,8 @@ def test_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metad
 
 def test_grib_cache_basic_file_non_patched():
     """This test is the same as test_grib_cache_basic but without the patch_metadata_cache fixture.
-    So metadata cache hits and misses are not counted."""
-
+    So metadata cache hits and misses are not counted.
+    """
     with config.temporary(
         {
             "grib-field-policy": "persistent",
@@ -905,7 +905,6 @@ def test_grib_cache_metadata_use_kwargs_1(fl_type, patch_metadata_cache):
             "use-grib-metadata-cache": False,
         }
     ):
-
         _kwargs = {
             "use_grib_metadata_cache": True,
         }
@@ -947,7 +946,6 @@ def test_grib_cache_metadata_use_kwargs_2(fl_type, patch_metadata_cache):
             "use-grib-metadata-cache": True,
         }
     ):
-
         _kwargs = {
             "use_grib_metadata_cache": False,
         }

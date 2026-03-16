@@ -259,9 +259,7 @@ def test_xr_write_bits_per_value(allow_holes, lazy_load):
 
     xr.set_options(keep_attrs=True)
 
-    ds = ds_ek.to_xarray(
-        allow_holes=allow_holes, lazy_load=lazy_load, **{"profile": "mars", "time_dim_mode": "raw"}
-    )
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **{"profile": "mars", "time_dim_mode": "raw"})
     ds += 1
 
     # data-array

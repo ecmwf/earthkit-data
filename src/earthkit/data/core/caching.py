@@ -73,8 +73,7 @@ class DiskUsage:
 
     def __repr__(self):
         return (
-            f"DiskUsage(total={self.total},free={self.free},"
-            f"avail={self.avail},percent={self.percent},path={self.path})"
+            f"DiskUsage(total={self.total},free={self.free},avail={self.avail},percent={self.percent},path={self.path})"
         )
 
 
@@ -199,9 +198,7 @@ class CacheManager(threading.Thread):
         with self.connection as db:
             latest = db.execute("SELECT MIN(creation_date) FROM cache WHERE size IS NULL").fetchone()[0]
             if latest is None:
-                latest = db.execute("SELECT MAX(creation_date) FROM cache WHERE size IS NOT NULL").fetchone()[
-                    0
-                ]
+                latest = db.execute("SELECT MAX(creation_date) FROM cache WHERE size IS NOT NULL").fetchone()[0]
             if latest is None:
                 latest = datetime.datetime.now()
             return latest

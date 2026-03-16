@@ -332,7 +332,7 @@ class SqlRemapping(SqlFilter):
             return None
 
         assert new_view != old_view
-        return f"CREATE TEMP VIEW IF NOT EXISTS {new_view} AS SELECT *, {select} " f"FROM {old_view};"
+        return f"CREATE TEMP VIEW IF NOT EXISTS {new_view} AS SELECT *, {select} FROM {old_view};"
 
 
 class SqlOrder(SqlFilter):
@@ -466,10 +466,7 @@ class SqlDatabase(Database, VersionedDatabaseMixin):
         self.dbkeys = EntriesLoader(self.connection).keys
 
     def __str__(self):
-        return (
-            f"{self.__class__.__name__}({self.db_path},"
-            f"(filters=[{','.join([str(_) for _ in self._filters])}])"
-        )
+        return f"{self.__class__.__name__}({self.db_path},(filters=[{','.join([str(_) for _ in self._filters])}])"
 
     def build_indexes(self):
         EntriesLoader(self.connection).build_sql_indexes()

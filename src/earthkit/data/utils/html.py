@@ -66,9 +66,7 @@ def table_from_dict(vals, title=None):
     t += """
 <table class="eh-table">
 {rows}
-</table>""".format(
-        rows=" ".join([tr(k, v) for k, v in vals.items()])
-    )
+</table>""".format(rows=" ".join([tr(k, v) for k, v in vals.items()]))
 
     style = css("table")
     return style + t

@@ -20,8 +20,8 @@ class FileTarget(SimpleTarget):
     """
     File target.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     file: str, file-like, None
         The file path or file-like object to write to. When None, tries to guess the file name
         from the ``data`` if it is passed as a kwarg.
@@ -34,8 +34,8 @@ class FileTarget(SimpleTarget):
     **kwargs:
         Additional keyword arguments passed to the parent class.
 
-    Raises:
-    -------
+    Raises
+    ------
     ValueError: If the file name is not specified and cannot be constructed.
     """
 
@@ -67,8 +67,8 @@ class FileTarget(SimpleTarget):
         If :obj:`FileTarget` was created with a file object this call has no effect.
         The target will not be able to write anymore.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         self._mark_closed()
@@ -78,8 +78,8 @@ class FileTarget(SimpleTarget):
     def flush(self):
         """Flush the file.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         self._f().flush()

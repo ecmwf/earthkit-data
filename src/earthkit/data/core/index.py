@@ -55,11 +55,7 @@ class Selection(OrderOrSelection):
                 if self.slc.start is None and self.slc.stop is None:
                     raise ValueError("Invalid selection value: slice(None, None)")
 
-                if (
-                    self.slc.start is not None
-                    and self.slc.stop is not None
-                    and self.slc.stop < self.slc.start
-                ):
+                if self.slc.start is not None and self.slc.stop is not None and self.slc.stop < self.slc.start:
                     self.slc = slice(self.slc.stop, self.slc.start)
 
             def __call__(self, x):

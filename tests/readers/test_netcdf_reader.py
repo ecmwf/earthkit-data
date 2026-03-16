@@ -204,8 +204,7 @@ def test_netcdf_multi_files():
 @pytest.mark.no_eccodes
 @pytest.mark.skipif(IN_GITHUB, reason="Some runners crash in Xarray")
 def test_get_fields_missing_standard_name_attr_in_coord_array():
-    """test _get_fields() can handle a missing 'standard_name' attr in coordinate data arrays"""
-
+    """Test _get_fields() can handle a missing 'standard_name' attr in coordinate data arrays"""
     # example dataset
     fs = from_source("file", earthkit_examples_file("test.nc"))
     ds = fs.to_xarray()

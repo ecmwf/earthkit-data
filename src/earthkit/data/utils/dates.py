@@ -109,9 +109,7 @@ def to_datetime_list(datetimes):  # noqa C901
             and datetimes[1].lower() == "to"
             and datetimes[3].lower() == "by"
         ):
-            return mars_like_date_list(
-                to_datetime(datetimes[0]), to_datetime(datetimes[2]), int(datetimes[4])
-            )
+            return mars_like_date_list(to_datetime(datetimes[0]), to_datetime(datetimes[2]), int(datetimes[4]))
 
         return [to_datetime(x) for x in datetimes]
 
@@ -281,7 +279,7 @@ def step_to_grib(step):
             if minutes == 0:
                 return hours
             else:
-                return f"{hours*60}{minutes}m"
+                return f"{hours * 60}{minutes}m"
         else:
             return f"{int(step.total_seconds())}s"
 

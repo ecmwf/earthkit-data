@@ -140,7 +140,6 @@ class KeyVariable(ProfileVariable):
         ds: fieldlist
             FieldList object with cached metadata
         """
-
         self.variables = ds.index(self.key)
 
         if self.drop:
@@ -346,9 +345,7 @@ class Profile:
             if "array_module" in data:
                 import warnings
 
-                warnings.warn(
-                    "'array_module' is deprecated. Use 'array_namespace' instead", DeprecationWarning
-                )
+                warnings.warn("'array_module' is deprecated. Use 'array_namespace' instead", DeprecationWarning)
                 array_module = kwargs.pop("array_module")
                 if data.get("array_namespace", None) is None:
                     data["array_namespace"] = array_module
@@ -358,9 +355,7 @@ class Profile:
             if "array_backend" in data:
                 import warnings
 
-                warnings.warn(
-                    "'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning
-                )
+                warnings.warn("'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning)
                 array_backend = kwargs.pop("array_backend")
                 if data.get("array_namespace", None) is None:
                     data["array_namespace"] = array_backend

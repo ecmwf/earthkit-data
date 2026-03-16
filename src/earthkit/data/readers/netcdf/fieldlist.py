@@ -414,8 +414,6 @@ class NetCDFMultiFieldList(NetCDFFieldList, MultiIndex):
 
         for x in self._indexes:
             if isinstance(x, NetCDFMaskFieldList):
-                raise NotImplementedError(
-                    "NetCDFMultiFieldList.to_xarray() does not supports NetCDFMaskFieldList"
-                )
+                raise NotImplementedError("NetCDFMultiFieldList.to_xarray() does not supports NetCDFMaskFieldList")
 
         return NetCDFFieldList.to_xarray_multi_from_paths([x.path for x in self._indexes], **kwargs)
