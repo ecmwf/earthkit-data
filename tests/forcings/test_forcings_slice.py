@@ -9,15 +9,10 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import numpy as np
 import pytest
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from forcings_fixtures import load_forcings_fs  # noqa: E402
+from forcings_fixtures import load_forcings_fs
 
 
 @pytest.mark.parametrize("input_data", ["grib", "latlon"])

@@ -9,17 +9,12 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import numpy as np
 import pytest
+from xr_engine_fixtures import compare_dims
 
 from earthkit.data import from_source
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from xr_engine_fixtures import compare_dims  # noqa: E402
 
 
 @pytest.fixture

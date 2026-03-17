@@ -9,22 +9,17 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
 import pathlib
-import sys
 
 import numpy as np
 import pytest
+from xr_engine_fixtures import (
+    compare_coords,
+    load_grib_data,
+)
 
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_remote_test_data_file
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from xr_engine_fixtures import (
-    compare_coords,  # noqa: E402
-    load_grib_data,  # noqa: E402
-)
 
 
 @pytest.mark.cache

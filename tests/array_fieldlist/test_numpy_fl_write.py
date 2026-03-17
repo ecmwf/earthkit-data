@@ -11,10 +11,10 @@
 
 import logging
 import os
-import sys
 
 import numpy as np
 import pytest
+from array_fl_fixtures import load_array_fl
 
 from earthkit.data import from_source
 from earthkit.data.core.fieldlist import FieldList
@@ -27,10 +27,6 @@ from earthkit.data.testing import (
     earthkit_test_data_file,
     write_to_file,
 )
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from array_fl_fixtures import load_array_fl  # noqa: E402
 
 LOG = logging.getLogger(__name__)
 

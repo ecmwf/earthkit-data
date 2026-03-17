@@ -9,17 +9,12 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import numpy as np
 import pytest
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
 from grib_fixtures import (
-    FL_NUMPY,  # noqa: E402
-    load_grib_data,  # noqa: E402
+    FL_NUMPY,
+    load_grib_data,
 )
 
 

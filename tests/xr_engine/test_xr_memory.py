@@ -9,15 +9,10 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import numpy as np
 import pytest
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from xr_engine_fixtures import load_grib_data  # noqa: E402
+from xr_engine_fixtures import load_grib_data
 
 
 class Counter:

@@ -11,23 +11,19 @@
 
 import os
 import pickle
-import sys
 
 import numpy as np
 import pytest
+from grib_fixtures import (
+    FL_FILE,
+    FL_NUMPY,
+    load_grib_data,
+)
 
 from earthkit.data import config, from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
 from earthkit.data.testing import WRITE_TO_FILE_METHODS, earthkit_examples_file, write_to_file
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from grib_fixtures import (
-    FL_FILE,  # noqa: E402
-    FL_NUMPY,  # noqa: E402
-    load_grib_data,  # noqa: E402
-)
 
 
 def _pickle(data, representation):

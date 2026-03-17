@@ -10,22 +10,18 @@
 #
 
 import os
-import sys
 
 import numpy as np
 import pytest
+from array_fl_fixtures import (
+    check_array_fl,
+    check_array_fl_from_to_fieldlist,
+)
 
 from earthkit.data import from_source
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import WRITE_TO_FILE_METHODS, earthkit_examples_file, write_to_file
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from array_fl_fixtures import (
-    check_array_fl,  # noqa: E402
-    check_array_fl_from_to_fieldlist,  # noqa: E402
-)
 
 
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)

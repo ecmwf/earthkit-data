@@ -9,24 +9,19 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import numpy as np
 import pytest
 from earthkit.utils.array import convert as array_convert
 from earthkit.utils.array.convert import convert_dtype
+from grib_fixtures import (
+    FL_FILE,
+    FL_NUMPY,
+    FL_TYPES,
+    load_grib_data,
+)
 
 from earthkit.data.testing import check_array, check_array_type
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from grib_fixtures import (
-    FL_FILE,  # noqa: E402
-    FL_NUMPY,  # noqa: E402
-    FL_TYPES,  # noqa: E402
-    load_grib_data,  # noqa: E402
-)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)

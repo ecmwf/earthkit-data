@@ -9,18 +9,13 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import pytest
+from xr_engine_fixtures import compare_dims
 
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.utils.xarray.profile import PROFILE_CONF
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from xr_engine_fixtures import compare_dims  # noqa: E402
 
 
 @pytest.mark.cache

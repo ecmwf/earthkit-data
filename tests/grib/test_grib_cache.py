@@ -9,19 +9,14 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
 import pickle
-import sys
 
 import pytest
+from grib_fixtures import load_grib_data
 
 from earthkit.data import config, from_source
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.utils.diag import field_cache_diag
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from grib_fixtures import load_grib_data  # noqa: E402
 
 FIELD_NUM = 18
 MD_ITEM_NUM = 7

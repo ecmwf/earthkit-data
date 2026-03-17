@@ -16,18 +16,15 @@ import tempfile
 
 import numpy as np
 import pytest
+from grib_fixtures import (
+    FL_ARRAYS,
+    load_grib_data,
+)
 
 import earthkit.data
 from earthkit.data import from_source, to_target
 from earthkit.data.core.temporary import temp_directory, temp_file
 from earthkit.data.testing import WRITE_TO_FILE_METHODS, earthkit_examples_file, write_to_file
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from grib_fixtures import (
-    FL_ARRAYS,  # noqa: E402
-    load_grib_data,  # noqa: E402
-)
 
 EPSILON = 1e-4
 

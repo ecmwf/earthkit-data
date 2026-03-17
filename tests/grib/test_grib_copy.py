@@ -9,20 +9,15 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import numpy as np
 import pytest
+from grib_fixtures import load_grib_data
 
 from earthkit.data import FieldList, from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.sources.array_list import ArrayField
 from earthkit.data.testing import WRITE_TO_FILE_METHODS, write_to_file
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from grib_fixtures import load_grib_data  # noqa: E402
 
 
 # @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
