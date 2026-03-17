@@ -15,14 +15,14 @@ from abc import abstractmethod
 from collections import defaultdict
 
 from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.core.index import MaskIndex
-from earthkit.data.core.index import MultiIndex
-from earthkit.data.decorators import alias_argument
-from earthkit.data.decorators import detect_out_filename
-from earthkit.data.indexing.database import FILEPARTS_KEY_NAMES
-from earthkit.data.indexing.database import MORE_KEY_NAMES
-from earthkit.data.indexing.database import MORE_KEY_NAMES_WITH_UNDERSCORE
-from earthkit.data.indexing.database import STATISTICS_KEY_NAMES
+from earthkit.data.core.index import MaskIndex, MultiIndex
+from earthkit.data.decorators import alias_argument, detect_out_filename
+from earthkit.data.indexing.database import (
+    FILEPARTS_KEY_NAMES,
+    MORE_KEY_NAMES,
+    MORE_KEY_NAMES_WITH_UNDERSCORE,
+    STATISTICS_KEY_NAMES,
+)
 from earthkit.data.readers.grib.codes import GribField
 from earthkit.data.readers.grib.pandas import PandasMixIn
 from earthkit.data.readers.grib.xarray import XarrayMixIn

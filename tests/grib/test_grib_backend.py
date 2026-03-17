@@ -12,11 +12,9 @@
 import numpy as np
 import pytest
 from earthkit.utils.array import array_namespace as eku_array_namespace
-from earthkit.utils.array.testing.testing import NO_CUPY
-from earthkit.utils.array.testing.testing import NO_TORCH
+from earthkit.utils.array.testing.testing import NO_CUPY, NO_TORCH
 
-from earthkit.data import FieldList
-from earthkit.data import from_source
+from earthkit.data import FieldList, from_source
 from earthkit.data.testing import earthkit_examples_file
 
 

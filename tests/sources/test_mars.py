@@ -13,14 +13,9 @@ import datetime
 
 import pytest
 
-from earthkit.data import config
-from earthkit.data import from_source
+from earthkit.data import config, from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import NO_MARS
-from earthkit.data.testing import NO_MARS_API
-from earthkit.data.testing import NO_MARS_DIRECT
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import write_to_file
+from earthkit.data.testing import NO_MARS, NO_MARS_API, NO_MARS_DIRECT, WRITE_TO_FILE_METHODS, write_to_file
 
 YESTERDAY = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y%m%d")
 

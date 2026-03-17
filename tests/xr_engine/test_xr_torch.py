@@ -17,8 +17,7 @@ from earthkit.utils.array import array_namespace as eku_array_namespace
 from earthkit.utils.array.testing.testing import NO_TORCH
 
 from earthkit.data import from_source
-from earthkit.data.testing import check_array_type
-from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.testing import check_array_type, earthkit_remote_test_data_file
 
 _TORCH = None
 if not NO_TORCH:

@@ -17,14 +17,15 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.testing import earthkit_examples_file, earthkit_remote_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import FL_FILE  # noqa: E402
-from grib_fixtures import FL_TYPES  # noqa: E402
-from grib_fixtures import load_grib_data  # noqa: E402
+from grib_fixtures import (
+    FL_FILE,  # noqa: E402
+    FL_TYPES,  # noqa: E402
+    load_grib_data,  # noqa: E402
+)
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):

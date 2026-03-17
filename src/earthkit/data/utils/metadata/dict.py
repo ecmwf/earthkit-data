@@ -14,13 +14,10 @@ from math import prod
 import numpy as np
 
 from earthkit.data.core.geography import Geography
-from earthkit.data.core.metadata import Metadata
-from earthkit.data.core.metadata import MetadataAccessor
+from earthkit.data.core.metadata import Metadata, MetadataAccessor
 from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils.bbox import BoundingBox
-from earthkit.data.utils.dates import datetime_from_grib
-from earthkit.data.utils.dates import to_datetime
-from earthkit.data.utils.dates import to_timedelta
+from earthkit.data.utils.dates import datetime_from_grib, to_datetime, to_timedelta
 from earthkit.data.utils.projections import Projection
 
 LOG = logging.getLogger(__name__)

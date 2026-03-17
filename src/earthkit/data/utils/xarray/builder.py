@@ -8,14 +8,12 @@
 #
 
 import logging
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 import xarray
 import xarray.core.indexing as indexing
 
-from earthkit.data.utils import ensure_dict
-from earthkit.data.utils import ensure_iterable
+from earthkit.data.utils import ensure_dict, ensure_iterable
 
 from .dim import LevelPerTypeDim
 from .profile import Profile

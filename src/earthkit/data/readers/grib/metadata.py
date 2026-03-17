@@ -15,16 +15,12 @@ from abc import abstractmethod
 from earthkit.utils.array import array_namespace
 
 from earthkit.data.core.geography import Geography
-from earthkit.data.core.metadata import Metadata
-from earthkit.data.core.metadata import MetadataAccessor
-from earthkit.data.core.metadata import MetadataCacheHandler
-from earthkit.data.core.metadata import WrappedMetadata
+from earthkit.data.core.metadata import Metadata, MetadataAccessor, MetadataCacheHandler, WrappedMetadata
 from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
-from earthkit.data.utils.dates import datetime_from_grib
-from earthkit.data.utils.dates import to_timedelta
+from earthkit.data.utils.dates import datetime_from_grib, to_timedelta
 
 LOG = logging.getLogger(__name__)
 

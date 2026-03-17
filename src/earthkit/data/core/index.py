@@ -14,10 +14,8 @@ from abc import abstractmethod
 from collections import defaultdict
 
 import earthkit.data
-from earthkit.data.core.order import build_remapping
-from earthkit.data.core.order import normalize_order_by
-from earthkit.data.core.select import normalize_selection
-from earthkit.data.core.select import selection_from_index
+from earthkit.data.core.order import build_remapping, normalize_order_by
+from earthkit.data.core.select import normalize_selection, selection_from_index
 from earthkit.data.sources import Source
 
 LOG = logging.getLogger(__name__)

@@ -497,8 +497,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         if "message" in md:
             data = md["message"]
             from earthkit.data.readers.grib.memory import GribMessageMemoryReader
-            from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
-            from earthkit.data.readers.grib.metadata import WrappedMetadata
+            from earthkit.data.readers.grib.metadata import StandAloneGribMetadata, WrappedMetadata
 
             handle = next(GribMessageMemoryReader(data)).handle
             bpv = md.get("bitsPerValue", 0)

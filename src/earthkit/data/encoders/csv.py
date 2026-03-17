@@ -9,8 +9,7 @@
 
 import logging
 
-from . import EncodedData
-from . import Encoder
+from . import EncodedData, Encoder
 
 LOG = logging.getLogger(__name__)
 

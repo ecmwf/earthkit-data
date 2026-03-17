@@ -11,9 +11,7 @@
 
 import pytest
 
-from earthkit.data import ArrayField
-from earthkit.data import SimpleFieldList
-from earthkit.data import from_source
+from earthkit.data import ArrayField, SimpleFieldList, from_source
 from earthkit.data.testing import earthkit_examples_file
 
 

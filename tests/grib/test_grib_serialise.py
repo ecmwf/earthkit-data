@@ -16,19 +16,18 @@ import sys
 import numpy as np
 import pytest
 
-from earthkit.data import config
-from earthkit.data import from_source
+from earthkit.data import config, from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import write_to_file
+from earthkit.data.testing import WRITE_TO_FILE_METHODS, earthkit_examples_file, write_to_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import FL_FILE  # noqa: E402
-from grib_fixtures import FL_NUMPY  # noqa: E402
-from grib_fixtures import load_grib_data  # noqa: E402
+from grib_fixtures import (
+    FL_FILE,  # noqa: E402
+    FL_NUMPY,  # noqa: E402
+    load_grib_data,  # noqa: E402
+)
 
 
 def _pickle(data, representation):

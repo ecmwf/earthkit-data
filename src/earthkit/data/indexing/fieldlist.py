@@ -9,8 +9,7 @@
 
 
 from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.core.metadata import Metadata
-from earthkit.data.core.metadata import WrappedMetadata
+from earthkit.data.core.metadata import Metadata, WrappedMetadata
 
 
 class SimpleFieldList(FieldList):

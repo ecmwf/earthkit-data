@@ -14,9 +14,7 @@ import re
 import stat
 from getpass import getpass
 
-from earthkit.data.core.ipython import HTML
-from earthkit.data.core.ipython import display
-from earthkit.data.core.ipython import ipython_active
+from earthkit.data.core.ipython import HTML, display, ipython_active
 from earthkit.data.utils.humanize import list_to_human
 
 LOG = logging.getLogger(__name__)

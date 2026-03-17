@@ -13,13 +13,10 @@ import logging
 
 import numpy as np
 
-from earthkit.data.core.fieldlist import Field
-from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.fieldlist import Field, FieldList
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.metadata import RawMetadata
-from earthkit.data.decorators import cached_method
-from earthkit.data.decorators import normalize
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.data.decorators import cached_method, normalize, thread_safe_cached_property
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.utils.dates import to_datetime
 

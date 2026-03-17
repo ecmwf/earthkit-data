@@ -13,8 +13,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.readers.geotiff import GeoTIFFField
-from earthkit.data.testing import NO_RIOXARRAY
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.testing import NO_RIOXARRAY, earthkit_test_data_file
 from earthkit.data.utils.projections import TransverseMercator
 
 

@@ -14,12 +14,8 @@ import eccodes
 from pdbufr.high_level_bufr.bufr import bufr_code_is_coord
 
 from earthkit.data.core import Base
-from earthkit.data.core.index import Index
-from earthkit.data.core.index import MaskIndex
-from earthkit.data.core.index import MultiIndex
-from earthkit.data.utils.message import CodesHandle
-from earthkit.data.utils.message import CodesMessagePositionIndex
-from earthkit.data.utils.message import CodesReader
+from earthkit.data.core.index import Index, MaskIndex, MultiIndex
+from earthkit.data.utils.message import CodesHandle, CodesMessagePositionIndex, CodesReader
 from earthkit.data.utils.metadata.args import metadata_argument
 from earthkit.data.utils.parts import Part
 from earthkit.data.utils.summary import make_bufr_html_tree

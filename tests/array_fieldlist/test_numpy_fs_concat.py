@@ -19,9 +19,11 @@ from earthkit.data.core.fieldlist import FieldList
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from array_fl_fixtures import check_array_fl  # noqa: E402
-from array_fl_fixtures import check_save_to_disk  # noqa: E402
-from array_fl_fixtures import load_array_fl  # noqa: E402
+from array_fl_fixtures import (
+    check_array_fl,  # noqa: E402
+    check_save_to_disk,  # noqa: E402
+    load_array_fl,  # noqa: E402
+)
 
 
 @pytest.mark.parametrize("mode", ["oper", "multi"])

@@ -10,8 +10,7 @@
 
 import numpy as np
 
-from earthkit.data.core.fieldlist import Field
-from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.fieldlist import Field, FieldList
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.decorators import thread_safe_cached_property

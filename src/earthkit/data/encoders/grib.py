@@ -11,12 +11,10 @@ import datetime
 import logging
 from functools import lru_cache
 
-from earthkit.data.decorators import normalize
-from earthkit.data.decorators import normalize_grib_keys
+from earthkit.data.decorators import normalize, normalize_grib_keys
 from earthkit.data.utils.humanize import list_to_human
 
-from . import EncodedData
-from . import Encoder
+from . import EncodedData, Encoder
 
 LOG = logging.getLogger(__name__)
 

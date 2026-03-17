@@ -16,8 +16,7 @@ import pandas as pd
 import pytest
 import yaml
 
-from earthkit.data.decorators import availability
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import availability, normalize
 from earthkit.data.utils.availability import Availability
 
 

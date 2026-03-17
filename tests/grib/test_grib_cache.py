@@ -15,8 +15,7 @@ import sys
 
 import pytest
 
-from earthkit.data import config
-from earthkit.data import from_source
+from earthkit.data import config, from_source
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.utils.diag import field_cache_diag
 

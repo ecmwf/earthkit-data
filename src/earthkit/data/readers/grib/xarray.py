@@ -12,8 +12,7 @@ import logging
 
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils.kwargs import Kwargs
-from earthkit.data.utils.serialise import deserialise_state
-from earthkit.data.utils.serialise import serialise_state
+from earthkit.data.utils.serialise import deserialise_state, serialise_state
 
 LOG = logging.getLogger(__name__)
 

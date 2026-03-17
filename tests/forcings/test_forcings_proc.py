@@ -20,8 +20,10 @@ from earthkit.data.testing import earthkit_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from forcings_fixtures import all_params  # noqa: E402
-from forcings_fixtures import load_forcings_fs  # noqa: E402
+from forcings_fixtures import (
+    all_params,  # noqa: E402
+    load_forcings_fs,  # noqa: E402
+)
 
 
 @pytest.mark.parametrize("input_data", ["grib", "latlon"])

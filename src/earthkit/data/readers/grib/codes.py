@@ -18,9 +18,7 @@ from earthkit.data.core.fieldlist import Field
 from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.readers.grib.metadata import GribFieldMetadata
-from earthkit.data.utils.message import CodesHandle
-from earthkit.data.utils.message import CodesMessagePositionIndex
-from earthkit.data.utils.message import CodesReader
+from earthkit.data.utils.message import CodesHandle, CodesMessagePositionIndex, CodesReader
 
 LOG = logging.getLogger(__name__)
 

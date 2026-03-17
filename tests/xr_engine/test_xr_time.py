@@ -20,8 +20,10 @@ from earthkit.data.testing import earthkit_remote_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from xr_engine_fixtures import compare_coords  # noqa: E402
-from xr_engine_fixtures import compare_dims  # noqa: E402
+from xr_engine_fixtures import (
+    compare_coords,  # noqa: E402
+    compare_dims,  # noqa: E402
+)
 
 
 @pytest.mark.cache

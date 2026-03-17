@@ -14,16 +14,16 @@ import os
 import pytest
 import yaml
 
-from earthkit.data import FieldList
-from earthkit.data import from_source
+from earthkit.data import FieldList, from_source
 from earthkit.data.core.gridspec import GridSpec
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.readers.grib.gridspec import GridSpecConverter
-from earthkit.data.readers.grib.gridspec import make_gridspec
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import earthkit_remote_test_data_file
-from earthkit.data.testing import earthkit_test_data_file
-from earthkit.data.testing import write_to_file
+from earthkit.data.readers.grib.gridspec import GridSpecConverter, make_gridspec
+from earthkit.data.testing import (
+    WRITE_TO_FILE_METHODS,
+    earthkit_remote_test_data_file,
+    earthkit_test_data_file,
+    write_to_file,
+)
 
 SUPPORTED_GRID_TYPES = [
     "sh",

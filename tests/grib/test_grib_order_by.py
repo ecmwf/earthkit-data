@@ -18,8 +18,10 @@ from earthkit.data import from_source
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import FL_TYPES  # noqa: E402
-from grib_fixtures import load_grib_data  # noqa: E402
+from grib_fixtures import (
+    FL_TYPES,  # noqa: E402
+    load_grib_data,  # noqa: E402
+)
 
 
 # @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")

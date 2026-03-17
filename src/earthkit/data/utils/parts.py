@@ -7,8 +7,7 @@
 # nor does it submit to any jurisdiction.
 
 import os
-from collections import defaultdict
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 
 SimplePart = namedtuple("SimplePart", ["offset", "length"])
 

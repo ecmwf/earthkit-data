@@ -17,8 +17,7 @@ except ImportError:
 
 import yaml
 
-from earthkit.data.utils.request import FileRequestRetriever
-from earthkit.data.utils.request import RequestBuilder
+from earthkit.data.utils.request import FileRequestRetriever, RequestBuilder
 
 from .file import FileSource
 from .prompt import APIKeyPrompt

@@ -17,10 +17,8 @@ import pytest
 import yaml
 
 from earthkit.data import from_source
-from earthkit.data.core.temporary import temp_directory
-from earthkit.data.core.temporary import temp_env
-from earthkit.data.testing import NO_GRIBJUMP
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.core.temporary import temp_directory, temp_env
+from earthkit.data.testing import NO_GRIBJUMP, earthkit_test_data_file
 
 
 @pytest.fixture

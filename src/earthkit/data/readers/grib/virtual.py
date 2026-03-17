@@ -12,10 +12,7 @@ import logging
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.metadata import WrappedMetadata
 from earthkit.data.decorators import thread_safe_cached_property
-from earthkit.data.utils.dates import date_to_grib
-from earthkit.data.utils.dates import datetime_from_grib
-from earthkit.data.utils.dates import time_to_grib
-from earthkit.data.utils.dates import to_timedelta
+from earthkit.data.utils.dates import date_to_grib, datetime_from_grib, time_to_grib, to_timedelta
 
 from .index import GribFieldList
 

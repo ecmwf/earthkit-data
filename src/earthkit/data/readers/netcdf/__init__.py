@@ -9,8 +9,7 @@
 
 
 from .. import Reader
-from .fieldlist import NetCDFFieldListFromFile
-from .fieldlist import NetCDFFieldListFromURL
+from .fieldlist import NetCDFFieldListFromFile, NetCDFFieldListFromURL
 
 
 class NetCDFFieldListReader(NetCDFFieldListFromFile, Reader):

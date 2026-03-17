@@ -12,9 +12,7 @@
 import numpy as np
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.testing import earthkit_examples_file, earthkit_remote_test_data_file, earthkit_test_data_file
 from earthkit.data.utils.xarray.fieldlist import XArrayInputFieldList
 
 

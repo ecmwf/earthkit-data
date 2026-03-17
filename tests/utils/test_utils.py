@@ -11,8 +11,7 @@
 
 import pytest
 
-from earthkit.data.utils import ensure_iterable
-from earthkit.data.utils import ensure_sequence
+from earthkit.data.utils import ensure_iterable, ensure_sequence
 
 
 @pytest.mark.parametrize(

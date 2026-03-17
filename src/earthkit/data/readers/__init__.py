@@ -16,8 +16,7 @@ import deprecation
 
 from earthkit.data.core import Base
 from earthkit.data.core.config import CONFIG
-from earthkit.data.decorators import detect_out_filename
-from earthkit.data.decorators import locked
+from earthkit.data.decorators import detect_out_filename, locked
 
 LOG = logging.getLogger(__name__)
 
@@ -167,9 +166,7 @@ def _find_reader(method_name, source, path_or_data, **kwargs):
 
 
 def _unknown(method_name, source, path_or_data, **kwargs):
-    from .unknown import UnknownMemoryReader
-    from .unknown import UnknownReader
-    from .unknown import UnknownStreamReader
+    from .unknown import UnknownMemoryReader, UnknownReader, UnknownStreamReader
 
     unknowns = {
         "reader": UnknownReader,

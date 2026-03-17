@@ -15,14 +15,15 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.core.temporary import temp_directory
-from earthkit.data.core.temporary import temp_file
+from earthkit.data.core.temporary import temp_directory, temp_file
 from earthkit.data.sources.stream import StreamFieldList
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
-from earthkit.data.testing import make_tgz
-from earthkit.data.testing import write_to_file
+from earthkit.data.testing import (
+    WRITE_TO_FILE_METHODS,
+    earthkit_examples_file,
+    earthkit_remote_test_data_file,
+    make_tgz,
+    write_to_file,
+)
 
 
 def repeat_list_items(items, count):

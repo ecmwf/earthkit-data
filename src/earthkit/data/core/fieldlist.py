@@ -18,13 +18,9 @@ from earthkit.utils.array import convert as convert_array
 from earthkit.utils.array.convert import convert_dtype
 
 from earthkit.data.core import Base
-from earthkit.data.core.index import Index
-from earthkit.data.core.index import MaskIndex
-from earthkit.data.core.index import MultiIndex
+from earthkit.data.core.index import Index, MaskIndex, MultiIndex
 from earthkit.data.core.order import build_remapping
-from earthkit.data.decorators import cached_method
-from earthkit.data.decorators import detect_out_filename
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.data.decorators import cached_method, detect_out_filename, thread_safe_cached_property
 from earthkit.data.utils.metadata.args import metadata_argument
 
 

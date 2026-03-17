@@ -9,8 +9,7 @@
 
 import logging
 import os
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from importlib import import_module
 
 LOG = logging.getLogger(__name__)

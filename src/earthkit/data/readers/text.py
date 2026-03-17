@@ -9,8 +9,7 @@
 
 
 from . import Reader
-from .csv import CSVReader
-from .csv import is_csv
+from .csv import CSVReader, is_csv
 
 
 def is_text(path, prob_lines=1000, probe_size=4096):

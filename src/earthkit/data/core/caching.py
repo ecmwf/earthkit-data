@@ -24,8 +24,7 @@ import shutil
 import sqlite3
 import threading
 import time
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from random import randrange
 

@@ -9,8 +9,7 @@
 
 import logging
 
-from earthkit.data.utils import ensure_dict
-from earthkit.data.utils import ensure_iterable
+from earthkit.data.utils import ensure_dict, ensure_iterable
 from earthkit.data.utils.dates import datetime_from_grib
 
 LOG = logging.getLogger(__name__)

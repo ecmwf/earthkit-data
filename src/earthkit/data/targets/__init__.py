@@ -9,8 +9,7 @@
 
 import logging
 import os
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from functools import lru_cache
 from importlib import import_module
 

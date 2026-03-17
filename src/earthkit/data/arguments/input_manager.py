@@ -9,8 +9,7 @@
 import logging
 
 from .argument import Argument
-from .transformers import AvailabilityChecker
-from .transformers import KwargsAliasTransformer
+from .transformers import AvailabilityChecker, KwargsAliasTransformer
 
 LOG = logging.getLogger(__name__)
 

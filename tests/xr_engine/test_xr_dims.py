@@ -22,10 +22,12 @@ from earthkit.data.utils.xarray.profile import Profile
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from xr_engine_fixtures import compare_coords  # noqa: E402
-from xr_engine_fixtures import compare_dim_order  # noqa: E402
-from xr_engine_fixtures import compare_dims  # noqa: E402
-from xr_engine_fixtures import load_wrapped_fieldlist  # noqa: E402
+from xr_engine_fixtures import (
+    compare_coords,  # noqa: E402
+    compare_dim_order,  # noqa: E402
+    compare_dims,  # noqa: E402
+    load_wrapped_fieldlist,  # noqa: E402
+)
 
 DS_LEV = {
     "class": ["od"],

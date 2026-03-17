@@ -22,8 +22,7 @@ from earthkit.utils.array import convert as convert_array
 # from earthkit.utils.testing import get_array_backend
 from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
-from earthkit.data import from_object
-from earthkit.data import from_source
+from earthkit.data import from_object, from_source
 from earthkit.data.readers.text import TextReader
 from earthkit.data.sources.empty import EmptySource
 from earthkit.data.sources.mars import StandaloneMarsClient

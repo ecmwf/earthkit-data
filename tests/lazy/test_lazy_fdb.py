@@ -17,8 +17,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import NO_FDB
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.testing import NO_FDB, earthkit_test_data_file
 
 TEST_GRIB_REQUEST = {
     "class": "od",

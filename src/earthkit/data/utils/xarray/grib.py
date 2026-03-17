@@ -11,12 +11,14 @@ import datetime
 import logging
 from itertools import product
 
-from earthkit.data.utils.dates import date_to_grib
-from earthkit.data.utils.dates import datetime_to_grib
-from earthkit.data.utils.dates import step_to_grib
-from earthkit.data.utils.dates import time_to_grib
-from earthkit.data.utils.dates import to_datetime
-from earthkit.data.utils.dates import to_timedelta
+from earthkit.data.utils.dates import (
+    date_to_grib,
+    datetime_to_grib,
+    step_to_grib,
+    time_to_grib,
+    to_datetime,
+    to_timedelta,
+)
 
 LOG = logging.getLogger(__name__)
 

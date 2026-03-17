@@ -50,8 +50,7 @@ def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
         import io
 
-        from .memory import GribFieldListInMemory
-        from .memory import GribStreamReader
+        from .memory import GribFieldListInMemory, GribStreamReader
 
         # convert the memory buffer into a stream and use the stream reader. See
         # https://github.com/ecmwf/earthkit-data/issues/740 for details
@@ -75,8 +74,7 @@ def stream_reader(
     **kwargs,
 ):
     if _is_default(magic, content_type) or _match_magic(magic, deeper_check):
-        from .memory import GribFieldListInMemory
-        from .memory import GribStreamReader
+        from .memory import GribFieldListInMemory, GribStreamReader
 
         r = GribStreamReader(stream, **kwargs)
         if memory:

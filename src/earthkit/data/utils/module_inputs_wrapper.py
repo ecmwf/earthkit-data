@@ -1,5 +1,5 @@
 """Module containing methods to transform the inputs of functions based on the function type setting,
-common signitures or mapping defined at call time.
+common signatures or mapping defined at call time.
 """
 # (C) Copyright 2020 ECMWF.
 #

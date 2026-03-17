@@ -12,8 +12,7 @@
 import pytest
 
 from earthkit.data import ALL
-from earthkit.data.arguments.earthkit_types import EnumListType
-from earthkit.data.arguments.earthkit_types import EnumType
+from earthkit.data.arguments.earthkit_types import EnumListType, EnumType
 from earthkit.data.decorators import normalize
 
 

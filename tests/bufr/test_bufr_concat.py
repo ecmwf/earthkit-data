@@ -10,8 +10,7 @@
 #
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_examples_file
+from earthkit.data.testing import earthkit_examples_file, earthkit_remote_examples_file
 
 
 def test_bufr_concat():

@@ -9,8 +9,7 @@
 import datetime
 import re
 
-from dateutil.parser import isoparse
-from dateutil.parser import parse
+from dateutil.parser import isoparse, parse
 
 from earthkit.data.wrappers import Wrapper
 

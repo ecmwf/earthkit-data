@@ -17,13 +17,9 @@ import yaml
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.readers.grib.metadata import RestrictedGribMetadata
-from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
-from earthkit.data.readers.grib.metadata import WrappedMetadata
+from earthkit.data.readers.grib.metadata import RestrictedGribMetadata, StandAloneGribMetadata, WrappedMetadata
 from earthkit.data.readers.grib.output import new_grib_output
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.testing import earthkit_examples_file, earthkit_remote_test_data_file, earthkit_test_data_file
 from earthkit.data.utils import ensure_iterable
 
 

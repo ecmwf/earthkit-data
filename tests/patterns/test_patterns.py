@@ -13,9 +13,7 @@ import datetime
 
 import pytest
 
-from earthkit.data.utils.patterns import Function
-from earthkit.data.utils.patterns import Pattern
-from earthkit.data.utils.patterns import Variable
+from earthkit.data.utils.patterns import Function, Pattern, Variable
 
 
 @pytest.mark.parametrize(

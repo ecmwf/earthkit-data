@@ -15,13 +15,11 @@ except ImportError:
     raise ImportError("WEkEO access requires 'hda' to be installed")
 
 from earthkit.data.decorators import normalize
-from earthkit.data.utils.request import FileRequestRetriever
-from earthkit.data.utils.request import RequestBuilder
+from earthkit.data.utils.request import FileRequestRetriever, RequestBuilder
 
 from .file import FileSource
-from .wekeo import EXTENSIONS
+from .wekeo import EXTENSIONS, HDAAPIKeyPrompt
 from .wekeo import ApiClient as WekeoClient
-from .wekeo import HDAAPIKeyPrompt
 
 LOG = logging.getLogger(__name__)
 
