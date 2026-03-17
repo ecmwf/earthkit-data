@@ -96,11 +96,6 @@ file
   :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Directories and archives are supported. Stream based access is only available for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`. *New in version 0.11.0*
   :param bool read_all: if ``True``, all the data is read straight to memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.11.0*
 
-  *earthkit-data* will inspect the content of the files to check for any of the
-  supported :ref:`data formats <data-format>`.
-
-  When the input is an archive format such as ``.zip``, ``.tar``, ``.tar.gz``, etc,
-  *earthkit-data* will attempt to open it and extract any usable files, which are then stored in the :ref:`cache <caching>`.
 
   The ``path`` can be used in a flexible way:
 
@@ -118,7 +113,7 @@ file
       ds = ekd.from_source("file", "path/to/dir")
 
 
-  The following examples using parts:
+  The following examples use parts:
 
   .. code:: python
 
