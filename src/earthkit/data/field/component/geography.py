@@ -445,12 +445,13 @@ class BaseGeography(SimpleFieldComponent):
         return create_geography_from_dict(data, shape_hint=shape_hint)
 
     def to_dict(self):
-        return {
-            "grid_spec": self.grid_spec(),
-            "grid_type": self.grid_type(),
-            "shape": self.shape(),
-            "area": self.area(),
-        }
+        r = dict()
+        for k in ("grid_spec", "grid_type", "shape", "area"):
+            try:
+                r[k] = getattr(self, k)()
+            except Exception:
+                pass
+        return r
 
     def __getstate__(self):
         return super().__getstate__()

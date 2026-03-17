@@ -500,6 +500,17 @@ def test_grib_grid_points_rotated_rgg():
     assert np.allclose(res[1][-4:], ref2[1])
 
 
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+def test_grib_healpix_grid(fl_type):
+    ds, _ = load_grib_data("healpix_H8.grib2", fl_type, folder="data")
+
+    f = ds[0]
+    assert f.geography.shape() == (768,)
+    r = f.geography.to_dict()
+    assert r["shape"] == (768,)
+    assert r["grid_type"] == "healpix"
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 
