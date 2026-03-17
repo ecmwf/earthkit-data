@@ -146,6 +146,7 @@ def format_ls(attributes, column_names=None):
 
     if df is not None and column_names is not None:
         df = df.rename(columns=column_names)
+
     return df
 
 

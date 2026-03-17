@@ -22,21 +22,22 @@ from .scan import BufrCodesMessagePositionIndex
 
 COLUMNS = ("latitude", "longitude", "data_datetime")
 
-BUFR_LS_KEYS = {
-    "edition": "edition",
-    "dataCategory": "type",
-    "dataSubCategory": "subtype",
-    "bufrHeaderCentre": "c",
-    "masterTablesVersionNumber": "mv",
-    "localTablesVersionNumber": "lv",
-    "numberOfSubsets": "subsets",
-    "compressedData": "compr",
-    "typicalDate": "typicalDate",
-    "typicalTime": "typicalTime",
-    "ident": "ident",
-    "localLatitude": "lat",
-    "localLongitude": "lon",
-}
+
+BUFR_LS_KEYS = [
+    "edition",
+    "dataCategory",
+    "dataSubCategory",
+    "bufrHeaderCentre",
+    "masterTablesVersionNumber",
+    "localTablesVersionNumber",
+    "numberOfSubsets",
+    "compressedData",
+    "typicalDate",
+    "typicalTime",
+    "ident",
+    "localLatitude",
+    "localLongitude",
+]
 
 
 class BUFRList(IndexFeatureListBase):

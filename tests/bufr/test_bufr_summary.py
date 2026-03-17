@@ -33,18 +33,18 @@ def test_bufr_ls_num():
     df = f.ls(n=2)
     ref = {
         "edition": {0: 3, 1: 3},
-        "type": {0: 2, 1: 2},
-        "subtype": {0: 101, 1: 101},
-        "c": {0: 98, 1: 98},
-        "mv": {0: 13, 1: 13},
-        "lv": {0: 1, 1: 1},
-        "subsets": {0: 1, 1: 1},
-        "compr": {0: 0, 1: 0},
+        "dataCategory": {0: 2, 1: 2},
+        "dataSubCategory": {0: 101, 1: 101},
+        "bufrHeaderCentre": {0: 98, 1: 98},
+        "masterTablesVersionNumber": {0: 13, 1: 13},
+        "localTablesVersionNumber": {0: 1, 1: 1},
+        "numberOfSubsets": {0: 1, 1: 1},
+        "compressedData": {0: 0, 1: 0},
         "typicalDate": {0: "20081208", 1: "20081208"},
         "typicalTime": {0: "120000", 1: "120000"},
         "ident": {0: "02836", 1: "01400"},
-        "lat": {0: 67.37, 1: 56.9},
-        "lon": {0: 26.63, 1: 3.35},
+        "localLatitude": {0: 67.37, 1: 56.9},
+        "localLongitude": {0: 26.63, 1: 3.35},
     }
 
     assert ref == df.to_dict()
@@ -53,18 +53,18 @@ def test_bufr_ls_num():
     df = f.ls(-2)
     ref = {
         "edition": {0: 3, 1: 3},
-        "type": {0: 2, 1: 2},
-        "subtype": {0: 101, 1: 101},
-        "c": {0: 98, 1: 98},
-        "mv": {0: 13, 1: 13},
-        "lv": {0: 1, 1: 1},
-        "subsets": {0: 1, 1: 1},
-        "compr": {0: 0, 1: 0},
+        "dataCategory": {0: 2, 1: 2},
+        "dataSubCategory": {0: 101, 1: 101},
+        "bufrHeaderCentre": {0: 98, 1: 98},
+        "masterTablesVersionNumber": {0: 13, 1: 13},
+        "localTablesVersionNumber": {0: 1, 1: 1},
+        "numberOfSubsets": {0: 1, 1: 1},
+        "compressedData": {0: 0, 1: 0},
         "typicalDate": {0: "20081208", 1: "20081208"},
         "typicalTime": {0: "120000", 1: "120000"},
         "ident": {0: "11035", 1: "02963"},
-        "lat": {0: 48.25, 1: 60.82},
-        "lon": {0: 16.37, 1: 23.5},
+        "localLatitude": {0: 48.25, 1: 60.82},
+        "localLongitude": {0: 16.37, 1: 23.5},
     }
 
     assert ref == df.to_dict()
@@ -80,18 +80,18 @@ def test_bufr_head_num():
     df = f.head(n=2)
     ref = {
         "edition": {0: 3, 1: 3},
-        "type": {0: 2, 1: 2},
-        "subtype": {0: 101, 1: 101},
-        "c": {0: 98, 1: 98},
-        "mv": {0: 13, 1: 13},
-        "lv": {0: 1, 1: 1},
-        "subsets": {0: 1, 1: 1},
-        "compr": {0: 0, 1: 0},
+        "dataCategory": {0: 2, 1: 2},
+        "dataSubCategory": {0: 101, 1: 101},
+        "bufrHeaderCentre": {0: 98, 1: 98},
+        "masterTablesVersionNumber": {0: 13, 1: 13},
+        "localTablesVersionNumber": {0: 1, 1: 1},
+        "numberOfSubsets": {0: 1, 1: 1},
+        "compressedData": {0: 0, 1: 0},
         "typicalDate": {0: "20081208", 1: "20081208"},
         "typicalTime": {0: "120000", 1: "120000"},
         "ident": {0: "02836", 1: "01400"},
-        "lat": {0: 67.37, 1: 56.9},
-        "lon": {0: 26.63, 1: 3.35},
+        "localLatitude": {0: 67.37, 1: 56.9},
+        "localLongitude": {0: 26.63, 1: 3.35},
     }
 
     assert ref == df.to_dict()
@@ -107,18 +107,18 @@ def test_bufr_tail_num():
     df = f.tail(n=2)
     ref = {
         "edition": {0: 3, 1: 3},
-        "type": {0: 2, 1: 2},
-        "subtype": {0: 101, 1: 101},
-        "c": {0: 98, 1: 98},
-        "mv": {0: 13, 1: 13},
-        "lv": {0: 1, 1: 1},
-        "subsets": {0: 1, 1: 1},
-        "compr": {0: 0, 1: 0},
+        "dataCategory": {0: 2, 1: 2},
+        "dataSubCategory": {0: 101, 1: 101},
+        "bufrHeaderCentre": {0: 98, 1: 98},
+        "masterTablesVersionNumber": {0: 13, 1: 13},
+        "localTablesVersionNumber": {0: 1, 1: 1},
+        "numberOfSubsets": {0: 1, 1: 1},
+        "compressedData": {0: 0, 1: 0},
         "typicalDate": {0: "20081208", 1: "20081208"},
         "typicalTime": {0: "120000", 1: "120000"},
         "ident": {0: "11035", 1: "02963"},
-        "lat": {0: 48.25, 1: 60.82},
-        "lon": {0: 16.37, 1: 23.5},
+        "localLatitude": {0: 48.25, 1: 60.82},
+        "localLongitude": {0: 16.37, 1: 23.5},
     }
 
     assert ref == df.to_dict()
