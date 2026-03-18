@@ -111,6 +111,10 @@ xref_links = {
         "earthkit-regrid",
         "https://earthkit-regrid.readthedocs.io/en/latest/",
     ),
+    "earthkit-utils": (
+        "earthkit-utils",
+        "https://github.com/ecmwf/earthkit-utils",
+    ),
     "eccodes": (
         "ecCodes",
         "https://confluence.ecmwf.int/display/ECC/ecCodes+Home",
@@ -119,6 +123,7 @@ xref_links = {
         "ecCodes namespace",
         "https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ",
     ),
+    "gribjump": ("GribJump", "https://github.com/ecmwf/gribjump"),
     "pdbufr": ("pdbufr", "https://github.com/ecmwf/pdbufr"),
     "read_bufr": (
         "pdbufr.read_bufr()",

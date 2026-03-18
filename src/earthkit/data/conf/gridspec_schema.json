@@ -154,7 +154,7 @@
             "type": "integer",
             "minimum": 1
         },
-        "ordering": {
+        "order": {
             "description": "Healpix grid ordering",
             "enum": [
                 "ring",
@@ -427,7 +427,7 @@
             "then": {
                 "required": [
                     "grid",
-                    "ordering"
+                    "order"
                 ],
                 "properties": {
                     "grid": {

@@ -55,14 +55,14 @@ def test_polytope_odb():
 @pytest.mark.download
 @pytest.mark.skipif(NO_POLYTOPE, reason="No access to Polytope Web API")
 @pytest.mark.parametrize("kwargs", [{"stream": False}, {"stream": True, "read_all": True}])
-def test_polytope_grib_all(kwargs):
+def test_polytope_grib_all_single(kwargs):
     request = {
         "stream": "oper",
         "levtype": "pl",
         "levellist": "500",
         "param": "129.128",
         "step": "0/12",
-        "time": "00:00:00",
+        "time": "00",
         "date": "20200915",
         "type": "fc",
         "class": "rd",
@@ -74,6 +74,49 @@ def test_polytope_grib_all(kwargs):
 
     assert len(ds) == 2
     assert ds.metadata("level") == [500, 500]
+    assert ds.metadata("param") == ["z", "z"]
+
+
+@pytest.mark.skip("Does not work in polytope-client")
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_POLYTOPE, reason="No access to Polytope Web API")
+@pytest.mark.parametrize("kwargs", [{"stream": False}, {"stream": True, "read_all": True}])
+def test_polytope_grib_all_multi(kwargs):
+    request = [
+        {
+            "stream": "oper",
+            "levtype": "pl",
+            "levellist": "500",
+            "param": "129.128",
+            "step": "0/12",
+            "time": "00",
+            "date": "20200915",
+            "type": "fc",
+            "class": "rd",
+            "expver": "hsvs",
+            "domain": "g",
+        },
+        {
+            "stream": "oper",
+            "levtype": "pl",
+            "levellist": "500",
+            "param": "130.128",
+            "step": "0/12",
+            "time": "00",
+            "date": "20200915",
+            "type": "fc",
+            "class": "rd",
+            "expver": "hsvs",
+            "domain": "g",
+        },
+    ]
+
+    ds = from_source("polytope", "ecmwf-mars", request, **kwargs)
+
+    assert len(ds) == 4
+    assert ds.metadata("level") == [500, 500, 500, 500]
+    assert ds.metadata("param") == ["z", "z", "t", "t"]
 
 
 @pytest.mark.long_test
@@ -86,7 +129,7 @@ def test_polytope_grib_stream():
         "levellist": "500",
         "param": "129.128",
         "step": "0/12",
-        "time": "00:00:00",
+        "time": "00",
         "date": "20200915",
         "type": "fc",
         "class": "rd",

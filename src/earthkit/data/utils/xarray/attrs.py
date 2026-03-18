@@ -12,8 +12,8 @@ import os
 from abc import ABCMeta
 from abc import abstractmethod
 from collections import defaultdict
-from functools import cached_property
 
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
 
@@ -36,7 +36,7 @@ class CFAttrs:
         else:
             raise ValueError(f"CF attributes file not found! path={path}")
 
-    @cached_property
+    @thread_safe_cached_property
     def attrs(self):
         return self._load()
 
@@ -89,7 +89,7 @@ class KeyAttr(Attr):
         return {self.name: metadata.get(self.key, default=None)}
 
     def __repr__(self) -> str:
-        return f"KeyAttr({self.name})"
+        return f"KeyAttr({self.name}, key={self.key})"
 
 
 class NamespaceAttr(Attr):
@@ -285,8 +285,9 @@ class UniqueAttrBuilder(AttrsBuilder):
                 attrs[k].update(ensure_iterable(v))
 
         global_attrs = defaultdict(list)
+        variable_attrs_names = set(attr.name for attr in self.attrs.variable_attrs)
         for k, v in attrs.items():
-            if len(v) == 1 and k not in self.attrs.variable_attrs:
+            if len(v) == 1 and k not in variable_attrs_names:
                 global_attrs[k] = list(v)[0]
 
         # Some attrs cannot be global according to the CF convention.

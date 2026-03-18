@@ -10,7 +10,6 @@
 import datetime
 import itertools
 import logging
-from functools import cached_property
 
 import numpy as np
 
@@ -20,6 +19,7 @@ from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalize
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.utils.dates import to_datetime
 
@@ -180,7 +180,7 @@ class ForcingMaker:
         return self.cos_solar_zenith_angle(date)
 
     def toa_incident_solar_radiation(self, date):
-        from earthkit.meteo.solar import toa_incident_solar_radiation
+        from earthkit.data.utils.meteo import toa_incident_solar_radiation
 
         date = to_datetime(date)
         result = toa_incident_solar_radiation(
@@ -193,7 +193,7 @@ class ForcingMaker:
         return result.flatten()
 
     def cos_solar_zenith_angle(self, date):
-        from earthkit.meteo.solar import cos_solar_zenith_angle
+        from earthkit.data.utils.meteo import cos_solar_zenith_angle
 
         date = to_datetime(date)
         result = cos_solar_zenith_angle(
@@ -245,7 +245,7 @@ class ForcingField(Field):
         # self._shape = shape
         # self._geometry = self.maker.field.metadata().geography
 
-    @cached_property
+    @thread_safe_cached_property
     def _metadata(self):
         d = dict(
             valid_datetime=self.date if isinstance(self.date, str) else self.date.isoformat(),
@@ -281,10 +281,7 @@ def make_datetime(date, time):
         return date
     if date.hour or date.minute:
         raise ValueError(
-            (
-                f"Duplicate information about time time={time},"
-                f"and time={date.hour}:{date.minute} from date={date}"
-            )
+            (f"Duplicate information about time time={time}," f"and time={date.hour}:{date.minute} from date={date}")
         )
     assert date.hour == 0, (date, time)
     assert date.minute == 0, (date, time)
@@ -339,8 +336,7 @@ class ForcingsFieldListCore(FieldList):
                 return self.request["number"]
 
             assert hasattr(source_or_dataset, "unique_values"), (
-                f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is"
-                " not a proper source or dataset"
+                f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is" " not a proper source or dataset"
             )
 
             return source_or_dataset.unique_values("number", patches={"number": {None: 0}}).get("number", 0)
@@ -362,8 +358,7 @@ class ForcingsFieldListCore(FieldList):
 
             assert "date" not in self.request and "time" not in self.request
             assert hasattr(source_or_dataset, "unique_values"), (
-                f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is"
-                " not a proper source or dataset"
+                f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is" " not a proper source or dataset"
             )
 
             return source_or_dataset.unique_values("valid_datetime")["valid_datetime"]

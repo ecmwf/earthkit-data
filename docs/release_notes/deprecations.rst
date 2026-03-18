@@ -226,3 +226,52 @@ Its functionality is replaced by the :ref:`targets <data-targets>` instead. For 
 ++++++++++++++++++++++++++++++++++++++++++++
 
 Its functionality is replaced by the :ref:`encoders <data-endoders>`. For details see :ref:`migrating new_grib_coder() <deprecated-new-grib-coder>`.
+
+
+.. _deprecated-0.19.0:
+
+Version 0.19.0
+-----------------
+
+.. _deprecated-array-backend-kwarg:
+
+The ``array_backend`` kwarg is deprecated
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The ``array_backend`` kwarg is now deprecated and ``array_namespace`` should be used instead. This affects the following methods: :func:`Field.to_array`, :func:`Field.copy`,  :func:`Field.clone`, :func:`FieldList.to_array`, :func:`FieldList.to_fieldlist`, :func:`to_xarray`. The old kwarg is still available for backward compatibility but will be removed in a future release.
+
+
+.. list-table::
+   :header-rows: 0
+
+   * - Deprecated code
+   * -
+
+        .. literalinclude:: include/deprec_array_backend_kwarg.py
+
+   * - New code
+   * -
+
+        .. literalinclude:: include/migrated_array_namespace_kwarg.py
+
+
+
+.. _deprecated-field-array-backend-attribute:
+
+The ``Field.array_backend`` attribute is deprecated
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The ``Field.array_backend`` attribute is now deprecated and ``Field.array_namespace`` should be used instead. The old attribute is still available for backward compatibility but will be removed in a future release.
+
+.. list-table::
+   :header-rows: 0
+
+   * - Deprecated code
+   * -
+
+        .. literalinclude:: include/deprec_field_array_backend_attribute.py
+
+   * - New code
+   * -
+
+        .. literalinclude:: include/migrated_field_array_namespace_attribute.py

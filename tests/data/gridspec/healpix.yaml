@@ -1,7 +1,7 @@
 - file: healpix/H16_ring.grib2
   gridspec:
     grid: H16
-    ordering: ring
+    order: ring
     type: healpix
   metadata:
     N: 16
@@ -16,7 +16,7 @@
 - file: healpix/H16_nested.grib2
   gridspec:
     grid: H16
-    ordering: nested
+    order: nested
     type: healpix
   metadata:
     N: 16

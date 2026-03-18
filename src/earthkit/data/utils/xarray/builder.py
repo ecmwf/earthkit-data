@@ -17,7 +17,6 @@ import xarray.core.indexing as indexing
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
 
-from .attrs import AttrList
 from .dim import LevelPerTypeDim
 from .profile import Profile
 
@@ -38,7 +37,7 @@ class VariableBuilder:
         data_maker,
         tensor,
         remapping,
-        local_attr_keys=None,
+        dims_as_attrs_map=None,
         fixed_local_attrs=None,
     ):
         """
@@ -56,9 +55,8 @@ class VariableBuilder:
             The tensor object that contains the data.
         remapping: Remapping
             The remapping object that contains the remapping information.
-        local_attr_keys: list, optional
-            A list of metadata keys that are used to collect local attributes. These attributes
-            are not taken into account by the attribute policies.
+        dims_as_attrs_map: dict, optional
+            A dictionary dim->coord whose keys are size-1 dimensions to be turned into the variable attributes.
         fixed_local_attrs: dict, optional
             A dictionary of fixed local attributes that are added to the variable. These attributes
             are not taken into account by the attribute policies.
@@ -67,7 +65,7 @@ class VariableBuilder:
         self.var_dims = var_dims
         self.data_maker = data_maker
         self._attrs = {}
-        self.local_keys = ensure_iterable(local_attr_keys)
+        self.dims_as_attrs_map = dims_as_attrs_map or {}
         self.fixed_local_attrs = ensure_dict(fixed_local_attrs)
         self.tensor = tensor
         self.remapping = remapping
@@ -81,6 +79,18 @@ class VariableBuilder:
                     "bitsPerValue": md.get("bitsPerValue", 0),
                 }
                 self._attrs["_earthkit"] = attrs
+
+        try:
+            grid_spec = self.tensor.source[0].metadata().grid_spec
+            if grid_spec is not None:
+                if isinstance(grid_spec, dict):
+                    import json
+
+                    grid_spec = json.dumps(grid_spec)
+                if isinstance(grid_spec, str):
+                    self._attrs["ek_grid_spec"] = grid_spec
+        except Exception:
+            pass
 
         self._attrs.update(self.fixed_local_attrs)
         data = self.data_maker(self.tensor, self.var_dims, self.name)
@@ -98,8 +108,6 @@ class VariableBuilder:
         collect: list, optional
             A list of attributes that are collected but not added to the variable attributes.
         """
-        attrs = attrs + AttrList(self.local_keys)
-
         res = {}
         keys_strict = []
         fixed_attrs = {}
@@ -108,10 +116,12 @@ class VariableBuilder:
 
         def _metadata():
             nonlocal first
-            return self.tensor.source[0].metadata() if not first else first
+            if not first:
+                first = self.tensor.source[0].metadata()
+            return first
 
         for a in attrs:
-            if a.name not in self.var_dims and a.name not in res and a.name not in self.fixed_local_attrs:
+            if a.name not in res and a.name not in self.fixed_local_attrs:
                 if a.fixed():
                     fixed_attrs[a.name] = a.value()
                 elif callable(a):
@@ -132,6 +142,7 @@ class VariableBuilder:
 
         self._attrs = res
         self._attrs.update(fixed_attrs)
+        self._attrs.update(self.dims_as_attrs_map)
 
         # extra attributes to be collected but not added to the variable
         collected_attrs = {}
@@ -150,11 +161,11 @@ class VariableBuilder:
             collected_attrs = res
             collected_attrs.update(fixed_attrs)
 
-        return {k: v for k, v in self._attrs.items() if k not in self.local_keys}, collected_attrs
+        return {k: v for k, v in self._attrs.items() if k not in self.dims_as_attrs_map}, collected_attrs
 
     def adjust_attrs(self, drop_keys=None, rename=None):
         drop_keys = ensure_iterable(drop_keys)
-        drop_keys = [k for k in drop_keys if k not in self.local_keys]
+        drop_keys = [k for k in drop_keys if k not in self.dims_as_attrs_map]
         r = {}
         for k, v in self._attrs.items():
             if k not in drop_keys:
@@ -173,14 +184,14 @@ class VariableBuilder:
 
 
 class TensorBackendArray(xarray.backends.common.BackendArray):
-    def __init__(self, tensor, dims, shape, array_backend, dtype, var_name):
+    def __init__(self, tensor, dims, shape, array_namespace, dtype, var_name):
         super().__init__()
         self.tensor = tensor
         self.dims = dims
         self.shape = shape
         self._var_name = var_name
         self.dtype = dtype
-        self.array_backend = array_backend
+        self.array_namespace = array_namespace
 
         from dask.utils import SerializableLock
 
@@ -228,7 +239,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
             # LOG.debug(f"   {field_index=}")
 
             try:
-                result = r.to_array(index=field_index, array_backend=self.array_backend, dtype=self.dtype)
+                result = r.to_array(index=field_index, array_namespace=self.array_namespace, dtype=self.dtype)
             except Exception as e:
                 LOG.exception("Error in to_array:", e)
                 raise
@@ -259,19 +270,23 @@ class BackendDataBuilder(metaclass=ABCMeta):
             self.global_tensor_coords_component = None
 
         # Array backend/namespace
-        array_backend = profile.array_backend
-        if array_backend is None:
-            array_backend = "numpy"
+        array_namespace = profile.array_namespace
+        if array_namespace is None:
+            array_namespace = "numpy"
 
-        from earthkit.utils.array import get_backend
+        from earthkit.utils.array import array_namespace as eku_array_namespace
+        from earthkit.utils.array.convert import convert_dtype
 
-        self.array_backend = get_backend(array_backend)
-        assert self.array_backend is not None, f"Unsupported array_backend : {array_backend}"
+        self.array_namespace = eku_array_namespace(array_namespace)
+
+        assert self.array_namespace is not None, f"Unsupported array_namespace : {array_namespace}"
 
         dtype = profile.dtype
         if dtype is None:
-            dtype = "float64"
-        self.dtype = self.array_backend.make_dtype(dtype)
+            dtype = convert_dtype("float64", array_namespace)
+        else:
+            dtype = convert_dtype(dtype, array_namespace)
+        self.dtype = dtype
 
         # Note: these coords inside the tensor are called user_coords and
         # the corresponding dims are called user_dims
@@ -329,9 +344,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
             for d in global_tensor_dims:
                 if isinstance(d, LevelPerTypeDim):
-                    raise NotImplementedError(
-                        "level_dim_mode='level_per_type' not yet supported when allow_holes=True"
-                    )
+                    raise NotImplementedError("level_dim_mode='level_per_type' not yet supported when allow_holes=True")
                 # Create coord for each dimension
                 # TODO: This does not work yet: Dimensions like "level_per_type" are templates and will be
                 #  added as multiple concrete dimensions to the dataset
@@ -376,22 +389,32 @@ class BackendDataBuilder(metaclass=ABCMeta):
     def build_values(self, *args, **kwargs):
         pass
 
-    @abstractmethod
     def pre_build_variables(self):
-        pass
+        """Generate a builder for each variable"""
+        builders = {}
+
+        if self.profile.variable.is_mono:
+            name = self.profile.variable.name
+            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
+        else:
+            groups = self.ds.group(self.profile.variable.key, self.profile.variable.variables)
+
+            # we assume each variable forms a full cube
+            for name in groups:
+                ds_var = groups[name]
+                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
+
+        return builders
 
     def pre_build_variable(self, ds_var, dims, name):
-        tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs = self.prepare_tensor(
-            ds_var, dims, name
-        )
-
+        tensor_dims, tensor_coords, tensor_coords_component, dims_as_attrs_map = self.prepare_tensor(ds_var, dims, name)
         tensor_dim_keys = [d.key for d in tensor_dims]
 
         if self.profile.allow_holes:
             tensor_coords = {k: v for k, v in self.raw_global_tensor_coords.items() if k in tensor_dim_keys}
             tensor_coords_component = self.global_tensor_coords_component
 
-        # LOG.debug(f"{tensor_dims=} {tensor_coords=} {tensor_coords_component=} {tensor_extra_attrs=}")
+        # LOG.debug(f"{tensor_dims=} {tensor_coords=} {tensor_coords_component=} {dims_as_attrs_map=}")
         # LOG.debug(f"{tensor_dim_keys=}")
 
         tensor = ds_var.to_tensor(
@@ -409,9 +432,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             # Create coord for each dimension
             # Dimensions like "level_per_type" are templates and will be
             # added as multiple concrete dimensions to the dataset
-            k, c = d.as_coord(
-                d.key, tensor.user_coords[d.key], tensor_coords_component.get(d.key, None), tensor.source
-            )
+            k, c = d.as_coord(d.key, tensor.user_coords[d.key], tensor_coords_component.get(d.key, None), tensor.source)
             if k not in self.tensor_coords:
                 assert not self.profile.allow_holes, (
                     f"allow_holes=True: the dimension {k} not found among dimensions "
@@ -431,7 +452,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             data_maker,
             tensor,
             remapping,
-            local_attr_keys=tensor_extra_attrs,
+            dims_as_attrs_map=dims_as_attrs_map,
             fixed_local_attrs=self.fixed_local_attrs,
         )
 
@@ -441,13 +462,11 @@ class BackendDataBuilder(metaclass=ABCMeta):
         tensor_dims = []
         tensor_coords = {}
         tensor_coords_component = {}
-        tensor_extra_attrs = []
+        tensor_extra_attrs = {}
 
         # LOG.debug(f"{name=} {dims=}")
 
-        vals, component_vals = ds.unique_values(
-            [d.key for d in dims], component=self.profile.add_earthkit_attrs
-        )
+        vals, component_vals = ds.unique_values([d.key for d in dims], component=self.profile.add_earthkit_attrs)
 
         # LOG.debug(f"unique_values={vals}")
         # LOG.debug(f"ensure_dims={self.profile.dims.ensure_dims}")
@@ -461,13 +480,23 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 # if d.name not in self.profile.dims.ensure_dims:
                 #     raise ValueError(f"Dimension {d} has no valid values for variable={name}")
             else:
-                if num > 1 and d.enforce_unique:
+                if num > 1 and d.enforce_unique and name != "<ALL VARIABLES>":
                     raise ValueError(
                         f"Dimension '{d.name}' of variable '{name}' cannot have multiple values={vals[d.key]}"
                     )
-                elif num == 1 and d.name in self.profile.dims.dims_as_attrs:
-                    tensor_extra_attrs.append(d.key)
-                elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
+                if num == 1 and d.name in self.profile.dims.dims_as_attrs:
+                    attr_val = vals[d.key][0]
+                    k = d.dim_name(d.key, ds)
+
+                    # mimics the behaviour of DimHandler.rename_dataset_dims
+                    attr_key = d.name if k == d.key else k
+
+                    tensor_extra_attrs[attr_key] = attr_val
+                if (
+                    d.name in self.profile.dims.ensure_dims
+                    or num > 1
+                    or (not self.profile.dims.squeeze and d.name not in self.profile.dims.dims_as_attrs)
+                ):
                     tensor_dims.append(d)
                     tensor_coords[d.key] = vals[d.key]
                     if component_vals and d.key in component_vals:
@@ -495,22 +524,6 @@ class TensorBackendDataBuilder(BackendDataBuilder):
     stored in memory or on disk.
     """
 
-    def pre_build_variables(self):
-        """Generate a builder for each variable"""
-        builders = {}
-
-        if self.profile.variable.is_mono:
-            name = self.profile.variable.name
-            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
-        else:
-            # we assume each variable forms a full cube
-            key = self.profile.variable.key
-            for name in self.profile.variable.variables:
-                ds_var = self.ds.sel(**{key: name})
-                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
-
-        return builders
-
     def build_values(self, tensor, var_dims, name):
         """Generate the data object stored in the xarray variable"""
         # There is no need for the extra structures in the wrapped source in the
@@ -521,7 +534,7 @@ class TensorBackendDataBuilder(BackendDataBuilder):
             tensor,
             var_dims,
             tensor.full_shape,
-            self.array_backend,
+            self.array_namespace,
             self.dtype,
             name,
         )
@@ -538,23 +551,6 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
     field supports this operation. Fields released in this way are not available for further access.
     """
 
-    def pre_build_variables(self):
-        """Generate a builder for each variable"""
-        builders = {}
-
-        if self.profile.variable.is_mono:
-            name = self.profile.variable.name
-            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
-        else:
-            groups = self.ds.group(self.profile.variable.key, self.profile.variable.variables)
-
-            # we assume each variable forms a full cube
-            for name in groups:
-                ds_var = groups[name]
-                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
-
-        return builders
-
     def build_values(self, tensor, var_dims, name):
         """Generate the data object stored in the xarray variable"""
 
@@ -565,7 +561,7 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
             for f in tensor.source:
                 f.keep = False
 
-        return tensor.to_array(dtype=self.dtype, array_backend=self.array_backend)
+        return tensor.to_array(dtype=self.dtype, array_namespace=self.array_namespace)
 
 
 class DatasetBuilder:
@@ -664,9 +660,7 @@ class SingleDatasetBuilder(DatasetBuilder):
             raise ValueError("SingleDatasetMaker does not support splitting")
 
         if from_xr and self.direct_backend:
-            raise ValueError(
-                "SingleDatasetMaker does not support direct_backend=True when invoked from xarray"
-            )
+            raise ValueError("SingleDatasetMaker does not support direct_backend=True when invoked from xarray")
 
     def build(self):
         ds_sorted, _ = self.parse(self.ds, self.profile)

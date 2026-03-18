@@ -158,10 +158,7 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
         LOG.debug("Building availability")
 
         self._availability = self._custom_availability(
-            ignore_keys=FILEPARTS_KEY_NAMES
-            + STATISTICS_KEY_NAMES
-            + MORE_KEY_NAMES_WITH_UNDERSCORE
-            + MORE_KEY_NAMES
+            ignore_keys=FILEPARTS_KEY_NAMES + STATISTICS_KEY_NAMES + MORE_KEY_NAMES_WITH_UNDERSCORE + MORE_KEY_NAMES
         )
         return self.availability
 
@@ -303,9 +300,7 @@ class GribHandleManager:
 
                 self.cache = LRU(self.max_cache_size)
             else:
-                raise ValueError(
-                    'grib_handle_cache_size must be greater than 0 when grib_handle_policy="cache"'
-                )
+                raise ValueError('grib_handle_cache_size must be greater than 0 when grib_handle_policy="cache"')
 
         self.handle_create_count = 0
 

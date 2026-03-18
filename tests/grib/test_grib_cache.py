@@ -24,6 +24,9 @@ here = os.path.dirname(__file__)
 sys.path.insert(0, here)
 from grib_fixtures import load_grib_data  # noqa: E402
 
+FIELD_NUM = 18
+MD_ITEM_NUM = 7
+
 
 class TestMetadataCache:
     def __init__(self):
@@ -79,7 +82,7 @@ def test_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metad
             pickled_f = pickle.dumps(ds)
             ds = pickle.loads(pickled_f)
 
-        assert len(ds) == 18
+        assert len(ds) == FIELD_NUM
 
         # unique values
         ref_vals = ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
@@ -89,14 +92,14 @@ def test_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metad
 
         diag = ds._cache_diag()
         ref = {
-            "field_cache_size": 18,
-            "field_create_count": 18,
+            "field_cache_size": FIELD_NUM,
+            "field_create_count": FIELD_NUM,
             "handle_cache_size": handle_cache_size,
-            "handle_create_count": 18,
+            "handle_create_count": FIELD_NUM,
             "current_handle_count": 0,
             "metadata_cache_hits": 0,
-            "metadata_cache_misses": 18 * 6,
-            "metadata_cache_size": 18 * 6,
+            "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
         _check_diag(ds._cache_diag(), ref)
 
@@ -112,14 +115,14 @@ def test_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metad
         assert vals == ref_vals
 
         ref = {
-            "field_cache_size": 18,
-            "field_create_count": 18,
+            "field_cache_size": FIELD_NUM,
+            "field_create_count": FIELD_NUM,
             "handle_cache_size": handle_cache_size,
-            "handle_create_count": 18,
+            "handle_create_count": FIELD_NUM,
             "current_handle_count": 0,
-            "metadata_cache_hits": 18 * 4,
-            "metadata_cache_misses": 18 * 6,
-            "metadata_cache_size": 18 * 6,
+            "metadata_cache_hits": FIELD_NUM * 4,
+            "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
         _check_diag(ds._cache_diag(), ref)
 
@@ -127,17 +130,17 @@ def test_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metad
         ds.order_by(["levelist", "valid_datetime", "paramId", "levtype"])
         diag = ds._cache_diag()
         ref = {
-            "field_cache_size": 18,
-            "field_create_count": 18,
+            "field_cache_size": FIELD_NUM,
+            "field_create_count": FIELD_NUM,
             "handle_cache_size": handle_cache_size,
-            "handle_create_count": 18,
+            "handle_create_count": FIELD_NUM,
             "current_handle_count": 0,
-            "metadata_cache_misses": 18 * 6,
-            "metadata_cache_size": 18 * 6,
+            "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
         _check_diag(ds._cache_diag(), ref)
 
-        assert diag["metadata_cache_hits"] >= 18 * 4
+        assert diag["metadata_cache_hits"] >= FIELD_NUM * 4
 
         # metadata object is not decoupled from the field object
         md = ds[0].metadata()
@@ -158,20 +161,20 @@ def test_grib_cache_basic_file_non_patched():
         }
     ):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-        assert len(ds) == 18
+        assert len(ds) == FIELD_NUM
 
         # unique values
         ref_vals = ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
         ref = {
-            "field_cache_size": 18,
-            "field_create_count": 18,
+            "field_cache_size": FIELD_NUM,
+            "field_create_count": FIELD_NUM,
             "handle_cache_size": 1,
-            "handle_create_count": 18,
+            "handle_create_count": FIELD_NUM,
             "current_handle_count": 0,
             # "metadata_cache_hits": 0,
-            # "metadata_cache_misses": 18 * 6,
-            "metadata_cache_size": 18 * 6,
+            # "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
         _check_diag(ds._cache_diag(), ref)
 
@@ -187,27 +190,27 @@ def test_grib_cache_basic_file_non_patched():
         assert vals == ref_vals
 
         ref = {
-            "field_cache_size": 18,
-            "field_create_count": 18,
+            "field_cache_size": FIELD_NUM,
+            "field_create_count": FIELD_NUM,
             "handle_cache_size": 1,
-            "handle_create_count": 18,
+            "handle_create_count": FIELD_NUM,
             "current_handle_count": 0,
-            # "metadata_cache_hits": 18 * 4,
-            # "metadata_cache_misses": 18 * 6,
-            "metadata_cache_size": 18 * 6,
+            # "metadata_cache_hits": FIELD_NUM * 4,
+            # "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
         _check_diag(ds._cache_diag(), ref)
 
         # order by
         ds.order_by(["levelist", "valid_datetime", "paramId", "levtype"])
         ref = {
-            "field_cache_size": 18,
-            "field_create_count": 18,
+            "field_cache_size": FIELD_NUM,
+            "field_create_count": FIELD_NUM,
             "handle_cache_size": 1,
-            "handle_create_count": 18,
+            "handle_create_count": FIELD_NUM,
             "current_handle_count": 0,
-            # "metadata_cache_misses": 18 * 6,
-            "metadata_cache_size": 18 * 6,
+            # "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
         _check_diag(ds._cache_diag(), ref)
 
@@ -235,7 +238,7 @@ def test_grib_cache_basic_metadata_patched(serialise, fl_type, patch_metadata_ca
             pickled_f = pickle.dumps(ds)
             ds = pickle.loads(pickled_f)
 
-        assert len(ds) == 18
+        assert len(ds) == FIELD_NUM
 
         # unique values
         ref_vals = ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
@@ -246,8 +249,8 @@ def test_grib_cache_basic_metadata_patched(serialise, fl_type, patch_metadata_ca
         diag = ds._cache_diag()
         ref = {
             "metadata_cache_hits": 0,
-            "metadata_cache_misses": 18 * 6,
-            "metadata_cache_size": 18 * 6,
+            "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
         _check_diag(ds._cache_diag(), ref)
 
@@ -257,9 +260,9 @@ def test_grib_cache_basic_metadata_patched(serialise, fl_type, patch_metadata_ca
         assert vals == ref_vals
 
         ref = {
-            "metadata_cache_hits": 18 * 4,
-            "metadata_cache_misses": 18 * 6,
-            "metadata_cache_size": 18 * 6,
+            "metadata_cache_hits": FIELD_NUM * 4,
+            "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
         _check_diag(ds._cache_diag(), ref)
 
@@ -267,12 +270,12 @@ def test_grib_cache_basic_metadata_patched(serialise, fl_type, patch_metadata_ca
         ds.order_by(["levelist", "valid_datetime", "paramId", "levtype"])
         diag = ds._cache_diag()
         ref = {
-            "metadata_cache_misses": 18 * 6,
-            "metadata_cache_size": 18 * 6,
+            "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
         _check_diag(ds._cache_diag(), ref)
 
-        assert diag["metadata_cache_hits"] >= 18 * 4
+        assert diag["metadata_cache_hits"] >= FIELD_NUM * 4
 
         # metadata object is not decoupled from the field object
         md = ds[0].metadata()
@@ -296,7 +299,7 @@ def test_grib_cache_options_1(patch_metadata_cache):
         }
     ):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-        assert len(ds) == 18
+        assert len(ds) == FIELD_NUM
 
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
@@ -305,13 +308,13 @@ def test_grib_cache_options_1(patch_metadata_cache):
         assert ds._handle_manager.cache is None
 
         ref = {
-            "field_cache_size": 18,
-            "field_create_count": 18,
-            "handle_create_count": 18 * 5,
+            "field_cache_size": FIELD_NUM,
+            "field_create_count": FIELD_NUM,
+            "handle_create_count": FIELD_NUM * 6,
             "current_handle_count": 0,
             "metadata_cache_hits": 0,
-            "metadata_cache_misses": 18 * 6,
-            "metadata_cache_size": 18 * 6,
+            "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
 
         _check_diag(ds._cache_diag(), ref)
@@ -335,14 +338,22 @@ def test_grib_cache_options_1(patch_metadata_cache):
 
         _check_diag(
             field_cache_diag(first),
-            {"metadata_cache_hits": 0, "metadata_cache_misses": 6, "metadata_cache_size": 6},
+            {
+                "metadata_cache_hits": 0,
+                "metadata_cache_misses": MD_ITEM_NUM,
+                "metadata_cache_size": MD_ITEM_NUM,
+            },
         )
 
         # key already cached
         first.metadata("levelist", default=None)
         _check_diag(
             field_cache_diag(first),
-            {"metadata_cache_hits": 1, "metadata_cache_misses": 6, "metadata_cache_size": 6},
+            {
+                "metadata_cache_hits": 1,
+                "metadata_cache_misses": MD_ITEM_NUM,
+                "metadata_cache_size": MD_ITEM_NUM,
+            },
         )
 
         ref["metadata_cache_hits"] += 1
@@ -352,7 +363,11 @@ def test_grib_cache_options_1(patch_metadata_cache):
         first.metadata("level")
         _check_diag(
             field_cache_diag(first),
-            {"metadata_cache_hits": 1, "metadata_cache_misses": 7, "metadata_cache_size": 7},
+            {
+                "metadata_cache_hits": 1,
+                "metadata_cache_misses": MD_ITEM_NUM + 1,
+                "metadata_cache_size": MD_ITEM_NUM + 1,
+            },
         )
 
         ref["handle_create_count"] += 1
@@ -376,7 +391,7 @@ def test_grib_cache_options_2(patch_metadata_cache):
         }
     ):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-        assert len(ds) == 18
+        assert len(ds) == FIELD_NUM
 
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
@@ -385,13 +400,13 @@ def test_grib_cache_options_2(patch_metadata_cache):
         assert ds._handle_manager.cache is None
 
         ref = {
-            "field_cache_size": 18,
-            "field_create_count": 18,
-            "handle_create_count": 18,
-            "current_handle_count": 18,
+            "field_cache_size": FIELD_NUM,
+            "field_create_count": FIELD_NUM,
+            "handle_create_count": FIELD_NUM,
+            "current_handle_count": FIELD_NUM,
             "metadata_cache_hits": 0,
-            "metadata_cache_misses": 18 * 6,
-            "metadata_cache_size": 18 * 6,
+            "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
 
         _check_diag(ds._cache_diag(), ref)
@@ -419,14 +434,22 @@ def test_grib_cache_options_2(patch_metadata_cache):
 
         _check_diag(
             field_cache_diag(first),
-            {"metadata_cache_hits": 0, "metadata_cache_misses": 6, "metadata_cache_size": 6},
+            {
+                "metadata_cache_hits": 0,
+                "metadata_cache_misses": MD_ITEM_NUM,
+                "metadata_cache_size": MD_ITEM_NUM,
+            },
         )
 
         # key already cached
         first.metadata("levelist", default=None)
         _check_diag(
             field_cache_diag(first),
-            {"metadata_cache_hits": 1, "metadata_cache_misses": 6, "metadata_cache_size": 6},
+            {
+                "metadata_cache_hits": 1,
+                "metadata_cache_misses": MD_ITEM_NUM,
+                "metadata_cache_size": MD_ITEM_NUM,
+            },
         )
 
         ref["metadata_cache_hits"] += 1
@@ -436,7 +459,11 @@ def test_grib_cache_options_2(patch_metadata_cache):
         first.metadata("level")
         _check_diag(
             field_cache_diag(first),
-            {"metadata_cache_hits": 1, "metadata_cache_misses": 7, "metadata_cache_size": 7},
+            {
+                "metadata_cache_hits": 1,
+                "metadata_cache_misses": MD_ITEM_NUM + 1,
+                "metadata_cache_size": MD_ITEM_NUM + 1,
+            },
         )
 
         ref["metadata_cache_misses"] += 1
@@ -458,7 +485,7 @@ def test_grib_cache_options_3(patch_metadata_cache):
         }
     ):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-        assert len(ds) == 18
+        assert len(ds) == FIELD_NUM
 
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
@@ -467,14 +494,14 @@ def test_grib_cache_options_3(patch_metadata_cache):
         assert ds._handle_manager.cache is not None
 
         ref = {
-            "field_cache_size": 18,
-            "field_create_count": 18,
+            "field_cache_size": FIELD_NUM,
+            "field_create_count": FIELD_NUM,
             "handle_cache_size": 1,
-            "handle_create_count": 18,
+            "handle_create_count": FIELD_NUM,
             "current_handle_count": 0,
             "metadata_cache_hits": 0,
-            "metadata_cache_misses": 18 * 6,
-            "metadata_cache_size": 18 * 6,
+            "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
 
         _check_diag(ds._cache_diag(), ref)
@@ -498,14 +525,22 @@ def test_grib_cache_options_3(patch_metadata_cache):
 
         _check_diag(
             field_cache_diag(first),
-            {"metadata_cache_hits": 0, "metadata_cache_misses": 6, "metadata_cache_size": 6},
+            {
+                "metadata_cache_hits": 0,
+                "metadata_cache_misses": MD_ITEM_NUM,
+                "metadata_cache_size": MD_ITEM_NUM,
+            },
         )
 
         # key already cached
         first.metadata("levelist", default=None)
         _check_diag(
             field_cache_diag(first),
-            {"metadata_cache_hits": 1, "metadata_cache_misses": 6, "metadata_cache_size": 6},
+            {
+                "metadata_cache_hits": 1,
+                "metadata_cache_misses": MD_ITEM_NUM,
+                "metadata_cache_size": MD_ITEM_NUM,
+            },
         )
 
         ref["metadata_cache_hits"] += 1
@@ -515,7 +550,11 @@ def test_grib_cache_options_3(patch_metadata_cache):
         first.metadata("level")
         _check_diag(
             field_cache_diag(first),
-            {"metadata_cache_hits": 1, "metadata_cache_misses": 7, "metadata_cache_size": 7},
+            {
+                "metadata_cache_hits": 1,
+                "metadata_cache_misses": MD_ITEM_NUM + 1,
+                "metadata_cache_size": MD_ITEM_NUM + 1,
+            },
         )
 
         ref["handle_create_count"] += 1
@@ -538,16 +577,16 @@ def test_grib_cache_options_4(patch_metadata_cache):
         }
     ):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-        assert len(ds) == 18
+        assert len(ds) == FIELD_NUM
 
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
         ref = {
             "field_cache_size": 0,
-            "field_create_count": 18,
+            "field_create_count": FIELD_NUM,
             "handle_cache_size": 0,
-            "handle_create_count": 18 * 5,
+            "handle_create_count": FIELD_NUM * 6,
             "current_handle_count": 0,
             "metadata_cache_hits": 0,
             "metadata_cache_misses": 0,
@@ -635,16 +674,16 @@ def test_grib_cache_options_5(patch_metadata_cache):
         }
     ):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-        assert len(ds) == 18
+        assert len(ds) == FIELD_NUM
 
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
         ref = {
             "field_cache_size": 0,
-            "field_create_count": 18,
+            "field_create_count": FIELD_NUM,
             "handle_cache_size": 0,
-            "handle_create_count": 18,
+            "handle_create_count": FIELD_NUM,
             "current_handle_count": 0,
             "metadata_cache_hits": 0,
             "metadata_cache_misses": 0,
@@ -734,16 +773,16 @@ def test_grib_cache_options_6(patch_metadata_cache):
         }
     ):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-        assert len(ds) == 18
+        assert len(ds) == FIELD_NUM
 
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
         ref = {
             "field_cache_size": 0,
-            "field_create_count": 18,
+            "field_create_count": FIELD_NUM,
             "handle_cache_size": 1,
-            "handle_create_count": 18,
+            "handle_create_count": FIELD_NUM,
             "current_handle_count": 0,
             "metadata_cache_hits": 0,
             "metadata_cache_misses": 0,
@@ -825,16 +864,16 @@ def test_grib_cache_file_use_kwargs_1():
     }
 
     ds = from_source("file", earthkit_examples_file("tuv_pl.grib"), **_kwargs)
-    assert len(ds) == 18
+    assert len(ds) == FIELD_NUM
 
     # unique values
     ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
     ref = {
         "field_cache_size": 0,
-        "field_create_count": 18,
+        "field_create_count": FIELD_NUM,
         "handle_cache_size": 0,
-        "handle_create_count": 18,
+        "handle_create_count": FIELD_NUM,
         "current_handle_count": 0,
         "metadata_cache_hits": 0,
         "metadata_cache_misses": 0,
@@ -873,15 +912,15 @@ def test_grib_cache_metadata_use_kwargs_1(fl_type, patch_metadata_cache):
 
         ds, _ = load_grib_data("tuv_pl.grib", fl_type, **_kwargs)
 
-        assert len(ds) == 18
+        assert len(ds) == FIELD_NUM
 
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
         ref = {
             "metadata_cache_hits": 0,
-            "metadata_cache_misses": 108,
-            "metadata_cache_size": 108,
+            "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
 
         _check_diag(ds._cache_diag(), ref)
@@ -890,9 +929,9 @@ def test_grib_cache_metadata_use_kwargs_1(fl_type, patch_metadata_cache):
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
         ref = {
-            "metadata_cache_hits": 72,
-            "metadata_cache_misses": 108,
-            "metadata_cache_size": 108,
+            "metadata_cache_hits": FIELD_NUM * 4,
+            "metadata_cache_misses": FIELD_NUM * MD_ITEM_NUM,
+            "metadata_cache_size": FIELD_NUM * MD_ITEM_NUM,
         }
 
         _check_diag(ds._cache_diag(), ref)
@@ -915,7 +954,7 @@ def test_grib_cache_metadata_use_kwargs_2(fl_type, patch_metadata_cache):
 
         ds, _ = load_grib_data("tuv_pl.grib", fl_type, **_kwargs)
 
-        assert len(ds) == 18
+        assert len(ds) == FIELD_NUM
 
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")

@@ -9,9 +9,9 @@
 
 import itertools
 import logging
-from functools import cached_property
 
 from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.readers import stream_reader
 from earthkit.data.sources.memory import MemoryBaseSource
 
@@ -33,7 +33,7 @@ class StreamMemorySource(MemoryBaseSource):
             raise ValueError(f"Invalid stream={stream}")
         self._stream = stream
 
-    @cached_property
+    @thread_safe_cached_property
     def _reader(self):
         reader = stream_reader(self, self._stream.stream, True, **self._kwargs)
         if reader is None:
@@ -74,7 +74,7 @@ class StreamSource(Source):
                 return StreamFieldList(self._reader, **self._kwargs)
         return self
 
-    @cached_property
+    @thread_safe_cached_property
     def _reader(self):
         reader = stream_reader(self, self._stream.stream, False, **self._kwargs)
         if reader is None:

@@ -110,9 +110,7 @@ class ClonedFieldCore:
                 if kwargs:
                     raise ValueError("metadata and kwargs cannot be used together")
             else:
-                raise ValueError(
-                    "metadata must be a dict, Metadata or WrappedMetadata, got %s" % type(metadata)
-                )
+                raise ValueError("metadata must be a dict, Metadata or WrappedMetadata, got %s" % type(metadata))
 
         if metadata is None:
             metadata = dict()

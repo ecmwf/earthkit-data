@@ -57,9 +57,7 @@ def detect_out_filename(func):
             and os.path.isfile(self.path)
             and os.path.samefile(args[0], self.path)
         ):
-            warnings.warn(
-                UserWarning(f"Earthkit refusing to overwrite the file we are currently reading: {args[0]}")
-            )
+            warnings.warn(UserWarning(f"Earthkit refusing to overwrite the file we are currently reading: {args[0]}"))
             return
 
         return func(self, *args, **kwargs)
@@ -197,13 +195,9 @@ def normalize_grib_key_values(kwargs, accept_none=True, as_tuple=False):
     kwargs = f(**kwargs)
 
     if "time" in kwargs:
-        kwargs["time"] = {False: _normalize_time, True: _normalize_time_as_tuple}[as_tuple](
-            kwargs["time"], int
-        )
+        kwargs["time"] = {False: _normalize_time, True: _normalize_time_as_tuple}[as_tuple](kwargs["time"], int)
     if "expver" in kwargs:
-        kwargs["expver"] = {False: _normalize_expver, True: _normalize_expver_as_tuple}[as_tuple](
-            kwargs["expver"]
-        )
+        kwargs["expver"] = {False: _normalize_expver, True: _normalize_expver_as_tuple}[as_tuple](kwargs["expver"])
 
     return kwargs
 
@@ -323,3 +317,49 @@ def cached_method(method):
         return getattr(self, name)
 
     return wrapped
+
+
+class thread_safe_cached_property:
+    """A thread-safe cached property decorator.
+
+    It was implemented because a the functools.cached_property is not thread-safe
+    from Python 3.12.
+
+    Parameters
+    ----------
+    method: property method
+        The property method to be decorated.
+
+    The :obj:`__get__` method of the decorator only runs on lookups. On first call
+    it gets the underlying property's value and stores it as the hidden ``name`` attribute
+    of the instance it was called on. Subsequent calls return the cached value, i.e. the
+    hidden ``name`` attribute.
+    """
+
+    def __init__(self, method):
+        self.method = method
+        self.name = f"_c_{method.__name__}"
+        self.lock = threading.Lock()
+
+    def __get__(self, instance, owner=None):
+        if instance is None:
+            return self
+
+        # not all objects have __dict__ (e.g. class defines slots)
+        try:
+            cache = instance.__dict__
+        except AttributeError:
+            msg = f"No '__dict__' is available on {type(instance).__name__!r}"
+            raise TypeError(msg) from None
+
+        # avoid using hasattr/getattr as they may be overridden in the instance
+        # and may have side effects (infinite recursion etc.)
+        if self.name in cache:
+            return cache[self.name]
+
+        with self.lock:
+            if self.name in cache:
+                return cache[self.name]
+            value = self.method(instance)
+            cache[self.name] = value
+            return value

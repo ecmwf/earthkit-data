@@ -9,7 +9,6 @@
 
 import logging
 from datetime import timedelta
-from functools import cached_property
 
 import numpy as np
 
@@ -17,6 +16,7 @@ from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import MetadataAccessor
 from earthkit.data.core.metadata import RawMetadata
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
@@ -47,8 +47,9 @@ class XArrayFieldGeography(Geography):
         return self.ds._get_xy(self.data_array, flatten=True, dtype=dtype)[1]
 
     def shape(self):
-        _, coords = self.ds._get_xy_coords(self.data_array)
-        return tuple([self.data_array.coords[v].size for v in coords])
+        return self.ds._get_shape(self.data_array)
+        # _, coords = self.ds._get_xy_coords(self.data_array)
+        # return tuple([self.data_array.coords[v].size for v in coords])
 
     def _unique_grid_id(self):
         return self.shape()
@@ -153,7 +154,7 @@ class XArrayMetadata(RawMetadata):
             return self
         return None
 
-    @cached_property
+    @thread_safe_cached_property
     def geography(self):
         return XArrayFieldGeography(self, self._field._ds, self._field.variable)
 
@@ -240,12 +241,10 @@ class XArrayField(Field):
 
     def __repr__(self):
         return (
-            f"{self.__class__.__name__}({self.variable},"
-            + ",".join([f"{s.name}={s.value}" for s in self.slices])
-            + ")"
+            f"{self.__class__.__name__}({self.variable}," + ",".join([f"{s.name}={s.value}" for s in self.slices]) + ")"
         )
 
-    @cached_property
+    @thread_safe_cached_property
     def _metadata(self):
         return XArrayMetadata(self)
 
@@ -277,7 +276,7 @@ class XArrayField(Field):
         else:
             return self._to_numpy().astype(dtype, copy=False)
 
-    @cached_property
+    @thread_safe_cached_property
     def grid_mapping(self):
         def tidy(x):
             if isinstance(x, np.ndarray):
@@ -305,11 +304,17 @@ class XArrayField(Field):
     def _encode(self, *args, **kwargs):
         raise NotImplementedError
 
+    def valid_datetime(self):
+        return self._metadata.valid_datetime()
+
+    def base_datetime(self):
+        return self._metadata.base_datetime()
+
 
 class ClonedXarrayField(ClonedFieldCore, XArrayField):
     def __init__(self, field, **kwargs):
         ClonedFieldCore.__init__(self, field, **kwargs)
-        XArrayField.__init__(self, field.ds, field.variable, field.slices, field.non_dim_coords)
+        XArrayField.__init__(self, field._ds, field.variable, field.slices, field.non_dim_coords)
 
 
 class NetCDFMetadata(XArrayMetadata):
@@ -317,6 +322,6 @@ class NetCDFMetadata(XArrayMetadata):
 
 
 class NetCDFField(XArrayField):
-    @cached_property
+    @thread_safe_cached_property
     def _metadata(self):
         return NetCDFMetadata(self)

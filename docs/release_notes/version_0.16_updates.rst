@@ -1,6 +1,28 @@
 Version 0.16 Updates
 /////////////////////////
 
+
+Version 0.16.8
+===============
+
+Dependency updates
++++++++++++++++++++++
+
+Ensure compatibility between earthkit components by restricting the following dependencies:
+
+- ``earthkit-utils<0.2``
+- ``earthkit-meteo<0.6``
+
+
+Version 0.16.7
+===============
+
+Fixes
+++++++++
+
+- Fixed issue when the serialisation of a GRIB field loaded from disk did not work (:pr:`812`)
+
+
 Version 0.16.6
 ===============
 

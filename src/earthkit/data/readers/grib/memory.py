@@ -54,9 +54,7 @@ class GribMemoryReader(Reader):
 
     def _message_from_handle(self, handle):
         if handle is not None:
-            return GribFieldInMemory(
-                GribCodesHandle(handle, None, None), use_metadata_cache=self._use_metadata_cache
-            )
+            return GribFieldInMemory(GribCodesHandle(handle, None, None), use_metadata_cache=self._use_metadata_cache)
 
     def batched(self, n):
         from earthkit.data.utils.batch import batched
@@ -88,6 +86,7 @@ class GribMessageMemoryReader(GribMemoryReader):
     def __init__(self, buf, **kwargs):
         super().__init__(**kwargs)
         self.buf = buf
+        self._index = 0
 
     def __del__(self):
         self.buf = None
@@ -95,8 +94,18 @@ class GribMessageMemoryReader(GribMemoryReader):
     def _next_handle(self):
         if self.buf is None:
             return None
-        handle = eccodes.codes_new_from_message(self.buf)
-        self.buf = None
+
+        handle = eccodes.codes_new_from_message(self.buf[self._index :])
+
+        # TODO: allow handling padding between messages
+        try:
+            handle_length = eccodes.codes_get(handle, "totalLength")
+        except Exception:
+            return None
+
+        self._index += handle_length
+        if self._index >= len(self.buf):
+            self.buf = None
         return handle
 
 
@@ -158,9 +167,7 @@ class GribFieldInMemory(GribField):
     @staticmethod
     def from_buffer(buf):
         handle = eccodes.codes_new_from_message(buf)
-        return GribFieldInMemory(
-            GribCodesHandle(handle, None, None), use_metadata_cache=get_use_grib_metadata_cache()
-        )
+        return GribFieldInMemory(GribCodesHandle(handle, None, None), use_metadata_cache=get_use_grib_metadata_cache())
 
     def _release(self):
         self._handle = None

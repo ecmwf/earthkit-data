@@ -10,10 +10,9 @@
 import logging
 import math
 
-from earthkit.utils.array import array_namespace
-
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
+from earthkit.utils.array import array_namespace as eku_array_namespace
 
 LOG = logging.getLogger(__name__)
 
@@ -56,7 +55,13 @@ class ArrayField(Field):
         if dtype is None:
             return self._array
         else:
-            return array_namespace(self._array).astype(self._array, dtype, copy=False)
+            xp = eku_array_namespace(self._array)
+            try:
+                dtype = xp.xp.dtype(dtype)
+                return xp.astype(self._array, dtype, copy=False)
+            except Exception:
+                pass
+            return self._array
 
     @property
     def shape(self):
@@ -130,7 +135,7 @@ def from_array(array, metadata):
             raise ValueError("array must not be empty")
 
     if not isinstance(array, list):
-        array_ns = array_namespace(array)
+        array_ns = eku_array_namespace(array)
         if array_ns is None:
             raise ValueError(f"array type {type(array)} is not supported")
         elif array.shape[0] != len(metadata):

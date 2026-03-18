@@ -18,6 +18,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_remote_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -482,16 +483,23 @@ def test_grib_metadata_namespace(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_datetime(fl_type):
-    s, _ = load_grib_data("test.grib", fl_type)
+def test_grib_datetime_1(fl_type):
+    ds, _ = load_grib_data("test.grib", fl_type)
+    f = ds[0]
 
     ref = {
         "base_time": [datetime.datetime(2020, 5, 13, 12)],
         "valid_time": [datetime.datetime(2020, 5, 13, 12)],
     }
-    assert s.datetime() == ref
+    assert ds.datetime() == ref
 
-    s = from_source(
+    assert f.metadata("base_datetime") == "2020-05-13T12:00:00"
+    assert f.metadata("valid_datetime") == "2020-05-13T12:00:00"
+    assert f.metadata("forecast_reference_time") == "2020-05-13T12:00:00"
+    assert f.metadata("step_timedelta") == datetime.timedelta(0)
+    assert f.metadata("step") == 0
+
+    ds = from_source(
         "dummy-source",
         kind="grib",
         paramId=[129, 130],
@@ -508,7 +516,7 @@ def test_grib_datetime(fl_type):
             datetime.datetime(1990, 1, 2, 12, 0),
         ],
     }
-    assert s.datetime() == ref
+    assert ds.datetime() == ref
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -517,6 +525,24 @@ def test_grib_valid_datetime(fl_type):
     f = ds[4]
 
     assert f.metadata("valid_datetime") == "2020-12-21T18:00:00"
+
+
+@pytest.mark.cache
+def test_grib_datetime_seconds():
+    ds = from_source("url", earthkit_remote_test_data_file("t_30s.grib"))
+    f = ds[0]
+
+    ref = {
+        "base_time": [datetime.datetime(2023, 8, 20, 12)],
+        "valid_time": [datetime.datetime(2023, 8, 20, 12, 0, 30)],
+    }
+    assert ds.datetime() == ref
+
+    assert f.metadata("base_datetime") == "2023-08-20T12:00:00"
+    assert f.metadata("valid_datetime") == "2023-08-20T12:00:30"
+    assert f.metadata("forecast_reference_time") == "2023-08-20T12:00:00"
+    assert f.metadata("step_timedelta") == datetime.timedelta(seconds=30)
+    assert f.metadata("step") == "30s"
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)

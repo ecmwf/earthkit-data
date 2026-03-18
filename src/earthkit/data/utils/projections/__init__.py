@@ -138,6 +138,12 @@ class TransverseMercator(Projection):
     CARTOPY_CRS = "TransverseMercator"
 
 
+class RotatedLatitudeLongitude(Projection):
+    PROJ_NAME = "ob_tran"
+    CF_GRID_MAPPING_NAME = "rotated_latitude_longitude"
+    CARTOPY_CRS = "RotatedPole"
+
+
 _PROJECTIONS = [
     EquidistantCylindrical,
     LongLat,
@@ -146,4 +152,5 @@ _PROJECTIONS = [
     AlbersEqualArea,
     Mercator,
     TransverseMercator,
+    RotatedLatitudeLongitude,
 ]

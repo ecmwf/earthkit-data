@@ -7,21 +7,23 @@
 # nor does it submit to any jurisdiction.
 #
 
+import json
 import logging
 import warnings
 from abc import abstractmethod
-from functools import cached_property
 
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
 from earthkit.data.core.metadata import MetadataAccessor
 from earthkit.data.core.metadata import MetadataCacheHandler
 from earthkit.data.core.metadata import WrappedMetadata
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import to_timedelta
+from earthkit.utils.array import array_namespace
 
 LOG = logging.getLogger(__name__)
 
@@ -30,12 +32,253 @@ def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
+class GridSupport:
+    @thread_safe_cached_property
+    def has_grid(self):
+        try:
+            from eckit.geo import Grid  # noqa: F401
+
+            return True
+        except ImportError:
+            pass
+
+        return False
+
+    @thread_safe_cached_property
+    def has_ecc_grid_spec(self):
+        import os
+
+        if os.environ.get("ECCODES_ECKIT_GEO") == "1":
+            import eccodes
+
+            try:
+                r = eccodes.codes_get_features(eccodes.CODES_FEATURES_ENABLED)
+                if isinstance(r, str) and "ECKIT_GEO" in r:
+                    return True
+            except Exception as e:
+                LOG.warning(f"Failed to get ecCodes features: {e}")
+                return False
+
+        return False
+
+
+GRID_SUPPORT = GridSupport()
+
+
+class GeoBasedGribFieldGeography(Geography):
+    def __init__(self, grid_spec, metadata):
+        from eckit.geo import Grid
+
+        self._grid = Grid(grid_spec)
+        self._grid_spec = grid_spec
+        self.metadata = metadata
+
+    @thread_safe_cached_property
+    def spectral(self):
+        return False
+
+    def latitudes(self, dtype=None):
+        r"""Return the latitudes of the field.
+
+        Returns
+        -------
+        ndarray
+        """
+        r = self._grid.to_latlons()
+        import numpy as np
+
+        r = np.asarray(r[0])
+        xp = array_namespace(r)
+
+        if dtype is None:
+            dtype = xp.float64
+        if dtype is not None:
+            r = xp.astype(r, dtype)
+        return r
+
+    def longitudes(self, dtype=None):
+        r"""Return the longitudes of the field.
+
+        Returns
+        -------
+        ndarray
+        """
+        r = self._grid.to_latlons()
+        import numpy as np
+
+        r = np.asarray(r[1])
+        xp = array_namespace(r)
+        if dtype is None:
+            dtype = xp.float64
+        if dtype is not None:
+            r = xp.astype(r, dtype)
+        return r
+
+    def distinct_latitudes(self, dtype=None):
+        return None
+
+    def distinct_longitudes(self, dtype=None):
+        return None
+
+    def x(self, dtype=None):
+        r"""Return the x coordinates in the field's original CRS.
+
+        Returns
+        -------
+        ndarray
+        """
+        grid_type = self.metadata.get("gridType", None)
+        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+            return self.longitudes(dtype=dtype)
+
+    def y(self, dtype=None):
+        r"""Return the y coordinates in the field's original CRS.
+
+        Returns
+        -------
+        ndarray
+        """
+        grid_type = self.metadata.get("gridType", None)
+        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+            return self.latitudes(dtype=dtype)
+
+    def shape(self):
+        r"""Get the shape of the field.
+
+        For structured grids the shape is a tuple in the form of (Nj, Ni) where:
+
+        - ni: the number of gridpoints in i direction (longitude for a regular latitude-longitude grid)
+        - nj: the number of gridpoints in j direction (latitude for a regular latitude-longitude grid)
+
+        For other grid types the number of gridpoints is returned as ``(num,)``
+
+        Returns
+        -------
+        tuple
+        """
+        return self._grid.shape
+
+    def _unique_grid_id(self):
+        return self.metadata.get("md5GridSection", None)
+
+    def projection(self):
+        from earthkit.data.utils.projections import Projection
+
+        return Projection.from_proj_string(None)
+
+        # TODO: this crashed in eckit so we workaround it for now
+        return Projection.from_proj_string(self.metadata.get("projTargetString", None))
+
+    def bounding_box(self):
+        return BoundingBox(
+            north=self.metadata.get("latitudeOfFirstGridPointInDegrees", None),
+            south=self.metadata.get("latitudeOfLastGridPointInDegrees", None),
+            west=self.metadata.get("longitudeOfFirstGridPointInDegrees", None),
+            east=self.metadata.get("longitudeOfLastGridPointInDegrees", None),
+        )
+
+    def gridspec(self):
+        # TODO: call Grid.spec once it is available in eckit
+        if isinstance(self._grid_spec, str):
+            return json.loads(self._grid_spec)
+        return self._grid_spec
+
+    def grid_spec(self):
+        # TODO: call Grid.spec once it is available in eckit
+        if isinstance(self._grid_spec, str):
+            return json.loads(self._grid_spec)
+        return self._grid_spec
+
+    def resolution(self):
+        return None
+
+    def mars_grid(self):
+        if len(self.shape()) == 2:
+            return [
+                self.metadata.get("iDirectionIncrementInDegrees"),
+                self.metadata.get("jDirectionIncrementInDegrees"),
+            ]
+
+        return self.metadata.get("gridName")
+
+    def mars_area(self):
+        north = self.metadata.get("latitudeOfFirstGridPointInDegrees")
+        south = self.metadata.get("latitudeOfLastGridPointInDegrees")
+        west = self.metadata.get("longitudeOfFirstGridPointInDegrees")
+        east = self.metadata.get("longitudeOfLastGridPointInDegrees")
+        return [north, west, south, east]
+
+    @property
+    def rotation(self):
+        return (
+            self.metadata.get("latitudeOfSouthernPoleInDegrees"),
+            self.metadata.get("longitudeOfSouthernPoleInDegrees"),
+            self.metadata.get("angleOfRotationInDegrees"),
+        )
+
+    @thread_safe_cached_property
+    def rotated(self):
+        grid_type = self.metadata.get("gridType")
+        return "rotated" in grid_type
+
+    @thread_safe_cached_property
+    def rotated_iterator(self):
+        return self.metadata.get("iteratorDisableUnrotate") is not None
+
+    def check_rotated_support(self):
+        if self.rotated and self.metadata.get("gridType") == "reduced_rotated_gg":
+            from earthkit.data.utils.message import ECC_FEATURES
+
+            if not ECC_FEATURES.version >= (2, 35, 0):
+                raise RuntimeError("gridType=rotated_reduced_gg requires ecCodes >= 2.35.0")
+
+    def latitudes_unrotated(self, **kwargs):
+        if not self.rotated:
+            return self.latitudes(**kwargs)
+
+        if not self.rotated_iterator:
+            try:
+                from earthkit.geo.rotate import unrotate
+            except ImportError:
+                raise ImportError("GribFieldGeography.latitudes_unrotated requires 'earthkit-geo' to be installed")
+
+            grid_type = self.metadata.get("gridType")
+            warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
+            lat, lon = self.latitudes(**kwargs), self.longitudes(**kwargs)
+            south_pole_lat, south_pole_lon, _ = self.rotation
+            lat, lon = unrotate(lat, lon, south_pole_lat, south_pole_lon)
+            return lat
+
+        with self.metadata._handle._set_tmp("iteratorDisableUnrotate", 1, 0):
+            return self.latitudes(**kwargs)
+
+    def longitudes_unrotated(self, **kwargs):
+        if not self.rotated:
+            return self.longitudes(**kwargs)
+
+        if not self.rotated_iterator:
+            try:
+                from earthkit.geo.rotate import unrotate
+            except ImportError:
+                raise ImportError("GribFieldGeography.longitudes_unrotated requires 'earthkit-geo' to be installed")
+
+            grid_type = self.metadata.get("gridType")
+            warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
+            lat, lon = self.latitudes(**kwargs), self.longitudes(**kwargs)
+            south_pole_lat, south_pole_lon, _ = self.rotation
+            lat, lon = unrotate(lat, lon, south_pole_lat, south_pole_lon)
+            return lon
+
+        with self.metadata._handle._set_tmp("iteratorDisableUnrotate", 1, 0):
+            return self.longitudes(**kwargs)
+
+
 class GribFieldGeography(Geography):
     def __init__(self, metadata):
         self.metadata = metadata
         self.check_rotated_support()
 
-    @cached_property
+    @thread_safe_cached_property
     def spectral(self):
         return self.metadata._handle.get("gridType", "") == "sh"
 
@@ -159,6 +402,9 @@ class GribFieldGeography(Geography):
     def gridspec(self):
         return make_gridspec(self.metadata)
 
+    def grid_spec(self):
+        return None
+
     def resolution(self):
         grid_type = self.metadata.get("gridType")
 
@@ -206,12 +452,12 @@ class GribFieldGeography(Geography):
             self.metadata.get("angleOfRotationInDegrees"),
         )
 
-    @cached_property
+    @thread_safe_cached_property
     def rotated(self):
         grid_type = self.metadata.get("gridType")
         return "rotated" in grid_type
 
-    @cached_property
+    @thread_safe_cached_property
     def rotated_iterator(self):
         return self.metadata.get("iteratorDisableUnrotate") is not None
 
@@ -230,9 +476,7 @@ class GribFieldGeography(Geography):
             try:
                 from earthkit.geo.rotate import unrotate
             except ImportError:
-                raise ImportError(
-                    "GribFieldGeography.latitudes_unrotated requires 'earthkit-geo' to be installed"
-                )
+                raise ImportError("GribFieldGeography.latitudes_unrotated requires 'earthkit-geo' to be installed")
 
             grid_type = self.metadata.get("gridType")
             warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
@@ -252,9 +496,7 @@ class GribFieldGeography(Geography):
             try:
                 from earthkit.geo.rotate import unrotate
             except ImportError:
-                raise ImportError(
-                    "GribFieldGeography.longitudes_unrotated requires 'earthkit-geo' to be installed"
-                )
+                raise ImportError("GribFieldGeography.longitudes_unrotated requires 'earthkit-geo' to be installed")
 
             grid_type = self.metadata.get("gridType")
             warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
@@ -265,6 +507,83 @@ class GribFieldGeography(Geography):
 
         with self.metadata._handle._set_tmp("iteratorDisableUnrotate", 1, 0):
             return self.longitudes(**kwargs)
+
+
+class SpectralGribFieldGeography(Geography):
+    def __init__(self, metadata):
+        self.metadata = metadata
+        self.check_rotated_support()
+
+    @thread_safe_cached_property
+    def spectral(self):
+        return True
+
+    def latitudes(self, dtype=None):
+        return None
+
+    def longitudes(self, dtype=None):
+        return None
+
+    def distinct_latitudes(self, dtype=None):
+        return None
+
+    def distinct_longitudes(self, dtype=None):
+        return None
+
+    def x(self, dtype=None):
+        return None
+
+    def y(self, dtype=None):
+        return None
+
+    def shape(self):
+        n = self.metadata.get("numberOfDataPoints", None)
+        return (n,)  # shape must be a tuple
+
+    def _unique_grid_id(self):
+        return self.metadata.get("md5GridSection", None)
+
+    def projection(self):
+        return None
+
+    def bounding_box(self):
+        return None
+
+    def gridspec(self):
+        return None
+
+    def grid_spec(self):
+        return None
+
+    def resolution(self):
+        return None
+
+    def mars_grid(self):
+        return self.metadata.get("gridName")
+
+    def mars_area(self):
+        return None
+
+    @property
+    def rotation(self):
+        return None
+
+    @thread_safe_cached_property
+    def rotated(self):
+        return False
+
+    @thread_safe_cached_property
+    def rotated_iterator(self):
+        return False
+
+    def check_rotated_support(self):
+        pass
+
+    def latitudes_unrotated(self, **kwargs):
+        return None
+
+    def longitudes_unrotated(self, **kwargs):
+        return None
 
 
 class GribMetadata(Metadata):
@@ -542,9 +861,20 @@ class GribMetadata(Metadata):
                     r[k] = self.get(k)
         return r
 
-    @cached_property
+    @thread_safe_cached_property
     def geography(self):
-        return GribFieldGeography(self)
+        if self.get("gridType", None) == "sh":
+            return SpectralGribFieldGeography(self)
+        else:
+            if GRID_SUPPORT.has_ecc_grid_spec and GRID_SUPPORT.has_grid:
+                grid_spec = self.get("gridSpec", None)
+                if grid_spec is not None and grid_spec != "":
+                    return GeoBasedGribFieldGeography(grid_spec, self)
+                else:
+                    # fallback to non-eckit based geo support in ecCodes
+                    return GribFieldGeography(self)
+
+            return GribFieldGeography(self)
 
     def datetime(self):
         return {
@@ -556,6 +886,10 @@ class GribMetadata(Metadata):
         return self._datetime("dataDate", "dataTime")
 
     def valid_datetime(self):
+        try:
+            return self.base_datetime() + self.step_timedelta()
+        except Exception:
+            pass
         return self._datetime("validityDate", "validityTime")
 
     def reference_datetime(self):
@@ -647,6 +981,10 @@ class GribMetadata(Metadata):
 
     @property
     def gridspec(self):
+        return self.geography.gridspec()
+
+    @property
+    def grid_spec(self):
         return self.geography.gridspec()
 
     def _make_restricted(self, r):

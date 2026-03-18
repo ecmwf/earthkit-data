@@ -60,6 +60,4 @@ def test_target_zarr_from_grib(direct_call):
 
         for k in ["t", "r", "forecast_reference_time", "step", "level", "latitude", "longitude"]:
             k in root, f"Key {k} not found in Zarr root"
-            assert (
-                root[k].shape == shapes[k]
-            ), f"Shape mismatch for {k}: expected {shapes[k]}, got {root[k].shape}"
+            assert root[k].shape == shapes[k], f"Shape mismatch for {k}: expected {shapes[k]}, got {root[k].shape}"

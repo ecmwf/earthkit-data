@@ -11,7 +11,6 @@ import itertools
 import logging
 import os
 import re
-from functools import cached_property
 from pathlib import Path
 from typing import Any as TypingAny
 from typing import Dict
@@ -19,6 +18,8 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
+
+from earthkit.data.decorators import thread_safe_cached_property
 
 from .dates import to_datetime
 from .dates import to_timedelta
@@ -83,9 +84,7 @@ class Enum:
             If the value is not in the predefined set.
         """
         if self.enum and value not in self.enum:
-            raise ValueError(
-                "Invalid value '{}' for parameter '{}', expected one of {}".format(value, name, self.enum)
-            )
+            raise ValueError("Invalid value '{}' for parameter '{}', expected one of {}".format(value, name, self.enum))
         return value
 
 
@@ -217,9 +216,7 @@ class DatetimeDelta:
     def __init__(self, params: str) -> None:
         params_list = params.split(";")
         if len(params_list) != 2:
-            raise ValueError(
-                "Invalid parameters '{}' for class DatetimeDelta, expected (delta;format)".format(params)
-            )
+            raise ValueError("Invalid parameters '{}' for class DatetimeDelta, expected (delta;format)".format(params))
         self.delta = params_list[0].strip()
         self.format = params_list[1].strip()
 
@@ -248,9 +245,7 @@ class DatetimeDelta:
             delta = re.search(r"\d+[hms]?", self.delta).group(0)
         else:
             raise ValueError(
-                "Invalid value '{}' for delta, expected time in hour (h), minute (m) or second (s)".format(
-                    self.delta
-                )
+                "Invalid value '{}' for delta, expected time in hour (h), minute (m) or second (s)".format(self.delta)
             )
 
         valid_date = to_datetime(value) + sign * to_timedelta(delta)
@@ -662,7 +657,7 @@ class Pattern:
             t += f"\n {p}"
         return t
 
-    @cached_property
+    @thread_safe_cached_property
     def regex(self) -> re.Pattern:
         t = ""
         for p in self.pattern:

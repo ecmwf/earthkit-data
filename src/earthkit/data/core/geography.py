@@ -128,6 +128,19 @@ class Geography(metaclass=ABCMeta):
         """
         pass
 
+    def grid_spec(self):
+        r"""Return the eckit-geo grid specification.
+
+        Returns
+        -------
+        :class:`~data.core.gridspec.GridSpec>`
+        """
+        # NOTE: temporary solution
+        try:
+            return self.gridspec()
+        except NotImplementedError:
+            return None
+
     @abstractmethod
     def resolution(self):
         pass

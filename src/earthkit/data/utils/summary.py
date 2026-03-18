@@ -246,7 +246,7 @@ class BUFRTree:
                 if index < len(vals):
                     return f"{vals[index]} ({len(vals)} items)"
                 else:
-                    return f"[{vals[0]}, ...] ({len(vals)-1} items)"
+                    return f"[{vals[0]}, ...] ({len(vals) - 1} items)"
             else:
                 return f"[{vals[0]}, ...] ({len(vals)} items)"
         else:

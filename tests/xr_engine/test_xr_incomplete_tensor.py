@@ -26,6 +26,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
             {
                 "profile": "mars",
                 "time_dim_mode": "raw",
+                "dim_roles": {"step": "step"},
                 "decode_times": False,
                 "allow_holes": True,
             },
@@ -97,6 +98,7 @@ def test_xr_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, or_mask_spec, n
             {
                 "profile": "mars",
                 "time_dim_mode": "raw",
+                "dim_roles": {"step": "step"},
                 "dims_as_attrs": ["step"],
                 "decode_times": False,
                 "allow_holes": True,
@@ -134,9 +136,7 @@ def test_xr_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, or_mask_spec, n
         ),
     ],
 )
-def test_xr_incomplete_tensor_holes2(
-    lazy_load, kwargs, dim_keys, or_mask_spec, expected_dims_by_param, nfields
-):
+def test_xr_incomplete_tensor_holes2(lazy_load, kwargs, dim_keys, or_mask_spec, expected_dims_by_param, nfields):
     kwargs["lazy_load"] = lazy_load
 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
@@ -155,7 +155,7 @@ def test_xr_incomplete_tensor_holes2(
     assert len(ds_ek_masked) == nfields
 
     ds = ds_ek_masked.to_xarray(**kwargs)
-    assert ds["t"].attrs["step_timedelta"] == pd.Timedelta(0, "s")
+    assert ds["t"].attrs["step"] == 0
 
     kwargs_with_full_tensor = kwargs.copy()
     kwargs_with_full_tensor["allow_holes"] = False
@@ -186,6 +186,7 @@ def test_xr_incomplete_tensor_holes2(
             {
                 "profile": "mars",
                 "time_dim_mode": "raw",
+                "dim_roles": {"step": "step"},
                 "decode_times": False,
                 "allow_holes": True,
             },

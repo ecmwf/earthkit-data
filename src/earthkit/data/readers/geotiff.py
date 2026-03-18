@@ -7,7 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-from functools import cached_property
 
 import numpy as np
 
@@ -15,6 +14,7 @@ from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import RawMetadata
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils.bbox import BoundingBox
 
 from . import Reader
@@ -33,9 +33,7 @@ class GeoTIFFGeography(Geography):
         except ImportError:
             raise ImportError("geotiff handling requires 'pyproj' to be installed")
 
-        return Transformer.from_crs(self._ds.rio.crs, "EPSG:4326", always_xy=True).transform(
-            *self._xy_coords()
-        )
+        return Transformer.from_crs(self._ds.rio.crs, "EPSG:4326", always_xy=True).transform(*self._xy_coords())
 
     def latitudes(self, dtype=None):
         return self._latlon_coords()[0]
@@ -129,7 +127,7 @@ class GeoTIFFField(Field):
     def __repr__(self):
         return f"{self.__class__.__name__}({self.band},{self._da.name})"
 
-    @cached_property
+    @thread_safe_cached_property
     def _metadata(self):
         return GeoTIFFMetadata(self, self.band, geography=self._geo)
 

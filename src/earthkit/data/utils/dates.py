@@ -17,6 +17,31 @@ from earthkit.data.wrappers import get_wrapper
 ECC_SECONDS_FACTORS = {"s": 1, "m": 60, "h": 3600}
 NUM_STEP_PATTERN = re.compile(r"\d+")
 SUFFIX_STEP_PATTERN = re.compile(r"\d+[a-zA-Z]{1}")
+STEP_RANGE_PATTERN = re.compile(r"\d+-\d+")
+
+
+def _handle_complex_object_datetime(dt: np.ndarray) -> np.ndarray:
+    """Attempt to handle complex object datetime arrays."""
+    dt = dt.ravel()
+    if dt.size == 0:
+        return dt
+
+    first_elem = dt.flat[0]
+
+    # Check if it's a cftime type
+    try:
+        import cftime
+
+        if isinstance(first_elem, cftime.datetime):
+
+            def convert(x):
+                return cftime.date2num(x, "seconds since 1970-01-01 00:00:00", calendar="gregorian")
+
+            return np.array(list(map(convert, dt)), dtype="datetime64[s]")
+    except ImportError:
+        pass
+
+    return dt
 
 
 def to_datetime(dt):
@@ -27,6 +52,13 @@ def to_datetime(dt):
         return datetime.datetime(dt.year, dt.month, dt.day)
 
     if hasattr(dt, "dtype") and np.issubdtype(dt.dtype, np.datetime64):
+        return numpy_datetime_to_datetime(dt)
+
+    if hasattr(dt, "dtype") and dt.dtype == object:
+        # TODO: clarify what to do with object arrays
+        dt = _handle_complex_object_datetime(dt)
+        if dt.ndim > 0:
+            dt = dt[0]
         return numpy_datetime_to_datetime(dt)
 
     if isinstance(dt, np.int64):
@@ -77,9 +109,7 @@ def to_datetime_list(datetimes):  # noqa C901
             and datetimes[1].lower() == "to"
             and datetimes[3].lower() == "by"
         ):
-            return mars_like_date_list(
-                to_datetime(datetimes[0]), to_datetime(datetimes[2]), int(datetimes[4])
-            )
+            return mars_like_date_list(to_datetime(datetimes[0]), to_datetime(datetimes[2]), int(datetimes[4]))
 
         return [to_datetime(x) for x in datetimes]
 
@@ -156,6 +186,12 @@ def to_timedelta(td):
     if isinstance(td, str):
         if re.fullmatch(NUM_STEP_PATTERN, td):
             return datetime.timedelta(hours=int(td))
+
+        if re.fullmatch(STEP_RANGE_PATTERN, td):
+            _, end_str = td.split("-")
+            end = int(end_str)
+            # TODO: assumes hourly units, can we grab it from stepUnits metadata key?
+            return datetime.timedelta(hours=end)
 
         if re.fullmatch(SUFFIX_STEP_PATTERN, td):
             factor = ECC_SECONDS_FACTORS.get(td[-1], None)
@@ -243,7 +279,7 @@ def step_to_grib(step):
             if minutes == 0:
                 return hours
             else:
-                return f"{hours*60}{minutes}m"
+                return f"{hours * 60}{minutes}m"
         else:
             return f"{int(step.total_seconds())}s"
 
