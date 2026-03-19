@@ -126,6 +126,20 @@ class GribLayerType(GribVerticalType):
         return component.layer is not None and self.component_matcher.match(component)
 
 
+def from_grib(handle):
+    def _get(key, default=None):
+        return handle.get(key, default=default)
+
+    level = _get("level")
+    if level is None:
+        level = _get("topLevel")
+
+    level = level
+    layer = None
+
+    return level, layer
+
+
 _TYPES = [
     GribLevelType("isobaricInhPa", LevelTypes.PRESSURE, component_matcher=IntComponentMatcher()),
     GribLevelType(
@@ -134,19 +148,24 @@ _TYPES = [
         converter=PressurePaConverter(),
         component_matcher=NonIntComponentMatcher(),
     ),
-    GribLevelType("depthBelowLand", LevelTypes.DEPTH_BGL),
-    GribLayerType("depthBelowLandLayer", LevelTypes.DEPTH_BGL),
+    GribLevelType("depthBelowLand", LevelTypes.DEPTH_BG_LEVEL),
+    GribLayerType("depthBelowLandLayer", LevelTypes.DEPTH_BG_LEVEL),
+    GribLayerType("depthBelowSeaLayer", LevelTypes.DEPTH_BS_LAYER),
     GribLevelType("entireAtmosphere", LevelTypes.ENTIRE_ATMOSPHERE),
     GribLevelType("generalVerticalLayer", LevelTypes.GENERAL),
-    GribLevelType("heightAboveSea", LevelTypes.HEIGHT_ASL),
-    GribLevelType("heightAboveGround", LevelTypes.HEIGHT_AGL),
+    GribLevelType("heightAboveSea", LevelTypes.HEIGHT_AS_LEVEL),
+    GribLevelType("heightAboveGround", LevelTypes.HEIGHT_AG_LEVEL),
     GribLevelType("hybrid", LevelTypes.MODEL),
+    GribLevelType("iceLayerOnWater", LevelTypes.ICE_LAYER_ON_WATER),
     GribLayerType("isobaricLayer", LevelTypes.PRESSURE),  # hPa
+    GribLevelType("isothermal", LevelTypes.TEMPERATURE),
     GribLevelType("meanSea", LevelTypes.MEAN_SEA),
-    GribLevelType("theta", LevelTypes.THETA),
+    GribLevelType("mixedLayerDepthByDensity", LevelTypes.MIXED_LAYER_DEPTH_BY_DENSITY),
+    GribLevelType("oceanSurface", LevelTypes.OCEAN_SURFACE),
     GribLevelType("potentialVorticity", LevelTypes.PV),
-    GribLevelType("surface", LevelTypes.SURFACE),
     GribLevelType("snowLayer", LevelTypes.SNOW),
+    GribLevelType("surface", LevelTypes.SURFACE),
+    GribLevelType("theta", LevelTypes.THETA),
 ]
 
 # mapping from GRIB typeOfLevel key to GribLevelType
@@ -166,6 +185,22 @@ for k in list(_COMPONENT_TYPES.keys()):
         _COMPONENT_TYPES[k] = tuple(_COMPONENT_TYPES[k])
 
 
+# TODO: make it thread safe
+def register_grib_level_type(
+    key: str,
+    component_type: LevelTypes,
+    converter: Converter = Converter(),
+    component_matcher: ComponentMatcher = ComponentMatcher(),
+):
+    if key in _GRIB_TYPES:
+        raise ValueError(f"GRIB level type {key} already exists")
+
+    grib_level_type = GribLevelType(key, component_type, converter, component_matcher)
+    _GRIB_TYPES[key] = grib_level_type
+    _COMPONENT_TYPES[component_type.name].append(grib_level_type)
+    return grib_level_type
+
+
 class GribVerticalBuilder:
     @staticmethod
     def build(handle):
@@ -182,9 +217,20 @@ class GribVerticalBuilder:
         level_type = handle.get("typeOfLevel", None)
         t = _GRIB_TYPES.get(level_type)
         if t is None:
+            from earthkit.data.field.component.level_type import get_level_type
+
+            level, layer = from_grib(handle)
+            component = get_level_type(level_type)
+            t = register_grib_level_type(
+                key=level_type,
+                component_type=component,
+            )
+
+        if t is None:
             raise ValueError(f"Unsupported level type: {level_type}")
 
         level, layer, level_type = t.from_grib(handle)
+
         return dict(
             level=level,
             layer=layer,

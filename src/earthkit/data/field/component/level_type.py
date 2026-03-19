@@ -91,16 +91,16 @@ _defs = {
         "layer": False,
         "positive": POSITIVE_DOWN,
     },
-    "HEIGHT_ASL": {
-        "name": "height_above_sea_level",
+    "HEIGHT_AS_LEVEL": {
+        "name": "height_above_mean_sea_level",
         "abbreviation": "h_asl",
-        "standard_name": "height_above_sea_level",
+        "standard_name": "height_above_mean_sea_level",
         "long_name": "height above mean sea level",
         "units": "m",
         "layer": False,
         "positive": POSITIVE_UP,
     },
-    "HEIGHT_AGL": {
+    "HEIGHT_AG_LEVEL": {
         "name": "height_above_ground_level",
         "abbreviation": "h_agl",
         "standard_name": "height",
@@ -118,7 +118,7 @@ _defs = {
         "layer": False,
         "positive": "",
     },
-    "DEPTH_BGL": {
+    "DEPTH_BG_LEVEL": {
         "name": "depth_below_ground_level",
         "abbreviation": "d_bgl",
         "standard_name": "depth",
@@ -180,6 +180,51 @@ _defs = {
         "layer": False,
         "positive": "",
     },
+    "OCEAN_SURFACE": {
+        "name": "ocean_surface",
+        "abbreviation": "ocean_surface",
+        "standard_name": "ocean_surface",
+        "long_name": "ocean surface",
+        "units": "",
+        "layer": False,
+        "positive": "",
+    },
+    "TEMPERATURE": {
+        "name": "temperature",
+        "abbreviation": "isothermal",
+        "standard_name": "temperature",
+        "long_name": "temperature",
+        "units": "K",
+        "layer": False,
+        "positive": "",
+    },
+    "DEPTH_BS_LAYER": {
+        "name": "depth_below_sea_layer",
+        "abbreviation": "d_bsl_layer",
+        "standard_name": "depth",
+        "long_name": "depth",
+        "units": "m",
+        "layer": True,
+        "positive": POSITIVE_DOWN,
+    },
+    "MIXED_LAYER_DEPTH_BY_DENSITY": {
+        "name": "mixed_layer_depth_by_density",
+        "abbreviation": "mixedLayerDepthByDensity",
+        "standard_name": "mixed_layer_depth_by_density",
+        "long_name": "mixed layer depth by density",
+        "units": "m",
+        "layer": True,
+        "positive": POSITIVE_DOWN,
+    },
+    "ICE_LAYER_ON_WATER": {
+        "name": "ice_layer_on_water",
+        "abbreviation": "iceLayerOnWater",
+        "standard_name": "ice_layer_on_water",
+        "long_name": "ice layer on water",
+        "units": "m",
+        "layer": True,
+        "positive": POSITIVE_UP,
+    },
 }
 
 LevelTypes = Enum("LevelTypes", [(k, LevelType(**v)) for k, v in _defs.items()])
@@ -187,7 +232,29 @@ LevelTypes = Enum("LevelTypes", [(k, LevelType(**v)) for k, v in _defs.items()])
 _LEVEL_TYPES = {t.value.name: t.value for t in LevelTypes}
 
 
-def get_level_type(item: str, default=LevelTypes.UNKNOWN) -> LevelType:
+# TODO: make it thread safe
+def register_level_type(name: str, metadata: dict | None = None) -> LevelType:
+    if name in _LEVEL_TYPES:
+        raise ValueError(f"Level type {name} already exists")
+
+    if metadata is None:
+        metadata = {}
+
+    level_type = LevelType(
+        name=name,
+        abbreviation=metadata.get("abbreviation", name),
+        standard_name=metadata.get("standard_name", name),
+        long_name=metadata.get("long_name", name),
+        units=metadata.get("units", ""),
+        layer=metadata.get("layer", False),
+        positive=metadata.get("positive", None),
+    )
+
+    _LEVEL_TYPES[name] = level_type
+    return level_type
+
+
+def get_level_type(item: str, default=LevelTypes.UNKNOWN, metadata=None) -> LevelType:
     if isinstance(item, LevelTypes):
         return item.value
     elif isinstance(item, LevelType):
@@ -196,6 +263,8 @@ def get_level_type(item: str, default=LevelTypes.UNKNOWN) -> LevelType:
     elif isinstance(item, str):
         if item in _LEVEL_TYPES:
             return _LEVEL_TYPES[item]
+        else:
+            return register_level_type(item, metadata)
     elif item is None:
         return default.value
 

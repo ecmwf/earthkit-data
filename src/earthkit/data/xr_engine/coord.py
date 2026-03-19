@@ -18,6 +18,7 @@ from .dim import LEVEL_KEYS
 from .dim import MONTH_KEYS
 from .dim import STEP_KEYS
 from .dim import TIME_KEYS
+from .level import is_level_type
 
 LOG = logging.getLogger(__name__)
 
@@ -46,13 +47,17 @@ class Coord:
             return StepCoord(name, *args, **kwargs)
         elif name in LEVEL_KEYS:
             return LevelCoord(name, *args, **kwargs)
+        elif is_level_type(name):
+            # this is the case when a vertical coordinate is named after the level type, r.g. when
+            # level_dim_mode='level_per_type`
+            return LevelCoord(name, *args, **kwargs)
+
         return Coord(name, *args, **kwargs)
 
     def to_xr_var(self, profile):
         import xarray
 
         # LOG.debug(f"{self.name=}" + str(self.convert(profile)))
-
         return xarray.Variable(
             self.dims,
             self.convert(profile),
@@ -178,9 +183,18 @@ class MonthCoord(Coord):
 class LevelCoord(Coord):
     def __init__(self, name, vals, dims=None, ds=None, **kwargs):
         self._level_type = {}
-        self._cf = None
+        self._default = None
         if ds is not None:
-            self._cf = ds[0].vertical.cf()
+            # TODO: this is a bit hacky, need to find a better way to get the level type information
+            t = ds[0].vertical._type
+            self._default = {
+                "standard_name": t.standard_name,
+                "long_name": t.long_name,
+                "units": t.units,
+                "positive": t.positive,
+            }
+
+            # TODO; try to avoid getting the metadata upfront
             for k in ["vertical.level_type", "metadata.typeOfLevel", "metadata.levtype"]:
                 v = ds[0]._get_fast(k)
                 if v is not None:
@@ -194,13 +208,18 @@ class LevelCoord(Coord):
         _attrs = {}
         if conf:
             keys = conf["keys"]
+            level_type_key = conf.get("dim_roles", {}).get("level_type")
+
             for key in keys:
-                level_type = self._level_type.get(key)
-                if level_type is None:
-                    continue
-                _attrs = conf.get(level_type)
-                if _attrs is not None:
-                    return _attrs
-        _attrs = self._cf
+                if key == level_type_key or level_type_key is None:
+
+                    level_type = self._level_type.get(key)
+                    if level_type is None:
+                        continue
+                    _attrs = conf.get(level_type)
+                    if _attrs is not None:
+
+                        return _attrs
+
+        _attrs = self._default
         return _attrs
-        # raise ValueError(f"Cannot determine level type for coordinate {name}")
