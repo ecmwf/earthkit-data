@@ -190,7 +190,7 @@ class LevelCoord(Coord):
             self._default = {
                 "standard_name": t.standard_name,
                 "long_name": t.long_name,
-                "units": t.units,
+                "units": str(t.units),
                 "positive": t.positive,
             }
 
