@@ -236,7 +236,8 @@ class TensorCore(metaclass=ABCMeta):
                     if not isinstance(v, (list, tuple, np.ndarray)):
                         v = (v,)
                     r[k] = v
-                elif isinstance(idx, list):
+                else:
+                    # idx must be an iterable (list, numpy array, etc.)
                     r[k] = tuple([self._user_coords[k][i] for i in idx])
             else:
                 r[k] = self._user_coords[k]
@@ -400,7 +401,7 @@ class FieldListTensor(TensorCore):
 
     def _prepare_tensor_data(self, source_to_array_func, index=None):
         if index is not None:
-            if all(i == slice(None, None, None) for i in index):
+            if all(isinstance(i, slice) and i == slice(None, None, None) for i in index):
                 index = None
 
         if index is None:
@@ -419,12 +420,18 @@ class FieldListTensor(TensorCore):
                 # where `coord` is an item (not a 1-element list),
                 # * `self.user_shape` does not lose the dimension `dim`, even if `dim` is one of user dims
                 # * `field_shape` does lose the dimension `dim` if `dim` is a field dimension
-                current_field_shape = tuple(
-                    len(range(n)[_slice])
-                    for n, _slice in zip(self.field_shape, index)
-                    if not isinstance(_slice, int)
-                    # `_slice` can be either an `int` or a `slice`; if `int`, ignore it!
-                )
+                current_field_shape = []
+                for n, _idx in zip(self.field_shape, index):
+                    if isinstance(_idx, int):
+                        # simply, ignore this index
+                        continue
+                    if isinstance(_idx, slice):
+                        _size = len(range(n)[_idx])
+                    else:
+                        # _idx must be an iterable of integers
+                        _size = len(np.arange(n)[_idx])
+                    current_field_shape.append(_size)
+                current_field_shape = tuple(current_field_shape)
 
         return arr, current_field_shape
 
@@ -459,7 +466,11 @@ class FieldListTensor(TensorCore):
     def is_full_field(self, indexes):
         assert len(indexes) == len(self._field_shape)
         for i, s in enumerate(indexes):
-            if not (s is None or s == slice(None, None, None) or s == slice(0, self._field_shape[i], 1)):
+            if not (
+                s is None
+                or isinstance(s, slice)
+                and (s == slice(None, None, None) or s == slice(0, self._field_shape[i], 1))
+            ):
                 return False
         return True
 
