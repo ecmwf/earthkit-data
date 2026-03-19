@@ -61,7 +61,7 @@ def test_grib_vertical_2(fl_type):
         ),
         (
             "hl_1000_m_asl.grib2",
-            [(100, "height_above_sea_level"), (1000, "height_above_sea_level")],
+            [(100, "height_above_mean_sea_level"), (1000, "height_above_mean_sea_level")],
         ),
         (
             "hl_1000_m_agr.grib2",
@@ -103,6 +103,14 @@ def test_grib_vertical_2(fl_type):
             "gen_vert_layer.grib",
             (1, "general"),
         ),
+        (
+            "ocean_surface.grib2",
+            (0, "ocean_surface"),
+        ),
+        ("depth_below_sea_layer.grib2", (0, "depth_below_sea_layer")),
+        ("mixed_layer_depth_by_density.grib2", (0, "mixed_layer_depth_by_density")),
+        ("isothermal.grib2", (287, "temperature")),
+        ("ice_layer_on_water.grib2", (1, "ice_layer_on_water")),
     ],
 )
 def test_grib_vertical_core(fname, expected_values):
@@ -115,4 +123,26 @@ def test_grib_vertical_core(fname, expected_values):
     for i, (level, level_type) in enumerate(ref):
         f = ds[i]
         assert np.isclose(f.vertical.level(), level)
+        assert f.vertical.level_type() == level_type
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "fname,expected_values",
+    [
+        ("depth_below_sea_layer.grib2", (0, 0, 300, "depth_below_sea_layer")),
+    ],
+)
+def test_grib_vertical_layer(fname, expected_values):
+    ds = from_source("url", earthkit_remote_test_data_file(f"xr_engine/level/{fname}")).to_fieldlist()
+
+    ref = expected_values
+    if not isinstance(ref, list):
+        ref = [ref]
+
+    for i, (level, bottom, top, level_type) in enumerate(ref):
+        f = ds[i]
+        assert np.isclose(f.vertical.level(), level)
+        assert np.isclose(f.vertical.layer()[0], bottom)
+        assert np.isclose(f.vertical.layer()[1], top)
         assert f.vertical.level_type() == level_type

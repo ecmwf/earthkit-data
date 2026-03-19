@@ -52,6 +52,30 @@ from grib_fixtures import load_grib_data  # noqa: E402
                 "metadata.typeOfLevel": "theta",
             },
         ),
+        # (
+        #     {
+        #         "vertical.level": 300,
+        #         "vertical.level_type": "temperature",
+        #     },
+        #     {
+        #         "vertical.level": 300,
+        #         "vertical.level_type": "temperature",
+        #         "vertical.units": "K",
+        #         "vertical.abbreviation": "isothermal",
+        #         "metadata.levelist": 500,
+        #         "metadata.level": 500,
+        #         "metadata.levtype": "pl",
+        #         "metadata.typeOfLevel": "isobaricInhPa",
+        #     },
+        #     {
+        #         "vertical.level": 300,
+        #         "vertical.level_type": "temperature",
+        #         "metadata.levelist": 300,
+        #         "metadata.level": 300,
+        #         "metadata.levtype": "isothermal",
+        #         "metadata.typeOfLevel": "isothermal",
+        #     },
+        # ),
     ],
 )
 def test_grib_set_vertical(fl_type, write_method, _kwargs, ref1, ref2):
