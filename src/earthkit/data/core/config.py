@@ -193,10 +193,10 @@ CONFIG_AND_HELP = {
     ),
     "maximum-cache-disk-usage": _(
         "95%",
-        """Specify maximum disk usage as a percentage of the full disk capacity.
-        When exceeded, earthkit-data evicts older cached entries until the usage
-        is below the specified limit. Can be set to None. Ignored when ``cache-policy``
-        is ``off``.
+        """Specify maximum disk usage as a percentage of the full disk capacity on the filesystem the
+        cache is located (e.g.: 90%). When the total disk usage exceeds this limit (it's not limited to the
+        cache usage alone), earthkit-data evicts older cached entries until the usage is below the
+        specified limit. Can be et to None. Ignored when ``cache-policy`` is ``off``.
         See :ref:`caching` for more information.""",
         getter="_as_percent",
         none_ok=True,
