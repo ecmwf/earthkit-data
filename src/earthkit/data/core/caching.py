@@ -197,6 +197,9 @@ class CacheManager(threading.Thread):
         So we do not purge files being downloaded.
         """
         with self.connection as db:
+            # TODO; this is not perfect, since it is not guaranteed that an empty file is actually being
+            # downloaded. So an old empty file will block removing the files by _decache when the cache
+            # limit is exceeded. Must be improved by at least adding a time margin
             latest = db.execute("SELECT MIN(creation_date) FROM cache WHERE size IS NULL").fetchone()[0]
             if latest is None:
                 latest = db.execute("SELECT MAX(creation_date) FROM cache WHERE size IS NOT NULL").fetchone()[0]
@@ -330,7 +333,7 @@ class CacheManager(threading.Thread):
                     pass
 
                 if parent is None:
-                    LOG.warning(f"earthkit-data cache: orphan found: {full}")
+                    LOG.debug(f"earthkit-data cache: orphan found: {full}")
                 else:
                     LOG.debug(f"earthkit-data cache: orphan found: {full} with parent {parent}")
 
@@ -351,8 +354,7 @@ class CacheManager(threading.Thread):
             else:
                 os.unlink(path)
         except Exception as e:
-            print(e)
-            LOG.exception("Deleting %s", path)
+            LOG.exception(f"Deleting {path}", e)
 
     def _entry_to_dict(self, entry):
         n = dict(entry)
@@ -379,6 +381,8 @@ class CacheManager(threading.Thread):
                 pass
 
         if entry["size"] is None:
+            if not isinstance(entry, dict):
+                entry = self._entry_to_dict(entry)
             entry["size"] = 0
 
         path, size, owner, args = (
@@ -388,10 +392,12 @@ class CacheManager(threading.Thread):
             entry["args"],
         )
 
-        LOG.warning(
-            "Deleting entry %s",
-            json.dumps(self._entry_to_dict(entry), indent=4, default=default_serialiser),
-        )
+        if logging.DEBUG >= LOG.getEffectiveLevel():
+            LOG.debug(
+                "Deleting entry %s",
+                json.dumps(self._entry_to_dict(entry), indent=4, default=default_serialiser),
+            )
+
         total = 0
 
         # First, delete child files, e.g. unzipped data
@@ -405,8 +411,9 @@ class CacheManager(threading.Thread):
                 db.execute("DELETE FROM cache WHERE path=?", (path,))
             return total
 
-        LOG.warning(f"earthkit-data cache: deleting {path} ({humanize.bytes(size)})")
-        LOG.warning(f"earthkit-data cache: {owner} {args}")
+        LOG.debug(f"earthkit-data cache: deleting {path} ({humanize.bytes(size)})")
+        LOG.debug(f"earthkit-data cache: {owner} {args}")
+
         self._delete_file(path)
 
         with self.connection as db:
@@ -514,6 +521,12 @@ class CacheManager(threading.Thread):
                 size = self._cache_size()
                 if size > maximum:
                     self._housekeeping()
+                    LOG.warning(
+                        (
+                            f"earthkit-data cache: cache size({humanize.bytes(size)}) exceeds limit"
+                            f" ({humanize.bytes(maximum)}) set by 'maximum-cache-size' config option"
+                        )
+                    )
                     self._decache(size - maximum)
 
             # Check relative limit
@@ -522,9 +535,14 @@ class CacheManager(threading.Thread):
                 size = self._cache_size()
                 df = disk_usage(self._policy.directory())
                 if df.percent > usage:
-                    LOG.debug("Cache disk usage %s, limit %s", df.percent, usage)
                     self._housekeeping()
                     delta = (df.percent - usage) * df.total * 0.01
+                    LOG.warning(
+                        (
+                            f"earthkit-data cache: filesystem usage ({df.percent}%) exceeds limit ({usage}%)"
+                            f" set by 'maximum-cache-disk-usage' config option"
+                        )
+                    )
                     self._decache(delta)
 
     def _repr_html_(self):
