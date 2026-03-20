@@ -425,11 +425,12 @@ class Config:
             assert len(args) == 1
             assert len(kwargs) == 0
             value = args[0]
-            # if value is not None:
-            #     try:
-            #     value = klass(value)
-            #     except Exception as e:
-            #         raise ValueError(f"Invalid value for config option '{name}': {value}") from e
+            if value is not None:
+                if klass is bool:
+                    try:
+                        value = klass(value)
+                    except Exception as e:
+                        raise ValueError(f"Invalid value for config option '{name}': {value}") from e
 
         if klass is list:
             assert len(args) > 0
