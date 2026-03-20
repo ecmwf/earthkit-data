@@ -16,6 +16,7 @@ from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalise
 from earthkit.data.utils.args import metadata_argument_new
 from earthkit.data.utils.array import flatten_array
+from earthkit.data.utils.array import outer_indexing
 from earthkit.data.utils.array import reshape_array
 from earthkit.data.utils.array import target_shape
 from earthkit.data.utils.compute import wrap_maths
@@ -488,7 +489,7 @@ class Field(Base):
         v = flatten_array(v) if flatten else reshape_array(v, self.shape)
 
         if index is not None:
-            v = v[index]
+            v = outer_indexing(v, index)
 
         return v
 
@@ -528,13 +529,19 @@ class Field(Base):
             Field values.
 
         """
+        # print(f"!!!!!!!!!=====> {index=}, {self.shape=}, {flatten=}", flush=True)
+
         v = self._components[DATA].get_values(dtype=dtype, copy=copy)
         if array_namespace is not None:
             v = convert_array(v, array_namespace=array_namespace, device=device)
 
         v = flatten_array(v) if flatten else reshape_array(v, self.shape)
+        # print(f"!!!!!!!!!=====> {v=}, {v.shape=}", flush=True)
         if index is not None:
-            v = v[index]
+            # v = v[index]
+            # import xarray as xr
+            # v = xr.DataArray(v)[index].values
+            v = outer_indexing(v, index)
 
         return v
 
@@ -618,7 +625,7 @@ class Field(Base):
                 raise ValueError(f"data: {k} not available")
             v = _reshape(v, flatten)
             if index is not None:
-                v = v[index]
+                v = outer_indexing(v, index)
             r[k] = v
 
         # convert latlon to array format

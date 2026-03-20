@@ -84,3 +84,44 @@ def adjust_array(v, flatten=False, dtype=None):
             v = target_xp.astype(v, target_dtype, copy=False)
 
     return v
+
+
+def outer_indexing(v, indices):
+    """Performs an outer indexing of an array ``v``.
+    The parameter ``indices`` is a tuple of indices.
+    Each index is either an int, a slice of an array of int's.
+    Each index form ``indices`` restricts/sub-selects the corresponding dimension of the array ``v``,
+    independently (orthogonally) to other indices (hence the name: "outer indexing").
+
+    This function mimics the behaviour of ``xarray.DataArray(v)[indices].values``,
+    and in general it is different from the behaviour of e.g.
+    the numpy indexing, i.e. ``v[indices]``
+    (see https://numpy.org/doc/stable/user/basics.indexing.html#advanced-indexing).
+
+    Parameters
+    ----------
+    v: array-like
+        The array to be reshaped.
+    indices: tuple of items, each being an int, a slice or an array-like of int's
+
+    Returns
+    -------
+    array-like
+        Sub-selection of the array ``v`` according to ``indices``
+    """
+    # print(f"======> outer_indexing({v=}, {indices=})", flush=True)
+    if not isinstance(indices, tuple):
+        indices = (indices,)
+    full_slices = ()
+    ndim = v.ndim
+    for idx in indices:
+        _1d_index = full_slices + (idx,)
+        # print(f"======> applying a[{_1d_index=}]", flush=True)
+        v = v[_1d_index]
+        v_ndim = v.ndim
+        if v_ndim == ndim:
+            full_slices = full_slices + (slice(None, None),)
+        else:
+            # the current dimension has collapsed
+            ndim = v_ndim
+    return v

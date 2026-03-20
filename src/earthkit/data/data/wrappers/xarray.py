@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.data.utils.array import outer_indexing
+
 from . import ObjectWrapperData
 
 
@@ -43,7 +45,7 @@ class XarrayData(ObjectWrapperData):
         if flatten:
             v = v.flatten()
         if index is not None:
-            v = v[index]
+            v = outer_indexing(v, index)
         return v
 
     def _default_encoder(self):
