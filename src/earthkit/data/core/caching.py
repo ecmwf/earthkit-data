@@ -355,8 +355,8 @@ class CacheManager(threading.Thread):
                 shutil.rmtree(path)
             else:
                 os.unlink(path)
-        except Exception:
-            LOG.exception(f"Deleting {path}")
+        except Exception as e:
+            LOG.exception(f"Deleting {path}", e)
 
     def _entry_to_dict(self, entry):
         n = dict(entry)

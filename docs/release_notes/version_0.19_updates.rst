@@ -8,7 +8,7 @@ Version 0.19.2
 Fixes
 ++++++++
 
-- Fixed a bug in the cache when files were not deleted if cache size exceeded the limit when cache-policy was set to "user" (:pr:`907`).
+- Fixed a bug in the cache when files were not deleted if cache size exceeded the limit when cache-policy was set to "user" or "temporary" (:pr:`937`).
 
 
 Version 0.19.1
