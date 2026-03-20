@@ -9,6 +9,8 @@
 
 from collections import defaultdict
 
+import numpy as np
+
 from earthkit.data.core import Base
 from earthkit.data.core.order import Patch
 from earthkit.data.core.order import Remapping
@@ -25,6 +27,42 @@ from earthkit.utils.array.convert import convert_dtype
 from earthkit.utils.decorators import thread_safe_cached_property
 
 GRIB = "grib"
+
+
+def _apply_outer_index(v, index):
+    """Apply outer-product indexing to array v.
+
+    When ``index`` is a tuple of 1-D arrays (as produced by xarray's OUTER
+    indexing), numpy's standard advanced indexing tries to broadcast the arrays
+    together, which fails when the arrays have incompatible shapes (e.g. shapes
+    ``(31,)`` and ``(41,)`` for latitude and longitude).  This function uses
+    :func:`numpy.ix_` to correctly apply outer-product semantics, so that every
+    combination of the index values is selected.
+
+    Integer elements collapse the corresponding dimension (same semantics as
+    numpy scalar indexing).  Slice elements are expanded to an equivalent
+    array of indices before passing to :func:`numpy.ix_`.
+    """
+    if not isinstance(index, tuple):
+        return v[index]
+    if not any(isinstance(i, np.ndarray) for i in index):
+        return v[index]
+
+    int_dims = []
+    ix_args = []
+    for dim, idx in enumerate(index):
+        if isinstance(idx, int):
+            ix_args.append(np.array([idx]))
+            int_dims.append(dim)
+        elif isinstance(idx, slice):
+            ix_args.append(np.arange(v.shape[dim])[idx])
+        else:
+            ix_args.append(np.asarray(idx))
+    result = v[np.ix_(*ix_args)]
+    if int_dims:
+        result = result.squeeze(axis=tuple(int_dims))
+    return result
+
 
 LS_KEYS = [
     "parameter.variable",
@@ -488,7 +526,7 @@ class Field(Base):
         v = flatten_array(v) if flatten else reshape_array(v, self.shape)
 
         if index is not None:
-            v = v[index]
+            v = _apply_outer_index(v, index)
 
         return v
 
@@ -534,7 +572,7 @@ class Field(Base):
 
         v = flatten_array(v) if flatten else reshape_array(v, self.shape)
         if index is not None:
-            v = v[index]
+            v = _apply_outer_index(v, index)
 
         return v
 

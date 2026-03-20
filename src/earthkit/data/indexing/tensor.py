@@ -468,8 +468,13 @@ class FieldListTensor(TensorCore):
         for i, s in enumerate(indexes):
             if not (
                 s is None
-                or isinstance(s, slice)
-                and (s == slice(None, None, None) or s == slice(0, self._field_shape[i], 1))
+                or (isinstance(s, slice) and (s == slice(None, None, None) or s == slice(0, self._field_shape[i], 1)))
+                or (
+                    isinstance(s, np.ndarray)
+                    and s.ndim == 1
+                    and len(s) == self._field_shape[i]
+                    and np.array_equal(s, np.arange(self._field_shape[i]))
+                )
             ):
                 return False
         return True
