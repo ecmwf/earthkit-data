@@ -1,5 +1,5 @@
 
-User guide
+Concepts
 =============
 
 .. toctree::
@@ -14,4 +14,5 @@ User guide
    config
    caching
    xarray/index.rst
+   plugins/index.rst
    misc/index.rst

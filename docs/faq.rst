@@ -1,7 +1,7 @@
-.. _howtos:
+.. _faq:
 
-Howtos
-============
+Frequently asked questions
+============================
 
 
 How to save results from a retrieval into a file?

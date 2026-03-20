@@ -46,36 +46,31 @@ Quick start
 
 .. toctree::
    :maxdepth: 1
-   :caption: Examples
+   :caption: User guide
 
+   install
    examples/index
+   faq
+   guide/index
+   api
 
 .. toctree::
    :maxdepth: 1
-   :caption: Documentation
+   :caption: Developer guide
 
-   howtos
-   guide/index
-   api
    development/index
 
 .. toctree::
    :maxdepth: 1
-   :caption: Installation
+   :caption: Extra
 
-   install
    release_notes/index
    licence
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Plugins
-
-   plugins/index
 
 .. toctree::
    :maxdepth: 1
-   :caption: Projects
+   :caption: Related projects
 
    earthkit <https://earthkit.readthedocs.io/en/latest>
 

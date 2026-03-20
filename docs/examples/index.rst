@@ -1,7 +1,7 @@
 .. _examples:
 
-Examples
-============
+How-to guides
+===============
 
 
 .. toctree::
