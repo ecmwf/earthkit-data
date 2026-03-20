@@ -120,7 +120,7 @@ def outer_indexing(v, indices):
         v = v[_1d_index]
         v_ndim = v.ndim
         if v_ndim == ndim:
-            full_slices = full_slices + (slice(None, None),)
+            full_slices = full_slices + (slice(None),)
         else:
             # the current dimension has collapsed
             ndim = v_ndim
