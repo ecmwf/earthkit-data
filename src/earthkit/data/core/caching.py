@@ -197,9 +197,9 @@ class CacheManager(threading.Thread):
         So we do not purge files being downloaded.
         """
         with self.connection as db:
-            # TODO; this is not perfect, since it is not guaranteed that an empty file is being downloaded
-            # Must be improved by at least adding a time margin. Since an old empty file will block removing
-            # the files when the cache limit is exceeded.
+            # TODO; this is not perfect, since it is not guaranteed that an empty file is actually being
+            # downloaded. So an old empty file will block removing the files by _decache when the cache
+            # limit is exceeded. Must be improved by at least adding a time margin
             latest = db.execute("SELECT MIN(creation_date) FROM cache WHERE size IS NULL").fetchone()[0]
             if latest is None:
                 latest = db.execute("SELECT MAX(creation_date) FROM cache WHERE size IS NOT NULL").fetchone()[
