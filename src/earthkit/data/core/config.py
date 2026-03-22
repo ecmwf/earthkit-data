@@ -184,14 +184,19 @@ CONFIG_AND_HELP = {
     "maximum-cache-size": _(
         None,
         """Maximum disk space used by the earthkit-data cache (e.g.: 100G or 2T).
-        Can be set to None.""",
+        When exceeded, earthkit-data evicts older cached entries until the usage
+        is below the specified limit. Can be set to None.
+        Ignored when ``cache-policy`` is ``off``.
+        See :ref:`caching` for more information.""",
         getter="_as_bytes",
         none_ok=True,
     ),
     "maximum-cache-disk-usage": _(
-        "98%",
-        """Disk usage threshold after which earthkit-data expires older cached
-        entries (% of the full disk capacity). Can be set to None.
+        "95%",
+        """Specify maximum disk usage as a percentage of the full disk capacity on the filesystem the
+        cache is located (e.g.: 90%). When the total disk usage exceeds this limit (it's not limited to the
+        cache usage alone), earthkit-data evicts older cached entries until the usage is below the
+        specified limit. Can be set to None. Ignored when ``cache-policy`` is ``off``.
         See :ref:`caching` for more information.""",
         getter="_as_percent",
         none_ok=True,
@@ -319,9 +324,9 @@ class Config:
     _auto_save_config = True
     _notify_enabled = True
 
-    def __init__(self, config_yaml: str, default: dict, callbacks=[]):
-        self._default = default
-        self._config = dict(**default)
+    def __init__(self, config_yaml: str, defaults: dict, callbacks=[]):
+        self._defaults = defaults
+        self._config = dict(**defaults)
         self._callbacks = [c for c in callbacks]
         self._config_yaml = config_yaml
         self._pytest = None
@@ -420,7 +425,12 @@ class Config:
             assert len(args) == 1
             assert len(kwargs) == 0
             value = args[0]
-            value = klass(value)
+            if value is not None:
+                if klass is bool:
+                    try:
+                        value = klass(value)
+                    except Exception as e:
+                        raise ValueError(f"Invalid value for config option '{name}': {value}") from e
 
         if klass is list:
             assert len(args) > 0
@@ -714,7 +724,7 @@ def _init_config(config_yaml):
 
     except Exception:
         LOG.error(
-            "Cannot load earthkit-data config (%s), reverting to default",
+            "Cannot load earthkit-data config (%s), reverting to defaults",
             config_yaml,
             exc_info=True,
         )
