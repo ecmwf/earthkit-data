@@ -21,7 +21,6 @@ from earthkit.data.utils.testing import earthkit_file
 fixture = NBRegressionFixture(exec_timeout=30)
 fixture.diff_color_words = False
 
-
 # See https://www.blog.pythonlibrary.org/2018/10/16/testing-jupyter-notebooks/
 
 

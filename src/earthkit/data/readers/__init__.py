@@ -16,8 +16,7 @@ from importlib import import_module
 from earthkit.data.core import Encodable
 from earthkit.data.core import Loader
 from earthkit.data.core.config import CONFIG
-from earthkit.data.decorators import detect_out_filename
-from earthkit.data.decorators import locked
+from earthkit.data.decorators import detect_out_filename, locked
 
 LOG = logging.getLogger(__name__)
 
@@ -161,9 +160,7 @@ def _find_reader(method_name, source, path_or_data, **kwargs):
 
 
 def _unknown(method_name, source, path_or_data, **kwargs):
-    from .unknown import UnknownMemoryReader
-    from .unknown import UnknownReader
-    from .unknown import UnknownStreamReader
+    from .unknown import UnknownMemoryReader, UnknownReader, UnknownStreamReader
 
     unknowns = {
         "reader": UnknownReader,
@@ -184,7 +181,7 @@ def _empty(source, path, **kwargs):
 
 
 def reader(source, path, **kwargs):
-    """Create the reader for a file/directory specified by path"""
+    """Create the reader for a file/directory specified by path."""
     assert isinstance(path, str), source
 
     if hasattr(source, "reader"):
@@ -233,7 +230,7 @@ def reader(source, path, **kwargs):
 
 
 def memory_reader(source, buffer, **kwargs):
-    """Create a reader for data held in a memory buffer"""
+    """Create a reader for data held in a memory buffer."""
     assert isinstance(buffer, (bytes, bytearray)), source
     n_bytes = CONFIG.get("reader-type-check-bytes")
     magic = buffer[: min(n_bytes, len(buffer) - 1)]
@@ -242,7 +239,7 @@ def memory_reader(source, buffer, **kwargs):
 
 
 def stream_reader(source, stream, memory, **kwargs):
-    """Create a reader for a stream"""
+    """Create a reader for a stream."""
     magic = None
     if hasattr(stream, "peek") and callable(stream.peek):
         try:

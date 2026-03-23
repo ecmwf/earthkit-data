@@ -6,8 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-from . import cf
-from . import proj
+from . import cf, proj
 
 try:
     import cartopy.crs as ccrs
