@@ -463,13 +463,16 @@ class FieldListTensor(TensorCore):
         return indexes[len(self._user_shape) :]
 
     def is_full_field(self, indexes):
-        assert len(indexes) == len(self._field_shape)
-        for i, s in enumerate(indexes):
-            if not (
-                s is None
-                or isinstance(s, slice)
-                and (s == slice(None, None, None) or s == slice(0, self._field_shape[i], 1))
-            ):
+        def is_full_indexer(index, size):
+            if index is None:
+                return True
+            if isinstance(index, slice):
+                return index.indices(size) == (0, size, 1)
+            full_indexer = np.arange(size)
+            return np.array_equal(full_indexer[index], full_indexer)
+
+        for index, size in zip(indexes, self._field_shape, strict=True):
+            if not is_full_indexer(index, size):
                 return False
         return True
 
