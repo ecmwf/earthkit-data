@@ -18,7 +18,7 @@ from earthkit.data.core import Base
 from earthkit.data.core.order import Patch, Remapping, build_remapping
 from earthkit.data.decorators import normalise
 from earthkit.data.utils.args import metadata_argument_new
-from earthkit.data.utils.array import flatten_array, reshape_array, target_shape
+from earthkit.data.utils.array import flatten_array, outer_indexing, reshape_array, target_shape
 from earthkit.data.utils.compute import wrap_maths
 
 GRIB = "grib"
@@ -485,7 +485,7 @@ class Field(Base):
         v = flatten_array(v) if flatten else reshape_array(v, self.shape)
 
         if index is not None:
-            v = v[index]
+            v = outer_indexing(v, index)
 
         return v
 
@@ -531,7 +531,7 @@ class Field(Base):
 
         v = flatten_array(v) if flatten else reshape_array(v, self.shape)
         if index is not None:
-            v = v[index]
+            v = outer_indexing(v, index)
 
         return v
 
@@ -615,7 +615,7 @@ class Field(Base):
                 raise ValueError(f"data: {k} not available")
             v = _reshape(v, flatten)
             if index is not None:
-                v = v[index]
+                v = outer_indexing(v, index)
             r[k] = v
 
         # convert latlon to array format

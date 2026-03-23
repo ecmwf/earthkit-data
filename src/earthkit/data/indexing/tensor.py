@@ -419,14 +419,13 @@ class FieldListTensor(TensorCore):
                 # * `field_shape` does lose the dimension `dim` if `dim` is a field dimension
                 current_field_shape = []
                 for n, _idx in zip(self.field_shape, index):
-                    if isinstance(_idx, int):
-                        # simply, ignore this index
+                    _sizes = np.arange(n)[_idx].shape
+                    if len(_sizes) == 0:
+                        # _idx is a scalar indexer, and thus we ignore it
                         continue
-                    if isinstance(_idx, slice):
-                        _size = len(range(n)[_idx])
-                    else:
-                        # _idx must be an iterable of integers
-                        _size = len(np.arange(n)[_idx])
+                    # _idx is a slice, an array of int's or a boolean mask
+                    # get the size of the selection made by the indexer _idx
+                    (_size,) = _sizes
                     current_field_shape.append(_size)
                 current_field_shape = tuple(current_field_shape)
 
@@ -461,13 +460,16 @@ class FieldListTensor(TensorCore):
         return indexes[len(self._user_shape) :]
 
     def is_full_field(self, indexes):
-        assert len(indexes) == len(self._field_shape)
-        for i, s in enumerate(indexes):
-            if not (
-                s is None
-                or isinstance(s, slice)
-                and (s == slice(None, None, None) or s == slice(0, self._field_shape[i], 1))
-            ):
+        def is_full_indexer(index, size):
+            if index is None:
+                return True
+            if isinstance(index, slice):
+                return index.indices(size) == (0, size, 1)
+            full_indexer = np.arange(size)
+            return np.array_equal(full_indexer[index], full_indexer)
+
+        for index, size in zip(indexes, self._field_shape, strict=True):
+            if not is_full_indexer(index, size):
                 return False
         return True
 
@@ -481,7 +483,7 @@ class FieldListTensor(TensorCore):
         user_indexes = []
 
         for s, c in zip(indexes, self._user_shape):
-            lst = np.array(list(range(c)))[s].tolist()
+            lst = np.arange(c)[s].tolist()
             if not isinstance(lst, list):
                 lst = [lst]
             user_coords.append(lst)
@@ -683,7 +685,7 @@ class FieldListSparseTensor(FieldListTensor):
         user_indexes = []
 
         for s, c in zip(indexes, self._user_shape):
-            lst = np.array(list(range(c)))[s].tolist()
+            lst = np.arange(c)[s].tolist()
             if not isinstance(lst, list):
                 lst = [lst]
             user_icoords.append(lst)
