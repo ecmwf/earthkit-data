@@ -244,7 +244,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
     def _raw_indexing_method(self, key: tuple):
         with self.lock:
             # LOG.debug(f"TensorBackendArray._raw_indexing_method var={self._var_name}")
-            # print(f"!!! dims={self.dims} key={key} shape={self.shape}", flush=True)
+            # LOG.debug(f"   dims={self.dims} key={key} shape={self.shape}")
             # LOG.debug(f"   tensor.user_coords={self.tensor.user_coords}")
 
             r = self.tensor[key]
@@ -256,7 +256,6 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
                 field_index = None
 
             # LOG.debug(f"   {field_index=}")
-            # print(f"!!!--- {field_index=}", flush=True)
 
             try:
                 result = r.to_array(index=field_index, array_namespace=self.array_namespace, dtype=self.dtype)

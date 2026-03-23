@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 
 
-from earthkit.data.utils.array import outer_indexing
-
 from . import ObjectWrapperData
 
 
@@ -41,8 +39,7 @@ class NumpyNDArrayWrapper(ObjectWrapperData):
         if flatten:
             v = v.flatten()
         if index is not None:
-            v = outer_indexing(v, index)
-            # v = v[index]
+            v = v[index]
 
         return v
 

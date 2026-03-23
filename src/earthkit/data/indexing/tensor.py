@@ -435,7 +435,6 @@ class FieldListTensor(TensorCore):
         return arr, current_field_shape
 
     def _to_array(self, source_to_array_func, index=None):
-        # print(f"### ======= {index=}", flush=True)
         arr, current_field_shape = self._prepare_tensor_data(source_to_array_func, index=index)
         return eku_array_namespace(arr).reshape(arr, self.user_shape + current_field_shape)
 

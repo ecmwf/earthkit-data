@@ -529,18 +529,12 @@ class Field(Base):
             Field values.
 
         """
-        # print(f"!!!!!!!!!=====> {index=}, {self.shape=}, {flatten=}", flush=True)
-
         v = self._components[DATA].get_values(dtype=dtype, copy=copy)
         if array_namespace is not None:
             v = convert_array(v, array_namespace=array_namespace, device=device)
 
         v = flatten_array(v) if flatten else reshape_array(v, self.shape)
-        # print(f"!!!!!!!!!=====> {v=}, {v.shape=}", flush=True)
         if index is not None:
-            # v = v[index]
-            # import xarray as xr
-            # v = xr.DataArray(v)[index].values
             v = outer_indexing(v, index)
 
         return v
