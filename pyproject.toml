@@ -65,11 +65,11 @@ optional-dependencies.docs = [
   "sphinx-tabs"
 ]
 optional-dependencies.ecmwf-opendata = ["ecmwf-opendata>=0.3.3"]
-optional-dependencies.fdb = ["pyfdb>=0.1"]
+optional-dependencies.fdb = ["pyfdb>=0.1,<1.0"]
 optional-dependencies.geo = ["earthkit-geo>=0.2"]
 optional-dependencies.geopandas = ["geopandas"]
 optional-dependencies.geotiff = ["pyproj", "rasterio", "rioxarray"]
-optional-dependencies.gribjump = ["pyfdb>=0.1", "pygribjump"]
+optional-dependencies.gribjump = ["pyfdb>=0.1,<1.0", "pygribjump"]
 optional-dependencies.iris = ["ncdata>=0.3.2", "scitools-iris"]
 optional-dependencies.mars = ["ecmwf-api-client>=1.6.1"]
 optional-dependencies.odb = ["pyodc"]
