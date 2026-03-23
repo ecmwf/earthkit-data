@@ -1,6 +1,14 @@
 Release notes
 =============
 
+Migration to version 1.0
+++++++++++++++++++++++++
+
+.. toctree::
+    :maxdepth: 1
+
+    deprecations_1
+
 Deprecated features
 +++++++++++++++++++++
 

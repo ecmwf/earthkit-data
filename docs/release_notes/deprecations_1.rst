@@ -5,10 +5,10 @@ Migration guide for 1.0.0
 from_source
 ----------------
 
-Returned data object
+The returned object
 +++++++++++++++++++++++
 
-The :func:`from_source` function now returns a **data object**. This object provides some basic information about the data but its primary goal is to convert it to a given representation for further work. The actual data loading is deferred as much as possible, until the data is converted into a given type.
+The return type of the :func:`from_source` function was changed and now it returns a :py:class:`Data` object. This object provides some basic information about the data but its primary goal is to convert it to a given representation for further work. The actual data loading is deferred as much as possible, until the data is converted into a given type.
 
 For example, when we read GRIB data with :func:`from_source`, it returns a data object that can be converted to a fieldlist with :meth:`to_fieldlist`. Previously, :func:`from_source` returned a fieldlist directly. E.g.:
 
@@ -29,18 +29,55 @@ New way:
     fl = ekd.from_source("file", "test6.grib").to_fieldlist()
 
 
-The read_all kwarg
+The available conversion types can be quickly accessed by calling :py:attr:`Data.available_types` on the returned object. E.g.:
+
+.. code-block:: python
+
+    import earthkit.data as ekd
+
+    data = ekd.from_source("file", "test6.grib")
+    print(data.available_types)
+    ['fieldlist', 'xarray', 'numpy']
+
+
+Examples:
+
+ -  :ref:`/examples/source/data.ipynb`
+
+
+The ``read_all`` kwarg
 +++++++++++++++++++++++
 
-Previously, data sources supporting streams had the ``read_all`` kwarg in :func:`from_source`. This is now removed and the same functionality can be achieved by passing ``read_all`` as a kwarg to :func:`from_source` directly. E.g.:
+Previously, we could use the ``read_all`` kwarg in :func:`from_source` when ``stream=True`` was also set (this latter is only available in sources supporting streams). This is now removed and the same functionality can be achieved by passing ``read_all`` as a kwarg to :func:`to_fieldlist`. E.g.:
 
 
-When set to ``True``, the returned data object will read all the data from the source and keep it in memory, so that it can be converted to a fieldlist multiple times without re-reading the source. When set to ``False`` (default), the returned data object will read only metadata from the source and defer reading the actual data until conversion to a fieldlist. In this case, once a fieldlist is generated, the source is consumed and cannot be used again for another conversion. E.g.:
+Old way:
+
+.. code-block:: python
+
+    import earthkit.data as ekd
+
+    url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test.grib"
+    fl = ekd.from_source("url", url, stream=True, read_all=True)
+
+New way:
+
+.. code-block:: python
+
+    import earthkit.data as ekd
+
+    url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test.grib"
+    fl = ekd.from_source("url", url, stream=True).to_fieldlist(read_all=True)
+
+
+See more details in :ref:`streams_read_all`.
+
+
 
 Concatenation
 ---------------
 
-Previously, concatenation used the ``+`` operator. This has been replaced with the ``concat`` function:
+Previously, fiedllists and some sources could be concatenated using the ``+`` operator. This has been replaced with the ``concat`` function:
 
 .. code-block:: python
 
@@ -48,11 +85,13 @@ Previously, concatenation used the ``+`` operator. This has been replaced with t
 
     ds3 = concat(ds1, ds2)
 
+Please note that ``+`` operator is used an arithmetic operator for Fields and Fieldlists, so it is still available but with a different meaning.
+
 
 Field
 -----------
 
-The Field API has been redesigned and many methods have been removed or changed. The following tables give an overview of the changes in the Field API:
+The Field API has been redesigned and many methods have been removed or changed. The following table gives an overview of the changes in the Field API:
 
 .. list-table::
    :header-rows: 1
@@ -60,103 +99,78 @@ The Field API has been redesigned and many methods have been removed or changed.
 
    * - Old API
      - New API
-     - Remark
-   * - values
-     - values
-     -
+     - Notes
    * - to_numpy()
      - to_numpy()
-     - Has copy=True kwarg now
+     - New kwarg: ``copy=True``
    * - to_array()
      - to_array()
-     - Has copy=True kwarg now
+     - New kwarg: ``copy=True``
    * - to_latlon()
      - N/A
-     - Use f.geography.latlons()
-
-       Returns tuple of arrays
+     - Use :func:`f.geography.latlons`. This returns a tuple of arrays (lats, lons).
    * - to_points()
      - N/A
-     - Use: f.geography.points(), f.geography.xys()
-
-       Returns tuple of arrays
+     - Use: :func:`f.geography.points`, :func:`f.geography.xys`. These functions return a tuple of arrays (x, y)
    * - grid_points()
      - N/A
-     - Use: f.geography.latlons()
-
-       Returns tuple of arrays
+     - Use: :func:`f.geography.latlons`.  This returns a tuple of arrays (lats, lons).
    * - projection()
      - N/A
-     - Use: f.geography.projection()
+     - Use: :func:`f.geography.projection`
    * - bounding_box()
      - N/A
-     - Use: f.geography.bounding_box()
+     - Use: :func:`f.geography.bounding_box`
    * - clone()
      - N/A
-     - Functionality not needed.
-
-       Use "set()" instead
+     - Functionality not needed. Use :func:`f.set` instead
    * - copy()
      - N/A
-     - Functionality not needed.
-
-       Use "set()" instead
+     - Functionality not needed. Use :func:`f.set` instead
    * - as_namespace()
      - N/A
      -
    * - datetime()
      - N/A
-     - f.time.base_datetime()
-
-       f.time.valid_datetime()
+     - Use :func:`f.time.base_datetime` and :func:`f.time.valid_datetime` instead.
    * - valid_datetime()
      - N/A
-     - Use the f.time.valid_datetime()
-
-       instead
+     - Use :func:`f.time.valid_datetime`
    * - base_datetime()
      - N/A
-     - Use the f.time.base_datetime()
-
-       instead
+     - Use :func:`f.time.base_datetime`
    * - metadata()
      - metadata()
-     - Has now limited scope. Can only access keys in the raw metadata belonging to the object the field was created from. E.g. for GRIB this works:
+     - Has limited scope now. Can only access keys in the raw metadata belonging to the object the field was created from. E.g. for GRIB this works:
 
-       f.metadata("shortName")
+        .. code-block:: python
 
-       But this does not (high level key):
+           f.metadata("shortName")
+           f.metadata("metadata.shortName")
 
-       f.metadata("parameter.variable")
-   * - MetaData object accessed buy calling metadata() without args/kwargs
+
+        When the key does not exist in the raw metadata, it raises a KeyError.
+   * - MetaData object accessed by calling metadata() without args/kwargs
      - N/A
      -
-   * -
-     - get()
-     - f.get("parameter.variable")
-
-       f.get(metadata.shortName")
    * - dump()
      - N/A
-     - Use: f.describe()
+     - Use: :func:`f.describe`
    * - describe()
-     - Still there but functionality changed. Similar to dump() before
-     -
-   * - message()
-     - message()
+     - Still exists but functionality changed.
      -
    * - handle
      - N/A
      -
    * - mars_area
      - N/A
-     - Use: f.geography.area()
+     - Use: :func:`f.geography.area`
    * - mars_grid
      - N/A
      -
    * - resolution
      - N/A
-     - N/A
+     -
    * - rotation
      - N/A
      - N/A
@@ -165,14 +179,17 @@ The Field API has been redesigned and many methods have been removed or changed.
      - N/A
    * - save()
      - N/A
-     - to_target()
+     - Use: :func:`f.to_target`
    * - write()
      - N/A
-     - to_target()
+     - Use: :func:`f.to_target`
 
 
 Fieldlist
 -----------
+
+The Field API has been redesigned and many methods have been removed or changed. The following table gives an overview of the changes in the Field API:
+
 
 .. list-table::
    :header-rows: 1
@@ -180,64 +197,42 @@ Fieldlist
 
    * - Old API
      - New API
-     - Remark
-   * - values
-     - values
-     -
-   * - data()
-     - data()
-     -
+     - Notes
    * - to_numpy()
      - to_numpy()
-     - Has copy=True kwarg now
+     - New kwarg: ``copy=True``
    * - to_array()
      - to_array()
-     - Has copy=True kwarg now
+     - New kwarg: ``copy=True``
    * - to_latlon()
      - N/A
-     - Use fl.geography.latlons()
-
-       Returns tuple of arrays
+     - Use :func:`fl.geography.latlons`. This returns a tuple of arrays (lats, lons)
    * - to_points()
      - N/A
-     - Use: fl.geography.points(), fl.geography.xys()
-
-       Returns tuple of arrays
+     - Use: :func:`fl.geography.points`, :func:`fl.geography.xys`. These functions return a tuple of arrays (x, y)
    * - projection()
      - N/A
-     - Use: fl.geography.projection()
+     - Use: :func:`fl.geography.projection`
    * - bounding_box()
      - N/A
-     - Use: fl.geography.bounding_box()
-   * -
-     - geography
-     - Returns the geography component of the first field, if all the fields have the same geography. Raises exception otherwise.
+     - Use: :func:`fl.geography.bounding_box`
    * - datetime()
      - N/A
      -
    * - metadata()
      - metadata()
-     - Has now limited scope. Can only access keys in the raw metadata belonging to the object the field was created from. E.g. for GRIB this works:
+     - Has limited scope now. Can only access keys in the raw metadata belonging to the object the field was created from. E.g. for GRIB this works:
 
-       fl.metadata("shortName")
+        .. code-block:: python
 
-       But this does not (high level key):
+           f.metadata("shortName")
+           f.metadata("metadata.shortName")
 
-       fl.metadata("parameter.variable")
-   * -
-     - get()
-     - fl.get("parameter.variable")
 
-       fl.get(metadata.shortName")
+        When the key does not exist in the raw metadata, it raises a KeyError.
    * - save()
      - N/A
-     - to_target()
+     - Use: :func:`f.to_target`
    * - write()
      - N/A
-     - to_target()
-   * - to_tensor()
-     - to_tensor()
-     -
-   * - cube()
-     - to_cube()
-     -
+     - Use: :func:`f.to_target`

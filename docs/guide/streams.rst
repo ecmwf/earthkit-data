@@ -61,6 +61,8 @@ Another option is to use :meth:`~data.core.fieldlist.FieldList.group_by` to iter
     len=3 [('t', 850), ('u', 850), ('v', 850)]
 
 
+.. _streams_read_all:
+
 Reading all the data into memory
 ----------------------------------
 
