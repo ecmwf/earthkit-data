@@ -179,14 +179,19 @@ CONFIG_AND_HELP = {
     "maximum-cache-size": _(
         None,
         """Maximum disk space used by the earthkit-data cache (e.g.: 100G or 2T).
-        Can be set to None.""",
+        When exceeded, earthkit-data evicts older cached entries until the usage
+        is below the specified limit. Can be set to None.
+        Ignored when ``cache-policy`` is ``off``.
+        See :ref:`caching` for more information.""",
         getter="_as_bytes",
         none_ok=True,
     ),
     "maximum-cache-disk-usage": _(
         "95%",
-        """Disk usage threshold after which earthkit-data expires older cached
-        entries (% of the full disk capacity). Can be set to None.
+        """Specify maximum disk usage as a percentage of the full disk capacity on the filesystem the
+        cache is located (e.g.: 90%). When the total disk usage exceeds this limit (it's not limited to the
+        cache usage alone), earthkit-data evicts older cached entries until the usage is below the
+        specified limit. Can be set to None. Ignored when ``cache-policy`` is ``off``.
         See :ref:`caching` for more information.""",
         getter="_as_percent",
         none_ok=True,
@@ -415,7 +420,12 @@ class Config:
             assert len(args) == 1
             assert len(kwargs) == 0
             value = args[0]
-            value = klass(value)
+            if value is not None:
+                if klass is bool:
+                    try:
+                        value = klass(value)
+                    except Exception as e:
+                        raise ValueError(f"Invalid value for config option '{name}': {value}") from e
 
         if klass is list:
             assert len(args) > 0

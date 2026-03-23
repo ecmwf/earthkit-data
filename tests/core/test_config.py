@@ -67,6 +67,31 @@ def test_config_invalid():
 @pytest.mark.parametrize(
     "param,set_value,stored_value,raise_error",
     [
+        ("check-out-of-date-urls", True, True, None),
+        ("check-out-of-date-urls", 1, True, None),
+        ("check-out-of-date-urls", 1.0, True, None),
+        ("check-out-of-date-urls", False, False, None),
+        ("check-out-of-date-urls", 0, False, None),
+        ("check-out-of-date-urls", 0.0, False, None),
+        ("check-out-of-date-urls", "true", True, None),
+        ("check-out-of-date-urls", "false", True, None),
+        ("check-out-of-date-urls", "1", True, None),
+        ("check-out-of-date-urls", "0", True, None),
+    ],
+)
+def test_config_set_bool(param, set_value, stored_value, raise_error):
+    with config.temporary():
+        if raise_error is None:
+            config.set(param, set_value)
+            assert config.get(param) == stored_value
+        else:
+            with pytest.raises(raise_error):
+                config.set(param, set_value)
+
+
+@pytest.mark.parametrize(
+    "param,set_value,stored_value,raise_error",
+    [
         ("number-of-download-threads", "A", "A", ValueError),
         ("url-download-timeout", 30, 30, None),
         ("url-download-timeout", "30", 30, None),
