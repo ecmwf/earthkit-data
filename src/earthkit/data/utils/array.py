@@ -109,14 +109,12 @@ def outer_indexing(v, indices):
     array-like
         Sub-selection of the array ``v`` according to ``indices``
     """
-    # print(f"======> outer_indexing({v=}, {indices=})", flush=True)
     if not isinstance(indices, tuple):
         indices = (indices,)
     full_slices = ()
     ndim = v.ndim
     for idx in indices:
         _1d_index = full_slices + (idx,)
-        # print(f"======> applying a[{_1d_index=}]", flush=True)
         v = v[_1d_index]
         v_ndim = v.ndim
         if v_ndim == ndim:

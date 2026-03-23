@@ -51,3 +51,26 @@ def test_xr_engine_daily_mean(allow_holes, kwargs):
         ds.resample({"valid_time": "24h"}).mean().groupby("valid_time.month") - monthly_mean_ds
     )
     assert np.allclose(np.abs(daily_anomaly_from_monthly_mean_ds).max()["2t"].values, 28.98466590143022)
+
+
+@pytest.mark.cache
+@pytest.mark.long_test
+@pytest.mark.timeout(60)
+def test_xr_engine_groupby_forecast_valid_time():
+    seas5_data = from_source(
+        "url",
+        "https://sites.ecmwf.int/repository/earthkit-data/test-data/seas5_2m_temperature_201501-201503_europe_1deg.grib",
+    )
+    seas5_data = seas5_data.to_fieldlist()
+    seas5_xr = seas5_data.to_xarray(
+        time_dim_mode="forecast",
+        add_valid_time_coord=True,
+    ).rename({"2t": "t2m"})
+
+    seas5_xr_mean = seas5_xr.groupby("valid_time.day").mean()
+    assert np.allclose(seas5_xr_mean.max()["t2m"].values, 288.32264709)
+
+    seas5_xr_mean2 = seas5_xr.sel(latitude=[50, 55, 60], longitude=[-10, 0, 10, 20]).groupby("valid_time.day").mean()
+    assert np.allclose(seas5_xr_mean2["latitude"].values, [50, 55, 60])
+    assert np.allclose(seas5_xr_mean2["longitude"].values, [-10, 0, 10, 20])
+    assert np.allclose(seas5_xr_mean2.max()["t2m"].values, 283.53151703)
