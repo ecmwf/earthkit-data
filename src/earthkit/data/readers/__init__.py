@@ -102,7 +102,6 @@ class Reader(Loader, Encodable, os.PathLike):
 
     def _path_info(self):
         if self.path and os.path.exists(self.path):
-
             from earthkit.data.utils.path_info import LoaderPathInfo
 
             return LoaderPathInfo(

@@ -13,11 +13,9 @@ import os
 
 import pytest
 
-from earthkit.data import concat
-from earthkit.data import from_source
+from earthkit.data import concat, from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.utils.testing import IN_GITHUB
-from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import IN_GITHUB, earthkit_examples_file
 
 
 @pytest.mark.skip(reason="Some runners crash in Xarray")

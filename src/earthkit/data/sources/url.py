@@ -172,8 +172,7 @@ class UrlBase(FileSource):
     ):
         super().__init__(filter=filter, merger=merger)
 
-        from earthkit.data.utils.url import UrlSpec
-        from earthkit.data.utils.url import UrlSpecItem
+        from earthkit.data.utils.url import UrlSpec, UrlSpecItem
 
         if isinstance(url, UrlSpecItem):
             self.url_spec = UrlSpec.from_urls(url)

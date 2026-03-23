@@ -11,8 +11,7 @@ import datetime
 import logging
 from collections import defaultdict
 
-from earthkit.data.core.index import Selection
-from earthkit.data.core.index import normalise_selection
+from earthkit.data.core.index import Selection, normalise_selection
 from earthkit.data.core.order import build_remapping
 from earthkit.data.indexing.indexed import IndexFieldListBase
 from earthkit.data.indexing.simple import SimpleFieldList

@@ -13,11 +13,8 @@ import datetime
 import numpy as np
 
 from earthkit.data import from_source
-from earthkit.data.utils.dates import to_datetime
-from earthkit.data.utils.dates import to_timedelta
-from earthkit.data.utils.testing import earthkit_examples_file
-from earthkit.data.utils.testing import earthkit_remote_test_data_file
-from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data.utils.dates import to_datetime, to_timedelta
+from earthkit.data.utils.testing import earthkit_examples_file, earthkit_remote_test_data_file, earthkit_test_data_file
 from earthkit.data.xr_engine.fieldlist import XArrayInputFieldList
 
 

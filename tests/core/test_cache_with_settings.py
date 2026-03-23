@@ -13,13 +13,10 @@ import os
 
 import pytest
 
-from earthkit.data import cache
-from earthkit.data import from_source
-from earthkit.data import settings
+from earthkit.data import cache, from_source, settings
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.utils.testing import earthkit_examples_file
-from earthkit.data.utils.testing import earthkit_remote_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file, earthkit_remote_examples_file
 
 
 def check_cache_files(dir_path, managed=True):
@@ -109,12 +106,10 @@ def test_cache_policy_setting():
 
             # cache = temporary with user defined root path
             with temp_directory() as root_dir:
-                with settings.temporary(
-                    {
-                        "cache-policy": "temporary",
-                        "temporary-cache-directory-root": root_dir,
-                    }
-                ):
+                with settings.temporary({
+                    "cache-policy": "temporary",
+                    "temporary-cache-directory-root": root_dir,
+                }):
                     assert settings.get("cache-policy") == "temporary"
                     assert settings.get("temporary-cache-directory-root") == root_dir
                     assert cache.policy.managed() is True
@@ -269,12 +264,10 @@ def test_cache_management_setting(policy):
                 settings.set({"cache-policy": "user", "user-cache-directory": tmp_dir_path})
                 assert cache.directory() == tmp_dir_path
             elif policy == "temporary":
-                settings.set(
-                    {
-                        "cache-policy": "temporary",
-                        "temporary-cache-directory-root": tmp_dir_path,
-                    }
-                )
+                settings.set({
+                    "cache-policy": "temporary",
+                    "temporary-cache-directory-root": tmp_dir_path,
+                })
                 assert os.path.dirname(cache.directory()) == tmp_dir_path
             else:
                 assert False

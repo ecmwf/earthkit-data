@@ -9,7 +9,7 @@
 
 
 def create_xarray_field(handle, variable, selection=None):
-    r"""Create a Field object from XArray"""
+    r"""Create a Field object from XArray."""
     pass
     # from earthkit.data.specs.geography import SimpleGeography
     # from earthkit.data.specs.labels import SimpleLabels

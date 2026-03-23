@@ -8,10 +8,8 @@
 #
 
 
-from abc import ABCMeta
-from abc import abstractmethod
-from typing import Any
-from typing import TypeAlias
+from abc import ABCMeta, abstractmethod
+from typing import Any, TypeAlias
 
 FieldComponent: TypeAlias = Any
 
@@ -195,10 +193,6 @@ class SimpleFieldComponentHandler(FieldComponentHandler):
     Parameters
     ----------
     component : Component
-
-    Attributes
-    ----------
-    component : Component
         The type of the specification object wrapped by the FieldComponent. To be
         defined in subclasses.
 
@@ -214,9 +208,9 @@ class SimpleFieldComponentHandler(FieldComponentHandler):
     COMPONENT_MAKER = None
 
     def __init__(self, component: Any) -> None:
-        assert isinstance(
-            component, self.COMPONENT_CLS
-        ), f"type(component)={type(component)}, expected {self.COMPONENT_CLS}"
+        assert isinstance(component, self.COMPONENT_CLS), (
+            f"type(component)={type(component)}, expected {self.COMPONENT_CLS}"
+        )
         self._component = component
 
     @classmethod

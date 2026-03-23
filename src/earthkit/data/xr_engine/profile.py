@@ -10,12 +10,11 @@
 import logging
 import os
 import threading
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
-from earthkit.data.utils import ensure_dict
-from earthkit.data.utils import ensure_iterable
 from earthkit.utils.decorators import thread_safe_cached_property
+
+from earthkit.data.utils import ensure_dict, ensure_iterable
 
 LOG = logging.getLogger(__name__)
 
@@ -140,7 +139,6 @@ class KeyVariable(ProfileVariable):
         ds: fieldlist
             FieldList object with cached metadata
         """
-
         self.variables = ds.index(self.key)
 
         if self.drop:
@@ -342,7 +340,7 @@ class Profile:
         opt = copy.deepcopy(PROFILE_CONF.defaults)
 
         def _deprec_array_module(data):
-            """Deprecated: use 'array_namespace' instead"""
+            """Deprecated: use 'array_namespace' instead."""
             if "array_module" in data:
                 import warnings
 
@@ -352,7 +350,7 @@ class Profile:
                     data["array_namespace"] = array_module
 
         def _deprec_array_backend(data):
-            """Deprecated: use 'array_namespace' instead"""
+            """Deprecated: use 'array_namespace' instead."""
             if "array_backend" in data:
                 import warnings
 
@@ -402,7 +400,7 @@ class Profile:
 
     @classmethod
     def to_docs(cls, name):
-        """Used to generate documentation"""
+        """Used to generate documentation."""
         import copy
 
         if name is None:

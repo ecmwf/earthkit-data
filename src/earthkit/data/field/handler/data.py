@@ -11,11 +11,11 @@ import math
 from abc import abstractmethod
 from typing import Any
 
-from earthkit.data.utils.array import flatten_array
 from earthkit.utils.array import array_namespace as eku_array_namespace
 
-from .core import FieldComponentHandler
-from .core import LazyFieldComponentHandler
+from earthkit.data.utils.array import flatten_array
+
+from .core import FieldComponentHandler, LazyFieldComponentHandler
 
 
 class BaseDataFieldComponentHandler(FieldComponentHandler):
@@ -35,7 +35,6 @@ class BaseDataFieldComponentHandler(FieldComponentHandler):
 
     @property
     def component(self):
-        """This component handler behaves like a component"""
         return self
 
     @property

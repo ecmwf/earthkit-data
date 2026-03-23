@@ -26,7 +26,8 @@ def create_fieldlist(fields=None):
 class FeatureList(Source, Encodable):
     """Base class for a FieldList.
 
-    A FieldList is a collection of Fields. It provides methods to access the field values and metadata."""
+    A FieldList is a collection of Fields. It provides methods to access the field values and metadata.
+    """
 
     @abstractmethod
     def __getitem__(self, index):

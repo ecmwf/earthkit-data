@@ -8,40 +8,39 @@
 #
 
 import logging
-from abc import ABC
-from abc import abstractmethod
-from typing import Any
-from typing import Dict
-from typing import Hashable
-from typing import Optional
-from typing import Tuple
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Hashable, Optional, Tuple
 
 import xarray as xr
 
 from earthkit.data.utils.dotdict import DotDict
 
-from .coordinates import Coordinate
-from .coordinates import DateCoordinate
-from .coordinates import EnsembleCoordinate
-from .coordinates import LatitudeCoordinate
-from .coordinates import LevelCoordinate
-from .coordinates import LongitudeCoordinate
-from .coordinates import PointCoordinate
-from .coordinates import ScalarCoordinate
-from .coordinates import StepCoordinate
-from .coordinates import TimeCoordinate
-from .coordinates import UnsupportedCoordinate
-from .coordinates import XCoordinate
-from .coordinates import YCoordinate
-from .coordinates import is_scalar
-from .grid import Grid
-from .grid import MeshedGrid
-from .grid import MeshedXYGrid
-from .grid import MeshProjectionGrid
-from .grid import UnstructuredGrid
-from .grid import UnstructuredProjectionGrid
-from .grid import UnstructuredXYGrid
-from .grid import XarrayGrid
+from .coordinates import (
+    Coordinate,
+    DateCoordinate,
+    EnsembleCoordinate,
+    LatitudeCoordinate,
+    LevelCoordinate,
+    LongitudeCoordinate,
+    PointCoordinate,
+    ScalarCoordinate,
+    StepCoordinate,
+    TimeCoordinate,
+    UnsupportedCoordinate,
+    XCoordinate,
+    YCoordinate,
+    is_scalar,
+)
+from .grid import (
+    Grid,
+    MeshedGrid,
+    MeshedXYGrid,
+    MeshProjectionGrid,
+    UnstructuredGrid,
+    UnstructuredProjectionGrid,
+    UnstructuredXYGrid,
+    XarrayGrid,
+)
 
 # CoordinateAttributes = namedtuple("CoordinateAttributes", ["axis", "name", "long_name", "standard_name", "units"])
 
@@ -599,7 +598,6 @@ class DefaultCoordinateGuesser(CoordinateGuesser):
         Optional[LongitudeCoordinate]
             The LongitudeCoordinate if matched, else None.
         """
-
         # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.12/cf-conventions.html#longitude-coordinate
 
         if attributes.standard_name == "longitude":
@@ -631,7 +629,6 @@ class DefaultCoordinateGuesser(CoordinateGuesser):
         Optional[LatitudeCoordinate]
             The LatitudeCoordinate if matched, else None.
         """
-
         # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.12/cf-conventions.html#latitude-coordinate
 
         if attributes.standard_name == "latitude":

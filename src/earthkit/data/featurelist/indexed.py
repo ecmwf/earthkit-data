@@ -9,9 +9,7 @@
 
 from collections import defaultdict
 
-from earthkit.data.core.index import Index
-from earthkit.data.core.index import MaskIndex
-from earthkit.data.core.index import MultiIndex
+from earthkit.data.core.index import Index, MaskIndex, MultiIndex
 from earthkit.data.core.order import build_remapping
 
 from .featurelist import FeatureList

@@ -10,9 +10,9 @@
 from abc import abstractmethod
 
 import numpy as np
+from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.featurelist.simple import IndexFeatureListBase
-from earthkit.utils.decorators import thread_safe_cached_property
 
 from .core import GeoJsonReaderBase
 

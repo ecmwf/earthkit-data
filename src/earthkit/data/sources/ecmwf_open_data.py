@@ -13,8 +13,7 @@ try:
 except ImportError:
     raise ImportError("ECMWF Open Data access requires 'ecmwf-opendata' to be installed")
 
-from earthkit.data.utils.request import FileRequestRetriever
-from earthkit.data.utils.request import RequestBuilder
+from earthkit.data.utils.request import FileRequestRetriever, RequestBuilder
 
 from .file import FileSource
 

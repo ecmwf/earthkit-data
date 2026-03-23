@@ -9,8 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data import from_object
-from earthkit.data import from_source
+from earthkit.data import from_object, from_source
 from earthkit.data.utils.testing import earthkit_test_data_file
 
 

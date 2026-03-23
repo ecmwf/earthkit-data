@@ -62,10 +62,7 @@ class UnknownStreamReader(UnknownReaderBase):
         super().__init__(source, **kwargs)
         if not self.skip_warning:
             LOG.warning(
-                (
-                    f"Unknown stream data type, no reader available. "
-                    f"magic={self.magic} content_type={self.content_type}"
-                )
+                (f"Unknown stream data type, no reader available. magic={self.magic} content_type={self.content_type}")
             )
 
 
@@ -74,8 +71,5 @@ class UnknownMemoryReader(UnknownReaderBase):
         super().__init__(source, **kwargs)
         if not self.skip_warning:
             LOG.warning(
-                (
-                    f"Unknown memory data type, no reader available. "
-                    f"magic={self.magic} content_type={self.content_type}"
-                )
+                (f"Unknown memory data type, no reader available. magic={self.magic} content_type={self.content_type}")
             )

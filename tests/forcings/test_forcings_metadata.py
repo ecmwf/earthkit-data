@@ -10,13 +10,8 @@
 #
 
 import datetime
-import os
-import sys
 
 import pytest
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
 from forcings_fixtures import load_forcings_fs  # noqa: E402
 
 

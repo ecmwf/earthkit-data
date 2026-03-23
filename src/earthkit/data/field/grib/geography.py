@@ -9,8 +9,7 @@
 import logging
 
 from earthkit.data.field.component.component import normalise_set_kwargs
-from earthkit.data.field.component.geography import BaseGeography
-from earthkit.data.field.component.geography import create_geography_from_dict
+from earthkit.data.field.component.geography import BaseGeography, create_geography_from_dict
 from earthkit.data.utils.grid import ECKIT_GRID_SUPPORT
 
 from .collector import GribContextCollector
@@ -227,7 +226,6 @@ class GribGeographyHandler(GribFieldComponentHandler):
 
         if keys == {"grid_spec"}:
             if not ECKIT_GRID_SUPPORT.has_ecc_grid_spec or not ECKIT_GRID_SUPPORT.has_grid:
-
                 handle = self._handle_from_grid_spec(self, kwargs["grid_spec"])
                 return GribGeographyHandler(handle)
 

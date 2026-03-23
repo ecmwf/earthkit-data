@@ -11,10 +11,7 @@ from abc import abstractmethod
 
 from earthkit.utils.units import Units
 
-from .component import SimpleFieldComponent
-from .component import component_keys
-from .component import mark_alias
-from .component import mark_get_key
+from .component import SimpleFieldComponent, component_keys, mark_alias, mark_get_key
 
 
 @component_keys

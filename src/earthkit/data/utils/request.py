@@ -10,12 +10,12 @@
 import itertools
 import logging
 import sys
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
+
+from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.utils import ensure_iterable
-from earthkit.utils.decorators import thread_safe_cached_property
 
 LOG = logging.getLogger(__name__)
 

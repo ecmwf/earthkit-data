@@ -10,21 +10,18 @@
 import functools
 import itertools
 import logging
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
-
-from earthkit.data.core.index import Selection
-from earthkit.data.core.index import normalise_selection
 from earthkit.utils.array import array_namespace as eku_array_namespace
+
+from earthkit.data.core.index import Selection, normalise_selection
 
 LOG = logging.getLogger(__name__)
 
 
 def coords_to_index(coords, shape) -> int:
-    """
-    Map user coords to field index"""
+    """Map user coords to field index."""
     index = 0
     n = 1
     for i in range(len(coords) - 1, -1, -1):
@@ -257,7 +254,7 @@ class TensorCore(metaclass=ABCMeta):
     def _check(self):
         if self._full_shape != self._user_shape + self._field_shape:
             raise ValueError(
-                (f"shape={self._full_shape} differs from expected shape=" f"{self._user_shape} + {self._field_shape}")
+                (f"shape={self._full_shape} differs from expected shape={self._user_shape} + {self._field_shape}")
             )
 
         shape = self._coords_shape(self._user_coords) + self._dims_shape(self._field_dims)

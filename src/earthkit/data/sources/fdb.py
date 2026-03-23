@@ -18,8 +18,7 @@ except ImportError:
 
 from earthkit.data.sources.file import FileSource
 from earthkit.data.sources.stream import StreamSource
-from earthkit.data.utils.request import RequestBuilder
-from earthkit.data.utils.request import RequestMapper
+from earthkit.data.utils.request import RequestBuilder, RequestMapper
 
 from . import Source
 

@@ -12,13 +12,10 @@
 import numpy as np
 import pytest
 
-from earthkit.data import concat
-from earthkit.data import from_source
+from earthkit.data import concat, from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.sources.stream import StreamFieldList
-from earthkit.data.utils.testing import ARRAY_BACKENDS
-from earthkit.data.utils.testing import earthkit_examples_file
-from earthkit.data.utils.testing import earthkit_remote_examples_file
+from earthkit.data.utils.testing import ARRAY_BACKENDS, earthkit_examples_file, earthkit_remote_examples_file
 
 
 def repeat_list_items(items, count):
@@ -230,16 +227,14 @@ def test_grib_from_stream_in_memory():
         # data
         assert ds.to_numpy().shape == expected_shape
 
-        ref = np.array(
-            [
-                272.56417847,
-                -6.28688049,
-                7.83348083,
-                272.53916931,
-                -4.89837646,
-                8.66096497,
-            ]
-        )
+        ref = np.array([
+            272.56417847,
+            -6.28688049,
+            7.83348083,
+            272.53916931,
+            -4.89837646,
+            8.66096497,
+        ])
 
         vals = ds.to_numpy()[:, 0, 0]
         assert np.allclose(vals, ref)
@@ -290,16 +285,14 @@ def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_sh
         # data
         assert ds.to_numpy(**convert_kwargs).shape == expected_shape
 
-        ref = np.array(
-            [
-                272.56417847,
-                -6.28688049,
-                7.83348083,
-                272.53916931,
-                -4.89837646,
-                8.66096497,
-            ]
-        )
+        ref = np.array([
+            272.56417847,
+            -6.28688049,
+            7.83348083,
+            272.53916931,
+            -4.89837646,
+            8.66096497,
+        ])
 
         if len(expected_shape) == 3:
             vals = ds.to_numpy(**convert_kwargs)[:, 0, 0]

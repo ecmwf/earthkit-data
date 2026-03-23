@@ -15,8 +15,7 @@ import logging
 import geopandas as gpd
 import pandas as pd
 
-from earthkit.data import from_object
-from earthkit.data import transform
+from earthkit.data import from_object, transform
 
 LOG = logging.getLogger(__name__)
 

@@ -67,9 +67,9 @@ def test_grib_tensor_core():
     ref_meta = (["t", 300], ["t", 400])
 
     for i in range(len(ref_meta)):
-        assert (
-            r[0, i].source[0].get(["parameter.variable", "vertical.level"]) == ref_meta[i]
-        ), f"{i=} ref_meta={ref_meta[i]}"
+        assert r[0, i].source[0].get(["parameter.variable", "vertical.level"]) == ref_meta[i], (
+            f"{i=} ref_meta={ref_meta[i]}"
+        )
 
     # this slice is a cube
     r = c[1:3, 0:2]
@@ -85,9 +85,9 @@ def test_grib_tensor_core():
     cnt = 0
     for par in range(2):
         for level in range(2):
-            assert (
-                r[par, level].source[0].get(["parameter.variable", "vertical.level"]) == ref_meta[cnt]
-            ), f"{cnt=} ref_meta={ref_meta[cnt]}"
+            assert r[par, level].source[0].get(["parameter.variable", "vertical.level"]) == ref_meta[cnt], (
+                f"{cnt=} ref_meta={ref_meta[cnt]}"
+            )
             cnt += 1
 
     # this slice is a cube
@@ -105,9 +105,9 @@ def test_grib_tensor_core():
     cnt = 0
     for par in range(1):
         for level in range(6):
-            assert (
-                r[par, level].source[0].get(["parameter.variable", "vertical.level"]) == ref_meta[cnt]
-            ), f"{cnt=} ref_meta={ref_meta[cnt]}"
+            assert r[par, level].source[0].get(["parameter.variable", "vertical.level"]) == ref_meta[cnt], (
+                f"{cnt=} ref_meta={ref_meta[cnt]}"
+            )
             cnt += 1
 
 

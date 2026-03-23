@@ -17,10 +17,8 @@ import pytest
 import yaml
 
 from earthkit.data import from_source
-from earthkit.data.core.temporary import temp_directory
-from earthkit.data.core.temporary import temp_env
-from earthkit.data.utils.testing import NO_GRIBJUMP
-from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data.core.temporary import temp_directory, temp_env
+from earthkit.data.utils.testing import NO_GRIBJUMP, earthkit_test_data_file
 
 
 @pytest.fixture
@@ -102,28 +100,26 @@ def mask():
 def arr_expected():
     import numpy as np
 
-    arr_expected = np.array(
+    arr_expected = np.array([
         [
-            [
-                1743.06591797,
-                1743.06591797,
-                1743.06591797,
-                1743.06591797,
-                1743.06591797,
-                1607.31591797,
-                1721.81591797,
-            ],
-            [
-                1641.43701172,
-                1641.43701172,
-                1641.43701172,
-                1641.43701172,
-                1641.43701172,
-                1702.31201172,
-                1887.18701172,
-            ],
-        ]
-    )
+            1743.06591797,
+            1743.06591797,
+            1743.06591797,
+            1743.06591797,
+            1743.06591797,
+            1607.31591797,
+            1721.81591797,
+        ],
+        [
+            1641.43701172,
+            1641.43701172,
+            1641.43701172,
+            1641.43701172,
+            1641.43701172,
+            1702.31201172,
+            1887.18701172,
+        ],
+    ])
     return arr_expected
 
 
@@ -132,50 +128,44 @@ def ds_expected_with_coords():
     import numpy as np
     import xarray as xr
 
-    arr_expected = np.array(
+    arr_expected = np.array([
         [
-            [
-                1743.06591797,
-                1743.06591797,
-                1743.06591797,
-                1743.06591797,
-                1743.06591797,
-                1607.31591797,
-                1721.81591797,
-            ],
-            [
-                1641.43701172,
-                1641.43701172,
-                1641.43701172,
-                1641.43701172,
-                1641.43701172,
-                1702.31201172,
-                1887.18701172,
-            ],
-        ]
-    )
-    latitude_expected = np.array(
+            1743.06591797,
+            1743.06591797,
+            1743.06591797,
+            1743.06591797,
+            1743.06591797,
+            1607.31591797,
+            1721.81591797,
+        ],
         [
-            90.0,
-            90.0,
-            90.0,
-            90.0,
-            90.0,
-            30.0,
-            30.0,
-        ]
-    )
-    longitude_expected = np.array(
-        [
-            0.0,
-            150.0,
-            180.0,
-            210.0,
-            240.0,
-            30.0,
-            60.0,
-        ]
-    )
+            1641.43701172,
+            1641.43701172,
+            1641.43701172,
+            1641.43701172,
+            1641.43701172,
+            1702.31201172,
+            1887.18701172,
+        ],
+    ])
+    latitude_expected = np.array([
+        90.0,
+        90.0,
+        90.0,
+        90.0,
+        90.0,
+        30.0,
+        30.0,
+    ])
+    longitude_expected = np.array([
+        0.0,
+        150.0,
+        180.0,
+        210.0,
+        240.0,
+        30.0,
+        60.0,
+    ])
     ds_expected = xr.Dataset(
         {"z": (("step", "index"), arr_expected)},
         coords={

@@ -6,8 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
 from earthkit.data.field.component.level_type import LevelTypes

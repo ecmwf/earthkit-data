@@ -9,20 +9,17 @@
 
 from collections import defaultdict
 
-from earthkit.data.core import Base
-from earthkit.data.core.order import Patch
-from earthkit.data.core.order import Remapping
-from earthkit.data.core.order import build_remapping
-from earthkit.data.decorators import normalise
-from earthkit.data.utils.args import metadata_argument_new
-from earthkit.data.utils.array import flatten_array
-from earthkit.data.utils.array import reshape_array
-from earthkit.data.utils.array import target_shape
-from earthkit.data.utils.compute import wrap_maths
 from earthkit.utils.array import array_namespace as eku_array_namespace
 from earthkit.utils.array import convert as convert_array
 from earthkit.utils.array.convert import convert_dtype
 from earthkit.utils.decorators import thread_safe_cached_property
+
+from earthkit.data.core import Base
+from earthkit.data.core.order import Patch, Remapping, build_remapping
+from earthkit.data.decorators import normalise
+from earthkit.data.utils.args import metadata_argument_new
+from earthkit.data.utils.array import flatten_array, reshape_array, target_shape
+from earthkit.data.utils.compute import wrap_maths
 
 GRIB = "grib"
 
@@ -564,6 +561,12 @@ class Field(Base):
             of the field is used. When ``keys`` is a single value only the
             array belonging to the key is returned.
 
+        See Also
+        --------
+        geography
+        to_numpy
+        value
+
         Examples
         --------
         - :ref:`/examples/grib/grib_lat_lon_value_ll.ipynb`
@@ -584,12 +587,6 @@ class Field(Base):
         (7, 12)
         >>> d[0, 0]  # first longitude
         0.0
-
-        See Also
-        --------
-        geography
-        to_numpy
-        values
 
         """
         _keys = dict(
@@ -1090,7 +1087,7 @@ class Field(Base):
             return None
 
     def _encode(self, encoder, hints=None, **kwargs):
-        """Double dispatch to the encoder"""
+        """Double dispatch to the encoder."""
         return encoder._encode_field(self, **kwargs)
 
     def to_field(self, array=True):
@@ -1151,13 +1148,15 @@ class Field(Base):
             contains the keys and values of that namespace. Otherwise the returned
             dict contains one item per namespace.
 
-        Examples
-        --------
-        :ref:`/examples/grib/grib_contents.ipynb`
 
         See Also
         --------
         dump
+
+
+        Examples
+        --------
+        :ref:`/examples/grib/grib_contents.ipynb`
 
         """
         if component is None or component == "":
@@ -1208,13 +1207,15 @@ class Field(Base):
             Dict-like object with one item per namespace. In a Jupyter notebook represented
             as a tabbed interface to browse the dump contents.
 
-        Examples
-        --------
-        :ref:`/examples/grib/grib_contents.ipynb`
 
         See Also
         --------
         namespace
+
+
+        Examples
+        --------
+        :ref:`/examples/grib/grib_contents.ipynb`
 
         """
         from earthkit.data.utils.summary import format_namespace_dump
@@ -1233,13 +1234,11 @@ class Field(Base):
         for ns, v in d1.items():
             # v = self.as_namespace(ns)
             if v:
-                r.append(
-                    {
-                        "title": ns if ns else "default",
-                        "data": v,
-                        "tooltip": f"Keys in the {ns} namespace",
-                    }
-                )
+                r.append({
+                    "title": ns if ns else "default",
+                    "data": v,
+                    "tooltip": f"Keys in the {ns} namespace",
+                })
 
         return format_namespace_dump(r, selected=DEFAULT_DESCRIBE_SELECTION, details=self.__class__.__name__, **kwargs)
 

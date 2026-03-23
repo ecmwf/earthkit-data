@@ -10,19 +10,16 @@
 #
 
 import math
-import os
-import sys
 
 import numpy as np
 import pytest
+from grib_fixtures import (
+    FL_NUMPY,  # noqa: E402
+    FL_TYPES,  # noqa: E402
+    load_grib_data,  # noqa: E402
+)
 
 from earthkit.data.utils.compute import apply_ufunc
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from grib_fixtures import FL_NUMPY  # noqa: E402
-from grib_fixtures import FL_TYPES  # noqa: E402
-from grib_fixtures import load_grib_data  # noqa: E402
 
 
 class ComputeOperand:
@@ -206,7 +203,7 @@ def test_grib_compute_pow(fl_type, operand):
     assert xp.allclose(res.values, ref, equal_nan=True)
 
 
-FieldOperand,
+(FieldOperand,)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)

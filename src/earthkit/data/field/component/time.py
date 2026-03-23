@@ -10,16 +10,16 @@
 from abc import abstractmethod
 
 from earthkit.data.core.constants import ZERO_TIMEDELTA
-from earthkit.data.utils.dates import datetime_from_date_and_time
-from earthkit.data.utils.dates import to_datetime
-from earthkit.data.utils.dates import to_timedelta
+from earthkit.data.utils.dates import datetime_from_date_and_time, to_datetime, to_timedelta
 
-from .component import SimpleFieldComponent
-from .component import component_keys
-from .component import mark_alias
-from .component import mark_get_key
-from .component import normalise_create_kwargs
-from .component import normalise_set_kwargs
+from .component import (
+    SimpleFieldComponent,
+    component_keys,
+    mark_alias,
+    mark_get_key,
+    normalise_create_kwargs,
+    normalise_set_kwargs,
+)
 
 
 @component_keys
@@ -301,7 +301,7 @@ class ForecastTime(BaseTime):
             ("base_datetime", "valid_datetime"): self._set_base_datetime_and_valid_datetime,
             (
                 "base_datetime",
-                "step" "valid_datetime",
+                "stepvalid_datetime",
             ): self._set_base_datetime_valid_datetime_and_step,
             ("base_date",): self._set_base_date_and_time,
             ("base_date", "base_time"): self._set_base_date_and_time,

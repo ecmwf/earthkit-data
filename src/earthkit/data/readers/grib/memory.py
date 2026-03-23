@@ -101,7 +101,9 @@ class GribMessageMemoryReader(GribMemoryReader):
 
 
 class GribStreamReader(GribMemoryReader):
-    """Wrapper around eccodes.Streamreader. The problem is that when iterating via
+    """Wrapper around eccodes.Streamreader.
+
+    The problem is that when iterating via
     the StreamReader it returns an eccodes.GRIBMessage that releases the handle when deleted.
     However, the handle has to be managed by earthkit-data so we access it directly
     using _next_handle
@@ -143,7 +145,7 @@ class GribStreamReader(GribMemoryReader):
 
 
 class GribFieldListInMemory(SimpleFieldList):
-    """Represent a GRIB field list in memory loaded lazily"""
+    """Represent a GRIB field list in memory loaded lazily."""
 
     def __init__(self, source, reader, *args, **kwargs):
         """The reader must support __next__."""

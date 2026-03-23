@@ -8,15 +8,16 @@
 #
 
 
-from earthkit.data.indexing.simple import SimpleFieldListBase
 from earthkit.utils.decorators import thread_safe_cached_property
+
+from earthkit.data.indexing.simple import SimpleFieldListBase
 
 from .core import DEFAULT_XARRAY_KWARGS
 from .reader import GeoTIFFReaderBase
 
 
 class GeoTIFFFieldList(SimpleFieldListBase, GeoTIFFReaderBase):
-    """A list of GeoTIFF bands"""
+    """A list of GeoTIFF bands."""
 
     def __init__(self, path, **kwargs):
         GeoTIFFReaderBase.__init__(self, self, path)

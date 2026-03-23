@@ -8,8 +8,7 @@
 #
 
 import math
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 from earthkit.data.data.wrappers import from_object
 

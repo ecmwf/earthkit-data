@@ -1,10 +1,10 @@
 - file: reduced_ll/swh_rll_global.grib1
   gridspec:
     area:
-      - 90.0
-      - 0.0
-      - -90.0
-      - 359.875
+    - 90.0
+    - 0.0
+    - -90.0
+    - 359.875
     grid: 0.125
     i_scans_negatively: 0
     j_points_consecutive: 0

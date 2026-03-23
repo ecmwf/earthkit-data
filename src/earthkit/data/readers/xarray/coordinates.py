@@ -11,11 +11,7 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Any
-from typing import Dict
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import numpy as np
 import xarray as xr

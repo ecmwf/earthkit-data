@@ -7,9 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.field.component.geography import BaseGeography
-from earthkit.data.field.component.geography import EmptyGeography
-from earthkit.data.field.component.geography import create_geography_from_dict
+from earthkit.data.field.component.geography import BaseGeography, EmptyGeography, create_geography_from_dict
 
 from .core import SimpleFieldComponentHandler
 

@@ -10,12 +10,13 @@
 import itertools
 import logging
 
+from earthkit.utils.decorators import thread_safe_cached_property
+
 from earthkit.data.indexing.stream import StreamFieldList
 
 # from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.readers import stream_reader
 from earthkit.data.sources.memory import MemoryBaseSource
-from earthkit.utils.decorators import thread_safe_cached_property
 
 from . import Source
 

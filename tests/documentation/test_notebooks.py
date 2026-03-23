@@ -13,10 +13,10 @@ import os
 import re
 
 import pytest
+from earthkit.utils.array.testing.testing import NO_TORCH
 from pytest_notebook.nb_regression import NBRegressionFixture
 
 from earthkit.data.utils.testing import earthkit_file
-from earthkit.utils.array.testing.testing import NO_TORCH
 
 fixture = NBRegressionFixture(exec_timeout=30)
 fixture.diff_color_words = False

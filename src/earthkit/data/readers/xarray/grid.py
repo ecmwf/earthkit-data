@@ -9,15 +9,13 @@
 
 
 import logging
-from abc import ABC
-from abc import abstractmethod
-from typing import Any
-from typing import Tuple
+from abc import ABC, abstractmethod
+from typing import Any, Tuple
 
 import numpy as np
+from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.utils.bbox import BoundingBox
-from earthkit.utils.decorators import thread_safe_cached_property
 
 LOG = logging.getLogger(__name__)
 
@@ -134,7 +132,6 @@ class MeshedGrid(LatLonGrid):
     @thread_safe_cached_property
     def latlons(self) -> Tuple[Any, Any]:
         """Get the grid points for the meshed grid."""
-
         if self.variable_dims == (self.lon.variable.name, self.lat.variable.name):
             lat, lon = np.meshgrid(
                 self.lat.variable.values,
@@ -227,7 +224,6 @@ class MeshedXYGrid(RawXYGrid):
     @thread_safe_cached_property
     def xys(self) -> Tuple[Any, Any]:
         """Get the grid points for the meshed grid."""
-
         if self.variable_dims == (self.x.variable.name, self.y.variable.name):
             y, x = np.meshgrid(
                 self.y.variable.values,
@@ -316,8 +312,7 @@ class ProjectionGrid(XYGrid):
         Any
             The transformer.
         """
-        from pyproj import CRS
-        from pyproj import Transformer
+        from pyproj import CRS, Transformer
 
         if isinstance(self.projection, dict):
             data_crs = CRS.from_cf(self.projection)

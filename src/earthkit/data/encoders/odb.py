@@ -8,12 +8,11 @@
 #
 #
 
-from . import Encoder
-from . import FilePathEncodedData
+from . import Encoder, FilePathEncodedData
 
 
 class ODBEncoder(Encoder):
-    """Encode ODB data"""
+    """Encode ODB data."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

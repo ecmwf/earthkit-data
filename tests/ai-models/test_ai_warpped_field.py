@@ -13,8 +13,7 @@ import logging
 
 import numpy as np
 
-from earthkit.data import SimpleFieldList
-from earthkit.data import from_source
+from earthkit.data import SimpleFieldList, from_source
 from earthkit.data.utils.testing import earthkit_examples_file
 
 LOG = logging.getLogger(__name__)

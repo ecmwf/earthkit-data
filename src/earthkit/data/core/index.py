@@ -11,15 +11,14 @@ import functools
 import logging
 from abc import abstractmethod
 
+from earthkit.utils.decorators import thread_safe_cached_property
+
 import earthkit.data
 from earthkit.data.core import Encodable
-from earthkit.data.core.order import build_remapping
-from earthkit.data.core.order import normalise_order_by
-from earthkit.data.core.select import normalise_selection
-from earthkit.data.core.select import selection_from_index
+from earthkit.data.core.order import build_remapping, normalise_order_by
+from earthkit.data.core.select import normalise_selection, selection_from_index
 from earthkit.data.sources import Source
 from earthkit.data.utils.unique import UniqueValuesCollector
-from earthkit.utils.decorators import thread_safe_cached_property
 
 LOG = logging.getLogger(__name__)
 
@@ -598,7 +597,6 @@ class Index(Source, Encodable):
         cache: bool, optional
             Whether to use a cached collector. Default is False.
         """
-
         keys = []
         for arg in args:
             if isinstance(arg, str):

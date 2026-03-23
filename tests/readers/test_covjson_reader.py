@@ -10,10 +10,8 @@
 #
 import pytest
 
-from earthkit.data import from_object
-from earthkit.data import from_source
-from earthkit.data.utils.testing import NO_COVJSONKIT
-from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data import from_object, from_source
+from earthkit.data.utils.testing import NO_COVJSONKIT, earthkit_test_data_file
 
 
 def test_covjson_1():

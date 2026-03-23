@@ -15,8 +15,7 @@ import numpy as np
 
 from earthkit.data.data import Data
 from earthkit.data.data.fieldlist import FieldListData
-from earthkit.data.decorators import cached_method
-from earthkit.data.decorators import normalise
+from earthkit.data.decorators import cached_method, normalise
 from earthkit.data.field.handler.data import DataFieldComponentHandler
 from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.utils.dates import to_datetime
@@ -207,7 +206,7 @@ def make_datetime(date, time):
         return date
     if date.hour or date.minute:
         raise ValueError(
-            (f"Duplicate information about time time={time}," f"and time={date.hour}:{date.minute} from date={date}")
+            (f"Duplicate information about time time={time},and time={date.hour}:{date.minute} from date={date}")
         )
     assert date.hour == 0, (date, time)
     assert date.minute == 0, (date, time)

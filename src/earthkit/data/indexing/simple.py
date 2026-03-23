@@ -9,9 +9,10 @@
 
 from abc import abstractmethod
 
+from earthkit.utils.decorators import thread_safe_cached_property
+
 from earthkit.data.core.field import Field
 from earthkit.data.data.fieldlist import FieldListData
-from earthkit.utils.decorators import thread_safe_cached_property
 
 from .indexed import IndexFieldListBase
 

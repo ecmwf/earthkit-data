@@ -18,9 +18,7 @@ from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.grid import ECKIT_GRID_SUPPORT
 from earthkit.data.utils.projections import Projection
 
-from .component import SimpleFieldComponent
-from .component import component_keys
-from .component import mark_get_key
+from .component import SimpleFieldComponent, component_keys, mark_get_key
 
 
 def create_geography_from_array(
@@ -114,7 +112,7 @@ def create_geography_from_array(
 
             else:
                 raise ValueError(
-                    ("Number of points do not match expected size. " f"Expected=({expected_size}), got={lat.size}")
+                    (f"Number of points do not match expected size. Expected=({expected_size}), got={lat.size}")
                 )
         else:
             shape = lat.shape

@@ -11,9 +11,7 @@ import logging
 
 from earthkit.data import from_object
 
-from . import EncodedData
-from . import Encoder
-from . import FilePathEncodedData
+from . import EncodedData, Encoder, FilePathEncodedData
 
 LOG = logging.getLogger(__name__)
 

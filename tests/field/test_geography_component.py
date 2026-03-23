@@ -155,12 +155,10 @@ def test_geography_component_set(input_d, ref):
     lat_orig = np.array([-10.0, 0.0, 10.0])
     lon_orig = np.array([20.0, 40.0, 60.0])
 
-    r = LatLonGeography.from_dict(
-        {
-            "latitudes": np.array(lat_orig, copy=True),
-            "longitudes": np.array(lon_orig, copy=True),
-        }
-    )
+    r = LatLonGeography.from_dict({
+        "latitudes": np.array(lat_orig, copy=True),
+        "longitudes": np.array(lon_orig, copy=True),
+    })
 
     if not isinstance(input_d, list):
         input_d = [input_d]

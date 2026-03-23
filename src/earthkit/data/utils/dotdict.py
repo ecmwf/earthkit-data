@@ -117,7 +117,6 @@ class DotDict(dict):
         DotDict
             The created DotDict.
         """
-
         with open(path, "r") as file:
             data = json.load(file)
 

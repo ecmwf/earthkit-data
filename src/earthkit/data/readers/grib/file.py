@@ -7,10 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.utils.decorators import thread_safe_cached_property
+
 from earthkit.data.indexing.simple import SimpleFieldListBase
 from earthkit.data.sources import Source
 from earthkit.data.utils.parts import Part
-from earthkit.utils.decorators import thread_safe_cached_property
 
 from .core import GRIBReaderBase
 from .scan import GribCodesMessagePositionIndex

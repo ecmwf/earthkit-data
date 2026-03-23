@@ -11,19 +11,19 @@ from . import Translator
 
 
 class PandasTranslator(Translator):
-    """Translator class for pandas `DataFrame` and `Series`"""
+    """Translator class for pandas `DataFrame` and `Series`."""
 
     def __init__(self, data, *args, **kwargs):
         super().__init__(data.to_pandas(*args, **kwargs))
 
 
 class PandasSeriesTranslator(PandasTranslator):
-    """Translator class for pandas `Series`"""
+    """Translator class for pandas `Series`."""
 
     _name = "pandas.Series"
 
     def __call__(self):
-        """Series requested, if DataFrame return the first column"""
+        """Series requested, if DataFrame return the first column."""
         import pandas as pd
 
         if isinstance(self._data, pd.DataFrame):
@@ -33,7 +33,7 @@ class PandasSeriesTranslator(PandasTranslator):
 
 
 class PandasDataFrameTranslator(PandasTranslator):
-    """Translator class for pandas `DataFrame`"""
+    """Translator class for pandas `DataFrame`."""
 
     def __call__(self):
         """Return DataFrame, if Series convert to DataFrame."""
@@ -46,7 +46,7 @@ class PandasDataFrameTranslator(PandasTranslator):
 
 
 class GeoPandasDataFrameTranslator(PandasTranslator):
-    """Translator class for geopandas `DataFrame`"""
+    """Translator class for geopandas `DataFrame`."""
 
     def __call__(self):
         """Return GeoDataFrame, if normal pandas convert to geopandas."""

@@ -21,23 +21,23 @@ class NetCDFData(SourceData):
         pass
 
     def to_fieldlist(self, *args, **kwargs):
-        """Convert into a field list"""
+        """Convert into a field list."""
         return self._reader.to_fieldlist(*args, **kwargs)
 
     def to_xarray(self, *args, **kwargs):
-        """Convert into an xarray dataset"""
+        """Convert into an xarray dataset."""
         return self._reader.to_xarray(*args, **kwargs)
 
     def to_pandas(self, *args, **kwargs):
-        """Convert into a pandas dataframe"""
+        """Convert into a pandas dataframe."""
         pass
 
     def to_numpy(self, *args, **kwargs):
-        """Convert into a numpy array"""
+        """Convert into a numpy array."""
         return self._reader.to_numpy(*args, **kwargs)
 
     def to_array(self, *args, **kwargs):
-        """Convert into an array (other than numpy)"""
+        """Convert into an array (other than numpy)."""
         return self._reader.to_array(*args, **kwargs)
 
     def _default_encoder(self):

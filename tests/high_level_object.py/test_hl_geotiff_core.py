@@ -12,8 +12,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.utils.testing import NO_RIOXARRAY
-from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import NO_RIOXARRAY, earthkit_test_data_file
 
 
 @pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")

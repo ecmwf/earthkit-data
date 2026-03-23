@@ -8,9 +8,7 @@
 #
 
 
-from earthkit.data.field.component.time import BaseTime
-from earthkit.data.field.component.time import EmptyTime
-from earthkit.data.field.component.time import create_time
+from earthkit.data.field.component.time import BaseTime, EmptyTime, create_time
 
 from .core import SimpleFieldComponentHandler
 

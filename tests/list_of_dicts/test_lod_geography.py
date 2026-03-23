@@ -9,15 +9,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import numpy as np
 import pytest
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-
 from lod_fixtures import build_lod_fieldlist  # noqa: E402
 
 

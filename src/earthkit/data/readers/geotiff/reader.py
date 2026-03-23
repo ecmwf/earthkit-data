@@ -10,8 +10,7 @@
 
 from earthkit.data.sources import Source
 
-from .core import DEFAULT_XARRAY_KWARGS
-from .core import GeoTIFFReaderBase
+from .core import DEFAULT_XARRAY_KWARGS, GeoTIFFReaderBase
 
 
 class GeoTIFFReader(Source, GeoTIFFReaderBase):
