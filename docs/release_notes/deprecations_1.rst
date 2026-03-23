@@ -29,7 +29,7 @@ New way:
     fl = ekd.from_source("file", "test6.grib").to_fieldlist()
 
 
-The available conversion types can be quickly accessed by calling :py:attr:`Data.available_types` on the returned object. E.g.:
+The list of available conversion types can be quickly get by calling :py:attr:`Data.available_types` on the returned object. E.g.:
 
 .. code-block:: python
 
@@ -37,7 +37,18 @@ The available conversion types can be quickly accessed by calling :py:attr:`Data
 
     data = ekd.from_source("file", "test6.grib")
     print(data.available_types)
-    ['fieldlist', 'xarray', 'numpy']
+    ['fieldlist', 'xarray', 'pandas', 'numpy']
+
+Then we can call any of the corresponding ``to_*`` methods to convert the data to the desired type. E.g. to convert to an Xarray Dataset we can do:
+
+
+.. code-block:: python
+
+    import earthkit.data as ekd
+
+    data = ekd.from_source("file", "test6.grib")
+    ds = data.to_xarray()
+
 
 
 Examples:
@@ -90,6 +101,45 @@ Please note that ``+`` operator is used an arithmetic operator for Fields and Fi
 
 Field
 -----------
+
+The Field is now not polymorphic but is made up of polymorphic components using format independent metadata. So far the following components are implemented:
+
+- parameter
+- time
+- vertical
+- geography
+- ensemble
+- proc
+- labels
+
+Each component has its own set of metadata keys and methods. There are two ways to access the related values from the components:
+
+.. code-block:: python
+
+    # use the get() method
+    f.get("time.base_datetime")
+
+    # use the key method on the component
+    f.time.base_datetime()
+
+Raw metadata keys are still available but they are only accessible either by using the "metadata." prefix in :func:`get` or through the :func:`metadata` method. E.g. if the Field was created from a GRIB message, we can access the "shortName" key from the raw metadata like this:
+
+.. code-block:: python
+
+    f.get("metadata.shortName")
+    f.metadata("shortName")
+    f.metadata("metadata.shortName")
+
+
+Notebook examples
+++++++++++++++++++++++++
+
+- :ref:`/examples/field/field.ipynb`
+
+
+Changes in the Field API
+++++++++++++++++++++++++
+
 
 The Field API has been redesigned and many methods have been removed or changed. The following table gives an overview of the changes in the Field API:
 
