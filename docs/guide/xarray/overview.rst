@@ -3,7 +3,7 @@
 Xarray engine: overview
 ////////////////////////
 
-Earthkit-data comes with its own Xarray engine called "earthkit" to perform conversions between :ref:`grib` and Xarray data.
+Earthkit-data comes with its own Xarray engine called "earthkit" to convert :ref:`fieldlist`\_s to Xarray.
 
 Creating Xarray from GRIB
 --------------------------
@@ -16,7 +16,7 @@ We can convert :ref:`grib` data into an Xarray dataset by using :py:meth:`~data.
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> ds_fl = ekd.from_source("sample", "pl.grib")
+    >>> ds_fl = ekd.from_source("sample", "pl.grib").to_fieldlist()
     >>> ds_xr = ds_fl.to_xarray()
     >>> ds_xr
     <xarray.Dataset> Size: 176kB

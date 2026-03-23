@@ -94,7 +94,6 @@ file
   :param parts: the :ref:`parts <parts>` to read from the file(s) specified by ``path``. Cannot be used when ``path`` already defines the :ref:`parts <parts>`.
   :type parts: pair, list or tuple of pairs, None
   :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Directories and archives are supported. Stream based access is only available for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`. *New in version 0.11.0*
-  :param bool read_all: if ``True``, all the data is read straight to memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.11.0*
 
 
   The ``path`` can be used in a flexible way:
@@ -104,13 +103,13 @@ file
       import earthkit.data as ekd
 
       # UNIX globbing is allowed by default
-      ds = ekd.from_source("file", "path/to/t_*.grib")
+      d = ekd.from_source("file", "path/to/t_*.grib")
 
       # list of files can be specified
-      ds = ekd.from_source("file", ["path/to/f1.grib", "path/to/f2.grib"])
+      d = ekd.from_source("file", ["path/to/f1.grib", "path/to/f2.grib"])
 
       # a path can be a directory, in this case it is recursively scanned for supported files
-      ds = ekd.from_source("file", "path/to/dir")
+      d = ekd.from_source("file", "path/to/dir")
 
 
   The following examples use parts:
@@ -120,10 +119,10 @@ file
       import earthkit.data as ekd
 
       # reading only certain parts (byte ranges) from a single file
-      ds = ekd.from_source("file", "my.grib", parts=[(0, 150), (400, 160)])
+      d = ekd.from_source("file", "my.grib", parts=[(0, 150), (400, 160)])
 
       # reading only certain parts (byte ranges) from multiple files
-      ds = ekd.from_source(
+      d = ekd.from_source(
           "file",
           [
               ("a.grib", (0, 150)),
@@ -176,8 +175,7 @@ hive_partioning=False
         import datetime
         import earthkit.data as ekd
 
-        # ds is a fieldlist
-        ds = ekd.from_source(
+        d = ekd.from_source(
             "file-pattern",
             "path/to/data-{my_date:date(%Y-%m-%d)}-{run_time}-{param}.grib",
             {
@@ -201,7 +199,7 @@ hive_partioning=False
 hive_partioning=True
 /////////////////////////////
 
-    When ``hive_partitioning`` is ``True``, the ``pattern`` defines a Hive partitioning with each pattern parameter interpreted as a metadata key. The returned object has a limited scope only supporting the :meth:`sel` method. Calling any of these methods will trigger a filesystem scan for all the matching files. During this scan, if the required metadata is present in the pattern no files will be opened at all to extract their metadata, which can be an enormous optimisation. Another advantage is that during the scan entire file system branches can be skipped based simply on inspecting the actual file path.
+    When ``hive_partitioning`` is ``True``, the ``pattern`` defines a Hive partitioning with each pattern parameter interpreted as a metadata key. The returned object has a limited scope, we need to call :meth:`to_fieldlist` with the filter conditions to trigger a filesystem scan for all the matching files. During this scan, if the required metadata is present in the pattern no files will be opened at all to extract their metadata, which can be an enormous optimisation. Another advantage is that during the scan entire file system branches can be skipped based simply on inspecting the actual file path.
 
     Pattern values are optional, but can be still specified to restrict the search to a specific set of values.
 
@@ -233,9 +231,8 @@ hive_partioning=True
         import datetime
         import earthkit.data as ekd
 
-        # At this point nothing is scanned/read yet. ds only has the
-        # sel() method.
-        ds = from_source(
+        # At this point nothing is scanned/read yet.
+        d = from_source(
             "file-pattern", "mydir/{date}/myfile_{param}.grib", hive_partitioning=True
         )
 
@@ -244,7 +241,7 @@ hive_partioning=True
         # "mydir/20230101/" sub-directory and non of the GRIB files will be
         # opened to extract their metadata. The returned object will
         # be a Fieldlist.
-        ds1 = ds.sel(date="20230101", param=["t", "r"])
+        fl = d.to_fieldlist(date="20230101", param=["t", "r"])
 
 
 Further examples:
@@ -257,7 +254,7 @@ Further examples:
 url
 ---
 
-.. py:function:: from_source("url", url, unpack=True, parts=None, stream=False, read_all=False)
+.. py:function:: from_source("url", url, unpack=True, parts=None, stream=False)
   :noindex:
 
   The ``url`` source will download the data from the address specified and store it in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
@@ -268,17 +265,16 @@ url
   :param parts: the :ref:`parts <parts>` to read from the resource(s) specified by ``url``. Cannot be used when ``url`` already defines the :ref:`parts <parts>`.
   :type parts: pair, list or tuple of pairs, None
   :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs. See details about streams :ref:`here <streams>`.
-  :param bool read_all: if ``True``, all the data is read straight to memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
   :param dict **kwargs: other keyword arguments specifying the request
 
   .. code-block:: python
 
       >>> import earthkit.data as ekd
-      >>> ds = ekd.from_source(
+      >>> fl = ekd.from_source(
       ...     "url",
       ...     "https://sites.ecmwf.int/repository/earthkit-data/examples/test4.grib",
-      ... )
-      >>> ds.ls()
+      ... ).to_fieldlist()
+      >>> fl.ls()
         centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
       0   ecmf         t  isobaricInhPa    500  20070101      1200         0       an       0  regular_ll
       1   ecmf         z  isobaricInhPa    500  20070101      1200         0       an       0  regular_ll
@@ -288,12 +284,12 @@ url
   .. code-block:: python
 
       >>> import earthkit.data as ekd
-      >>> ds = ekd.from_source(
+      >>> fl = ekd.from_source(
       ...     "url",
       ...     "https://sites.ecmwf.int/repository/earthkit-data/examples/test4.grib",
       ...     parts=[(0, 130428), (260856, 130428)],
-      ... )
-      >>> ds.ls()
+      ... ).to_fieldlist()
+      >>> fl.ls()
         centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
       0   ecmf         t  isobaricInhPa    500  20070101      1200         0       an       0  regular_ll
       1   ecmf         t  isobaricInhPa    850  20070101      1200         0       an       0  regular_ll
@@ -325,7 +321,7 @@ url-pattern
 
       import earthkit.data as ekd
 
-      ds = ekd.from_source(
+      d = ekd.from_source(
           "url-pattern",
           "https://www.example.com/data-{foo}-{bar}-{qux}.csv",
           foo=[1, 2, 3],
@@ -364,8 +360,8 @@ sample
   .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> ds = ekd.from_source("sample", "storm_ophelia_wind_850.grib")
-    >>> ds.ls()
+    >>> fl = ekd.from_source("sample", "storm_ophelia_wind_850.grib").to_fieldlist()
+    >>> fl.ls()
       centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
     0   ecmf         u  isobaricInhPa    850  20171016         0         0       an       0  regular_ll
     1   ecmf         v  isobaricInhPa    850  20171016         0         0       an       0  regular_ll
@@ -377,14 +373,13 @@ sample
 stream
 --------------
 
-.. py:function:: from_source("stream", stream, read_all=False)
+.. py:function:: from_source("stream", stream)
   :noindex:
 
   The ``stream`` source will read data from a stream (or streams), which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment it only works for :ref:`grib` and CoverageJson data. For more details see :ref:`here <streams>`.
 
   :param stream: the stream(s)
   :type stream: stream, list, tuple
-  :param bool read_all: if ``True``, all the data is read into memory from a stream. Used when ``stream=True``. *New in version 0.8.0*
 
   In the examples below, for simplicity, we create a file stream from a :ref:`grib` file. By default :ref:`from_source() <data-sources-stream>` returns an object that can only be used as an iterator.
 
@@ -392,10 +387,10 @@ stream
 
       >>> import earthkit.data as ekd
       >>> stream = open("docs/examples/test4.grib", "rb")
-      >>> ds = ekd.from_source("stream", stream)
+      >>> fl = ekd.from_source("stream", stream).to_fieldlist()
 
       # f is a GribField
-      >>> for f in ds:
+      >>> for f in fl:
       ...     print(f)
       ...
       GribField(t,500,20070101,1200,0,0)
@@ -409,11 +404,11 @@ stream
 
       >>> import earthkit.data as ekd
       >>> stream = open("docs/examples/test4.grib", "rb")
-      >>> ds = ekd.from_source("stream", stream, batch_size=2)
+      >>> fl = ekd.from_source("stream", stream).to_fieldlist()
 
        # f is a FieldList
-      >>> for f in ds.batched(2):
-      ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
+      >>> for f in fl.batched(2):
+      ...     print(f"len={len(f)} {f.get(('parameter.variable', 'vertical.level'))}")
       ...
       len=2 [('t', 500), ('z', 500)]
       len=2 [('t', 850), ('z', 850)]
@@ -425,29 +420,15 @@ stream
 
       >>> import earthkit.data as ekd
       >>> stream = open("docs/examples/test4.grib", "rb")
-      >>> ds = ekd.from_source("stream", stream)
+      >>> fl = ekd.from_source("stream", stream).to_fieldlist()
 
       # f is a FieldList
-      >>> for f in ds.group_by("level"):
-      ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
+      >>> for f in fl.group_by("vertical.level"):
+      ...     print(f"len={len(f)} {f.get(('parameter.variable', 'vertical.level'))}")
       ...
       len=2 [('t', 500), ('z', 500)]
       len=2 [('t', 850), ('z', 850)]
 
-  We can consume the whole stream and load all the data into memory by using ``read_all=True`` in :ref:`from_source() <data-sources-stream>`. **Use this option carefully!**
-
-    .. code-block:: python
-
-      >>> import earthkit.data as ekd
-      >>> stream = open("docs/examples/test4.grib", "rb")
-      >>> ds = ekd.from_source("stream", stream, read_all=True)
-
-      # ds is empty at this point, but calling any method on it will
-      # consume the whole stream
-      >>> len(ds)
-      4
-
-      # now ds stores all the messages in memory
 
   See the following notebook examples for further details:
 
@@ -473,10 +454,10 @@ memory
       # buffer storing a GRIB message
       buffer = ...
 
-      ds = ekd.from_source("memory", bufr)
+      fl = ekd.from_source("memory", buffer).to_fieldlist()
 
-      # f is the only GribField in ds
-      f = ds[0]
+      # f is the only GribField in fl
+      f = fl[0]
 
 
   Please note that if the given input can be read as a stream we can also use the :ref:`stream source <data-sources-stream>` to read the ``buffer`` using ``io.BytesIO``. The equivalent code to the example above using a stream is as follows:
@@ -490,10 +471,10 @@ memory
       buffer = ...
       stream = io.BytesIO(buffer)
 
-      ds = ekd.from_source("stream", stream, real_all=True)
+      fl = ekd.from_source("stream", stream).to_fieldlist(read_all=True)
 
-      # f is the only GribField in ds
-      f = ds[0]
+      # f is the only GribField in fl
+      f = fl[0]
 
 
 .. _data-sources-forcings:
@@ -504,7 +485,7 @@ forcings
 .. py:function:: from_source("forcings", source_or_dataset=None, *, request={}, **kwargs)
   :noindex:
 
-  :param source_or_dataset: the input data. It can the object returned from :py:func:`from_source` or a FieldLists. If it is None a :ref:`data-sources-lod` source is built from the ``request``. The first field in this data is used a template to build the forcing fields.
+  :param source_or_dataset: the input data. It can the object returned from :py:func:`from_source` or a FieldList. If it is None a :ref:`data-sources-lod` source is built from the ``request``. The first field in this data is used a template to build the forcing fields.
   :type source_or_dataset: Source, FieldList or None
   :param request: specify the request
   :type request: dict
@@ -522,79 +503,7 @@ list-of-dicts
   :noindex:
 
   The ``list-of-dicts`` source will read data from a list of dictionaries. Each dictionary represents a single field and
-  the result is a FieldList consisting of ArrayField fields.
-
-  .. note::
-
-    No attempt is made to represent the fields internally as GRIB messages, so field functionalities are limited,
-    and some of them may not work at all. The fields cannot be saved to a GRIB file.
-
-  The only **required** key for a dictionary is "values", which represents the data values. It can be a list, tuple or an ndarray.
-  All the other keys define the **metadata** and are optional. However, many field functionalities require the existence
-  of specific keys (see below).
-
-  The keys that might be interpreted internally can be grouped into the following categories:
-
-  Geography keys:
-
-    - "latitudes": the latitudes, iterable or ndarray
-    - "longitudes": the longitudes, iterable or ndarray
-    - "distinctLatitudes": the distinct latitudes, iterable or ndarray
-    - "distinctLongitudes": the distinct longitudes, iterable or ndarray
-
-    These keys are required to make any geography related field functionalities work
-    (e.g. :py:meth:`to_latlon`). The role of the keys depends on the grid type:
-
-    - structured grids: "latitudes" and "longitudes" can define the distinct
-      latitudes and longitudes or the full grid. The keys "distinctLatitudes" and "distinctLongitudes" are
-      only used when "latitudes" and "longitudes" are not present and in this
-      case they define the distinct latitudes and longitudes.
-    - other grids: "latitudes" and "longitudes" must have the same number of points as "values".
-
-    When other GRIB related geography keys are present, no attempt is made to check if they are consistent
-    with the grid defined by "latitudes" and "longitudes". Therefore their usage is strongly discouraged.
-
-    See: :ref:`/examples/dict/list_of_dicts_geography.ipynb` for more details.
-
-  Parameter keys:
-
-    - "param": the parameter name, alias to "shortName" if missing. Must be a str.
-    - "shortName": the parameter name, alias to "param" if missing. Must be a str.
-
-  Temporal keys:
-
-    - "date": the date part of the forecast reference time. Must be an int as YYYYMMDD
-      (the same format as the "date" ecCodes GRIB key).
-    - "time": the time part of the forecast reference time. Must be an int as hhmm with leading zeros omitted
-      (the same format as the "time" ecCodes GRIB key).
-    - "dataDate": alias to "date"
-    - "dataTime": alias to "time"
-    - "forecast_reference_time": the forecast reference time. Must be a datetime object. If not present
-      it is automatically built from "date" and "time" or from "valid_datetime" and "step".
-    - "base_datetime": alias to "forecast_reference_time"
-    - "valid_datetime": the valid datetime. Must be a datetime object. If not present
-      it is automatically built from "forecast_reference_time" and "step".
-    - "step": the forecast step. If it is an int, it specifies the number of hours. If it is a str it must
-      use the same format as the "step" ecCodes GRIB key. Can be a timedelta object.
-    - "step_timedelta": the step timedelta. Must be a timedelta object. If not present
-      it is automatically built from "step".
-
-  Level keys:
-
-    - "level": the level value. Must be a number.
-    - "levelist": the level value. Must be a number.
-    - "typeOfLevel": the type of level. Must be a str.
-    - "levtype": the type of level. Must be a str.
-
-    These keys are supposed to be the same as the corresponding GRIB keys.
-
-  Ensemble keys:
-
-    - "number": the ensemble member number. Must be an int.
-
-  Other keys:
-
-    Other keys can be used to store additional metadata.
+  the result is a FieldList.
 
   Further examples:
 
@@ -661,7 +570,7 @@ ads
 
       import earthkit.data as ekd
 
-      ds = ekd.from_source(
+      d = ekd.from_source(
           "ads",
           "cams-global-reanalysis-eac4",
           request=dict(
@@ -716,7 +625,7 @@ cds
 
       import earthkit.data as ekd
 
-      ds = ekd.from_source(
+      d = ekd.from_source(
           "cds",
           "reanalysis-era5-single-levels",
           request=dict(
@@ -779,7 +688,7 @@ ecmwf-open-data
 
       import earthkit.data
 
-      ds = earthkit.data.from_source(
+      d = earthkit.data.from_source(
           "ecmwf-open-data",
           requests=dict(param=["2t", "msl"], levtype="sfc", step=[0, 6, 12]),
       )
@@ -797,7 +706,7 @@ ecmwf-open-data
 fdb
 ---
 
-.. py:function:: from_source("fdb", *args, config=None, userconfig=None, request=None, stream=True, read_all=False, lazy=False, **kwargs)
+.. py:function:: from_source("fdb", *args, config=None, userconfig=None, request=None, stream=True, lazy=False, **kwargs)
   :noindex:
 
   The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
@@ -809,7 +718,6 @@ fdb
   :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests, but current only one request is supported. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
-  :param bool read_all: if ``True``, all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
   :param bool lazy: if ``True``, the data is read in a lazy way. This means the following:
 
     - GRIB data is not retrieved until it is explicitly/implictly requested for a given field
@@ -818,7 +726,7 @@ fdb
     - the retrieved GRIB data is not cached (either in memory or on disk) but gets deleted as soon as the data values are extracted. Repeated request for the data values will trigger a new retrieval.
     - the resulting :py:class:`FieldList` always retrives one GRIB field as a reference and stores it in memory throughout the lifetime of the :py:class:`FieldList`. This is managed internally.
 
-    When ``lazy=True`` the ``stream`` and ``read_all`` options are ignored. Please note that this is an **experimental** feature. *New in version 0.14.0*
+    When ``lazy=True`` the ``stream`` option is ignored. Please note that this is an **experimental** feature. *New in version 0.14.0*
   :param dict **kwargs: other keyword arguments specifying the request
 
   .. note::
@@ -844,8 +752,8 @@ fdb
       ...     "param": [151, 167, 168],
       ... }
       >>>
-      >>> ds = ekd.from_source("fdb", request=request)
-      >>> for f in ds:
+      >>> fl = ekd.from_source("fdb", request=request).to_fieldlist()
+      >>> for f in fl:
       ...     print(f)
       ...
       GribField(msl,None,20240421,0,0,0)
@@ -859,40 +767,27 @@ fdb
 
   .. code-block:: python
 
-      >>> ds = ekd.from_source("fdb", request=request)
-      >>> for f in ds.batched(2):
-      ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
+      >>> fl = ekd.from_source("fdb", request=request).to_fieldlist()
+      >>> for f in fl.batched(2):
+      ...     print(f"len={len(f)} {f.get(('parameter.variable', 'vertical.level'))}")
       ...
       len=2 [('msl', 0), ('2t', 0)]
       len=2 [('2d', 0), ('msl', 0)]
       len=2 [('2t', 0), ('2d', 0)]
 
-  We can use ``batch_size=2`` to read 2 fields at a time. ``ds`` is still just an iterator, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>` containing 2 fields:
+  We can use ``batch_size=2`` to read 2 fields at a time. ``fl`` is still just an iterato   r, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>` containing 2 fields:
 
   When using ``group_by()`` we can iterate through the stream in groups defined by metadata keys. In this case each iteration step yields a :obj:`FieldList <data.readers.grib.index.FieldList>`.
 
   .. code-block:: python
 
-      >>> ds = ekd.from_source("fdb", request=request)
-      >>> for f in ds.group_by("time"):
-      ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
+      >>> fl = ekd.from_source("fdb", request=request).to_fieldlist()
+      >>> for f in fl.group_by("time"):
+      ...     print(f"len={len(f)} {f.get(('parameter.variable', 'vertical.level'))}")
       ...
       len=3 [('msl', 0), ('2t', 0), ('2d', 0)]
       len=3 [('msl', 0), ('2t', 0), ('2d', 0)]
 
-  We can consume the whole stream and load all the data into memory by using ``read_all=True`` in :ref:`from_source() <data-sources-stream>`. **Use this option carefully!**
-
-  .. code-block:: python
-
-      >>> import earthkit.data as ekd
-      >>> ds = ekd.from_source("fdb", request=request, read_all=True)
-
-      # ds is empty at this point, but calling any method on it will
-      # consume the whole stream
-      >>> len(ds)
-      3
-
-      # now ds stores all the messages in memory
 
   Further examples:
 
@@ -974,8 +869,8 @@ gribjump
 
       ranges = [(0, 10), (20, 30)]
 
-      source = ekd.from_source("gribjump", request, ranges=ranges)
-      ds = source.to_xarray()
+      d = ekd.from_source("gribjump", request, ranges=ranges)
+      ds = d.to_xarray()
 
   Further examples:
 
@@ -1019,7 +914,7 @@ mars
 
 
           request = {...}
-          ds = ekd.from_source("mars", request, log=my_logging_function)
+          d = ekd.from_source("mars", request, log=my_logging_function)
 
     - direct MARS access:
 
@@ -1047,7 +942,7 @@ mars
 
       import earthkit.data as ekd
 
-      ds = ekd.from_source(
+      d = ekd.from_source(
           "mars",
           request={
               "param": ["2t", "msl"],
@@ -1087,7 +982,7 @@ opendap
 polytope
 --------
 
-.. py:function:: from_source("polytope", collection, *args, address=None, user_email=None, user_key=None, request=None, stream=True, read_all=False, **kwargs)
+.. py:function:: from_source("polytope", collection, *args, address=None, user_email=None, user_key=None, request=None, stream=True,  **kwargs)
   :noindex:
 
   The ``polytope`` source accesses the `Polytope web services <https://polytope.readthedocs.io/en/latest/>`_ , using the polytope-client_ package.
@@ -1100,7 +995,6 @@ polytope
   :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
-  :param bool read_all: if ``True``, all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
   :param dict **kwargs: other keyword arguments, these can include options passed to the polytope-client_
 
   The following logic is applied to build the **requests**:
@@ -1130,7 +1024,7 @@ polytope
           "domain": "g",
       }
 
-      ds = ekd.from_source("polytope", "ecmwf-mars", request=request, stream=False)
+      d = ekd.from_source("polytope", "ecmwf-mars", request=request, stream=False)
 
   Data downloaded from the polytope service is stored in the :ref:`cache <caching>`.
 
@@ -1149,7 +1043,7 @@ polytope
 s3
 ---
 
-.. py:function:: from_source("s3", *args, anon=True, aws_access_key=None, aws_secret_access_key=None, aws_token=None, stream=False, read_all=False)
+.. py:function:: from_source("s3", *args, anon=True, aws_access_key=None, aws_secret_access_key=None, aws_token=None, stream=False)
   :noindex:
 
   *New in version 0.11.0*
@@ -1165,7 +1059,7 @@ s3
   :param str aws_secret_access_key: the AWS secret access key. Can be overridden in a request. Used when ``anon=False``.
   :param str aws_token: the AWS token only used for AWS Security Token Service (AWS STS) temporary credentials. Can be overridden in a request. Used when ``anon=False``.
   :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
-  :param bool read_all: if ``True``, all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``.
+
 
   A **request** is a dictionary describing a single or multiple objects in a given bucket. It has the following format:
 
@@ -1214,8 +1108,8 @@ s3
     ...     "bucket": "earthkit-test-data-public",
     ...     "objects": "test6.grib",
     ... }
-    >>> ds = ekd.from_source("s3", req, anon=True)
-    >>> ds.ls()
+    >>> fl = ekd.from_source("s3", req, anon=True).to_fieldlist()
+    >>> fl.ls()
       centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
     0   ecmf         t  isobaricInhPa   1000  20180801      1200         0       an       0  regular_ll
     1   ecmf         u  isobaricInhPa   1000  20180801      1200         0       an       0  regular_ll
@@ -1236,8 +1130,8 @@ s3
     ...     ],
     ... }
     >>>
-    >>> ds = ekd.from_source("s3", req, anon=True)
-    >>> ds.ls()
+    >>> fl = ekd.from_source("s3", req, anon=True).to_fieldlist()
+    >>> fl.ls()
       centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
     0   ecmf         t  isobaricInhPa   1000  20180801      1200         0       an       0  regular_ll
     1   ecmf         u  isobaricInhPa    500  20180801      1200         0       an       0  regular_ll
@@ -1278,7 +1172,7 @@ wekeo
 
       import earthkit.data as ekd
 
-      ds = ekd.from_source(
+      d = ekd.from_source(
           "wekeo",
           "EO:CLMS:DAT:CLMS_GLOBAL_BA_300M_V3_MONTHLY_NETCDF",
           request={
@@ -1328,7 +1222,7 @@ wekeocds
 
       import earthkit.data as ekd
 
-      ds = ekd.from_source(
+      d = ekd.from_source(
           "wekeocds",
           "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS_MONTHLY_MEANS",
           requewst=dict(

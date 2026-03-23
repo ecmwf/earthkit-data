@@ -4,12 +4,18 @@
 GRIB
 ---------
 
-GRIB is the WMO's format for binary gridded data consisting of GRIB messages, which in the earthkit terminology are called **fields**. The earthkit-data GRIB interface is based on :xref:`eccodes` and can handle both GRIB `edition 1 <https://community.wmo.int/activity-areas/wmo-codes/manual-codes/grib-edition-1>`_ and `edition 2 <https://library.wmo.int/index.php?lvl=notice_display&id=10684>`_.
+GRIB is the WMO's format for binary gridded data consisting of GRIB messages, which are represented as Fields in earthkit-data. The earthkit-data GRIB interface is based on :xref:`eccodes` and can handle both GRIB `edition 1 <https://community.wmo.int/activity-areas/wmo-codes/manual-codes/grib-edition-1>`_ and `edition 2 <https://library.wmo.int/index.php?lvl=notice_display&id=10684>`_.
 
 Fieldlists
 +++++++++++
 
-We can read/retrieve GRIB data with :func:`from_source`. The resulting object will be a :class:`~data.readers.grib.index.GribFieldList` representing a list of :class:`~data.readers.grib.codes.GribField`\ s, which we can iterate through:
+We can read/retrieve GRIB data with :func:`from_source`.
+
+
+to_fieldlist()
+
+
+The resulting object will be a :class:`~data.readers.grib.index.GribFieldList` representing a list of :class:`~data.readers.grib.codes.GribField`\ s, which we can iterate through:
 
 .. code-block:: python
 
