@@ -16,8 +16,7 @@ VALID_DATE = re.compile(r"\d\d\d\d-?\d\d-?\d\d([T\s]\d\d:\d\d(:\d\d)?)?Z?")
 
 
 def parse_date(dt):
-    from dateutil.parser import isoparse
-    from dateutil.parser import parse
+    from dateutil.parser import isoparse, parse
 
     if not VALID_DATE.match(dt):
         raise ValueError(f"Invalid datetime '{dt}'")

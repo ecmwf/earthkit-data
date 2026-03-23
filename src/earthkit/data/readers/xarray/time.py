@@ -9,15 +9,10 @@
 
 
 import logging
-from abc import ABC
-from abc import abstractmethod
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
 
-from earthkit.data.utils.dates import to_datetime
-from earthkit.data.utils.dates import to_timedelta
+from earthkit.data.utils.dates import to_datetime, to_timedelta
 
 from .coordinates import Coordinate
 from .variable import Variable
@@ -32,16 +27,17 @@ class Time(ABC):
     def from_coordinates(cls, coordinates: List[Coordinate]) -> "Time":
         """Create a Time instance from a list of coordinates.
 
-        Returns
-        -------
-        Union[ForecastFromValidTimeAndStep, Analysis, Constant, ForecastFromValidTimeAndBaseTime,
-        ForecastFromBaseTimeAndDate]
-            An instance of a subclass of Time.
 
         Args
         ----
         coordinates : List[Coordinate]
             List of coordinate objects.
+
+        Returns
+        -------
+        Union[ForecastFromValidTimeAndStep, Analysis, Constant, ForecastFromValidTimeAndBaseTime,
+        ForecastFromBaseTimeAndDate]
+            An instance of a subclass of Time.
         """
         time_coordinate = [c for c in coordinates if c.is_time]
         step_coordinate = [c for c in coordinates if c.is_step]

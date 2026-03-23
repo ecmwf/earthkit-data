@@ -11,12 +11,14 @@ import datetime
 import logging
 from itertools import product
 
-from earthkit.data.utils.dates import date_to_grib
-from earthkit.data.utils.dates import datetime_to_grib
-from earthkit.data.utils.dates import step_to_grib
-from earthkit.data.utils.dates import time_to_grib
-from earthkit.data.utils.dates import to_datetime
-from earthkit.data.utils.dates import to_timedelta
+from earthkit.data.utils.dates import (
+    date_to_grib,
+    datetime_to_grib,
+    step_to_grib,
+    time_to_grib,
+    to_datetime,
+    to_timedelta,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -125,7 +127,6 @@ def data_array_to_fields(da, reference_field=None, metadata=None):
             step_len = None
 
     for values in product(*[coords[dim] for dim in dims]):
-
         # field
         local_coords = dict(zip(dims, values))
         # for k in components:

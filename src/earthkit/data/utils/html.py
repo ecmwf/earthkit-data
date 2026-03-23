@@ -66,9 +66,7 @@ def table_from_dict(vals, title=None):
     t += """
 <table class="eh-table">
 {rows}
-</table>""".format(
-        rows=" ".join([tr(k, v) for k, v in vals.items()])
-    )
+</table>""".format(rows=" ".join([tr(k, v) for k, v in vals.items()]))
 
     style = css("table")
     return style + t
@@ -102,18 +100,16 @@ def tab(items, details=None, selected=None):
 </section>
 </div>
         """.format(
-        pages=" ".join(
-            [
-                tab_page(
-                    item["title"],
-                    item.get("tooltip", ""),
-                    str(uuid.uuid4()),
-                    item["text"],
-                    selected in (None, "") or item["title"] == selected,
-                )
-                for item in items
-            ]
-        ),
+        pages=" ".join([
+            tab_page(
+                item["title"],
+                item.get("tooltip", ""),
+                str(uuid.uuid4()),
+                item["text"],
+                selected in (None, "") or item["title"] == selected,
+            )
+            for item in items
+        ]),
     )
 
     style = css("tab")

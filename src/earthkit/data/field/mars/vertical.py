@@ -7,8 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 from earthkit.data.field.component.level_type import LevelTypes
 

@@ -9,9 +9,7 @@
 import logging
 
 from earthkit.data.arguments.earthkit_types import infer_type
-from earthkit.data.arguments.transformers import AliasTransformer
-from earthkit.data.arguments.transformers import FormatTransformer
-from earthkit.data.arguments.transformers import TypeTransformer
+from earthkit.data.arguments.transformers import AliasTransformer, FormatTransformer, TypeTransformer
 
 LOG = logging.getLogger(__name__)
 

@@ -1,5 +1,6 @@
-import earthkit.data as ekd
 from earthkit.data.readers.grib.output import new_grib_coder
+
+import earthkit.data as ekd
 
 ds = ekd.from_source("sample", "test.grib")
 

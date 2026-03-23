@@ -11,8 +11,7 @@
 
 import logging
 
-from earthkit.data import from_object
-from earthkit.data import transform
+from earthkit.data import from_object, transform
 
 LOG = logging.getLogger(__name__)
 

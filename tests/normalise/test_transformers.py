@@ -13,21 +13,22 @@ import datetime
 
 import pytest
 
-from earthkit.data.arguments.earthkit_types import BoundingBoxType
-from earthkit.data.arguments.earthkit_types import DateListType
-from earthkit.data.arguments.earthkit_types import DateType
-from earthkit.data.arguments.earthkit_types import EnumListType
-from earthkit.data.arguments.earthkit_types import EnumType
-from earthkit.data.arguments.earthkit_types import FloatListType
-from earthkit.data.arguments.earthkit_types import FloatType
-from earthkit.data.arguments.earthkit_types import IntListType
-from earthkit.data.arguments.earthkit_types import IntType
-from earthkit.data.arguments.earthkit_types import StrListType
-from earthkit.data.arguments.earthkit_types import StrType
-from earthkit.data.arguments.earthkit_types import VariableListType
-from earthkit.data.arguments.earthkit_types import VariableType
-from earthkit.data.arguments.transformers import FormatTransformer
-from earthkit.data.arguments.transformers import TypeTransformer
+from earthkit.data.arguments.earthkit_types import (
+    BoundingBoxType,
+    DateListType,
+    DateType,
+    EnumListType,
+    EnumType,
+    FloatListType,
+    FloatType,
+    IntListType,
+    IntType,
+    StrListType,
+    StrType,
+    VariableListType,
+    VariableType,
+)
+from earthkit.data.arguments.transformers import FormatTransformer, TypeTransformer
 from earthkit.data.utils.bbox import BoundingBox
 
 enum = ("a", "b", "c")
@@ -99,9 +100,10 @@ def test_formats():
 
     assert FormatTransformer(None, type=DateType, format="%Y").transform(datetime.datetime(2000, 1, 1)) == "2000"
 
-    assert FormatTransformer(None, type=DateListType, format="%d").transform(
-        (datetime.datetime(2000, 1, 1), datetime.datetime(2000, 1, 2))
-    ) == ["01", "02"]
+    assert FormatTransformer(None, type=DateListType, format="%d").transform((
+        datetime.datetime(2000, 1, 1),
+        datetime.datetime(2000, 1, 2),
+    )) == ["01", "02"]
 
     with pytest.raises(Exception):  # FIXME: Not sure what this should be
         assert FormatTransformer(None, type=VariableType, format="%4s").transform(42) == 0

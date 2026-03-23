@@ -9,14 +9,13 @@
 
 from collections import defaultdict
 
-from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.core.index import Index
-from earthkit.data.core.index import MaskIndex
-from earthkit.data.core.index import MultiIndex
-from earthkit.data.core.order import build_remapping
-from earthkit.data.utils.compute import wrap_maths
 from earthkit.utils.array import array_namespace as eku_array_namespace
 from earthkit.utils.decorators import thread_safe_cached_property
+
+from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.index import Index, MaskIndex, MultiIndex
+from earthkit.data.core.order import build_remapping
+from earthkit.data.utils.compute import wrap_maths
 
 
 @wrap_maths
@@ -284,9 +283,9 @@ class IndexFieldListBase(Index, FieldList):
         return format_describe(_proc(), *args, **kwargs)
 
     def to_fieldlist(self, array_namespace=None, device=None, **kwargs):
-        return self.from_fields(
-            [f.to_array_field(array_namespace=array_namespace, device=device, **kwargs) for f in self]
-        )
+        return self.from_fields([
+            f.to_array_field(array_namespace=array_namespace, device=device, **kwargs) for f in self
+        ])
 
     def to_tensor(self, *args, **kwargs):
         from earthkit.data.indexing.tensor import FieldListTensor

@@ -10,19 +10,14 @@
 #
 
 import datetime
-import os
-import sys
 
 import numpy as np
 import pytest
+from grib_fixtures import load_grib_data  # noqa: E402
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.utils.testing import NO_ECCODES_GRID
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from grib_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", ["file"])

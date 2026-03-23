@@ -14,12 +14,9 @@ import datetime
 import numpy as np
 import pytest
 
-from earthkit.data import create_encoder
-from earthkit.data import from_source
-from earthkit.data import to_target
+from earthkit.data import create_encoder, from_source, to_target
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.utils.dates import datetime_to_grib
-from earthkit.data.utils.dates import to_datetime
+from earthkit.data.utils.dates import datetime_to_grib, to_datetime
 from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
@@ -128,14 +125,12 @@ def test_xr_engine_write_1(allow_holes, lazy_load, kwargs):
 )
 def test_xr_engine_write_2(allow_holes, lazy_load, kwargs):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
-    ds_ek = ds_ek.sel(
-        {
-            "metadata.date": 20240603,
-            "metadata.time": 0,
-            "metadata.param": ["t", "r"],
-            "metadata.level": [500, 850],
-        }
-    )
+    ds_ek = ds_ek.sel({
+        "metadata.date": 20240603,
+        "metadata.time": 0,
+        "metadata.param": ["t", "r"],
+        "metadata.level": [500, 850],
+    })
 
     ref_t_vals = ds_ek.sel({"metadata.param": "t", "metadata.step": 6, "metadata.level": 500}).to_numpy()
     ref_r_vals = ds_ek.sel({"metadata.param": "r", "metadata.step": 6, "metadata.level": 500}).to_numpy()
@@ -209,14 +204,12 @@ def test_xr_engine_write_2(allow_holes, lazy_load, kwargs):
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_write_level_and_type(allow_holes, lazy_load):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
-    ds_ek = ds_ek.sel(
-        {
-            "metadata.date": 20240603,
-            "metadata.time": 0,
-            "metadata.param": ["t", "r"],
-            "metadata.level": [500, 850],
-        }
-    )
+    ds_ek = ds_ek.sel({
+        "metadata.date": 20240603,
+        "metadata.time": 0,
+        "metadata.param": ["t", "r"],
+        "metadata.level": [500, 850],
+    })
 
     ref_t_vals = ds_ek.sel({"metadata.param": "t", "metadata.step": 6, "metadata.level": 500}).to_numpy()
     ref_r_vals = ds_ek.sel({"metadata.param": "r", "metadata.step": 6, "metadata.level": 500}).to_numpy()

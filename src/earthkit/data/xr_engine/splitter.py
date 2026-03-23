@@ -8,8 +8,7 @@
 #
 
 import logging
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from itertools import product
 
 LOG = logging.getLogger(__name__)
@@ -28,7 +27,7 @@ class Splitter(metaclass=ABCMeta):
 
     @staticmethod
     def make(split_dims, auto_split=False):
-        """TODO: auto_split is not implemented"""
+        """TODO: auto_split is not implemented."""
         if not auto_split and not split_dims:
             return NoSplitter()
         elif split_dims:

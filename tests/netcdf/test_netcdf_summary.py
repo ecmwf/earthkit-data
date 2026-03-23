@@ -10,8 +10,7 @@
 
 import pytest
 
-from earthkit.data.utils.testing import earthkit_examples_file
-from earthkit.data.utils.testing import load_nc_or_xr_source
+from earthkit.data.utils.testing import earthkit_examples_file, load_nc_or_xr_source
 
 
 @pytest.mark.migrate

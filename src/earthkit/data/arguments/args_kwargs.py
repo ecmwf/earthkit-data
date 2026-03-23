@@ -73,7 +73,7 @@ class ArgsKwargs:
         self.kwargs = new_kwargs
 
     def ensure_positionals_only(self):
-        """Move positional arguments from self.kwargs into self.args"""
+        """Move positional arguments from self.kwargs into self.args."""
         for name in self.positionals_only:
             value = self.kwargs.pop(name)
             self.args.append(value)

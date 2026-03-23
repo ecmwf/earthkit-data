@@ -12,8 +12,7 @@
 import datetime
 
 from earthkit.data import from_source
-from earthkit.data.utils.testing import earthkit_remote_examples_file
-from earthkit.data.utils.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_remote_examples_file, earthkit_remote_test_data_file
 
 
 def test_url_pattern_source_1():

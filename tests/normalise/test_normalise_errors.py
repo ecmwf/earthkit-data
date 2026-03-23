@@ -11,8 +11,7 @@
 
 import pytest
 
-from earthkit.data.decorators import availability
-from earthkit.data.decorators import normalise
+from earthkit.data.decorators import availability, normalise
 
 
 def name_no_default(name):

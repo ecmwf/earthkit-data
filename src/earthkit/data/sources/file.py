@@ -17,8 +17,7 @@ from earthkit.data.core.caching import CACHE
 from earthkit.data.readers import reader
 from earthkit.data.utils.parts import PathAndParts
 
-from . import Source
-from . import from_source_internal
+from . import Source, from_source_internal
 
 LOG = logging.getLogger(__name__)
 
@@ -293,8 +292,7 @@ class SingleStreamFileSource:
             f = open(self.path, "rb")
             return f
         else:
-            from earthkit.data.utils.stream import FilePartStreamReader
-            from earthkit.data.utils.stream import RequestIterStreamer
+            from earthkit.data.utils.stream import FilePartStreamReader, RequestIterStreamer
 
             stream = FilePartStreamReader(self.path, self.parts)
             return RequestIterStreamer(iter(stream))

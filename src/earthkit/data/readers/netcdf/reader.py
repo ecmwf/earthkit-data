@@ -12,8 +12,7 @@ from abc import abstractmethod
 from earthkit.data.sources import Source
 
 from .core import NetCDFReaderBase
-from .fieldlist import NetCDFFieldListFromFile
-from .fieldlist import NetCDFFieldListFromURL
+from .fieldlist import NetCDFFieldListFromFile, NetCDFFieldListFromURL
 
 
 class NetCDFReader(Source, NetCDFReaderBase):
@@ -26,7 +25,7 @@ class NetCDFReader(Source, NetCDFReaderBase):
 
     @abstractmethod
     def to_fieldlist(self):
-        """Convert into a field list"""
+        """Convert into a field list."""
         # return NetCDFFieldListFromFile(self._ori_source, self.path)
         pass
 
@@ -86,7 +85,7 @@ class NetCDFFileReader(NetCDFReader):
         super().__init__(source, path)
 
     def to_fieldlist(self):
-        """Convert into a field list"""
+        """Convert into a field list."""
         return NetCDFFieldListFromFile(self.path)
 
     def __repr__(self):
@@ -100,7 +99,7 @@ class NetCDFUrlReader(NetCDFReader):
         super().__init__(source, "")
 
     def to_fieldlist(self):
-        """Convert into a field list"""
+        """Convert into a field list."""
         return NetCDFFieldListFromURL(self.url)
 
     def __repr__(self):

@@ -9,28 +9,27 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import numpy as np
 import pytest
+from earthkit.utils.array import convert as array_convert
+from grib_fixtures import (
+    FL_NUMPY,  # noqa: E402
+    FL_TYPES,  # noqa: E402
+    load_grib_data,  # noqa: E402
+)
 
 import earthkit.data
 from earthkit.data import concat
 from earthkit.data.utils import projections
-from earthkit.data.utils.testing import NO_ECCODES_GRID
-from earthkit.data.utils.testing import NO_GEO
-from earthkit.data.utils.testing import check_array
-from earthkit.data.utils.testing import check_array_type
-from earthkit.data.utils.testing import earthkit_examples_file
-from earthkit.data.utils.testing import earthkit_test_data_file
-from earthkit.utils.array import convert as array_convert
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from grib_fixtures import FL_NUMPY  # noqa: E402
-from grib_fixtures import FL_TYPES  # noqa: E402
-from grib_fixtures import load_grib_data  # noqa: E402
+from earthkit.data.utils.testing import (
+    NO_ECCODES_GRID,
+    NO_GEO,
+    check_array,
+    check_array_type,
+    earthkit_examples_file,
+    earthkit_test_data_file,
+)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -438,15 +437,15 @@ def test_grib_area_various_grids(path, expected_value):
 
 @pytest.mark.skipif(NO_GEO, reason="No earthkit-geo support")
 def test_grib_grid_points_rotated_ll():
-    """The"""
     ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_wind_20x20.grib")).to_fieldlist()
 
     # grid points
     res = ds[0].geography.grid_points()
     ref1 = np.array([30.0, 29.351052, 27.504876, 24.734374]), np.array([140.0, 136.09296, 132.770576, 130.469424])
 
-    ref2 = np.array([-17.968188, -14.787578, -12.22927, -10.573044]), np.array(
-        [-50.356844, -48.94784, -46.558096, -43.46374]
+    ref2 = (
+        np.array([-17.968188, -14.787578, -12.22927, -10.573044]),
+        np.array([-50.356844, -48.94784, -46.558096, -43.46374]),
     )
 
     assert np.allclose(res[0][:4], ref1[0])
@@ -485,13 +484,15 @@ def test_grib_grid_points_rotated_rgg():
     res = ds[0].geography.grid_points_unrotated()
 
     # front
-    ref1 = np.array([26.510768, 26.51076943, 26.5107701, 26.51076846]), np.array(
-        [1.28492181e-15, 2.81250046e00, 5.62500163e00, 8.43749805e00]
+    ref1 = (
+        np.array([26.510768, 26.51076943, 26.5107701, 26.51076846]),
+        np.array([1.28492181e-15, 2.81250046e00, 5.62500163e00, 8.43749805e00]),
     )
 
     # back
-    ref2 = np.array([-12.55775535, -12.55775697, -12.55775699, -12.5577565]), np.array(
-        [30.93749931, 33.75000128, 36.56250084, 39.37500023]
+    ref2 = (
+        np.array([-12.55775535, -12.55775697, -12.55775699, -12.5577565]),
+        np.array([30.93749931, 33.75000128, 36.56250084, 39.37500023]),
     )
 
     assert np.allclose(res[0][:4], ref1[0])

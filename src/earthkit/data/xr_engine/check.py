@@ -10,8 +10,7 @@
 import logging
 import math
 
-from .diff import DictDiff
-from .diff import ListDiff
+from .diff import DictDiff, ListDiff
 
 LOG = logging.getLogger(__name__)
 

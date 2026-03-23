@@ -13,9 +13,7 @@ import os
 
 import pytest
 
-from earthkit.data import concat
-from earthkit.data import create_fieldlist
-from earthkit.data import from_source
+from earthkit.data import concat, create_fieldlist, from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.utils.testing import earthkit_examples_file
 

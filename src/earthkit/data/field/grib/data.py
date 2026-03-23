@@ -33,7 +33,6 @@ class GribData(DataFieldComponentHandler):
 
     def get_values(self, dtype=None, copy=True, index=None):
         """Get the values stored in the field as an array."""
-
         v = self.handle.get_values(dtype=dtype)
         if dtype is not None:
             from earthkit.utils.array import array_namespace

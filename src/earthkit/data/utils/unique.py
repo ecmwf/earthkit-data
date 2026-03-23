@@ -62,7 +62,7 @@ class UniqueValuesCache:
 
 
 class UniqueValuesCollector:
-    r"""Collector for unique values for a given set of metadata keys
+    r"""Collector for unique values for a given set of metadata keys.
 
     Parameters
     ----------
@@ -119,7 +119,6 @@ class UniqueValuesCollector:
             A dictionary where each key is one of the input keys and the corresponding value is a tuple of
             unique values collected for that key from the data.
         """
-
         iterable = data
 
         if progress_bar:

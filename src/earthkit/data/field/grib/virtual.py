@@ -9,9 +9,10 @@
 
 import logging
 
+from earthkit.utils.decorators import thread_safe_cached_property
+
 from earthkit.data.field.handler.data import DataFieldComponentHandler
 from earthkit.data.indexing.indexed import IndexFieldListBase
-from earthkit.utils.decorators import thread_safe_cached_property
 
 LOG = logging.getLogger(__name__)
 
@@ -23,7 +24,6 @@ class VirtualData(DataFieldComponentHandler):
 
     def get_values(self, **kwargs):
         """Get the values stored in the field as an array."""
-
         return self._field._components["data"].get_values(**kwargs)
 
     @property

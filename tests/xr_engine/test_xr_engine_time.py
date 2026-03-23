@@ -10,19 +10,16 @@
 #
 
 import datetime
-import os
-import sys
 
 import numpy as np
 import pytest
+from xr_engine_fixtures import (
+    compare_coords,  # noqa: E402
+    compare_dims,  # noqa: E402
+)
 
 from earthkit.data import from_source
 from earthkit.data.utils.testing import earthkit_remote_test_data_file
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from xr_engine_fixtures import compare_coords  # noqa: E402
-from xr_engine_fixtures import compare_dims  # noqa: E402
 
 
 @pytest.mark.cache
@@ -177,9 +174,9 @@ def test_xr_engine_time_basic(allow_holes, kwargs, dims, step_units):
     compare_dims(ds, dims, order_ref_var="t")
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )
 
 
 @pytest.mark.cache
@@ -305,9 +302,9 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
     compare_dims(ds, dims, order_ref_var="2t")
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )
 
 
 @pytest.mark.cache
@@ -461,9 +458,9 @@ def test_xr_engine_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_
     compare_dims(ds, dims, order_ref_var="2t")
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )
 
 
 @pytest.mark.cache
@@ -585,9 +582,9 @@ def test_xr_engine_time_valid_time_coord(allow_holes, kwargs, dims, step_units, 
     compare_coords(ds, coords)
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )
 
 
 @pytest.mark.cache
@@ -625,9 +622,9 @@ def test_xr_engine_time_step_range_1(allow_holes, lazy_load, kwargs, dims, step_
     compare_dims(ds, dims, order_ref_var="10fg6")
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )
 
 
 @pytest.mark.cache
@@ -673,9 +670,9 @@ def test_xr_engine_time_step_range_2(allow_holes, lazy_load, kwargs, dims, step_
     compare_dims(ds, dims, order_ref_var="lsp")
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )
 
 
 @pytest.mark.cache
@@ -751,6 +748,6 @@ def test_xr_engine_time_step_seconds(allow_holes, lazy_load, kwargs, dims, step_
     compare_dims(ds, dims, order_ref_var="t")
 
     if step_units is not None:
-        assert (
-            ds[step_units[0]].attrs["units"] == step_units[1]
-        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        assert ds[step_units[0]].attrs["units"] == step_units[1], (
+            f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+        )

@@ -9,8 +9,7 @@
 
 from collections import defaultdict
 
-from earthkit.data.core.index import MaskIndex
-from earthkit.data.core.index import MultiIndex
+from earthkit.data.core.index import MaskIndex, MultiIndex
 from earthkit.data.featurelist.indexed import IndexFeatureListBase
 from earthkit.data.sources import Source
 from earthkit.data.utils.parts import Part
@@ -136,7 +135,6 @@ class BUFRList(IndexFeatureListBase):
         [['2t', 'K'], ['msl', 'Pa']]
 
         """
-
         from earthkit.data.utils.args import metadata_argument_new
 
         keys, astype, default, keys_arg_type = metadata_argument_new(keys, astype=astype, default=default)

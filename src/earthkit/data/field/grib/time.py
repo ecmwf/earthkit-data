@@ -7,10 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.utils.dates import datetime_from_grib
-from earthkit.data.utils.dates import datetime_to_grib
-from earthkit.data.utils.dates import step_to_grib
-from earthkit.data.utils.dates import to_timedelta
+from earthkit.data.utils.dates import datetime_from_grib, datetime_to_grib, step_to_grib, to_timedelta
 
 from .collector import GribContextCollector
 from .core import GribFieldComponentHandler

@@ -29,8 +29,8 @@ class ZarrTarget(SimpleTarget):
 
         The target will not be able to write anymore.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         pass
@@ -38,8 +38,8 @@ class ZarrTarget(SimpleTarget):
     def flush(self):
         """Flush the fdb.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         pass

@@ -1,6 +1,4 @@
-from . import EncodedData
-from . import Encoder
-from . import FilePathEncodedData
+from . import EncodedData, Encoder, FilePathEncodedData
 
 
 class BufrEncodedData(EncodedData):
@@ -21,7 +19,7 @@ class BufrEncodedData(EncodedData):
 
 
 class BufrEncoder(Encoder):
-    """Encode BUFR data"""
+    """Encode BUFR data."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

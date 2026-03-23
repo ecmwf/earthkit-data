@@ -14,18 +14,20 @@ import datetime
 import numpy as np
 import pytest
 
-from earthkit.data.utils.dates import date_to_grib
-from earthkit.data.utils.dates import datetime_to_grib
-from earthkit.data.utils.dates import mars_like_date_list
-from earthkit.data.utils.dates import numpy_datetime_to_datetime
-from earthkit.data.utils.dates import numpy_timedelta_to_timedelta
-from earthkit.data.utils.dates import step_to_grib
-from earthkit.data.utils.dates import time_to_grib
-from earthkit.data.utils.dates import timedeltas_to_int
-from earthkit.data.utils.dates import to_datetime
-from earthkit.data.utils.dates import to_datetime_list
-from earthkit.data.utils.dates import to_time
-from earthkit.data.utils.dates import to_timedelta
+from earthkit.data.utils.dates import (
+    date_to_grib,
+    datetime_to_grib,
+    mars_like_date_list,
+    numpy_datetime_to_datetime,
+    numpy_timedelta_to_timedelta,
+    step_to_grib,
+    time_to_grib,
+    timedeltas_to_int,
+    to_datetime,
+    to_datetime_list,
+    to_time,
+    to_timedelta,
+)
 
 # Change to utc once aware datetime objects will be used
 # tzinfo = datetime.timezone.utc

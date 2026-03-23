@@ -2,17 +2,17 @@
   gridspec:
     angle_of_rotation: 0.0
     area:
-      - 88.573
-      - 0.0
-      - -88.573
-      - 358.125
+    - 88.573
+    - 0.0
+    - -88.573
+    - 358.125
     grid: N48
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
     rotation:
-      - 40.0
-      - 20.0
+    - 40.0
+    - 20.0
     type: reduced_gg
   metadata:
     N: 48

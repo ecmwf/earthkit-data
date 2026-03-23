@@ -8,8 +8,7 @@
 # nor does it submit to any jurisdiction.
 
 import logging
-from typing import Any
-from typing import Literal
+from typing import Any, Literal
 
 import xarray as xr
 
@@ -92,7 +91,6 @@ def patch_sort_coordinate(ds: xr.Dataset, sort_coordinates: list[str]) -> xr.Dat
     Any
         The patched dataset.
     """
-
     for name in sort_coordinates:
         ds = ds.sortby(name)
     return ds
@@ -127,7 +125,6 @@ def patch_subset_dataset(ds: xr.Dataset, selection: dict[str, Any]) -> xr.Datase
     >>> # Select a range using slice
     >>> patch_subset_dataset(ds, {"lat": slice(-90, 90), "lon": slice(0, 180)})
     """
-
     ds = ds.sel(selection)
 
     return ds
@@ -174,7 +171,6 @@ def patch_analysis_lead_to_valid_time(
     ...     },
     ... )
     """
-
     assert time_coord_names.keys() == {
         "analysis_time_coordinate",
         "lead_time_coordinate",
@@ -191,7 +187,8 @@ def patch_analysis_lead_to_valid_time(
     valid_time = ds[analysis_time_coordinate] + ds[lead_time_coordinate]
 
     ds = (
-        ds.assign_coords({valid_time_coordinate: valid_time})
+        ds
+        .assign_coords({valid_time_coordinate: valid_time})
         .stack(time_index=[analysis_time_coordinate, lead_time_coordinate])
         .set_index(time_index=valid_time_coordinate)
         .rename(time_index=valid_time_coordinate)
@@ -243,7 +240,6 @@ def patch_rolling_operation(
     ...     },
     ... )
     """
-
     assert vars_operation_config.keys() == {
         "dim",
         "steps",
@@ -289,7 +285,6 @@ def patch_dataset(ds: xr.Dataset, patch: dict[str, dict[str, Any]]) -> Any:
     Any
         The patched dataset.
     """
-
     ORDER = [
         "coordinates",
         "attributes",

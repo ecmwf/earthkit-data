@@ -26,7 +26,8 @@ def create_fieldlist(fields=None):
 class FieldList(Source, Encodable):
     """Base class for a FieldList.
 
-    A FieldList is a collection of Fields. It provides methods to access the field values and metadata."""
+    A FieldList is a collection of Fields. It provides methods to access the field values and metadata.
+    """
 
     @abstractmethod
     def __getitem__(self, index):
@@ -168,6 +169,14 @@ class FieldList(Source, Encodable):
         ValueError
             When not all the fields have the same grid geometry.
 
+
+        See Also
+        --------
+        geography
+        to_numpy
+        values
+
+
         Examples
         --------
         - :ref:`/examples/grib/grib_lat_lon_value_ll.ipynb`
@@ -192,11 +201,6 @@ class FieldList(Source, Encodable):
         >>> d[0, 0, 0]  # first longitude
         0.0
 
-        See Also
-        --------
-        geography
-        to_numpy
-        values
 
         """
         pass

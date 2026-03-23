@@ -12,12 +12,7 @@ import logging
 
 import numpy as np
 
-from .dim import DATE_KEYS
-from .dim import DATETIME_KEYS
-from .dim import LEVEL_KEYS
-from .dim import MONTH_KEYS
-from .dim import STEP_KEYS
-from .dim import TIME_KEYS
+from .dim import DATE_KEYS, DATETIME_KEYS, LEVEL_KEYS, MONTH_KEYS, STEP_KEYS, TIME_KEYS
 from .level import is_level_type
 
 LOG = logging.getLogger(__name__)
@@ -117,8 +112,7 @@ class DateCoord(Coord):
 class TimeCoord(Coord):
     def convert(self, profile):
         if profile.decode_timedelta:
-            from earthkit.data.utils.dates import to_time
-            from earthkit.data.utils.dates import to_timedelta
+            from earthkit.data.utils.dates import to_time, to_timedelta
 
             return [to_timedelta(to_time(x)) for x in self.vals]
         return super().convert(profile)
@@ -212,13 +206,11 @@ class LevelCoord(Coord):
 
             for key in keys:
                 if key == level_type_key or level_type_key is None:
-
                     level_type = self._level_type.get(key)
                     if level_type is None:
                         continue
                     _attrs = conf.get(level_type)
                     if _attrs is not None:
-
                         return _attrs
 
         _attrs = self._default

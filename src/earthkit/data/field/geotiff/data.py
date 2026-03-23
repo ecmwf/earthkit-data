@@ -20,7 +20,6 @@ class GeoTIFFData(DataFieldComponentHandler):
 
     def get_values(self, dtype=None, copy=True):
         """Get the values stored in the field as an array."""
-
         values = self.ds.values
         if dtype is not None:
             values = values.astype(dtype, copy=copy)

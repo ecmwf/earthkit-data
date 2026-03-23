@@ -14,9 +14,7 @@ import re
 import stat
 from getpass import getpass
 
-from earthkit.data.core.ipython import HTML
-from earthkit.data.core.ipython import display
-from earthkit.data.core.ipython import ipython_active
+from earthkit.data.core.ipython import HTML, display, ipython_active
 from earthkit.data.utils.humanize import list_to_human
 
 LOG = logging.getLogger(__name__)
@@ -157,7 +155,7 @@ class Markdown(Prompt):
 
         message = f"Please enter a value for <span style='color: red;'>{p.get('title')}</span>"
         if "default" in p:
-            message += " or leave empty for the default value " f"<span style='color: red;'>{p.get('default')}</span>"
+            message += f" or leave empty for the default value <span style='color: red;'>{p.get('default')}</span>"
         message += ", then press *ENTER*"
         if "example" in p:
             message += f" The value should look like  <span style='color: red;'>{p.get('example')}</span>"

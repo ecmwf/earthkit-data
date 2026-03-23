@@ -9,11 +9,7 @@
 
 import json
 import logging
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import Any, Dict, List, Optional, Union
 
 import xarray as xr
 import yaml
@@ -25,8 +21,7 @@ from earthkit.data.indexing.indexed import IndexFieldListBase
 from .flavour import CoordinateGuesser
 from .patch import patch_dataset
 from .time import Time
-from .variable import FilteredVariable
-from .variable import Variable
+from .variable import FilteredVariable, Variable
 
 LOG = logging.getLogger(__name__)
 
@@ -182,7 +177,6 @@ class XArrayFieldList(IndexFieldListBase):
 
         # Select only geographical variables
         for name in ds.data_vars:
-
             if name in skip:
                 continue
 
@@ -209,7 +203,9 @@ class XArrayFieldList(IndexFieldListBase):
             # TODO: refactor
             def _check_values_geo() -> None:
                 """Handle the case where lat, lon is a coordinate but not a dimension and their
-                dimension is not recognised as a grid coordinate. E.g.:
+                dimension is not recognised as a grid coordinate.
+
+                E.g.:
 
                 Dimensions:  (level: 2, values: 9)
                 Coordinates:
@@ -260,7 +256,6 @@ class XArrayFieldList(IndexFieldListBase):
         FieldList
             The new FieldList with selected fields.
         """
-
         """
         The algorithm is as follows:
         1 - Use the kwargs to select the variables that match the selection (`param` or `variable`)
@@ -289,7 +284,6 @@ class XArrayFieldList(IndexFieldListBase):
         count: int = 0
 
         for v in self.variables:
-
             # First, select matching variables
 
             # This will consume 'param' or 'variable' from kwargs

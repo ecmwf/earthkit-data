@@ -10,22 +10,18 @@
 #
 
 import datetime
-import os
-import sys
 
 import pytest
+from grib_fixtures import (
+    FL_TYPES,  # noqa: E402
+    load_grib_data,  # noqa: E402
+)
 
 from earthkit.data import from_source
 
 # from earthkit.data.specs.time_span import TimeSpan
 # from earthkit.data.specs.time_span import TimeSpanMethod
-from earthkit.data.utils.testing import earthkit_remote_test_data_file
-from earthkit.data.utils.testing import earthkit_test_data_file
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from grib_fixtures import FL_TYPES  # noqa: E402
-from grib_fixtures import load_grib_data  # noqa: E402
+from earthkit.data.utils.testing import earthkit_remote_test_data_file, earthkit_test_data_file
 
 
 @pytest.mark.cache

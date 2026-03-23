@@ -10,20 +10,17 @@
 #
 
 import os
-import sys
 
 import numpy as np
 import pytest
+from array_fl_fixtures import (
+    check_array_fl,  # noqa: E402
+    check_array_fl_from_to_fieldlist,  # noqa: E402
+)
 
-from earthkit.data import FieldList
-from earthkit.data import from_source
+from earthkit.data import FieldList, from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.utils.testing import earthkit_examples_file
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from array_fl_fixtures import check_array_fl  # noqa: E402
-from array_fl_fixtures import check_array_fl_from_to_fieldlist  # noqa: E402
 
 
 def test_array_fl_grib_single_field():

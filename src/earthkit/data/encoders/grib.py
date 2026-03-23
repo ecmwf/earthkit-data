@@ -11,14 +11,11 @@ import datetime
 import logging
 from functools import lru_cache
 
-from earthkit.data.decorators import normalise
-from earthkit.data.decorators import normalise_grib_keys
+from earthkit.data.decorators import normalise, normalise_grib_keys
 from earthkit.data.utils.dates import step_range_to_grib
 from earthkit.data.utils.humanize import list_to_human
 
-from . import EncodedData
-from . import Encoder
-from . import FilePathEncodedData
+from . import EncodedData, Encoder, FilePathEncodedData
 
 LOG = logging.getLogger(__name__)
 
@@ -107,14 +104,15 @@ def _gg_pl(N):
 
 
 class GribHandleMaker:
-    """Create a new GribCodesHandle from a template, field or metadata"""
+    """Create a new GribCodesHandle from a template, field or metadata."""
 
     def __init__(self, template=None):
         self.template = template
         self._bbox = {}
 
     def make(self, values=None, metadata=None, template=None):
-        """Create a new GribCodesHandle from a template, field or metadata
+        """Create a new GribCodesHandle from a template, field or metadata.
+
         May modify existing metadata
 
         Parameters
@@ -126,7 +124,6 @@ class GribHandleMaker:
         template: GribCoder
             A template to use for encoding
         """
-
         handle = self.handle_from_template(template)
         if handle is not None:
             self.update_metadata_from_template(metadata, template, handle)
@@ -341,12 +338,11 @@ class GribHandleMaker:
         if octahedral or levtype == "sfc":
             return f"reduced_gg_{levtype}_grib{edition}"
         else:
-
             return f"reduced_gg_{levtype}_{N}_grib{edition}"
 
 
 class GribEncoder(Encoder):
-    """Encode GRIB data"""
+    """Encode GRIB data."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -382,7 +378,6 @@ class GribEncoder(Encoder):
         """
         Parameters
         ----------
-
         data: Field
             The data to encode
         values: numpy.ndarray

@@ -14,13 +14,10 @@ import os
 import pytest
 import yaml
 
-from earthkit.data import FieldList
-from earthkit.data import from_source
+from earthkit.data import FieldList, from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.field.grib.legacy_grid_spec import LegacyGridSpecConverter
-from earthkit.data.field.grib.legacy_grid_spec import make_legacy_gridspec
-from earthkit.data.utils.testing import earthkit_remote_test_data_file
-from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data.field.grib.legacy_grid_spec import LegacyGridSpecConverter, make_legacy_gridspec
+from earthkit.data.utils.testing import earthkit_remote_test_data_file, earthkit_test_data_file
 
 # TODO: all the se tests are for the legacy gridspec. We should add tests for the
 # new one from eckit.geo as well, and then remove the legacy one.
@@ -159,15 +156,13 @@ def test_grib_metadata_from_gridspec_valid(metadata, gridspec, name):
 
 @pytest.mark.parametrize(
     "metadata,gridspec,name",
-    gridspec_list(
-        [
-            "sh",
-            "reduced_ll",
-            "regular_gg",
-            "reduced_gg",
-            "healpix",
-        ]
-    ),
+    gridspec_list([
+        "sh",
+        "reduced_ll",
+        "regular_gg",
+        "reduced_gg",
+        "healpix",
+    ]),
 )
 def test_grib_metadata_from_gridspec_invalid(metadata, gridspec, name):
     if name in [

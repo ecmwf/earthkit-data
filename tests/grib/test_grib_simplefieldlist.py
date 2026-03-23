@@ -12,9 +12,7 @@
 import pytest
 
 # from earthkit.data import ArrayField
-from earthkit.data import SimpleFieldList
-from earthkit.data import concat
-from earthkit.data import from_source
+from earthkit.data import SimpleFieldList, concat, from_source
 from earthkit.data.utils.testing import earthkit_examples_file
 
 

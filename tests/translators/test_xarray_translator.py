@@ -14,9 +14,7 @@ import logging
 import numpy as np
 import xarray as xr
 
-from earthkit.data import from_object
-from earthkit.data import from_source
-from earthkit.data import transform
+from earthkit.data import from_object, from_source, transform
 from earthkit.data.utils.testing import earthkit_test_data_file
 
 LOG = logging.getLogger(__name__)

@@ -8,16 +8,12 @@
 #
 
 import datetime
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 from earthkit.data.utils.dates import to_timedelta
 
-from .component import SimpleFieldComponent
-from .component import component_keys
-from .component import mark_get_key
-from .time_span import TimeMethods
-from .time_span import get_time_method
+from .component import SimpleFieldComponent, component_keys, mark_get_key
+from .time_span import TimeMethods, get_time_method
 
 
 class ProcItem(metaclass=ABCMeta):
@@ -179,7 +175,6 @@ class Proc(BaseProc):
         Realisation
             The created Realisation instance.
         """
-
         r = []
         for k, v in d.items():
             maker = _MAKERS.get(k, None)
@@ -261,7 +256,6 @@ class ProcOri:
         Realisation
             The created Realisation instance.
         """
-
         r = []
         for k, v in d.items():
             maker = _MAKERS.get(k, None)

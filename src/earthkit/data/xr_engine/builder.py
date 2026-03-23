@@ -9,14 +9,12 @@
 
 import datetime
 import logging
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 import xarray
 import xarray.core.indexing as indexing
 
-from earthkit.data.utils import ensure_dict
-from earthkit.data.utils import ensure_iterable
+from earthkit.data.utils import ensure_dict, ensure_iterable
 
 from .dim import LevelPerTypeDim
 from .profile import Profile
@@ -405,7 +403,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
         pass
 
     def pre_build_variables(self):
-        """Generate a builder for each variable"""
+        """Generate a builder for each variable."""
         builders = {}
 
         if self.profile.variable.is_mono:
@@ -537,7 +535,7 @@ class TensorBackendDataBuilder(BackendDataBuilder):
     """
 
     def build_values(self, tensor, var_dims, name):
-        """Generate the data object stored in the xarray variable"""
+        """Generate the data object stored in the xarray variable."""
         # There is no need for the extra structures in the wrapped source in the
         # tensor any longer. It is replaced by the original unwrapped fieldlist.
         tensor.source = tensor.source.unwrap()
@@ -564,8 +562,7 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
     """
 
     def build_values(self, tensor, var_dims, name):
-        """Generate the data object stored in the xarray variable"""
-
+        """Generate the data object stored in the xarray variable."""
         # At this point all the fields must be a ReleasableField.
         # We mark the fields so that their data will be released on the next
         # values access.

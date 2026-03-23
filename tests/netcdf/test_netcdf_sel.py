@@ -13,9 +13,7 @@ import datetime
 
 import pytest
 
-from earthkit.data.utils.testing import earthkit_examples_file
-from earthkit.data.utils.testing import earthkit_test_data_file
-from earthkit.data.utils.testing import load_nc_or_xr_source
+from earthkit.data.utils.testing import earthkit_examples_file, earthkit_test_data_file, load_nc_or_xr_source
 
 
 @pytest.mark.parametrize("mode", ["nc", "xr"])

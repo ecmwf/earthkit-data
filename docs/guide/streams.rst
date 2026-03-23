@@ -14,7 +14,7 @@ We can read :ref:`grib` and CoverageJson data as a stream by using the ``stream=
 Iterating over a stream
 ------------------------
 
-When reading a stream the returned object offers limited access to the data and primarily serves as an iterator. Once the iteration is finished the stream data is not available any longer.
+When reading a stream we need to call :meth:`to_fieldlist` on the returned object to get an iterable of Fields. Once the iteration is finished the stream data is not available any longer.
 
 The example below shows how we iterate through a GRIB data stream field by field:
 
@@ -22,8 +22,8 @@ The example below shows how we iterate through a GRIB data stream field by field
 
     >>> import earthkit.data as ekd
     >>> url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
-    >>> ds = ekd.from_source("url", url, stream=True)
-    >>> for f in fields:
+    >>> fl = ekd.from_source("url", url, stream=True).to_fieldlist()
+    >>> for f in fl:
     ...     print(f)
     ...
     GribField(t,1000,20180801,1200,0,0)
@@ -39,9 +39,9 @@ We can also use :meth:`~data.core.fieldlist.FieldList.batched` to iterate in bat
 
     >>> import earthkit.data as ekd
     >>> url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
-    >>> ds = ekd.from_source("url", url, stream=True)
-    >>> for f in ds.batched(2):
-    ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
+    >>> fl = ekd.from_source("url", url, stream=True).to_fieldlist()
+    >>> for f in fl.batched(2):
+    ...     print(f"len={len(f)} {f.get(('parameter.variable', 'vertical.level'))}")
     ...
     len=2 [('t', 1000), ('u', 1000)]
     len=2 [('v', 1000), ('t', 850)]
@@ -53,9 +53,9 @@ Another option is to use :meth:`~data.core.fieldlist.FieldList.group_by` to iter
 
     >>> import earthkit.data as ekd
     >>> url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
-    >>> ds = ekd.from_source("url", url, stream=True)
-    >>> for f in ds._group_by("level"):
-    ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
+    >>> fl = ekd.from_source("url", url, stream=True).to_fieldlist()
+    >>> for f in fl.group_by("vertical.level"):
+    ...     print(f"len={len(f)} {f.get(('parameter.variable', 'vertical.level'))}")
     ...
     len=3 [('t', 1000), ('u', 1000), ('v', 1000)]
     len=3 [('t', 850), ('u', 850), ('v', 850)]
@@ -64,14 +64,14 @@ Another option is to use :meth:`~data.core.fieldlist.FieldList.group_by` to iter
 Reading all the data into memory
 ----------------------------------
 
-We can load the whole stream into memory by using ``read_all=True`` in :func:`from_source`. The resulting object will be a :py:class:`FieldList` storing all the GRIB messages in memory. **Use this option carefully!**
+We can load the whole stream into memory by using  ``read_all=True`` in :meth:`to_fieldlist`. The resulting object will be a :py:class:`FieldList` storing all the Fields in memory. **Use this option carefully!**
 
 .. code-block:: python
 
     >>> import earthkit.data as ekd
     >>> url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
-    >>> ds = ekd.from_source("url", url, stream=True, read_all=True)
-    >>> len(ds)
+    >>> fl = ekd.from_source("url", url, stream=True).to_fieldlist(read_all=True)
+    >>> len(fl)
     6
 
 Further examples

@@ -19,7 +19,6 @@ class Labels(FieldComponentHandler):
 
     @property
     def component(self):
-        """This component handler behaves like a component"""
         return self
 
     @abstractmethod

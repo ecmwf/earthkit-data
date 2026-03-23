@@ -87,8 +87,7 @@ class MemoryDiag(DiagCore):
 
     def peak(self):
         """Peak rss memory usage in MB."""
-        from resource import RUSAGE_SELF
-        from resource import getrusage
+        from resource import RUSAGE_SELF, getrusage
 
         rss = getrusage(RUSAGE_SELF).ru_maxrss
         return self.scale_to_mbytes(rss)

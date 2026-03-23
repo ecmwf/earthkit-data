@@ -9,14 +9,12 @@
 
 import logging
 import threading
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 import eccodes
 import numpy as np
 
-from earthkit.data.utils.message import CodesHandle
-from earthkit.data.utils.message import CodesReader
+from earthkit.data.utils.message import CodesHandle, CodesReader
 
 LOG = logging.getLogger(__name__)
 

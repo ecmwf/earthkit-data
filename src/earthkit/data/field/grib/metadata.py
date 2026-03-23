@@ -9,8 +9,7 @@
 
 import functools
 
-from earthkit.data.utils.dates import datetime_from_grib
-from earthkit.data.utils.dates import to_timedelta
+from earthkit.data.utils.dates import datetime_from_grib, to_timedelta
 
 NAMESPACES = [
     "ls",

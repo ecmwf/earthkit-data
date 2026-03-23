@@ -77,12 +77,12 @@ class BoundingBox:
 
     @property
     def width(self):
-        """number: Returns the East-West size (degrees)"""
+        """number: Returns the East-West size (degrees)."""
         return self.east - self.west
 
     @property
     def height(self):
-        """number: Returns the North-South size (degrees)"""
+        """number: Returns the North-South size (degrees)."""
         return self.north - self.south
 
     @classmethod

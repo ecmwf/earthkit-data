@@ -189,8 +189,7 @@ def lod_no_latlon():
 
 
 def build_lod_fieldlist(lod, mode):
-    from earthkit.data import concat
-    from earthkit.data import from_source
+    from earthkit.data import concat, from_source
 
     # from earthkit.data.sources.array_list import ArrayField
     from earthkit.data.core.field import Field

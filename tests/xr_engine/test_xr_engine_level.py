@@ -9,17 +9,12 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import pytest
+from xr_engine_fixtures import compare_dims  # noqa: E402
 
 from earthkit.data import from_source
 from earthkit.data.utils.testing import earthkit_remote_test_data_file
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from xr_engine_fixtures import compare_dims  # noqa: E402
 
 
 def _get_level_type_attr(level_dim, levtype):

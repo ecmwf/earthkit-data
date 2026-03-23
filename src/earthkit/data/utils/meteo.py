@@ -15,7 +15,6 @@
 import datetime
 
 import numpy as np
-
 from earthkit.utils.array import array_namespace
 
 DAYS_PER_YEAR = 365.25
@@ -131,22 +130,18 @@ def _integrate(
     elif integration_order == 4:  # slower, more accurate (4 points)
         _C1 = xp.sqrt(xp.asarray(6.0 / 5.0))
         _C2 = xp.sqrt(xp.asarray(30))
-        E = xp.asarray(
-            [
-                -xp.sqrt(3.0 / 7.0 + 2.0 / 7.0 * _C1),
-                -xp.sqrt(3.0 / 7.0 - 2.0 / 7.0 * _C1),
-                xp.sqrt(3.0 / 7.0 - 2.0 / 7.0 * _C1),
-                xp.sqrt(3.0 / 7.0 + 2.0 / 7.0 * _C1),
-            ]
-        )
-        W = xp.asarray(
-            [
-                (18 - _C2) / 36,
-                (18 + _C2) / 36,
-                (18 + _C2) / 36,
-                (18 - _C2) / 36,
-            ]
-        )
+        E = xp.asarray([
+            -xp.sqrt(3.0 / 7.0 + 2.0 / 7.0 * _C1),
+            -xp.sqrt(3.0 / 7.0 - 2.0 / 7.0 * _C1),
+            xp.sqrt(3.0 / 7.0 - 2.0 / 7.0 * _C1),
+            xp.sqrt(3.0 / 7.0 + 2.0 / 7.0 * _C1),
+        ])
+        W = xp.asarray([
+            (18 - _C2) / 36,
+            (18 + _C2) / 36,
+            (18 + _C2) / 36,
+            (18 - _C2) / 36,
+        ])
     else:
         raise ValueError("Invalid integration order %d", integration_order)
 

@@ -12,8 +12,7 @@
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.utils.testing import earthkit_examples_file
-from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import earthkit_examples_file, earthkit_test_data_file
 
 
 def test_grib_from_memory_single():

@@ -9,8 +9,7 @@
 
 
 def create_geotiff_field(band, da):
-    r"""Create a Field object from GeoTIFF Xarray dataarray"""
-
+    r"""Create a Field object from GeoTIFF Xarray dataarray."""
     from earthkit.data.core.field import Field
     from earthkit.data.field.component.parameter import Parameter
     from earthkit.data.field.geotiff.data import GeoTIFFData

@@ -17,8 +17,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.utils.testing import NO_FDB
-from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import NO_FDB, earthkit_test_data_file
 
 TEST_GRIB_REQUEST = {
     "class": "od",
@@ -108,12 +107,18 @@ def test_lazy_fdb():
         assert len(t_fdb) == 16
         assert len(r_fdb) == 16
 
-        assert t.get(["variable", "base_datetime", "step", "level"]) == t_fdb.get(
-            ["variable", "base_datetime", "step", "level"]
-        )
-        assert r.get(["variable", "base_datetime", "step", "level"]) == r_fdb.get(
-            ["variable", "base_datetime", "step", "level"]
-        )
+        assert t.get(["variable", "base_datetime", "step", "level"]) == t_fdb.get([
+            "variable",
+            "base_datetime",
+            "step",
+            "level",
+        ])
+        assert r.get(["variable", "base_datetime", "step", "level"]) == r_fdb.get([
+            "variable",
+            "base_datetime",
+            "step",
+            "level",
+        ])
 
         assert np.allclose(t.to_numpy(), t_fdb.to_numpy().reshape(16, 19, 36))
         assert np.allclose(r.to_numpy(), r_fdb.to_numpy().reshape(16, 19, 36))

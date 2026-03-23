@@ -21,11 +21,11 @@ class ZarrData(SourceData):
         pass
 
     def to_fieldlist(self, *args, **kwargs):
-        """Convert into a field list"""
+        """Convert into a field list."""
         return self._reader.to_fieldlist(*args, **kwargs)
 
     def to_xarray(self, *args, **kwargs):
-        """Convert into an xarray dataset"""
+        """Convert into an xarray dataset."""
         return self._reader.to_xarray(*args, **kwargs)
 
     def _default_encoder(self):

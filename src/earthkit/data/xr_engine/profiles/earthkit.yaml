@@ -10,10 +10,10 @@ dim_roles:
 variable_key: parameter.variable
 attrs_mode: fixed
 variable_attrs:
-  - metadata.cfName
-  - metadata.name
-  - parameter.units
-  - vertical.level_type
+- metadata.cfName
+- metadata.name
+- parameter.units
+- vertical.level_type
 global_attrs:
-  - Conventions: CF-1.8
-  - institution: ECMWF
+- Conventions: CF-1.8
+- institution: ECMWF

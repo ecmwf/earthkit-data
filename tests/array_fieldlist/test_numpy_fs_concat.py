@@ -9,20 +9,15 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import pytest
+from array_fl_fixtures import (
+    check_array_fl,  # noqa: E402
+    check_save_to_disk,  # noqa: E402
+    load_array_fl,  # noqa: E402
+)
 
-from earthkit.data import concat
-from earthkit.data import create_fieldlist
-from earthkit.data import from_source
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from array_fl_fixtures import check_array_fl  # noqa: E402
-from array_fl_fixtures import check_save_to_disk  # noqa: E402
-from array_fl_fixtures import load_array_fl  # noqa: E402
+from earthkit.data import concat, create_fieldlist, from_source
 
 
 @pytest.mark.parametrize("mode", ["concat", "multi"])

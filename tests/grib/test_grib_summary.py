@@ -9,17 +9,14 @@
 # nor does it submit to any jurisdiction.
 
 import datetime
-import os
-import sys
 
 import pandas as pd
 import pytest
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from grib_fixtures import FL_FILE  # noqa: E402
-from grib_fixtures import FL_TYPES  # noqa: E402
-from grib_fixtures import load_grib_data  # noqa: E402
+from grib_fixtures import (
+    FL_FILE,  # noqa: E402
+    FL_TYPES,  # noqa: E402
+    load_grib_data,  # noqa: E402
+)
 
 
 def _check_ls_df(df, expected_values):

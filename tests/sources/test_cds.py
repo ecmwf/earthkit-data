@@ -15,8 +15,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.utils.testing import NO_CDS
-from earthkit.data.utils.testing import preserve_cwd
+from earthkit.data.utils.testing import NO_CDS, preserve_cwd
 
 CDS_TIMEOUT = pytest.CDS_TIMEOUT
 

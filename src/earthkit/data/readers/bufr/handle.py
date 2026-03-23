@@ -9,8 +9,7 @@
 
 import eccodes
 
-from earthkit.data.utils.message import CodesHandle
-from earthkit.data.utils.message import CodesReader
+from earthkit.data.utils.message import CodesHandle, CodesReader
 
 
 class BUFRCodesHandle(CodesHandle):
@@ -21,13 +20,13 @@ class BUFRCodesHandle(CodesHandle):
         self._unpacked = False
 
     def unpack(self):
-        """Decode data section"""
+        """Decode data section."""
         if not self._unpacked:
             eccodes.codes_set(self._handle, "unpack", 1)
             self._unpacked = True
 
     def pack(self):
-        """Encode data section"""
+        """Encode data section."""
         if self._unpacked:
             eccodes.codes_set(self._handle, "pack", 1)
             self._unpacked = False
@@ -62,7 +61,7 @@ class BUFRCodesHandle(CodesHandle):
         return _KeyIterator(self._handle)
 
     def keys(self, namespace=None):
-        """Iterate over all the available keys"""
+        """Iterate over all the available keys."""
         return self.__iter__()
 
     def as_namespace(self, namespace=None):

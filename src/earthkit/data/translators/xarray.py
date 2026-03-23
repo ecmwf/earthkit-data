@@ -10,7 +10,7 @@ from . import Translator
 
 
 class XArrayTranslator(Translator):
-    """Translator class for xarray `DataArray` and `Dataset`"""
+    """Translator class for xarray `DataArray` and `Dataset`."""
 
     def __init__(self, data, *args, **kwargs):
         super().__init__(data.to_xarray(*args, **kwargs))

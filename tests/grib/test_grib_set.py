@@ -9,19 +9,13 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import numpy as np
 import pytest
-
-from earthkit.data import FieldList
-from earthkit.data import from_source
-from earthkit.data.core.temporary import temp_file
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
 from grib_fixtures import load_grib_data  # noqa: E402
+
+from earthkit.data import FieldList, from_source
+from earthkit.data.core.temporary import temp_file
 
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
@@ -40,14 +34,12 @@ def test_grib_set_detailed(fl_type):
     #     name=_func3,
     # )
 
-    f = ds_ori[0].set(
-        {
-            "parameter.variable": "q",
-            "vertical.level": 600,
-            "labels.my_shape": (181, 360),
-            "labels.my_name": "t_500",
-        }
-    )
+    f = ds_ori[0].set({
+        "parameter.variable": "q",
+        "vertical.level": 600,
+        "labels.my_shape": (181, 360),
+        "labels.my_name": "t_500",
+    })
 
     assert f.get("parameter.variable") == "q"
     assert f.get("metadata.shortName") == "t"
@@ -75,12 +67,10 @@ def test_grib_set_detailed(fl_type):
 
     # write back to grib
     with temp_file() as tmp:
-        f = ds_ori[0].set(
-            {
-                "parameter.variable": "q",
-                "vertical.level": 600,
-            }
-        )
+        f = ds_ori[0].set({
+            "parameter.variable": "q",
+            "vertical.level": 600,
+        })
 
         f.to_target("file", tmp)
         f_saved = from_source("file", tmp).to_fieldlist()[0]
@@ -97,21 +87,17 @@ def test_grib_set_detailed(fl_type):
     # field - repeated use
     # ---------------------
 
-    f = ds_ori[0].set(
-        {
-            "parameter.variable": "q",
-            "vertical.level": 600,
-            "labels.my_shape": (181, 360),
-            "labels.my_name": "t_500",
-        }
-    )
+    f = ds_ori[0].set({
+        "parameter.variable": "q",
+        "vertical.level": 600,
+        "labels.my_shape": (181, 360),
+        "labels.my_name": "t_500",
+    })
 
-    f = f.set(
-        {
-            "parameter.variable": "pt",
-            "vertical.level": 800,
-        }
-    )
+    f = f.set({
+        "parameter.variable": "pt",
+        "vertical.level": 800,
+    })
 
     assert f.get("parameter.variable") == "pt"
     assert f.get("metadata.shortName") == "t"
@@ -131,12 +117,10 @@ def test_grib_set_detailed(fl_type):
 
     fields = []
     for i in range(2):
-        f = ds_ori[i].set(
-            {
-                "parameter.variable": "q",
-                "vertical.level": 600,
-            }
-        )
+        f = ds_ori[i].set({
+            "parameter.variable": "q",
+            "vertical.level": 600,
+        })
         fields.append(f)
 
     ds = FieldList.from_fields(fields)
@@ -176,13 +160,11 @@ def test_grib_set_combined(fl_type):
     # field
     # ---------------
 
-    f = ds_ori[0].set(
-        {
-            "values": vals_ori + 1,
-            "parameter.variable": "q",
-            "vertical.level": 600,
-        }
-    )
+    f = ds_ori[0].set({
+        "values": vals_ori + 1,
+        "parameter.variable": "q",
+        "vertical.level": 600,
+    })
 
     assert f.get("parameter.variable") == "q"
     assert f.get("metadata.shortName") == "t"
@@ -208,20 +190,16 @@ def test_grib_set_combined(fl_type):
     # field - repeated use
     # ---------------------
 
-    f = ds_ori[0].set(
-        {
-            "values": vals_ori + 1,
-            "parameter.variable": "q",
-            "vertical.level": 600,
-        }
-    )
-    f = f.set(
-        {
-            "values": vals_ori + 2,
-            "parameter.variable": "pt",
-            "vertical.level": 800,
-        }
-    )
+    f = ds_ori[0].set({
+        "values": vals_ori + 1,
+        "parameter.variable": "q",
+        "vertical.level": 600,
+    })
+    f = f.set({
+        "values": vals_ori + 2,
+        "parameter.variable": "pt",
+        "vertical.level": 800,
+    })
 
     assert f.get("parameter.variable") == "pt"
     assert f.get("metadata.shortName") == "t"
@@ -238,13 +216,11 @@ def test_grib_set_combined(fl_type):
 
     fields = []
     for i in range(2):
-        f = ds_ori[i].set(
-            {
-                "values": vals_ori + i + 1,
-                "parameter.variable": "q",
-                "vertical.level": 600,
-            }
-        )
+        f = ds_ori[i].set({
+            "values": vals_ori + i + 1,
+            "parameter.variable": "q",
+            "vertical.level": 600,
+        })
         fields.append(f)
 
     ds = FieldList.from_fields(fields)

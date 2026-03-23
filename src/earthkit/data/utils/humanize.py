@@ -13,7 +13,10 @@ from collections import defaultdict
 
 
 def bytes(n):
-    """>>> bytes(4096)
+    """
+    Convert a number of bytes into a human readable string, using base 2 units.
+
+    >>> bytes(4096)
     '4 KiB'
     >>> bytes(4000)
     '3.9 KiB'
@@ -33,7 +36,10 @@ def bytes(n):
 
 
 def base2(n):
-    """>>> base2(4096)
+    """
+    Return a human readable string for a number, using base 2 units.
+
+    >>> base2(4096)
     '4K'
     >>> base2(4000)
     '3.9K'

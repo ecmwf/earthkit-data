@@ -11,8 +11,7 @@
 
 from earthkit.data import from_source
 from earthkit.data.utils.concat import concat
-from earthkit.data.utils.testing import earthkit_examples_file
-from earthkit.data.utils.testing import earthkit_remote_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file, earthkit_remote_examples_file
 
 
 def test_bufr_concat():

@@ -8,14 +8,10 @@
 #
 
 from abc import abstractmethod
-from typing import Optional
-from typing import Union
+from typing import Optional, Union
 
-from .component import SimpleFieldComponent
-from .component import component_keys
-from .component import mark_get_key
-from .level_type import LevelType
-from .level_type import get_level_type
+from .component import SimpleFieldComponent, component_keys, mark_get_key
+from .level_type import LevelType, get_level_type
 
 
 @component_keys

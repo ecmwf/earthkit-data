@@ -70,5 +70,5 @@ def selection_from_index(coord_accessor, kwargs):
                 raise ValueError(f"Invalid value index={v}. Type={type(v)} not supported")
 
         except IndexError as e:
-            raise IndexError((f"Invalid index={v}. Index for key={k} must be in the range of" f"(0, {len(vals)}) {e}"))
+            raise IndexError((f"Invalid index={v}. Index for key={k} must be in the range of(0, {len(vals)}) {e}"))
     return _kwargs

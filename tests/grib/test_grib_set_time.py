@@ -10,16 +10,11 @@
 #
 
 import datetime
-import os
-import sys
 
 import pytest
 
 # from earthkit.data.specs.time_span import TimeSpan
 # from earthkit.data.specs.time_span import TimeSpanMethod
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
 from grib_fixtures import load_grib_data  # noqa: E402
 
 

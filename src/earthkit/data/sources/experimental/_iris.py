@@ -8,11 +8,11 @@
 #
 
 from earthkit.data.readers.pp.pp import IrisReader
+
 from earthkit.data.sources import Source
 
 
 class IrisSource(Source):
-
     def __init__(self, path, **kwargs):
         super().__init__(**kwargs)
 

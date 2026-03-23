@@ -26,12 +26,14 @@ The possible roles are as follows:
 
    * - Dimension role
      - Description
+     - Key (profile: :ref:`earthkit <xr_profile_earthkit>`)
      - Key (profile: :ref:`mars <xr_profile_mars>`)
      - Key (profile: :ref:`grib <xr_profile_grib>`)
-   * - ``"number"``
+   * - ``"member"``
      - metadata key interpreted as ensemble forecast members
-     - ``"number"``
-     - ``"number"``
+     - ``"ensemble.member"``
+     - ``"metadata.number"``
+     - ``"metadata.number"``
    * - ``"date"``
      - metadata key interpreted as date part of the ``"forecast_reference_time"``
      - ``"date"``
@@ -42,22 +44,27 @@ The possible roles are as follows:
      - ``"time"``
    * - ``"step"``
      - metadata key interpreted as forecast step
-     - ``"step_timedelta"``
-     - ``"step_timedelta"``
+     - ``"time.step"``
+     - ``"metadata.step_timedelta"``
+     - ``"metadata.step_timedelta"``
    * - ``"forecast_reference_time"``
      - if not specified or ``None`` or empty the forecast reference time is built using the ``"date"`` and ``"time"`` roles
+     - ``time.forecast_reference_time`` (built from ``date`` and ``time``)
      - ``None``
      - ``None``
    * - ``"valid_time"``
      - if not specified or ``None`` or empty the valid time is built using the ``"validityDate"`` and ``"validityTime"`` metadata keys
+     - ``"time.valid_datetime"``
      - ``None``
      - ``None``
    * - ``"level"``
      - metadata key interpreted as level
+     - ``"vertical.level"``
      - ``"levelist"``
      - ``"level"``
    * - ``"level_type"``
      - metadata key interpreted as level type
+     - ``"vertical.level_type"``
      - ``"levtype"``
      - ``"typeOfLevel"``
 

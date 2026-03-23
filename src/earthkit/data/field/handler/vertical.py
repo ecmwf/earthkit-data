@@ -7,9 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.field.component.vertical import BaseVertical
-from earthkit.data.field.component.vertical import EmptyVertical
-from earthkit.data.field.component.vertical import create_vertical
+from earthkit.data.field.component.vertical import BaseVertical, EmptyVertical, create_vertical
 
 from .core import SimpleFieldComponentHandler
 

@@ -9,8 +9,7 @@
 
 import logging
 import re
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from functools import lru_cache
 
 LOG = logging.getLogger(__name__)
