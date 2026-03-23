@@ -9,15 +9,12 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import pytest
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from array_fl_fixtures import load_array_fl  # noqa: E402
-from array_fl_fixtures import load_array_fl_file  # noqa: E402
+from array_fl_fixtures import (
+    load_array_fl,
+    load_array_fl_file,
+)
 
 # Note: Almost all grib metadata tests are also run for numpyfs.
 # See grib/test_grib_metadata.py

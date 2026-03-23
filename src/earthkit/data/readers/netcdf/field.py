@@ -14,15 +14,13 @@ import numpy as np
 
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.geography import Geography
-from earthkit.data.core.metadata import MetadataAccessor
-from earthkit.data.core.metadata import RawMetadata
+from earthkit.data.core.metadata import MetadataAccessor, RawMetadata
 from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
 
-from .coords import LevelSlice
-from .coords import TimeSlice
+from .coords import LevelSlice, TimeSlice
 
 LOG = logging.getLogger(__name__)
 

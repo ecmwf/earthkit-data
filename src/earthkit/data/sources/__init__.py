@@ -20,7 +20,7 @@ from earthkit.data.core.plugins import register as register_plugin
 
 
 class Source(Base):
-    """Doc"""
+    """Doc."""
 
     name = None
     home_page = "-"

@@ -9,8 +9,7 @@
 
 
 from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.core.metadata import Metadata
-from earthkit.data.core.metadata import WrappedMetadata
+from earthkit.data.core.metadata import Metadata, WrappedMetadata
 
 
 class SimpleFieldList(FieldList):
@@ -149,7 +148,7 @@ class ClonedFieldCore:
         return self._metadata._handle
 
     def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
+        """Double dispatch to the encoder."""
         md = {}
         # wrapped metadata
         if hasattr(self._metadata, "extra"):

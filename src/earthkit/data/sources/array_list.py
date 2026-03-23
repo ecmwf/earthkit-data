@@ -10,9 +10,10 @@
 import logging
 import math
 
+from earthkit.utils.array import array_namespace as eku_array_namespace
+
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
-from earthkit.utils.array import array_namespace as eku_array_namespace
 
 LOG = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ class ArrayField(Field):
         return self._array_
 
     def _values(self, dtype=None):
-        """Native array type"""
+        """Native array type."""
         if dtype is None:
             return self._array
         else:
@@ -79,7 +80,7 @@ class ArrayField(Field):
         )
 
     def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
+        """Double dispatch to the encoder."""
         values = kwargs.pop("values", None)
         if values is None:
             values = self.to_numpy(flatten=True)
@@ -144,16 +145,11 @@ def from_array(array, metadata):
                 array = array_ns.stack([array])
             else:
                 raise ValueError(
-                    (
-                        f"first array dimension={array.shape[0]} differs "
-                        f"from number of metadata objects={len(metadata)}"
-                    )
+                    (f"first array dimension={array.shape[0]} differs from number of metadata objects={len(metadata)}")
                 )
     else:
         if len(array) != len(metadata):
-            raise ValueError(
-                (f"array len=({len(array)}) differs " f"from number of metadata objects=({len(metadata)})")
-            )
+            raise ValueError((f"array len=({len(array)}) differs from number of metadata objects=({len(metadata)})"))
 
     fields = []
     for i, a in enumerate(array):

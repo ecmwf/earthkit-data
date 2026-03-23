@@ -12,18 +12,15 @@ import logging
 import warnings
 from abc import abstractmethod
 
+from earthkit.utils.array import array_namespace
+
 from earthkit.data.core.geography import Geography
-from earthkit.data.core.metadata import Metadata
-from earthkit.data.core.metadata import MetadataAccessor
-from earthkit.data.core.metadata import MetadataCacheHandler
-from earthkit.data.core.metadata import WrappedMetadata
+from earthkit.data.core.metadata import Metadata, MetadataAccessor, MetadataCacheHandler, WrappedMetadata
 from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
-from earthkit.data.utils.dates import datetime_from_grib
-from earthkit.data.utils.dates import to_timedelta
-from earthkit.utils.array import array_namespace
+from earthkit.data.utils.dates import datetime_from_grib, to_timedelta
 
 LOG = logging.getLogger(__name__)
 
@@ -653,7 +650,7 @@ class GribMetadata(Metadata):
     @staticmethod
     def _handle_type():
         """Return the expected handle type. Implemented like this
-        to avoid cyclic import
+        to avoid cyclic import.
         """
         if GribMetadata.__handle_type is None:
             from earthkit.data.readers.grib.codes import GribCodesHandle
@@ -957,13 +954,11 @@ class GribMetadata(Metadata):
         for ns in namespace:
             v = self.as_namespace(ns)
             if v:
-                r.append(
-                    {
-                        "title": ns if ns else "default",
-                        "data": v,
-                        "tooltip": f"Keys in the ecCodes {ns} namespace",
-                    }
-                )
+                r.append({
+                    "title": ns if ns else "default",
+                    "data": v,
+                    "tooltip": f"Keys in the ecCodes {ns} namespace",
+                })
 
         return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
 

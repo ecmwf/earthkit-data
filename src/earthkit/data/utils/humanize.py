@@ -13,7 +13,11 @@ from collections import defaultdict
 
 
 def bytes(n):
-    """>>> bytes(4096)
+    """Convert a number of bytes to a human readable string.
+
+    Examples
+    --------
+    >>> bytes(4096)
     '4 KiB'
     >>> bytes(4000)
     '3.9 KiB'
@@ -30,20 +34,6 @@ def bytes(n):
         n /= 1024.0
         i += 1
     return "%s%g%s" % (sign, int(n * 10 + 0.5) / 10.0, u[i])
-
-
-def base2(n):
-    """>>> base2(4096)
-    '4K'
-    >>> base2(4000)
-    '3.9K'
-    """
-    u = ["", "K", "M", "G", "T", " P", "E", "Z", "Y"]
-    i = 0
-    while n >= 1024:
-        n /= 1024.0
-        i += 1
-    return "%g%s" % (int(n * 10 + 0.5) / 10.0, u[i])
 
 
 PERIODS = (

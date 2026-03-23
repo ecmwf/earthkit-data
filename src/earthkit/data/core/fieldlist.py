@@ -13,19 +13,15 @@ from abc import abstractmethod
 from collections import defaultdict
 
 import deprecation
-
-from earthkit.data.core import Base
-from earthkit.data.core.index import Index
-from earthkit.data.core.index import MaskIndex
-from earthkit.data.core.index import MultiIndex
-from earthkit.data.core.order import build_remapping
-from earthkit.data.decorators import cached_method
-from earthkit.data.decorators import detect_out_filename
-from earthkit.data.decorators import thread_safe_cached_property
-from earthkit.data.utils.metadata.args import metadata_argument
 from earthkit.utils.array import array_namespace as eku_array_namespace
 from earthkit.utils.array import convert as convert_array
 from earthkit.utils.array.convert import convert_dtype
+
+from earthkit.data.core import Base
+from earthkit.data.core.index import Index, MaskIndex, MultiIndex
+from earthkit.data.core.order import build_remapping
+from earthkit.data.decorators import cached_method, detect_out_filename, thread_safe_cached_property
+from earthkit.data.utils.metadata.args import metadata_argument
 
 
 def _bits_per_value_to_metadata(**kwargs):
@@ -239,6 +235,13 @@ class Field(Base):
             of the field is used. When ``keys`` is a single value only the
             array belonging to the key is returned.
 
+        See Also
+        --------
+        to_latlon
+        to_points
+        to_numpy
+        values
+
         Examples
         --------
         - :ref:`/examples/grib_lat_lon_value.ipynb`
@@ -259,13 +262,6 @@ class Field(Base):
         (7, 12)
         >>> d[0, 0]  # first longitude
         0.0
-
-        See Also
-        --------
-        to_latlon
-        to_points
-        to_numpy
-        values
 
         """
         _keys = dict(
@@ -634,7 +630,6 @@ class Field(Base):
         >>> r["name"]
         '2 metre temperature'
         """
-
         if remapping is not None or patches is not None:
             remapping = build_remapping(remapping, patches)
             return remapping(self.metadata)(*keys, astype=astype, **kwargs)
@@ -767,7 +762,7 @@ class Field(Base):
         return self._metadata.data_format()
 
     def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
+        """Double dispatch to the encoder."""
         return encoder._encode_field(self, **kwargs)
 
     def __getitem__(self, key):
@@ -952,7 +947,7 @@ class Field(Base):
 
     @staticmethod
     def _flatten(v):
-        """Flatten the array without copying the data."
+        """Flatten the array without copying the data.
 
         Parameters
         ----------
@@ -997,7 +992,7 @@ class FieldList(Index):
             import warnings
 
             warnings.warn(
-                ("array_backend option is not supported any longer in FieldList!" " Use to_fieldlist() instead"),
+                ("array_backend option is not supported any longer in FieldList! Use to_fieldlist() instead"),
                 DeprecationWarning,
             )
             kwargs.pop("array_backend", None)
@@ -1274,6 +1269,13 @@ class FieldList(Index):
         ValueError
             When not all the fields have the same grid geometry.
 
+        See Also
+        --------
+        to_latlon
+        to_points
+        to_numpy
+        values
+
         Examples
         --------
         - :ref:`/examples/grib_lat_lon_value.ipynb`
@@ -1297,13 +1299,6 @@ class FieldList(Index):
         (1, 7, 12)
         >>> d[0, 0, 0]  # first longitude
         0.0
-
-        See Also
-        --------
-        to_latlon
-        to_points
-        to_numpy
-        values
 
         """
         if isinstance(keys, str):
@@ -1750,7 +1745,7 @@ class FieldList(Index):
             return self[0]._metadata.data_format()
 
     def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
+        """Double dispatch to the encoder."""
         return encoder._encode_fieldlist(self, **kwargs)
 
     def to_tensor(self, *args, **kwargs):
@@ -1801,12 +1796,9 @@ class FieldList(Index):
         dtype('float32')
 
         """
-        return self.from_fields(
-            [
-                f.copy(array_backend=array_backend, array_namespace=array_namespace, device=device, **kwargs)
-                for f in self
-            ]
-        )
+        return self.from_fields([
+            f.copy(array_backend=array_backend, array_namespace=array_namespace, device=device, **kwargs) for f in self
+        ])
 
     def cube(self, *args, **kwargs):
         from earthkit.data.indexing.cube import FieldCube
@@ -1823,7 +1815,7 @@ class FieldList(Index):
         return MultiFieldList(sources)
 
     def _cache_diag(self):
-        """For testing only"""
+        """For testing only."""
         from earthkit.data.utils.diag import metadata_cache_diag
 
         return metadata_cache_diag(self)

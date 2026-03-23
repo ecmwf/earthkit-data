@@ -37,8 +37,8 @@ class FDBTarget(SimpleTarget):
 
         The target will not be able to write anymore.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         self.flush()
@@ -46,8 +46,8 @@ class FDBTarget(SimpleTarget):
     def flush(self):
         """Flush the fdb.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         self._raise_if_closed()

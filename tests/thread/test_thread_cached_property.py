@@ -23,14 +23,14 @@ class _A:
 
     @thread_safe_cached_property
     def data(self):
-        """Property data"""
+        """Property data."""
         time.sleep(1)
         self.count += 1
         return self.count
 
     @thread_safe_cached_property
     def data_static(self):
-        """Property data_static"""
+        """Property data_static."""
         time.sleep(1)
         self.count_static += 1
         return self.count_static
@@ -50,7 +50,7 @@ class _Wrapper:
 
     @thread_safe_cached_property
     def _data(self):
-        """Property data"""
+        """Property data."""
         time.sleep(1)
         self.count += 1
         return _Wrapped(self.count)

@@ -44,13 +44,11 @@ def test_bufr_to_pandas_filters():
         filters={"WMO_station_id": [2836, 2963]},
     )
 
-    ref = pd.DataFrame.from_dict(
-        {
-            "latitude": [67.37, 60.82],
-            "longitude": [26.63, 23.50],
-            "WMO_station_id": [2836, 2963],
-        }
-    )
+    ref = pd.DataFrame.from_dict({
+        "latitude": [67.37, 60.82],
+        "longitude": [26.63, 23.50],
+        "WMO_station_id": [2836, 2963],
+    })
     assert_frame_equal(res, ref[res.columns])
 
 

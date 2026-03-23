@@ -10,22 +10,19 @@
 #
 
 import datetime
-import os
-import sys
 
 import pandas as pd
 import pytest
+from xr_engine_fixtures import (
+    compare_coords,
+    compare_dim_order,
+    compare_dims,
+    load_wrapped_fieldlist,
+)
 
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.utils.xarray.profile import Profile
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from xr_engine_fixtures import compare_coords  # noqa: E402
-from xr_engine_fixtures import compare_dim_order  # noqa: E402
-from xr_engine_fixtures import compare_dims  # noqa: E402
-from xr_engine_fixtures import load_wrapped_fieldlist  # noqa: E402
 
 DS_LEV = {
     "class": ["od"],
@@ -135,7 +132,8 @@ def test_xr_dims_input_fieldlist():
 )
 def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
     """Test for the internal profile/dimension object. Cannot use all the options since
-    many tasks are performed elsewhere in the engine."""
+    many tasks are performed elsewhere in the engine.
+    """
     # TODO: consider removing this test
     prof = Profile.make("mars", **kwargs)
     ds = load_wrapped_fieldlist(DS_LEV, prof)
@@ -294,7 +292,8 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
 )
 def test_xr_dims_ds_date_lev(kwargs, var_key, variables, dims):
     """Test for the internal profile/dimension object. Cannot use all the options since
-    many tasks are performed elsewhere in the engine."""
+    many tasks are performed elsewhere in the engine.
+    """
     # TODO: consider removing this test
 
     prof = Profile.make("mars", **kwargs)
@@ -334,7 +333,8 @@ def test_xr_dims_ds_date_lev(kwargs, var_key, variables, dims):
 )
 def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
     """Test for the internal profile/dimension object. Cannot use all the options since
-    many tasks are performed elsewhere in the engine."""
+    many tasks are performed elsewhere in the engine.
+    """
     # TODO: consider removing this test
     prof = Profile.make("mars", **kwargs)
     ds = load_wrapped_fieldlist(DS_DATE_SFC_PL, prof)

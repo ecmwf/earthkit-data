@@ -23,7 +23,7 @@ class GeojsonReader(Reader):
         self.fields = None
 
     def _scan(self):
-        """For geojson, a field is a feature"""
+        """For geojson, a field is a feature."""
         if self.fields is None:
             self.fields = self.get_fields()
 
@@ -32,12 +32,12 @@ class GeojsonReader(Reader):
         # return self.to_pandas().__repr__()
 
     def _repr_html_(self):
-        html_repr = f"<h3>GeojsonReader(represented as a geopandas object):</h3>" f"{self.to_pandas()._repr_html_()}"
+        html_repr = f"<h3>GeojsonReader(represented as a geopandas object):</h3>{self.to_pandas()._repr_html_()}"
 
         return html_repr
 
     def __iter__(self):
-        """Iterate over features in geojson via pandas"""
+        """Iterate over features in geojson via pandas."""
         self._scan()
         return iter(self.fields)
 

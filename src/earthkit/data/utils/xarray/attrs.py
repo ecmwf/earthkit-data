@@ -9,13 +9,11 @@
 
 import logging
 import os
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
 from earthkit.data.decorators import thread_safe_cached_property
-from earthkit.data.utils import ensure_dict
-from earthkit.data.utils import ensure_iterable
+from earthkit.data.utils import ensure_dict, ensure_iterable
 
 LOG = logging.getLogger(__name__)
 

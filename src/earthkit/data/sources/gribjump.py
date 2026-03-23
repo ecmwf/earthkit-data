@@ -16,8 +16,7 @@ import dataclasses
 import itertools
 import os
 from collections import UserList
-from typing import Any
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -79,11 +78,9 @@ def split_mars_requests(request: dict[str, Any]) -> list[dict[str, Any]]:
                 "Use Python lists to load from multiple fields."
             )
         elif isinstance(v, list) and len(v) == 0:
-            raise ValueError(f"Cannot expand dictionary with empty list. " f"Found empty list for key '{k}'.")
+            raise ValueError(f"Cannot expand dictionary with empty list. Found empty list for key '{k}'.")
         elif isinstance(v, list) and len({type(v_) for v_ in v}) != 1:
-            raise TypeError(
-                f"All list values must share the same type but found types {set(map(type, v))} " f"in {k}={v}"
-            )
+            raise TypeError(f"All list values must share the same type but found types {set(map(type, v))} in {k}={v}")
 
     list_keywords = sorted(k for k, v in request.items() if isinstance(v, list))
     lists = [request[k] for k in list_keywords]
@@ -185,7 +182,7 @@ def build_extraction_request(
 
     if sum(opt is not None for opt in (ranges, mask, indices)) != 1:
         raise ValueError(
-            "Exactly one of 'ranges', 'mask' or 'indices' must be set. " f"Got {ranges=}, {mask=}, {indices=}"
+            f"Exactly one of 'ranges', 'mask' or 'indices' must be set. Got {ranges=}, {mask=}, {indices=}"
         )
 
     if ranges is not None:
@@ -201,7 +198,6 @@ def build_extraction_request(
 
 
 class ExtractionRequestCollection(UserList):
-
     @classmethod
     def from_mars_requests(
         cls,
@@ -224,15 +220,15 @@ class ExtractionRequestCollection(UserList):
             The mask for the extraction requests, by default None.
         indices : Optional[np.ndarray], optional
             The indices for the extraction requests, by default None.
+
         Returns
         -------
         ExtractionRequestCollection
             A collection of ExtractionRequest objects created from the MARS requests.
         """
-
         if sum(opt is not None for opt in (ranges, mask, indices)) != 1:
             raise ValueError(
-                "Exactly one of 'ranges', 'mask' or 'indices' must be set. " f"Got {ranges=}, {mask=}, {indices=}"
+                f"Exactly one of 'ranges', 'mask' or 'indices' must be set. Got {ranges=}, {mask=}, {indices=}"
             )
 
         if mask is not None:
@@ -371,12 +367,10 @@ class FieldExtractList(SimpleFieldList):
         grid_latitudes = self._latitudes[indices]
         grid_longitudes = self._longitudes[indices]
 
-        metadata = metadata.override(
-            {
-                "latitudes": grid_latitudes,
-                "longitudes": grid_longitudes,
-            }
-        )
+        metadata = metadata.override({
+            "latitudes": grid_latitudes,
+            "longitudes": grid_longitudes,
+        })
         return metadata
 
     def to_xarray(self, *args, **kwargs):
@@ -443,12 +437,11 @@ class GribJumpSource(Source):
             keyword arguments passed to the `pyfdb.FDB` constructor. These arguments are only passed
             to the FDB when fetching coordinates and is not used by GribJump for the extraction itself.
         """
-
         super().__init__(**kwargs)
 
         if sum(opt is not None for opt in (ranges, mask, indices)) != 1:
             raise ValueError(
-                "Exactly one of 'ranges', 'mask' or 'indices' must be set. " f"Got {ranges=}, {mask=}, {indices=}"
+                f"Exactly one of 'ranges', 'mask' or 'indices' must be set. Got {ranges=}, {mask=}, {indices=}"
             )
         self._ranges = ranges
         self._mask = mask

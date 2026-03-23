@@ -16,8 +16,7 @@ import pytest
 import xarray as xr
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_test_data_file
-from earthkit.data.testing import load_nc_or_xr_source
+from earthkit.data.testing import earthkit_test_data_file, load_nc_or_xr_source
 
 # These functionalities are variations around
 # http://xarray.pydata.org/en/stable/user-guide/combining.html#combining-multi
@@ -115,12 +114,10 @@ def test_netcdf_read_multiple_files():
 
     import xarray as xr
 
-    target = xr.merge(
-        [
-            xr.open_dataset(earthkit_test_data_file("era5_2t_1.nc")),
-            xr.open_dataset(earthkit_test_data_file("era5_2t_2.nc")),
-        ]
-    )
+    target = xr.merge([
+        xr.open_dataset(earthkit_test_data_file("era5_2t_1.nc")),
+        xr.open_dataset(earthkit_test_data_file("era5_2t_2.nc")),
+    ])
     merged = ds.to_xarray()
     assert target.identical(merged)
 
@@ -345,12 +342,10 @@ def get_hierarchy():
         coord_values=dict(forecast_time=[2, 4]),
     )
 
-    target = xr.merge(
-        [
-            xr.merge([a1.to_xarray(), a2.to_xarray()]),
-            xr.merge([b1.to_xarray(), b2.to_xarray()]),
-        ]
-    )
+    target = xr.merge([
+        xr.merge([a1.to_xarray(), a2.to_xarray()]),
+        xr.merge([b1.to_xarray(), b2.to_xarray()]),
+    ])
     return target, a1, a2, b1, b2
 
 

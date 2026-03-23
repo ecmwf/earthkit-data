@@ -13,8 +13,7 @@ import logging
 import os
 import tempfile
 import warnings
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 from typing import Callable
 
@@ -23,11 +22,7 @@ import yaml
 
 from earthkit.data import __version__ as VERSION
 from earthkit.data.utils.html import css
-from earthkit.data.utils.humanize import as_bytes
-from earthkit.data.utils.humanize import as_percent
-from earthkit.data.utils.humanize import as_seconds
-from earthkit.data.utils.humanize import interval_to_human
-from earthkit.data.utils.humanize import list_to_human
+from earthkit.data.utils.humanize import as_bytes, as_percent, as_seconds, interval_to_human, list_to_human
 from earthkit.data.utils.interval import Interval
 
 LOG = logging.getLogger(__name__)
@@ -267,7 +262,7 @@ for k, v in CONFIG_AND_HELP.items():
 
 @contextmanager
 def new_config(s):
-    """Context manager to create new config"""
+    """Context manager to create new config."""
     CONFIG._stack.append(s)
     CONFIG._notify()
     try:
@@ -334,7 +329,7 @@ class Config:
 
     @forward
     def get(self, name: str, default=NONE):
-        """[summary]
+        """[summary].
 
         Parameters
         ----------
@@ -372,7 +367,7 @@ class Config:
 
     @forward
     def set(self, *args, **kwargs):
-        """[summary]
+        """[summary].
 
         Parameters
         ----------
@@ -395,7 +390,7 @@ class Config:
         self._changed()
 
     def _set(self, name: str, *args, **kwargs):
-        """[summary]
+        """[summary].
 
         Parameters
         ----------

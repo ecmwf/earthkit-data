@@ -19,12 +19,14 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.readers.netcdf.field import NetCDFField
-from earthkit.data.testing import IN_GITHUB
-from earthkit.data.testing import NO_CDS
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_test_data_file
-from earthkit.data.testing import write_to_file
+from earthkit.data.testing import (
+    IN_GITHUB,
+    NO_CDS,
+    WRITE_TO_FILE_METHODS,
+    earthkit_examples_file,
+    earthkit_test_data_file,
+    write_to_file,
+)
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -204,8 +206,7 @@ def test_netcdf_multi_files():
 @pytest.mark.no_eccodes
 @pytest.mark.skipif(IN_GITHUB, reason="Some runners crash in Xarray")
 def test_get_fields_missing_standard_name_attr_in_coord_array():
-    """test _get_fields() can handle a missing 'standard_name' attr in coordinate data arrays"""
-
+    """Test _get_fields() can handle a missing 'standard_name' attr in coordinate data arrays."""
     # example dataset
     fs = from_source("file", earthkit_examples_file("test.nc"))
     ds = fs.to_xarray()

@@ -13,8 +13,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.readers.netcdf.field import XArrayField
-from earthkit.data.testing import NO_ZARR
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.testing import NO_ZARR, earthkit_test_data_file
 
 
 @pytest.mark.skipif(NO_ZARR, reason="Zarr not installed")

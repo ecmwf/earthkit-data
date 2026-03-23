@@ -15,9 +15,7 @@ import sys
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.utils.serialise import SERIALISATION
-from earthkit.data.utils.serialise import deserialise_state
-from earthkit.data.utils.serialise import serialise_state
+from earthkit.data.utils.serialise import SERIALISATION, deserialise_state, serialise_state
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)

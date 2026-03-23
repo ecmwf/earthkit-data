@@ -13,17 +13,12 @@ from itertools import product
 import deprecation
 
 from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.core.index import MaskIndex
-from earthkit.data.core.index import MultiIndex
+from earthkit.data.core.index import MaskIndex, MultiIndex
 from earthkit.data.decorators import thread_safe_cached_property
 
-from .coords import LevelCoordinate
-from .coords import OtherCoordinate
-from .coords import TimeCoordinate
-from .dataset import GEOGRAPHIC_COORDS
-from .dataset import DataSet
-from .field import NetCDFField
-from .field import XArrayField
+from .coords import LevelCoordinate, OtherCoordinate, TimeCoordinate
+from .dataset import GEOGRAPHIC_COORDS, DataSet
+from .field import NetCDFField, XArrayField
 
 LOG = logging.getLogger(__name__)
 

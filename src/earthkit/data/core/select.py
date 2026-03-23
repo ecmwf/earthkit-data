@@ -61,6 +61,6 @@ def selection_from_index(coord_accessor, kwargs):
 
         except IndexError as e:
             raise IndexError(
-                (f"Invalid index={v}. Index for key={k} must be in the range of" f"(0, {len(coord_accessor(k))}) {e}")
+                (f"Invalid index={v}. Index for key={k} must be in the range of (0, {len(coord_accessor(k))}) {e}")
             )
     return _kwargs

@@ -22,14 +22,16 @@ from earthkit.data.core.order import build_remapping
 from earthkit.data.indexing.database.json import json_serialiser
 from earthkit.data.utils.parts import Part
 
-from . import FILEPARTS_KEY_NAMES
-from . import MORE_KEY_NAMES
-from . import MORE_KEY_NAMES_WITH_UNDERSCORE
-from . import STATISTICS_KEY_NAMES
-from . import Database
-from . import FloatDBKey
-from . import IntDBKey
-from . import StrDBKey
+from . import (
+    FILEPARTS_KEY_NAMES,
+    MORE_KEY_NAMES,
+    MORE_KEY_NAMES_WITH_UNDERSCORE,
+    STATISTICS_KEY_NAMES,
+    Database,
+    FloatDBKey,
+    IntDBKey,
+    StrDBKey,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -332,7 +334,7 @@ class SqlRemapping(SqlFilter):
             return None
 
         assert new_view != old_view
-        return f"CREATE TEMP VIEW IF NOT EXISTS {new_view} AS SELECT *, {select} " f"FROM {old_view};"
+        return f"CREATE TEMP VIEW IF NOT EXISTS {new_view} AS SELECT *, {select} FROM {old_view};"
 
 
 class SqlOrder(SqlFilter):
@@ -466,7 +468,7 @@ class SqlDatabase(Database, VersionedDatabaseMixin):
         self.dbkeys = EntriesLoader(self.connection).keys
 
     def __str__(self):
-        return f"{self.__class__.__name__}({self.db_path}," f"(filters=[{','.join([str(_) for _ in self._filters])}])"
+        return f"{self.__class__.__name__}({self.db_path}, filters=[{','.join([str(_) for _ in self._filters])}])"
 
     def build_indexes(self):
         EntriesLoader(self.connection).build_sql_indexes()
@@ -488,7 +490,7 @@ class SqlDatabase(Database, VersionedDatabaseMixin):
 
     def unique_values(self, *coords, remapping=None, progress_bar=True):
         """Given a list of metadata attributes, such as date, param, levels,
-        returns the list of unique values for each attributes
+        returns the list of unique values for each attributes.
         """
         remapping = build_remapping(remapping)
         with self.connection as con:

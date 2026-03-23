@@ -22,28 +22,28 @@ coord_attrs:
     standard_name: time
     long_name: valid_time
 level_coord_attrs:
-  - key: typeOfLevel
-    isobaricInhPa:
-      units: hPa
-      positive: down
-      stored_direction: decreasing
-      standard_name: air_pressure
-      long_name: pressure
-    isobaricInPa:
-      units: Pa
-      positive: down
-      stored_direction: decreasing
-      standard_name: air_pressure
-      long_name: pressure
-    heightAboveGround:
-      units: m
-      positive: up
-      long_name: height above the surface
-      standard_name: height
-  - key: levtype
-    pl:
-      units: hPa
-      positive: down
-      stored_direction: decreasing
-      standard_name: air_pressure
-      long_name: pressure
+- key: typeOfLevel
+  isobaricInhPa:
+    units: hPa
+    positive: down
+    stored_direction: decreasing
+    standard_name: air_pressure
+    long_name: pressure
+  isobaricInPa:
+    units: Pa
+    positive: down
+    stored_direction: decreasing
+    standard_name: air_pressure
+    long_name: pressure
+  heightAboveGround:
+    units: m
+    positive: up
+    long_name: height above the surface
+    standard_name: height
+- key: levtype
+  pl:
+    units: hPa
+    positive: down
+    stored_direction: decreasing
+    standard_name: air_pressure
+    long_name: pressure

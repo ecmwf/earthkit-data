@@ -11,24 +11,22 @@
 
 import logging
 import os
-import sys
 
 import numpy as np
 import pytest
+from array_fl_fixtures import load_array_fl
 
 from earthkit.data import from_source
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import ARRAY_BACKENDS
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import check_array_type
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_test_data_file
-from earthkit.data.testing import write_to_file
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from array_fl_fixtures import load_array_fl  # noqa: E402
+from earthkit.data.testing import (
+    ARRAY_BACKENDS,
+    WRITE_TO_FILE_METHODS,
+    check_array_type,
+    earthkit_examples_file,
+    earthkit_test_data_file,
+    write_to_file,
+)
 
 LOG = logging.getLogger(__name__)
 

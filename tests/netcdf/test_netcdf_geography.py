@@ -12,12 +12,13 @@
 import numpy as np
 import pytest
 
-from earthkit.data import from_object
-from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data import from_object, from_source
+from earthkit.data.testing import (
+    earthkit_examples_file,
+    earthkit_remote_examples_file,
+    earthkit_remote_test_data_file,
+    earthkit_test_data_file,
+)
 from earthkit.data.utils import projections
 
 
@@ -225,14 +226,12 @@ def test_netcdf_to_latlon_laea():
         assert isinstance(v["lon"], np.ndarray)
         assert v["lon"].shape == (950, 1000)
 
-        ref = np.array(
-            [
-                -35.034023999999995,
-                73.93767587613708,
-                -8.229274420493763,
-                41.13970495087975,
-            ]
-        )
+        ref = np.array([
+            -35.034023999999995,
+            73.93767587613708,
+            -8.229274420493763,
+            41.13970495087975,
+        ])
         for i, x in enumerate(pos):
             assert np.isclose(v["lon"][x], ref[i]), f"{i=}, {x=}"
 
@@ -240,14 +239,12 @@ def test_netcdf_to_latlon_laea():
         assert isinstance(v["lat"], np.ndarray)
         assert v["lat"].shape == (950, 1000)
 
-        ref = np.array(
-            [
-                66.9821429989222,
-                58.24673887576243,
-                27.802844211251625,
-                23.942342882929605,
-            ]
-        )
+        ref = np.array([
+            66.9821429989222,
+            58.24673887576243,
+            27.802844211251625,
+            23.942342882929605,
+        ])
         for i, x in enumerate(pos):
             assert np.isclose(v["lat"][x], ref[i]), f"{i=}, {x=}"
 
@@ -282,12 +279,10 @@ def test_netcdf_geography_2d_1(lat_name, lon_name):
     lats = [[50, 50, 50], [40, 40, 40], [30, 30, 30]]
     lons = [[0, 10, 20], [0, 10, 20], [0, 10, 20]]
 
-    data = np.array(
-        [
-            [[11, 12, 13], [21, 22, 23], [31, 32, 33]],
-            [[14, 15, 16], [24, 25, 26], [34, 35, 36]],
-        ]
-    )
+    data = np.array([
+        [[11, 12, 13], [21, 22, 23], [31, 32, 33]],
+        [[14, 15, 16], [24, 25, 26], [34, 35, 36]],
+    ])
 
     a = xr.Variable(dims, data)
     v = {"a": a}
@@ -324,12 +319,10 @@ def test_netcdf_geography_2d_2(lat_name, lon_name):
         lon_name: (["y", "x"], np.array([[0, 10], [0, 10], [0, 10]])),
     }
 
-    data = np.array(
-        [
-            [[11, 12], [21, 22], [31, 32]],
-            [[14, 15], [24, 25], [34, 35]],
-        ]
-    )
+    data = np.array([
+        [[11, 12], [21, 22], [31, 32]],
+        [[14, 15], [24, 25], [34, 35]],
+    ])
 
     a = xr.Variable(dims, data)
     v = {"a": a}
@@ -365,12 +358,10 @@ def test_netcdf_geography_2d_3(lat_name, lon_name):
         "level": np.array([700, 500]),
     }
 
-    data = np.array(
-        [
-            [[11, 12], [21, 22], [31, 32]],
-            [[14, 15], [24, 25], [34, 35]],
-        ]
-    )
+    data = np.array([
+        [[11, 12], [21, 22], [31, 32]],
+        [[14, 15], [24, 25], [34, 35]],
+    ])
 
     a = xr.Variable(dims, data)
     lat = xr.Variable({"y": 3, "x": 3}, np.array([[50, 50], [40, 40], [30, 30]]))
@@ -409,12 +400,10 @@ def test_netcdf_geography_1d_1(lat_name, lon_name):
         lon_name: ("values", np.array([0, 10, 20, 0, 10, 20, 0, 10, 20])),
     }
 
-    data = np.array(
-        [
-            [11, 12, 13, 21, 22, 23, 31, 32, 33],
-            [14, 15, 16, 24, 25, 26, 34, 35, 36],
-        ]
-    )
+    data = np.array([
+        [11, 12, 13, 21, 22, 23, 31, 32, 33],
+        [14, 15, 16, 24, 25, 26, 34, 35, 36],
+    ])
 
     a = xr.Variable(dims, data)
     v = {"a": a}
@@ -450,12 +439,10 @@ def test_netcdf_geography_1d_2(lat_name, lon_name):
         "level": np.array([700, 500]),
     }
 
-    data = np.array(
-        [
-            [11, 12, 13, 21, 22, 23, 31, 32, 33],
-            [14, 15, 16, 24, 25, 26, 34, 35, 36],
-        ]
-    )
+    data = np.array([
+        [11, 12, 13, 21, 22, 23, 31, 32, 33],
+        [14, 15, 16, 24, 25, 26, 34, 35, 36],
+    ])
 
     a = xr.Variable(dims, data)
     lat = xr.Variable({"values": 9}, np.array([50, 50, 50, 40, 40, 40, 30, 30, 30]))

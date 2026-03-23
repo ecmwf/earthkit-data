@@ -11,8 +11,7 @@
 
 import pytest
 
-from earthkit.data.decorators import alias_argument
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import alias_argument, normalize
 
 
 def func_x(x):

@@ -12,8 +12,7 @@ import logging
 from collections import defaultdict
 
 from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.core.index import Selection
-from earthkit.data.core.index import normalize_selection
+from earthkit.data.core.index import Selection, normalize_selection
 from earthkit.data.core.order import build_remapping
 
 LOG = logging.getLogger(__name__)
@@ -223,9 +222,9 @@ class XArrayInputFieldList(FieldList):
                     if k in self.remapping:
                         indices[k] = [x[0] for x in v]
                         components[k] = self.remapping.components(k), [x[1] for x in v]
-                        assert len(indices[k]) == len(
-                            components[k][1]
-                        ), f"{len(indices[k])} != {len(components[k])} {indices[k]=} {components[k]=}"
+                        assert len(indices[k]) == len(components[k][1]), (
+                            f"{len(indices[k])} != {len(components[k])} {indices[k]=} {components[k]=}"
+                        )
                     else:
                         indices[k] = v
             else:

@@ -15,13 +15,11 @@ except ImportError:
     raise ImportError("WEkEO access requires 'hda' to be installed")
 
 from earthkit.data.decorators import normalize
-from earthkit.data.utils.request import FileRequestRetriever
-from earthkit.data.utils.request import RequestBuilder
+from earthkit.data.utils.request import FileRequestRetriever, RequestBuilder
 
 from .file import FileSource
-from .wekeo import EXTENSIONS
+from .wekeo import EXTENSIONS, HDAAPIKeyPrompt
 from .wekeo import ApiClient as WekeoClient
-from .wekeo import HDAAPIKeyPrompt
 
 LOG = logging.getLogger(__name__)
 
@@ -34,12 +32,10 @@ class ApiClient(WekeoClient):
 
     def retrieve(self, name, request, target=None):
         rq = {"dataset_id": name}
-        rq.update(
-            {
-                _name: (_value if isinstance(_value, list) or _name in ("data_format", "download_format") else [_value])
-                for _name, _value in request.items()
-            }
-        )
+        rq.update({
+            _name: (_value if isinstance(_value, list) or _name in ("data_format", "download_format") else [_value])
+            for _name, _value in request.items()
+        })
 
         if "area" in request:
             rq.update({"bbox": request["area"]})

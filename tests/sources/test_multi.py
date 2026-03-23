@@ -17,10 +17,8 @@ import sys
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.core.temporary import temp_directory
-from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import write_to_file
+from earthkit.data.core.temporary import temp_directory, temp_file
+from earthkit.data.testing import WRITE_TO_FILE_METHODS, write_to_file
 
 LOG = logging.getLogger(__name__)
 

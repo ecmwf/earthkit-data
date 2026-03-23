@@ -11,8 +11,7 @@
 
 import re
 
-from earthkit.data.core.config import CONFIG_AND_HELP
-from earthkit.data.core.config import env_var_name
+from earthkit.data.core.config import CONFIG_AND_HELP, env_var_name
 
 
 def execute(*args):

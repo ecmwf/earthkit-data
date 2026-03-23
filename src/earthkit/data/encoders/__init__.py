@@ -9,8 +9,7 @@
 
 import logging
 import os
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from importlib import import_module
 
 LOG = logging.getLogger(__name__)
@@ -44,15 +43,15 @@ class EncodedData(metaclass=ABCMeta):
 
     @abstractmethod
     def to_bytes(self):
-        """Return the data as a bytesarray"""
+        """Return the data as a bytesarray."""
         pass
 
     @abstractmethod
     def to_file(self, f):
         """Write the data to a file.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         f: file-like object
             File-like object to write to
         """
@@ -68,8 +67,8 @@ class Encoder(metaclass=ABCMeta):
 
     An encoder is used to encode data to a specific format that can be used by a :class:`Target`.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     template: obj, None
         The template to use to encode the data. Can be overridden in the :obj:`encode` method.
     metadata: dict, None
@@ -96,8 +95,8 @@ class Encoder(metaclass=ABCMeta):
     ) -> EncodedData:
         """Encode the data.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         data: obj, None
             The data to encode. Should be used via double dispatch. Must have an ``_encode()``
             method,  which will call the appropriate ``_encode_*`` method on the :class:`Encoder`.
@@ -116,8 +115,8 @@ class Encoder(metaclass=ABCMeta):
         **kwargs: dict
             Additional keyword arguments.
 
-        Returns:
-        --------
+        Returns
+        -------
         EncodedData
             The encoded data.
         """
@@ -127,48 +126,52 @@ class Encoder(metaclass=ABCMeta):
     def _encode(self, data, **kwargs) -> EncodedData:
         """Subclass implementation of the encoding logic.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         field: :obj:`Base`
             The data to encode
 
-        Double dispatch method that called from a ``data`` to encode itself."""
+        Double dispatch method that called from a ``data`` to encode itself.
+        """
         pass
 
     @abstractmethod
     def _encode_field(self, field, **kwargs) -> EncodedData:
         """Subclass implementation of the encoding logic for a Field.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         field: :obj:`Field`
             The Field to encode
 
-        Double dispatch method that called from ``field`` to encode itself."""
+        Double dispatch method that called from ``field`` to encode itself.
+        """
         pass
 
     @abstractmethod
     def _encode_fieldlist(self, fieldlist, **kwargs) -> EncodedData:
         """Subclass implementation of the encoding logic for a FieldList.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         fieldlist: :obj:`FieldList`
             The FieldList to encode
 
-        Double dispatch method that called from ``fieldlist`` to encode itself."""
+        Double dispatch method that called from ``fieldlist`` to encode itself.
+        """
         pass
 
     @abstractmethod
     def _encode_xarray(self, data, **kwargs) -> EncodedData:
         """Subclass implementation of the encoding logic for Xarray data.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         data: Xarray DataArray or Dataset
             The data to encode
 
-        Double dispatch method that called from ``data`` to encode itself."""
+        Double dispatch method that called from ``data`` to encode itself.
+        """
         pass
 
 

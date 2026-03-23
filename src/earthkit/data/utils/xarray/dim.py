@@ -9,8 +9,7 @@
 
 import logging
 
-from earthkit.data.utils import ensure_dict
-from earthkit.data.utils import ensure_iterable
+from earthkit.data.utils import ensure_dict, ensure_iterable
 from earthkit.data.utils.dates import datetime_from_grib
 
 LOG = logging.getLogger(__name__)
@@ -195,7 +194,7 @@ class Dim:
 
         # sanity check
         if self.profile.variable.key in self:
-            raise ValueError((f"Variable key {self.profile.variable.key} cannot be in " f"dimension={self.name}"))
+            raise ValueError((f"Variable key {self.profile.variable.key} cannot be in dimension={self.name}"))
 
         # print(f"key={self.key} index={ds.index(self.key)}")
 
@@ -916,22 +915,20 @@ class DimHandler:
 
 
 PREDEFINED_DIMS = {}
-for i, d in enumerate(
-    [
-        NumberDim,
-        ForecastRefTimeDim,
-        DateDim,
-        TimeDim,
-        StepDim,
-        ValidTimeDim,
-        IndexingTimeDim,
-        ReferenceTimeDim,
-        LevelDim,
-        LevelTypeDim,
-        LevelPerTypeDim,
-        LevelAndTypeDim,
-    ]
-):
+for i, d in enumerate([
+    NumberDim,
+    ForecastRefTimeDim,
+    DateDim,
+    TimeDim,
+    StepDim,
+    ValidTimeDim,
+    IndexingTimeDim,
+    ReferenceTimeDim,
+    LevelDim,
+    LevelTypeDim,
+    LevelPerTypeDim,
+    LevelAndTypeDim,
+]):
     if d.name:
         PREDEFINED_DIMS[d.name] = d
     else:

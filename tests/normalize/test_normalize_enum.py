@@ -12,8 +12,7 @@
 import pytest
 
 from earthkit.data import ALL
-from earthkit.data.arguments.earthkit_types import EnumListType
-from earthkit.data.arguments.earthkit_types import EnumType
+from earthkit.data.arguments.earthkit_types import EnumListType, EnumType
 from earthkit.data.decorators import normalize
 
 
@@ -74,12 +73,10 @@ def test_enum_multiple():
 
 def test_enum_multiple_2():
     g = normalize("name", ["a", "b", "c"], multiple=True)(name_default_is_str_a)
-    assert g(
-        (
-            "a",
-            "b",
-        )
-    ) == ["a", "b"]
+    assert g((
+        "a",
+        "b",
+    )) == ["a", "b"]
 
 
 def test_enum_multiple_ALL_1():

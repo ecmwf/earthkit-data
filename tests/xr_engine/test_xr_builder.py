@@ -9,18 +9,13 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
 import pickle
-import sys
 
 import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_remote_test_data_file
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
 
 # Testing internal structures in the xarray engine
 

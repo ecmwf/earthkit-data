@@ -13,8 +13,7 @@ import logging
 import deprecation
 
 from earthkit.data.core.thread import SoftThreadPool
-from earthkit.data.mergers import make_merger
-from earthkit.data.mergers import merge_by_class
+from earthkit.data.mergers import make_merger, merge_by_class
 from earthkit.data.sources.empty import EmptySource
 from earthkit.data.utils.bbox import BoundingBox
 

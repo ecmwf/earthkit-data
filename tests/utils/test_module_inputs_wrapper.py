@@ -11,8 +11,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from earthkit.data import from_object
-from earthkit.data import from_source
+from earthkit.data import from_object, from_source
 from earthkit.data.readers import Reader
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import module_inputs_wrapper

@@ -10,14 +10,8 @@
 #
 
 
-import os
-import sys
-
 import pytest
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from forcings_fixtures import load_forcings_fs  # noqa: E402
+from forcings_fixtures import load_forcings_fs
 
 
 @pytest.mark.parametrize("input_data", ["grib", "latlon"])
@@ -59,12 +53,10 @@ def test_forcings_sel_single_file_1(input_data, params, expected_meta):
 def test_forcings_sel_single_file_as_dict(input_data):
     ds, _ = load_forcings_fs(input_data=input_data)
 
-    g = ds.sel(
-        {
-            "param": "sin_longitude",
-            "valid_datetime": ["2020-05-14T06:00:00", "2020-05-13T18:00:00"],
-        }
-    )
+    g = ds.sel({
+        "param": "sin_longitude",
+        "valid_datetime": ["2020-05-14T06:00:00", "2020-05-13T18:00:00"],
+    })
 
     assert len(g) == 2
     assert g.metadata(["param", "valid_datetime"]) == [

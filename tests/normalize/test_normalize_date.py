@@ -222,12 +222,10 @@ def test_normalize_dates_formatted_from_object():
         def to_datetime_list(self):
             return self.dates
 
-    obj = CustomDateObject(
-        [
-            datetime.datetime(2005, 8, 26, 18, 0),
-            datetime.datetime(2005, 8, 26, 18, 0),
-        ]
-    )
+    obj = CustomDateObject([
+        datetime.datetime(2005, 8, 26, 18, 0),
+        datetime.datetime(2005, 8, 26, 18, 0),
+    ])
 
     assert date_formatted(obj) == "2020.05.13"
 

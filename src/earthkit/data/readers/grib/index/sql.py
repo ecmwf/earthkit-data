@@ -11,15 +11,10 @@ import logging
 from collections import namedtuple
 
 from earthkit.data.core.constants import DATETIME
-from earthkit.data.core.order import build_remapping
-from earthkit.data.core.order import normalize_order_by
+from earthkit.data.core.order import build_remapping, normalize_order_by
 from earthkit.data.core.select import normalize_selection
-from earthkit.data.decorators import cached_method
-from earthkit.data.decorators import normalize
-from earthkit.data.indexing.database.sql import SqlDatabase
-from earthkit.data.indexing.database.sql import SqlOrder
-from earthkit.data.indexing.database.sql import SqlRemapping
-from earthkit.data.indexing.database.sql import SqlSelection
+from earthkit.data.decorators import cached_method, normalize
+from earthkit.data.indexing.database.sql import SqlDatabase, SqlOrder, SqlRemapping, SqlSelection
 from earthkit.data.readers.grib.index.db import FieldListInFilesWithDBIndex
 from earthkit.data.utils.serialise import register_serialisation
 
@@ -60,7 +55,7 @@ class FieldListInFilesWithSqlIndex(FieldListInFilesWithDBIndex):
 
     def unique_values(self, *coords, remapping=None, progress_bar=None):
         """Given a list of metadata attributes, such as date, param, levels,
-        returns the list of unique values for each attributes
+        returns the list of unique values for each attributes.
         """
         keys = coords
 

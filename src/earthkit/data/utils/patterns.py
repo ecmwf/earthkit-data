@@ -13,16 +13,11 @@ import os
 import re
 from pathlib import Path
 from typing import Any as TypingAny
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from earthkit.data.decorators import thread_safe_cached_property
 
-from .dates import to_datetime
-from .dates import to_timedelta
+from .dates import to_datetime, to_timedelta
 
 LOG = logging.getLogger(__name__)
 
@@ -406,6 +401,7 @@ class Variable:
         -------
         list
             List of substituted values.
+
         Raises
         ------
         ValueError

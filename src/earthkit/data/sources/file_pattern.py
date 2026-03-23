@@ -8,18 +8,13 @@
 #
 
 from typing import Any as TypingAny
-from typing import Dict
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Dict, Optional, Tuple, Union
 
-from earthkit.data.sources import Source
-from earthkit.data.sources import from_source
+from earthkit.data.sources import Source, from_source
 from earthkit.data.sources.empty import EmptySource
 from earthkit.data.sources.file import File
 from earthkit.data.sources.multi import MultiSource
-from earthkit.data.utils.patterns import HivePattern
-from earthkit.data.utils.patterns import Pattern
+from earthkit.data.utils.patterns import HivePattern, Pattern
 
 
 class HiveFilePattern(Source):

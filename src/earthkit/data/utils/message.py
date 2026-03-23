@@ -18,8 +18,7 @@ from contextlib import contextmanager
 import eccodes
 import numpy as np
 
-from earthkit.data.core.caching import CACHE
-from earthkit.data.core.caching import auxiliary_cache_file
+from earthkit.data.core.caching import CACHE, auxiliary_cache_file
 
 LOG = logging.getLogger(__name__)
 

@@ -13,13 +13,10 @@ import logging
 
 import numpy as np
 
-from earthkit.data.core.fieldlist import Field
-from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.fieldlist import Field, FieldList
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.metadata import RawMetadata
-from earthkit.data.decorators import cached_method
-from earthkit.data.decorators import normalize
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.data.decorators import cached_method, normalize, thread_safe_cached_property
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.utils.dates import to_datetime
 
@@ -281,7 +278,7 @@ def make_datetime(date, time):
         return date
     if date.hour or date.minute:
         raise ValueError(
-            (f"Duplicate information about time time={time}," f"and time={date.hour}:{date.minute} from date={date}")
+            (f"Duplicate information about time time={time}, and time={date.hour}:{date.minute} from date={date}")
         )
     assert date.hour == 0, (date, time)
     assert date.minute == 0, (date, time)
@@ -336,7 +333,7 @@ class ForcingsFieldListCore(FieldList):
                 return self.request["number"]
 
             assert hasattr(source_or_dataset, "unique_values"), (
-                f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is" " not a proper source or dataset"
+                f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is not a proper source or dataset"
             )
 
             return source_or_dataset.unique_values("number", patches={"number": {None: 0}}).get("number", 0)
@@ -358,7 +355,7 @@ class ForcingsFieldListCore(FieldList):
 
             assert "date" not in self.request and "time" not in self.request
             assert hasattr(source_or_dataset, "unique_values"), (
-                f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is" " not a proper source or dataset"
+                f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is not a proper source or dataset"
             )
 
             return source_or_dataset.unique_values("valid_datetime")["valid_datetime"]

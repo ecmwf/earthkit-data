@@ -19,8 +19,7 @@ from earthkit.data.utils.request import RequestBuilder
 from . import Source
 from .file import File
 from .prompt import APIKeyPrompt
-from .url import Url
-from .url import download_to_target
+from .url import Url, download_to_target
 
 LOG = logging.getLogger(__name__)
 

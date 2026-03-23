@@ -11,11 +11,9 @@ import logging
 
 import eccodes
 
-from earthkit.data.indexing.fieldlist import ClonedFieldCore
-from earthkit.data.indexing.fieldlist import SimpleFieldList
+from earthkit.data.indexing.fieldlist import ClonedFieldCore, SimpleFieldList
 from earthkit.data.readers import Reader
-from earthkit.data.readers.grib.codes import GribCodesHandle
-from earthkit.data.readers.grib.codes import GribField
+from earthkit.data.readers.grib.codes import GribCodesHandle, GribField
 
 LOG = logging.getLogger(__name__)
 
@@ -113,7 +111,7 @@ class GribStreamReader(GribMemoryReader):
     """Wrapper around eccodes.Streamreader. The problem is that when iterating via
     the StreamReader it returns an eccodes.GRIBMessage that releases the handle when deleted.
     However, the handle has to be managed by earthkit-data so we access it directly
-    using _next_handle
+    using _next_handle.
     """
 
     def __init__(self, stream, **kwargs):
@@ -142,7 +140,7 @@ class GribStreamReader(GribMemoryReader):
 
 
 class GribFieldInMemory(GribField):
-    """Represents a GRIB message in memory"""
+    """Represents a GRIB message in memory."""
 
     def __init__(self, handle, use_metadata_cache=False):
         super().__init__(None, None, None, use_metadata_cache=use_metadata_cache)
@@ -194,7 +192,7 @@ class ClonedGribFieldInMemory(ClonedFieldCore, GribFieldInMemory):
 
 
 class GribFieldListInMemory(SimpleFieldList):
-    """Represent a GRIB field list in memory loaded lazily"""
+    """Represent a GRIB field list in memory loaded lazily."""
 
     def __init__(self, source, reader, *args, **kwargs):
         """The reader must support __next__."""

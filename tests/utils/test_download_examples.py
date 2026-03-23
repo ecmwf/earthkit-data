@@ -11,8 +11,7 @@
 
 import os
 
-from earthkit.data import download_example_file
-from earthkit.data import remote_example_file
+from earthkit.data import download_example_file, remote_example_file
 
 
 def test_download_example_file_single(tmpdir):

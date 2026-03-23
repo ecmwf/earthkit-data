@@ -14,12 +14,8 @@ import eccodes
 from pdbufr.high_level_bufr.bufr import bufr_code_is_coord
 
 from earthkit.data.core import Base
-from earthkit.data.core.index import Index
-from earthkit.data.core.index import MaskIndex
-from earthkit.data.core.index import MultiIndex
-from earthkit.data.utils.message import CodesHandle
-from earthkit.data.utils.message import CodesMessagePositionIndex
-from earthkit.data.utils.message import CodesReader
+from earthkit.data.core.index import Index, MaskIndex, MultiIndex
+from earthkit.data.utils.message import CodesHandle, CodesMessagePositionIndex, CodesReader
 from earthkit.data.utils.metadata.args import metadata_argument
 from earthkit.data.utils.parts import Part
 from earthkit.data.utils.summary import make_bufr_html_tree
@@ -87,13 +83,13 @@ class BUFRCodesHandle(CodesHandle):
         self._unpacked = False
 
     def unpack(self):
-        """Decode data section"""
+        """Decode data section."""
         if not self._unpacked:
             eccodes.codes_set(self._handle, "unpack", 1)
             self._unpacked = True
 
     def pack(self):
-        """Encode data section"""
+        """Encode data section."""
         if self._unpacked:
             eccodes.codes_set(self._handle, "pack", 1)
             self._unpacked = False
@@ -128,7 +124,7 @@ class BUFRCodesHandle(CodesHandle):
         return _KeyIterator(self._handle)
 
     def keys(self, namespace=None):
-        """Iterate over all the available keys"""
+        """Iterate over all the available keys."""
         return self.__iter__()
 
     def as_namespace(self, namespace=None):
@@ -198,7 +194,7 @@ class BUFRMessage(Base):
         self._handle = None
 
     def __setitem__(self, key, value):
-        """Sets value associated with ``key``"""
+        """Sets value associated with ``key``."""
         if isinstance(value, list):
             return eccodes.codes_set_array(self.handle._handle, key, value)
         else:
@@ -300,7 +296,7 @@ class BUFRMessage(Base):
             return self.handle.as_namespace()
 
     def is_coord(self, key):
-        """Check if the specified key is a BUFR coordinate descriptor
+        """Check if the specified key is a BUFR coordinate descriptor.
 
         Parameters
         ----------
@@ -666,7 +662,7 @@ class BUFRInOneFile(BUFRInFiles):
 
 
 class BUFRReader(BUFRInOneFile, Reader):
-    """Represents a BUFR file"""
+    """Represents a BUFR file."""
 
     appendable = True  # BUFR messages can be added to the same file
 

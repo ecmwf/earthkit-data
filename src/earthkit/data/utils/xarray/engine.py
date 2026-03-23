@@ -458,8 +458,7 @@ class XarrayEarthkit:
         import warnings
 
         warnings.warn(
-            "The `to_grib` is deprecated in 0.15.0 and will be removed in a future version. "
-            "Use `to_target` instead.",
+            "The `to_grib` is deprecated in 0.15.0 and will be removed in a future version. Use `to_target` instead.",
             DeprecationWarning,
         )
         from earthkit.data.targets import create_target
@@ -498,8 +497,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         if "message" in md:
             data = md["message"]
             from earthkit.data.readers.grib.memory import GribMessageMemoryReader
-            from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
-            from earthkit.data.readers.grib.metadata import WrappedMetadata
+            from earthkit.data.readers.grib.metadata import StandAloneGribMetadata, WrappedMetadata
 
             handle = next(GribMessageMemoryReader(data)).handle
             bpv = md.get("bitsPerValue", 0)

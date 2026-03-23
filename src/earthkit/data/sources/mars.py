@@ -14,8 +14,7 @@ import subprocess
 from earthkit.data.core.config import CONFIG
 from earthkit.data.core.temporary import temp_file
 
-from .ecmwf_api import ECMWFApi
-from .ecmwf_api import MARSAPIKeyPrompt
+from .ecmwf_api import ECMWFApi, MARSAPIKeyPrompt
 
 LOG = logging.getLogger(__name__)
 

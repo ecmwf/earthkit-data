@@ -1,3 +1,6 @@
+"""Module containing methods to transform the inputs of functions based on the function type setting,
+common signatures or mapping defined at call time.
+"""
 # (C) Copyright 2020 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
@@ -7,9 +10,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""Module containing methods to transform the inputs of functions based on the function type setting,
-common signitures or mapping defined at call time
-"""
 import inspect
 import types
 import typing as T
@@ -30,14 +30,14 @@ EMPTY_TYPES = [inspect._empty]
 
 
 def _ensure_iterable(input_item):
-    """Ensure that an item is iterable"""
+    """Ensure that an item is iterable."""
     if not isinstance(input_item, (tuple, list, dict)):
         return [input_item]
     return input_item
 
 
 def _ensure_tuple(input_item):
-    """Ensure that an item is a tuple"""
+    """Ensure that an item is a tuple."""
     if not isinstance(input_item, tuple):
         return tuple(_ensure_iterable(input_item))
     return input_item
@@ -132,7 +132,7 @@ def signature_mapping(signature, kwarg_types):
     """Map args and kwargs to object types, using hierarchical selection method:
     1. Explicitly defined type
     2. Based on Type setting in function
-    3. Do nothing
+    3. Do nothing.
     """
     mapping = {}
     for key, parameter in signature.parameters.items():

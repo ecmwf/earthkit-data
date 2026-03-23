@@ -10,8 +10,7 @@
 import itertools
 import logging
 import sys
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.decorators import thread_safe_cached_property
@@ -42,8 +41,8 @@ class RequestBuilder:
         owner : Any
             The owner of the request builder.
         *args : tuple
-            Positional arguments representing request dictionaries. Each item can be dictionary
-            or a list/tuple of dictionaries.
+            Positional arguments representing request dictionaries.
+            Each item can be dictionary or a list/tuple of dictionaries.
         **kwargs : dict
             Keyword arguments representing request parameters.
         request : dict or list/tuple of dict, optional

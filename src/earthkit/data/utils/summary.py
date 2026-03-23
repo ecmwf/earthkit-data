@@ -137,8 +137,7 @@ class NamespaceDump(dict):
         from earthkit.data.core.ipython import ipython_active
 
         if ipython_active:
-            from earthkit.data.utils.html import tab
-            from earthkit.data.utils.html import table_from_dict
+            from earthkit.data.utils.html import tab, table_from_dict
 
             if len(self.data) == 1:
                 return table_from_dict(self.data[0]["data"])
@@ -224,13 +223,11 @@ class BUFRTree:
                 vals = v["value"]
                 if isinstance(vals, list):
                     vals = self._format_list(vals)
-                parent.append(
-                    {
-                        "key": v["key"],
-                        "value": vals,
-                        "units": v.get("units", None),
-                    }
-                )
+                parent.append({
+                    "key": v["key"],
+                    "value": vals,
+                    "units": v.get("units", None),
+                })
             else:
                 if arrayCnt > 1:
                     item = []

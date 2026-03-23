@@ -10,8 +10,7 @@
 
 import numpy as np
 
-from earthkit.data.core.fieldlist import Field
-from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.fieldlist import Field, FieldList
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.decorators import thread_safe_cached_property
@@ -21,7 +20,6 @@ from . import Reader
 
 
 class GeoTIFFGeography(Geography):
-
     def __init__(self, ds):
         self._ds = ds
         self.x_dim = ds.rio.x_dim
@@ -97,7 +95,6 @@ class GeoTIFFGeography(Geography):
 
 
 class GeoTIFFMetadata(RawMetadata):
-
     LS_KEYS = ["variable", "band"]
 
     def __init__(self, field, band, geography=None):
@@ -116,7 +113,7 @@ class GeoTIFFMetadata(RawMetadata):
 
 
 class GeoTIFFField(Field):
-    """A GeoTIFF band"""
+    """A GeoTIFF band."""
 
     def __init__(self, da, band, geography=None):
         super().__init__()
@@ -148,7 +145,7 @@ class GeoTIFFField(Field):
 
 
 class GeoTIFFFieldList(FieldList):
-    """A list of GeoTIFF bands"""
+    """A list of GeoTIFF bands."""
 
     FIELD_TYPE = GeoTIFFField
 
