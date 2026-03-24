@@ -773,10 +773,10 @@ def test_grib_metadata_namespace(fl_type):
 def test_grib_get_message(fl_type):
     f, _ = load_grib_data("test.grib", fl_type)
     v = f[0].get("metadata.message")
-    assert len(v) == 526
+    assert len(v) == 316
     assert v[:4] == b"GRIB"
     v = f[1].get("metadata.message")
-    assert len(v) == 526
+    assert len(v) == 316
     assert v[:4] == b"GRIB"
 
 

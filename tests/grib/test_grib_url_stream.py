@@ -15,7 +15,11 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.sources.stream import StreamFieldList
-from earthkit.data.utils.testing import earthkit_remote_examples_file, earthkit_remote_file
+from earthkit.data.utils.testing import (
+    earthkit_remote_examples_file,
+    earthkit_remote_file,
+    earthkit_remote_test_data_file,
+)
 
 
 def repeat_list_items(items, count):
@@ -239,7 +243,7 @@ def test_grib_url_stream_multi_urls_memory():
     ds = from_source(
         "url",
         [
-            earthkit_remote_examples_file("test.grib"),
+            earthkit_remote_test_data_file("test.grib"),
             earthkit_remote_examples_file("test4.grib"),
         ],
         stream=True,
@@ -268,10 +272,10 @@ def test_grib_url_stream_multi_urls_memory():
         ds.to_numpy().shape
 
     # first part
-    expected_shape = (2, 11, 19)
+    expected_shape = (2, 8, 13)
     assert ds[0:2].to_numpy().shape == expected_shape
 
-    ref = np.array([262.78027344, 101947.8125])
+    ref = np.array([270.52026367, 101562.0])
 
     vals = ds[0:2].to_numpy()[:, 0, 0]
     assert np.allclose(vals, ref)

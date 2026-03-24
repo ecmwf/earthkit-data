@@ -35,14 +35,14 @@ def test_hl_grib_single_core():
     a = ds.to_xarray()
     assert "2t" in a.data_vars
     assert "msl" in a.data_vars
-    assert a["2t"].shape == (11, 19)
-    assert a["msl"].shape == (11, 19)
+    assert a["2t"].shape == (8, 13)
+    assert a["msl"].shape == (8, 13)
 
     v = ds.to_numpy()
-    assert v.shape == (2, 11, 19)
+    assert v.shape == (2, 8, 13)
 
     v = ds.to_array()
-    assert v.shape == (2, 11, 19)
+    assert v.shape == (2, 8, 13)
 
 
 def test_hl_grib_stream_1():
@@ -84,5 +84,5 @@ def test_hl_grib_multi_core():
     fl = ds.to_fieldlist()
     assert len(fl) == 6
     assert fl.get("parameter.variable") == ["2t", "msl", "t", "z", "t", "z"]
-    assert fl[0].shape == (11, 19)
+    assert fl[0].shape == (8, 13)
     assert fl[2].shape == (181, 360)

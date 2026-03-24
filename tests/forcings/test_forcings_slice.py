@@ -34,7 +34,7 @@ def test_forcings_single_index(input_data, index):
     assert r.get(["time.valid_datetime", "parameter.variable"]) == ref_md
 
     v = r.values
-    assert v.shape == (209,)
+    assert v.shape == (104,)
 
     # check the original fieldlist
     assert len(ds) == num
@@ -63,7 +63,7 @@ def test_forcings_slice(input_data, indexes):
     assert r.get(["time.valid_datetime", "parameter.variable"]) == ref_md
 
     v = r.values
-    assert v.shape == (ref_num, 209)
+    assert v.shape == (ref_num, 104)
 
     # check the original fieldlist
     assert len(ds) == num

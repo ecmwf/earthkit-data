@@ -14,7 +14,11 @@ import pytest
 
 from earthkit.data import from_object, from_source
 from earthkit.data.utils import projections
-from earthkit.data.utils.testing import earthkit_examples_file, earthkit_remote_examples_file, earthkit_test_data_file
+from earthkit.data.utils.testing import (
+    earthkit_examples_file,
+    earthkit_remote_examples_file,
+    earthkit_test_data_file,
+)
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -81,15 +85,15 @@ def test_netcdf_points_2():
 
         # x
         assert isinstance(x, np.ndarray)
-        assert x.shape == (11, 19)
+        assert x.shape == (8, 13)
         for xi in x:
-            assert np.allclose(xi, np.arange(-27, 45 + 4, 4))
+            assert np.allclose(xi, np.arange(-20, 40 + 5, 5))
 
         # y
         assert isinstance(y, np.ndarray)
-        assert y.shape == (11, 19)
+        assert y.shape == (8, 13)
         for i, yi in enumerate(y):
-            assert np.allclose(yi, np.ones(19) * (73 - i * 4))
+            assert np.allclose(yi, np.ones(13) * (70 - i * 5))
 
         ref = xr_ds[f.get("parameter.variable")].sel(latitude=57, longitude=-7).values
 
@@ -114,34 +118,34 @@ def test_netcdf_latlon():
 
         # lon
         assert isinstance(lon, np.ndarray)
-        assert lon.shape == (11, 19)
+        assert lon.shape == (8, 13)
         for x in lon:
-            assert np.allclose(x, np.arange(-27, 45 + 4, 4))
+            assert np.allclose(x, np.arange(-20, 40 + 5, 5))
 
         # lat
         assert isinstance(lat, np.ndarray)
-        assert lat.shape == (11, 19)
+        assert lat.shape == (8, 13)
         for i, y in enumerate(lat):
-            assert np.allclose(y, np.ones(19) * (73 - i * 4))
+            assert np.allclose(y, np.ones(13) * (70 - i * 5))
 
-        ref = xr_ds[f.get("parameter.variable")].sel(latitude=57, longitude=-7).values
+        ref = xr_ds[f.get("parameter.variable")].sel(latitude=50, longitude=-5).values
 
-        x_idx = 5
+        x_idx = 3
         y_idx = 4
         assert np.isclose(f.to_numpy()[y_idx, x_idx], ref)
-        assert np.isclose(lon[y_idx, x_idx], -7)
-        assert np.isclose(lat[y_idx, x_idx], 57)
+        assert np.isclose(lon[y_idx, x_idx], -5)
+        assert np.isclose(lat[y_idx, x_idx], 50)
 
 
 def test_netcdf_bbox():
     ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
     bb = ds.geography.bounding_box()
-    assert bb.as_tuple() == (73, -27, 33, 45)
+    assert bb.as_tuple() == (70, -20, 35, 40)
 
 
 def test_netcdf_area():
     ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
-    ref = [73, -27, 33, 45]
+    ref = [70, -20, 35, 40]
     assert np.allclose(np.asarray(ds[0].geography.area()), np.asarray(ref))
 
 

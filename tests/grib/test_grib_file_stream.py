@@ -270,10 +270,10 @@ def test_grib_file_stream_multi_file_memory():
         ds.to_numpy().shape
 
     # first part
-    expected_shape = (2, 11, 19)
+    expected_shape = (2, 8, 13)
     assert ds[0:2].to_numpy().shape == expected_shape
 
-    ref = np.array([262.78027344, 101947.8125])
+    ref = np.array([270.52026367, 101562.0])
 
     vals = ds[0:2].to_numpy()[:, 0, 0]
     assert np.allclose(vals, ref)
@@ -402,7 +402,7 @@ def test_grib_file_stream_single_file_parts_as_arg_invalid():
         ),
         (
             None,
-            [(0, 526)],
+            [(0, 360)],
             [
                 ("t", 1000),
                 ("u", 1000),
@@ -415,12 +415,12 @@ def test_grib_file_stream_single_file_parts_as_arg_invalid():
         ),
         (
             [(240, 150)],
-            [(0, 526)],
+            [(0, 360)],
             [("u", 1000), ("2t", 0)],
         ),
         (
             [(240, 150), (720, 150)],
-            [(0, 526)],
+            [(0, 360)],
             [("u", 1000), ("t", 850), ("2t", 0)],
         ),
     ],

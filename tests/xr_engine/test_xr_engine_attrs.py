@@ -243,7 +243,7 @@ def test_xr_engine_dims_as_attrs_1(allow_holes, lazy_load, kwargs, coords, dims,
                     "level_and_type": "500isobaricInhPa",
                 }
             },
-            {"grid_type": "regular_ll"},
+            {"grid_type": "regular-ll"},
         ),
     ],
 )
@@ -341,7 +341,7 @@ def test_xr_engine_dims_as_attrs_2(allow_holes, lazy_load, idx, kwargs, coords, 
             },
             {"member": 1, "forecast_reference_time": 2, "step": 2},
             {"t": {"units": "kelvin", "pl": 700}},
-            {"grid_type": "regular_ll"},
+            {"grid_type": "regular-ll"},
         ),
     ],
 )

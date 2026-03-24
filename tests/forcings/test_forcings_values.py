@@ -32,24 +32,24 @@ def test_forcings_values(input_data):
     v = ds.values
     assert isinstance(v, np.ndarray)
     assert v.dtype == np.float64
-    assert v.shape == (num, 209)
+    assert v.shape == (num, 104)
     vf = v[0].flatten()
     check_array(
         vf,
-        (209,),
-        first=0.95630476,
-        last=0.54463904,
-        meanv=0.7793134730178092,
+        (104,),
+        first=0.93969262,
+        last=0.57357644,
+        meanv=0.7775866407798875,
         eps=eps,
     )
 
     vf = v[num - 1].flatten()
     check_array(
         vf,
-        (209,),
-        first=0.89100652,
-        last=0.70710678,
-        meanv=0.917041819159978,
+        (104,),
+        first=0.93969262,
+        last=0.76604444,
+        meanv=0.9331362672759168,
         eps=eps,
     )
 
@@ -64,24 +64,24 @@ def test_forcings_to_numpy(input_data):
     v = ds.to_numpy(flatten=True)
     assert isinstance(v, np.ndarray)
     assert v.dtype == np.float64
-    assert v.shape == (num, 209)
+    assert v.shape == (num, 104)
     vf = v[0].flatten()
     check_array(
         vf,
-        (209,),
-        first=0.95630476,
-        last=0.54463904,
-        meanv=0.7793134730178092,
+        (104,),
+        first=0.93969262,
+        last=0.57357644,
+        meanv=0.7775866407798875,
         eps=eps,
     )
 
     vf = v[num - 1].flatten()
     check_array(
         vf,
-        (209,),
-        first=0.89100652,
-        last=0.70710678,
-        meanv=0.917041819159978,
+        (104,),
+        first=0.93969262,
+        last=0.76604444,
+        meanv=0.9331362672759168,
         eps=eps,
     )
 
@@ -93,18 +93,18 @@ def test_forcings_to_numpy(input_data):
             {},
             (
                 16,
-                11,
-                19,
+                8,
+                13,
             ),
         ),
         (
             {"flatten": True},
             (
                 16,
-                209,
+                104,
             ),
         ),
-        ({"flatten": False}, (16, 11, 19)),
+        ({"flatten": False}, (16, 8, 13)),
     ],
 )
 def test_forcings_to_numpy_shape(options, expected_shape):
@@ -116,11 +116,11 @@ def test_forcings_to_numpy_shape(options, expected_shape):
     v = ds.to_numpy()
     assert isinstance(v, np.ndarray)
     assert v.dtype == np.float64
-    assert v.shape == (num, 11, 19)
+    assert v.shape == (num, 8, 13)
     vf0 = ds[0].to_numpy().flatten()
-    assert vf0.shape == (209,)
+    assert vf0.shape == (104,)
     vfm1 = ds[num - 1].to_numpy().flatten()
-    assert vfm1.shape == (209,)
+    assert vfm1.shape == (104,)
 
     v1 = ds.to_numpy(**options)
     assert isinstance(v1, np.ndarray)
@@ -146,13 +146,13 @@ def test_forcings_to_numpy_dtype(dtype):
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
     [
-        ({}, (11, 19), np.float64),
-        ({"flatten": True}, (209,), np.float64),
-        ({"flatten": True, "dtype": np.float32}, (209,), np.float32),
-        ({"flatten": True, "dtype": np.float64}, (209,), np.float64),
-        ({"flatten": False}, (11, 19), np.float64),
-        ({"flatten": False, "dtype": np.float32}, (11, 19), np.float32),
-        ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
+        ({}, (8, 13), np.float64),
+        ({"flatten": True}, (104,), np.float64),
+        ({"flatten": True, "dtype": np.float32}, (104,), np.float32),
+        ({"flatten": True, "dtype": np.float64}, (104,), np.float64),
+        ({"flatten": False}, (8, 13), np.float64),
+        ({"flatten": False, "dtype": np.float32}, (8, 13), np.float32),
+        ({"flatten": False, "dtype": np.float64}, (8, 13), np.float64),
     ],
 )
 def test_forcings_field_data(kwarg, expected_shape, expected_dtype):
@@ -196,13 +196,13 @@ def test_forcings_field_data(kwarg, expected_shape, expected_dtype):
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
     [
-        ({}, (11, 19), np.float64),
-        ({"flatten": True}, (209,), np.float64),
-        ({"flatten": True, "dtype": np.float32}, (209,), np.float32),
-        ({"flatten": True, "dtype": np.float64}, (209,), np.float64),
-        ({"flatten": False}, (11, 19), np.float64),
-        ({"flatten": False, "dtype": np.float32}, (11, 19), np.float32),
-        ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
+        ({}, (8, 13), np.float64),
+        ({"flatten": True}, (104,), np.float64),
+        ({"flatten": True, "dtype": np.float32}, (104,), np.float32),
+        ({"flatten": True, "dtype": np.float64}, (104,), np.float64),
+        ({"flatten": False}, (8, 13), np.float64),
+        ({"flatten": False, "dtype": np.float32}, (8, 13), np.float32),
+        ({"flatten": False, "dtype": np.float64}, (8, 13), np.float64),
     ],
 )
 def test_forcings_fieldlist_data(kwarg, expected_shape, expected_dtype):

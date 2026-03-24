@@ -44,7 +44,7 @@ def _build_proc_ref(input_data):
 
 
 @pytest.mark.parametrize("input_data", ["grib", "latlon"])
-def test_forcings_proc(input_data):
+def test_forcings_proc_1(input_data):
     with open(earthkit_test_data_file(os.path.join("forcings", "proc.yaml")), "r") as f:
         ref = yaml.safe_load(f)
 
@@ -55,6 +55,7 @@ def test_forcings_proc(input_data):
         assert len(f) == 1
         v = f[0].values
         r = ref[p]
+
         assert np.isclose(v[0], r["first"])
         assert np.isclose(v[-1], r["last"])
         assert np.isclose(np.nanmean(v), r["mean"])

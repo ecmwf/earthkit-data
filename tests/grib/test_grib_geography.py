@@ -251,14 +251,14 @@ def test_grib_bbox(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
     print(ds[0].geography.grid_spec())
     bb = ds[0].geography.bounding_box()
-    assert bb.as_tuple() == (73, -27, 33, 45)
+    assert bb.as_tuple() == (70, -20, 35, 40)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_bbox_2(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
     bb = ds.geography.bounding_box()
-    assert bb.as_tuple() == (73, -27, 33, 45)
+    assert bb.as_tuple() == (70, -20, 35, 40)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -377,7 +377,7 @@ def test_grib_eckit_grid_object(fl_type, filename, shape, grid_spec, area, grid_
 @pytest.mark.parametrize(
     "path,expected_value",
     [
-        (earthkit_examples_file("test.grib"), [73.0, -27.0, 33.0, 45.0]),
+        (earthkit_examples_file("test.grib"), [70.0, -20.0, 35.0, 40.0]),
         (
             earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"),
             [89.877, 36.233, 84.815, 46.185],

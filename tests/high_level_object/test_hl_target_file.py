@@ -60,7 +60,7 @@ def test_hl_target_file_grib_multi():
         fl = ds1.to_fieldlist()
         assert len(fl) == 6
         assert fl.get("parameter.variable") == ["2t", "msl", "t", "z", "t", "z"]
-        assert fl[0].shape == (11, 19)
+        assert fl[0].shape == (8, 13)
         assert fl[2].shape == (181, 360)
 
 
@@ -75,8 +75,8 @@ def test_hl_target_file_netcdf_single():
         a = ds.to_xarray()
         assert "t2m" in a.data_vars
         assert "msl" in a.data_vars
-        assert a.t2m.shape == (11, 19)
-        assert a.msl.shape == (11, 19)
+        assert a.t2m.shape == (8, 13)
+        assert a.msl.shape == (8, 13)
 
 
 def test_hl_target_file_netcdf_multi():

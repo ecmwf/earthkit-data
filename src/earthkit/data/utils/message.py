@@ -205,6 +205,14 @@ class CodesHandle(eccodes.Message):
     def from_message(cls, message):
         return cls(eccodes.codes_new_from_message(message), None, None)
 
+    @classmethod
+    def _raw_handle_from_file(cls, fp):
+        return eccodes.codes_new_from_file(fp, cls.PRODUCT_ID)
+
+    @classmethod
+    def _raw_handle_from_message(cls, message):
+        return eccodes.codes_new_from_message(message, cls.PRODUCT_ID)
+
     # TODO: just a wrapper around the base class implementation to handle the
     # s,l,d qualifiers. Once these are implemented in the base class this method can
     # be removed. md5GridSection is also handled!

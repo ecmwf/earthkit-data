@@ -83,7 +83,11 @@ class GribCodesHandle(CodesHandle):
                 try:
                     return super().get(name, ktype, **kwargs)
                 except Exception as e:
-                    if "FunctionNotImplementedError" in str(type(e)):
+                    e_str = str(type(e))
+                    if any(
+                        err in e_str
+                        for err in ["FunctionNotImplementedError", "GeocalculusError", "BufferTooSmallError"]
+                    ):
                         return kwargs.get("default", None)
 
         return super().get(name, ktype, **kwargs)
@@ -150,8 +154,8 @@ class GribCodesHandle(CodesHandle):
     def get_longitudes(self, dtype=None):
         return LONGITUDE_ACCESSOR.get(self._handle, dtype=dtype)
 
-    def get_data_points(self):
-        return eccodes.codes_grib_get_data(self._handle)
+    # def get_data_points(self):
+    #     return eccodes.codes_grib_get_data(self._handle)
 
     def set_values(self, values):
         try:
@@ -310,6 +314,11 @@ class MemoryGribHandle(GribHandle):
     def from_raw_handle(cls, handle):
         """Create a MemoryGribHandle from an existing handle."""
         return cls(GribCodesHandle(handle, None, None))
+
+    @classmethod
+    def from_message(cls, message):
+        """Create a MemoryGribHandle from an existing handle."""
+        return cls(GribCodesHandle.from_message(message))
 
     @property
     def handle(self):

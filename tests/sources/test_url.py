@@ -179,15 +179,16 @@ def test_url_part_file_source():
         f"file://{filename}",
         parts=[
             (0, 4),
-            (522, 4),
-            (526, 4),
-            (1048, 4),
+            (312, 4),
+            (360, 4),
+            (672, 4),
         ],
-    ).to_fieldlist()
+    )
 
-    assert os.path.getsize(ds.path) == 16
+    path = ds._source.path
+    assert os.path.getsize(path) == 16
 
-    with open(ds.path, "rb") as f:
+    with open(path, "rb") as f:
         assert f.read() == b"GRIB7777GRIB7777"
 
 

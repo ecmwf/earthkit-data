@@ -41,13 +41,21 @@ class _EckitGridSupport:
 
             try:
                 r = eccodes.codes_get_features(eccodes.CODES_FEATURES_ENABLED)
-                if isinstance(r, str) and "ECKIT_GEO" in r:
-                    return True
             except Exception as e:
-                LOG.warning(f"Failed to get ecCodes features: {e}")
-                return False
+                raise RuntimeError("Failed to get ecCodes features") from e
 
-        return False
+            if isinstance(r, str) and "ECKIT_GEO" in r:
+                return True
+            else:
+                raise RuntimeError(
+                    (
+                        "ecCodes does not have ECKIT_GEO support. Please check your ecCodes installation"
+                        " and ensure it is built with eckit.geo support."
+                    )
+                )
+
+        else:
+            raise EnvironmentError("ECCODES_ECKIT_GEO environment variable is not set to '1'")
 
 
 ECKIT_GRID_SUPPORT = _EckitGridSupport()

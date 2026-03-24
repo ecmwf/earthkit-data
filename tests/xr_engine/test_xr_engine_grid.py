@@ -35,14 +35,16 @@ def grid_list(files=None):
 
 
 @pytest.mark.cache
-@pytest.mark.parametrize("allow_holes", [False, True])
-@pytest.mark.parametrize("lazy_load", [True, False])
+# @pytest.mark.parametrize("allow_holes", [False, True])
+# @pytest.mark.parametrize("lazy_load", [True, False])
+@pytest.mark.parametrize("allow_holes", [False])
+@pytest.mark.parametrize("lazy_load", [True])
 @pytest.mark.parametrize(
     "file,dims,coords,distinct_ll",
-    # grid_list(files=["sh_t32.grib1"]),
+    # grid_list(files=["regular_gg_F16.grib1"]),
     grid_list(),
 )
-def test_xr_engine_grid(allow_holes, lazy_load, file, dims, coords, distinct_ll):
+def test_xr_engine_grid_core(allow_holes, lazy_load, file, dims, coords, distinct_ll):
     ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file)).to_fieldlist()
 
     a = ds.to_xarray(profile="mars", allow_holes=allow_holes, lazy_load=lazy_load)

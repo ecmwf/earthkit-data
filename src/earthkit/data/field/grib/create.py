@@ -78,9 +78,6 @@ def new_array_grib_field(field, handle, array_namespace=None, device=None, flatt
 
 
 def create_grib_field_from_buffer(buf):
-    import eccodes
-
     from earthkit.data.readers.grib.handle import MemoryGribHandle
 
-    handle = eccodes.codes_new_from_message(buf)
-    return create_grib_field(MemoryGribHandle.from_raw_handle(handle), cache=False)
+    return create_grib_field(MemoryGribHandle.from_message(buf), cache=False)

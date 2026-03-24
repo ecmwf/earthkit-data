@@ -433,13 +433,13 @@ def test_grib_to_array_1_shape(fl_type, first, options, expected_shape):
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
     [
-        ({}, (11, 19), np.float64),
-        ({"flatten": True}, (209,), np.float64),
-        ({"flatten": True, "dtype": np.float32}, (209,), np.float32),
-        ({"flatten": True, "dtype": np.float64}, (209,), np.float64),
-        ({"flatten": False}, (11, 19), np.float64),
-        ({"flatten": False, "dtype": np.float32}, (11, 19), np.float32),
-        ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
+        ({}, (8, 13), np.float64),
+        ({"flatten": True}, (104,), np.float64),
+        ({"flatten": True, "dtype": np.float32}, (104,), np.float32),
+        ({"flatten": True, "dtype": np.float64}, (104,), np.float64),
+        ({"flatten": False}, (8, 13), np.float64),
+        ({"flatten": False, "dtype": np.float32}, (8, 13), np.float32),
+        ({"flatten": False, "dtype": np.float64}, (8, 13), np.float64),
     ],
 )
 def test_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
@@ -484,13 +484,13 @@ def test_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
     [
-        ({}, (11, 19), np.float64),
-        ({"flatten": True}, (209,), np.float64),
-        ({"flatten": True, "dtype": np.float32}, (209,), np.float32),
-        ({"flatten": True, "dtype": np.float64}, (209,), np.float64),
-        ({"flatten": False}, (11, 19), np.float64),
-        ({"flatten": False, "dtype": np.float32}, (11, 19), np.float32),
-        ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
+        ({}, (8, 13), np.float64),
+        ({"flatten": True}, (104,), np.float64),
+        ({"flatten": True, "dtype": np.float32}, (104,), np.float32),
+        ({"flatten": True, "dtype": np.float64}, (104,), np.float64),
+        ({"flatten": False}, (8, 13), np.float64),
+        ({"flatten": False, "dtype": np.float32}, (8, 13), np.float32),
+        ({"flatten": False, "dtype": np.float64}, (8, 13), np.float64),
     ],
 )
 def test_grib_fieldlist_data(fl_type, kwarg, expected_shape, expected_dtype):

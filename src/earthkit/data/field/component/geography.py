@@ -693,7 +693,7 @@ class GridsSpecBasedGeography(BaseGeography):
         -------
         ndarray
         """
-        return NotImplementedError("x(): geographical coordinates in original CRS are not available")
+        return self.longitudes(dtype=dtype)
 
     def y(self, dtype=None):
         r"""Return the y coordinates in the field's original CRS.
@@ -702,7 +702,7 @@ class GridsSpecBasedGeography(BaseGeography):
         -------
         ndarray
         """
-        raise NotImplementedError("y(): geographical coordinates in original CRS are not available")
+        return self.latitudes(dtype=dtype)
 
     def shape(self):
         r"""Get the shape of the field.
@@ -724,7 +724,7 @@ class GridsSpecBasedGeography(BaseGeography):
         return self._grid.uid
 
     def projection(self):
-        raise NotImplementedError("projection is not implemented for this geography")
+        return Projection.from_proj_string(proj_string=None)
 
     def bounding_box(self):
         bb = self._grid.bounding_box()

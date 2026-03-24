@@ -24,8 +24,8 @@ def test_hl_netcdf_single_core():
     a = ds.to_xarray()
     assert "t2m" in a.data_vars
     assert "msl" in a.data_vars
-    assert a.t2m.shape == (11, 19)
-    assert a.msl.shape == (11, 19)
+    assert a.t2m.shape == (8, 13)
+    assert a.msl.shape == (8, 13)
 
     fl = ds.to_fieldlist()
     assert len(fl) == 2

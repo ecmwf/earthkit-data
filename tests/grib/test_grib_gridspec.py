@@ -76,6 +76,7 @@ def gridspec_list(grid_types):
 #         yield (item["metadata"], item["gridspec"], item["file"])
 
 
+@pytest.mark.skip(reason="Not needed anymore since we are now using eckit.geo gridspecs")
 @pytest.mark.parametrize(
     "metadata,ref,name",
     gridspec_list(SUPPORTED_GRID_TYPES),
@@ -97,6 +98,7 @@ def test_grib_gridspec_from_metadata_valid(metadata, ref, name):
     assert dict(gridspec) == ref, name
 
 
+@pytest.mark.skip(reason="Not needed anymore since we are now using eckit.geo gridspecs")
 @pytest.mark.parametrize(
     "metadata,ref,name",
     gridspec_list(UNSUPPORTED_GRID_TYPES),
@@ -106,6 +108,7 @@ def test_grib_gridspec_from_metadata_invalid_1(metadata, ref, name):
         make_legacy_gridspec(metadata)
 
 
+@pytest.mark.skip(reason="Not needed anymore since we are now using eckit.geo gridspecs")
 @pytest.mark.parametrize(
     "metadata",
     [
@@ -139,6 +142,7 @@ def test_grib_gridspec_from_file():
     assert gs == ref
 
 
+@pytest.mark.skip(reason="Not needed anymore since we are now using eckit.geo gridspecs")
 @pytest.mark.parametrize("metadata,gridspec,name", gridspec_list("regular_ll"))
 def test_grib_metadata_from_gridspec_valid(metadata, gridspec, name):
     if name in [
@@ -154,6 +158,7 @@ def test_grib_metadata_from_gridspec_valid(metadata, gridspec, name):
     assert md == metadata, name
 
 
+@pytest.mark.skip(reason="Not needed anymore since we are now using eckit.geo gridspecs")
 @pytest.mark.parametrize(
     "metadata,gridspec,name",
     gridspec_list([
@@ -178,6 +183,7 @@ def test_grib_metadata_from_gridspec_invalid(metadata, gridspec, name):
         _, _ = LegacyGridSpecConverter.to_metadata(gridspec, edition=edition)
 
 
+@pytest.mark.skip(reason="Not needed anymore since we are now using eckit.geo gridspecs")
 @pytest.mark.parametrize(
     "input_file",
     [
@@ -280,6 +286,7 @@ def _global_grids():
 
 
 # these are all the cases for the earthkit-regrid target grids
+@pytest.mark.skip(reason="Not needed anymore since we are now using eckit.geo gridspecs")
 @pytest.mark.parametrize("edition", [1, 2])
 @pytest.mark.parametrize("grid", _global_grids())
 def test_grib_global_ll_gridspec_to_metadata(edition, grid):

@@ -15,6 +15,8 @@ except ImportError:  # pragma: no cover
     # Local copy or not installed with setuptools
     __version__ = "999"
 
+import os
+
 from earthkit.data.data.wrappers import from_object
 from earthkit.data.translators import transform
 
@@ -26,13 +28,9 @@ from .core.fieldlist import FieldList
 from .core.fieldlist import create_fieldlist
 from .encoders import create_encoder
 from .indexing.simple import SimpleFieldList
-
-# from .readers.grib.output import new_grib_output
 from .sources import Source
 from .sources import from_source
 from .sources import from_source_lazily
-
-# from .sources.array_list import ArrayField
 from .targets import create_target
 from .targets import to_target
 from .utils.concat import concat
@@ -40,6 +38,10 @@ from .utils.examples import download_example_file
 from .utils.examples import remote_example_file
 
 settings = config
+
+# enforcing using eckit.geo in ecCodes for geography
+os.environ["ECCODES_ECKIT_GEO"] = "1"
+
 
 __all__ = [
     "ALL",

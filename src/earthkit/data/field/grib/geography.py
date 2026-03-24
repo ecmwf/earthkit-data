@@ -180,7 +180,7 @@ class GribGeographyBuilder:
                 from earthkit.data.field.component.geography import GridsSpecBasedGeography
 
                 # Try to get the gridspec from the handle
-                grid_spec = handle.get("gridSpec", None)
+                grid_spec = handle.get("gridSpec", default=None)
                 if grid_spec is not None and grid_spec != "":
                     component = GridsSpecBasedGeography(grid_spec)
                 else:

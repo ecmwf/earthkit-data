@@ -81,7 +81,9 @@ class GribFileMemoryReader(GribMemoryReader):
         self.fp.close()
 
     def _next_handle(self):
-        return eccodes.codes_new_from_file(self.fp, eccodes.CODES_PRODUCT_GRIB)
+        from .handle import GribCodesHandle
+
+        return GribCodesHandle._raw_handle_from_file(self.fp)
 
 
 class GribMessageMemoryReader(GribMemoryReader):
@@ -95,7 +97,11 @@ class GribMessageMemoryReader(GribMemoryReader):
     def _next_handle(self):
         if self.buf is None:
             return None
-        handle = eccodes.codes_new_from_message(self.buf)
+
+        from .handle import GribCodesHandle
+
+        handle = GribCodesHandle._raw_handle_from_message(self.buf)
+
         self.buf = None
         return handle
 

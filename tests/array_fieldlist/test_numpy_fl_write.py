@@ -208,7 +208,7 @@ def test_array_fl_grib_write_bits_per_value(array_backend, _kwargs, expected_val
 @pytest.mark.parametrize(
     "filename,shape",
     [
-        (earthkit_examples_file("test.grib"), (11, 19)),
+        (earthkit_examples_file("test.grib"), (8, 13)),
         (earthkit_test_data_file("O32_global.grib1"), (5248,)),
         (earthkit_test_data_file("O32_global.grib2"), (5248,)),
     ],
@@ -238,7 +238,7 @@ def test_array_fl_grib_single_write_to_path(filename, shape):
 @pytest.mark.parametrize(
     "filename,shape",
     [
-        (earthkit_examples_file("test.grib"), (11, 19)),
+        (earthkit_examples_file("test.grib"), (8, 13)),
         (earthkit_test_data_file("O32_global.grib1"), (5248,)),
         (earthkit_test_data_file("O32_global.grib2"), (5248,)),
     ],

@@ -73,12 +73,27 @@ class RegularLLGrid(Grid):
 
 
 class RectifiedLLGrid(Grid):
+    def _compute_distinct_ll(self):
+        # fragile logic assuming canonical scanning mode
+        lat, lon = self.field.geography.latlons()
+        lat = lat[:, 0]
+        lon = lon[0, :]
+        return lat, lon
+
     def to_distinct_latlon(self, field_shape):
         lat = np.atleast_1d(self.field.geography.distinct_latitudes())
         if len(lat) == field_shape[0]:
             lon = np.atleast_1d(self.field.geography.distinct_longitudes())
             if len(lon) == field_shape[1]:
                 return lat, lon
+
+        # fallback to computing distinct lat/lon from lat/lon arrays
+        # temporary workaround
+        try:
+            return self._compute_distinct_ll()
+        except Exception:
+            pass
+
         return None, None
 
 
