@@ -66,6 +66,7 @@ Quick start
 
    release_notes/index
    licence
+   :ref:`genindex`
 
 
 .. toctree::
@@ -73,12 +74,7 @@ Quick start
    :caption: Related projects
 
    earthkit <https://earthkit.readthedocs.io/en/latest>
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-
-.. * :ref:`modindex`
-.. * :ref:`search`
+   earthkit-geo <https://earthkit-geo.readthedocs.io/en/release-1.0.0rc0>
+   earthkit-meteo <https://earthkit-meteo.readthedocs.io/en/release-1.0.0rc0>
+   earthkit-plots <https://earthkit-plots.readthedocs.io/en/release-1.0.0rc0>
+   earthkit-transforms <https://earthkit-transforms.readthedocs.io/en/release-1.0.0rc0>
