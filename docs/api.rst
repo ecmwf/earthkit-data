@@ -4,6 +4,8 @@
 API reference guide
 ////////////////////
 
+.. warning::
+   The API reference guide is currently under construction and may be incomplete or inaccurate.
 
 Fields
 -------

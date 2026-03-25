@@ -3,6 +3,10 @@
 Encoders
 ===============
 
+.. warning::
+   This guide is currently under construction and may be incomplete or inaccurate.
+
+
 An **encoder** is used to generate data in a suitable format that can be written/added to a :ref:`target <data-targets>`. Encoders are typically used implicitly via :func:`to_target` but we can also instantiate an :class:`Encoder` and work with it directly.
 
 create_encoder()

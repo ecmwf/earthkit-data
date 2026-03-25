@@ -3,6 +3,11 @@
 GRIB field memory management
 //////////////////////////////
 
+
+.. warning::
+   This guide is currently under construction and may be incomplete or inaccurate.
+
+
 :ref:`grib` is a message-based binary format, where each message is regarded as a field. For reading GRIB, earthkit-data relies on :xref:`eccodes`, which, when loading a message into memory, represents it as a ``GRIB handle``. In the low level API, the GRIB handle is the object that holds the data and metadata of a GRIB field, therefore it can use up a significant amount of memory.
 
 Determining when a GRIB handle needs to be created and when it can be released is important for memory management. Earthkit-data provides several config options to control this behaviour depending on how we actually read the data.

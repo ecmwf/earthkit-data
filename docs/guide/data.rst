@@ -3,6 +3,11 @@
 Data objects
 =================
 
+
+.. warning::
+   This guide is currently under construction and may be incomplete or inaccurate.
+
+
 Methods :func:`from_source` and :func:`from_object` return a **data object**. This object provides some basic information about the data but its primary goal is to convert it to a given representation for further work. The actual data loading is deferred as much as possible, until the data is converted into a given type.
 
 

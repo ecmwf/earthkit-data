@@ -3,6 +3,11 @@
 GRIB field metadata caching
 //////////////////////////////
 
+
+.. warning::
+   This guide is currently under construction and may be incomplete or inaccurate.
+
+
 The ``use-grib-metadata-cache`` :ref:`config option <config>` controls whether :ref:`grib` fields will cache their metadata access. The default value is ``True``.
 
 This is an in-memory cache attached to the field and implemented for the low-level metadata accessor for individual keys. Getting the values from the cache can be significantly faster than reading them from the GRIB handle, even when the handle is kept in memory.

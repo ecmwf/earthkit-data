@@ -3,6 +3,11 @@
 Xarray engine: overview
 ////////////////////////
 
+
+.. warning::
+   This guide is currently under construction and may be incomplete or inaccurate.
+
+
 Earthkit-data comes with its own Xarray engine called "earthkit" to convert :ref:`fieldlist`\_s to Xarray.
 
 Creating Xarray from GRIB
