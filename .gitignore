@@ -221,6 +221,21 @@ docs/experimental/*.png*
 docs/experimental/*.nc*
 docs/experimental/*.geojson*
 
+docs_1/_build/
+docs_1/source/autodocs
+docs_1/source/examples/*.tar
+docs_1/source/examples/*.zip
+docs_1/source/examples/_*
+docs_1/source/examples/earthkit_use_cases/*.grib
+docs_1/source/examples/*/_*
+docs_1/source/experimental/_*
+docs_1/source/experimental/*.grib*
+docs_1/source/experimental/*.pp*
+docs_1/source/experimental/*.png*
+docs_1/source/experimental/*.nc*
+docs_1/source/experimental/*.geojson*
+
+
 # PyBuilder
 .pybuilder/
 target/
