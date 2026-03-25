@@ -23,6 +23,8 @@ def missing_is_none(x):
 
 
 class GribGeography(BaseGeography):
+    # If this class is used, it means that eckit-geo does not support the grid
+    # so we need to fallback to the legacy grid handling in ecCodes
     def __init__(self, handle):
         self.handle = handle
 
@@ -94,7 +96,7 @@ class GribGeography(BaseGeography):
         -------
         :obj:`Projection`
 
-        Examples
+        Examplesa
         --------
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
@@ -129,12 +131,7 @@ class GribGeography(BaseGeography):
         return None
 
     def grid_spec(self):
-        # Use the legacy earthkit-data grid_spec builder. If this class is used, it means that the eckit-based
-        # grid_spec builder is not available, so we need to fallback to the legacy one.
-        from .legacy_grid_spec import make_legacy_gridspec
-        from .metadata import GribMetadata
-
-        return make_legacy_gridspec(GribMetadata(self.handle))
+        return None
 
     def area(self):
         north = self.handle.get("latitudeOfFirstGridPointInDegrees")
@@ -209,7 +206,7 @@ class GribGeographyContextCollector(GribContextCollector):
             context.update(r)
         else:
             raise ValueError(
-                "GribGeographyContextCollector: cannot collect context for a geography without a valid grid_spec"
+                ("GribGeographyContextCollector: cannot collect context for a geography without a valid grid_spec")
             )
 
 
@@ -226,29 +223,11 @@ class GribGeographyHandler(GribFieldComponentHandler):
 
         if keys == {"grid_spec"}:
             if not ECKIT_GRID_SUPPORT.has_ecc_grid_spec or not ECKIT_GRID_SUPPORT.has_grid:
-                handle = self._handle_from_grid_spec(self, kwargs["grid_spec"])
-                return GribGeographyHandler(handle)
+                raise ValueError(
+                    (
+                        "GribGeographyHandler: cannot set grid_spec because eckit-geo grid support is not"
+                        " available in ecCodes"
+                    )
+                )
 
         return create_geography_from_dict(kwargs, shape_hint=shape_hint)
-
-    def _handle_from_grid_spec(cls, handler, grid_spec):
-        from earthkit.data.readers.grib.handle import MemoryGribHandle
-
-        from .legacy_grid_spec import LegacyGridSpecConverter
-
-        # edition = d.get("edition", self["edition"])
-        edition = handler.handle.get("edition", 2)
-        md, new_value_size = LegacyGridSpecConverter.to_metadata(grid_spec, edition=edition)
-
-        handle = handler.handle.clone(headers_only=False)
-        handle.set_multiple(md)
-
-        # we need to set the values to the new size otherwise the clone generated
-        # with headers_only=True will be inconsistent
-        if new_value_size is not None and new_value_size > 0:
-            import numpy as np
-
-            vals = np.zeros(new_value_size)
-            handle.set_values(vals)
-
-        return MemoryGribHandle(handle)
