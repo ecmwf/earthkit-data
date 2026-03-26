@@ -15,10 +15,13 @@ class GribData(SourceData):
     """
     Represent GRIB data.
 
-    GRIB is the WMO's format for binary gridded data consisting of GRIB messages, which are represented
+    GRIB is the WMO's format for binary gridded data consisting of GRIB messages, which can be represented
     as Fields in earthkit-data. The earthkit-data GRIB interface is based on :xref:`eccodes` and can handle
     both GRIB `edition 1 <https://community.wmo.int/activity-areas/wmo-codes/manual-codes/grib-edition-1>`_ and
     `edition 2 <https://library.wmo.int/index.php?lvl=notice_display&id=10684>`_.
+
+
+
     """
 
     _TYPE_NAME = "GRIB"
@@ -28,7 +31,9 @@ class GribData(SourceData):
         return [self._FIELDLIST, self._PANDAS, self._XARRAY, self._NUMPY, self._ARRAY]
 
     def describe(self):
-        return f"GRIB data from {self._reader.path}"
+        from earthkit.data.utils.summary import DataDescriber
+
+        return DataDescriber(title="GRIB file", path=self._reader.path, types=self.available_types)
 
     def __repr__(self):
         return "GribData(path={self._reader.path})"
@@ -46,7 +51,7 @@ class GribData(SourceData):
         ----------
         **kwargs
             Additional keyword arguments to pass to the reader's to_xarray method.
-            Please see :py:meth:`earthkit.data.readers.grib.XarrayMixIn.to_xarray` for details
+            Please see :py:func:`earthkit.data.readers.grib.xarray.XarrayMixIn.to_xarray` for details
             on the supported keyword arguments.
 
         """
@@ -59,6 +64,7 @@ class GribData(SourceData):
         return self._reader.to_array(*args, **kwargs)
 
     def _repr_html_(self):
-        from earthkit.data.utils.summary import make_data_repr_html
+        return self.describe()._repr_html_()
+        # from earthkit.data.utils.summary import make_data_repr_html
 
-        return make_data_repr_html(title="GRIB file", path=self._reader.path, types=self.available_types)
+        # return make_data_repr_html(title="GRIB file", path=self._reader.path, types=self.available_types)

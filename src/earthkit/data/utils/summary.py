@@ -425,6 +425,19 @@ def ncdump(path):
         print(line)
 
 
+class DataDescriber:
+    def __init__(self, title=None, path=None, types=None, **kwargs):
+        self.title = title
+        self.path = path
+        self.types = types
+
+    def _repr_html_(self):
+        return make_data_repr_html(title=self.title, path=self.path, types=self.types)
+
+    def __repr__(self):
+        return make_data_repr_str(title=self.title, path=self.path, types=self.types)
+
+
 def make_data_repr_html(title=None, path=None, types=None):
     import os
 
@@ -447,3 +460,27 @@ def make_data_repr_html(title=None, path=None, types=None):
     if types is not None:
         d["types"] = ", ".join(types)
     return table_from_dict(d, title=title)
+
+
+def make_data_repr_str(title=None, path=None, types=None):
+    import os
+
+    # from earthkit.data.utils.html import table_from_dict
+    from earthkit.data.utils.humanize import bytes
+
+    # t = f"<p><b>{title}</b></br>"
+    # if path is not None:
+    #     t += f"<b>Path</b>: {path} <b>size</b>: {bytes(os.path.getsize(path))}</br>"
+
+    # t += f"<b>Available types</b>: {', '.join(types)}</p>"
+
+    t = f"{title}\n"
+    if path is not None:
+        t += f"path: {path}\n"
+        try:
+            t += f"size: {bytes(os.path.getsize(path))}\n"
+        except Exception:
+            pass
+    if types is not None:
+        t += f"types: {', '.join(types)}\n"
+    return t
