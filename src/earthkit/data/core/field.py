@@ -1331,9 +1331,6 @@ class Field(Base):
     def sel(self, *args, **kwargs):
         pass
 
-    def isel(self, *args, **kwargs):
-        pass
-
     def order_by(self, *args, **kwargs):
         pass
 

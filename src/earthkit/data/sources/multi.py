@@ -80,9 +80,6 @@ class MultiSource(Source):
     def sel(self, *args, **kwargs):
         self._not_implemented()
 
-    def isel(self, *args, **kwargs):
-        self._not_implemented()
-
     def order_by(self, *args, **kwargs):
         self._not_implemented()
 

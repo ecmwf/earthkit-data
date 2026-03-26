@@ -374,9 +374,6 @@ class BUFRList(IndexFeatureListBase):
         kwargs.pop("remapping", None)
         return super().sel(*args, remapping=remapping, **kwargs)
 
-    def isel(self, *args, **kwargs):
-        raise NotImplementedError()
-
     def order_by(self, *args, **kwargs):
         """Change the order of the messages in a BUFRList object.
 

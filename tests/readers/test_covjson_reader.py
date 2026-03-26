@@ -73,7 +73,7 @@ def test_covjson_memory():
 def test_covjson_stream_1():
     stream = open(earthkit_test_data_file("time_series.covjson"), "rb")
 
-    ds = from_source("stream", stream).to_iterator()
+    ds = from_source("stream", stream).to_featurelist()
     assert ds
     it = iter(ds)
     c = next(it)
