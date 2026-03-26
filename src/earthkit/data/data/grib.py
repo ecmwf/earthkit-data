@@ -46,7 +46,7 @@ class GribData(SourceData):
         ----------
         **kwargs
             Additional keyword arguments to pass to the reader's to_xarray method.
-            Please see :py:meth:`earthkit.data.data.FieldList.to_xarray` for details
+            Please see :py:meth:`earthkit.data.readers.grib.XarrayMixIn.to_xarray` for details
             on the supported keyword arguments.
 
         """
