@@ -10,6 +10,7 @@ import datetime
 import os
 import sys
 
+sys.path.insert(0, os.path.abspath("../src"))
 sys.path.insert(0, os.path.abspath("./"))
 sys.path.insert(0, os.path.abspath("../"))
 
@@ -47,7 +48,7 @@ extensions = [
 autodoc_typehints = "none"
 
 # autoapi configuration
-autoapi_dirs = ["../src/earthkit/data"]
+autoapi_dirs = ["../src/earthkit"]
 autoapi_ignore = ["*/_version.py", "sphinxext/*"]
 autoapi_options = [
     "members",
@@ -56,9 +57,10 @@ autoapi_options = [
     "show-module-summary",
     "inherited-members",
 ]
-autoapi_root = "_api"
+autoapi_root = "autoapi"
 autoapi_member_order = "alphabetical"
 autoapi_add_toctree_entry = False
+autoapi_python_use_implicit_namespaces = True
 
 # napoleon configuration
 napoleon_google_docstring = False
@@ -184,7 +186,7 @@ intersphinx_mapping = {
 }
 
 
-def setup(app):
-    from skip_api_rules import _skip_api_items
+# def setup(app):
+#     from skip_api_rules import _skip_api_items
 
-    app.connect("autoapi-skip-member", _skip_api_items)
+#     app.connect("autoapi-skip-member", _skip_api_items)

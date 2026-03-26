@@ -10,7 +10,7 @@
 from . import ObjectWrapperData
 
 
-class NumpyNDArrayWrapper(ObjectWrapperData):
+class NumpyNDArrayData(ObjectWrapperData):
     """Wrapper around an numpy `ndarray`, offering polymorphism and
     convenience methods.
     """
@@ -59,5 +59,5 @@ def wrapper(data, *args, **kwargs):
     import numpy as np
 
     if isinstance(data, np.ndarray):
-        return NumpyNDArrayWrapper(data, *args, **kwargs)
+        return NumpyNDArrayData(data, *args, **kwargs)
     return None

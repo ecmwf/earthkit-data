@@ -14,6 +14,14 @@ class BUFRData(SimpleData):
     _TYPE_NAME = "BUFR"
 
     def __init__(self, reader):
+        """Initialize a BUFRData object with a reader.
+
+        Parameters
+        ----------
+        reader : BUFRReader
+            The reader object that provides access to the BUFR data.
+
+        """
         self._reader = reader
 
     @property

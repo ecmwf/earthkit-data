@@ -250,7 +250,7 @@ hive_partioning=True
 
 Further examples:
 
-    - :ref:`/examples/files.ipynb`
+    - :ref:`/examples/source/files.ipynb`
 
 
 .. _data-sources-url:

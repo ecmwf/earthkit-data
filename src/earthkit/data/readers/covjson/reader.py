@@ -57,9 +57,9 @@ class CovjsonReader(XarrayMixIn, GeojsonMixIn, CovJsonReaderBase):
         return True
 
     def to_data_object(self):
-        from earthkit.data.data.covjson import CovjsonData
+        from earthkit.data.data.covjson import CovJsonData
 
-        return CovjsonData(self)
+        return CovJsonData(self)
 
     def _encode_default(self, encoder, **kwargs):
         return encoder._encode_xarray(self.to_xarray(), **kwargs)
@@ -90,9 +90,9 @@ class CovjsonStreamReader(Source, CovJsonReaderBase):
         return self
 
     def to_data_object(self):
-        from earthkit.data.data.stream import StreamIteratorData
+        from earthkit.data.data.stream import StreamFeatureListData
 
-        return StreamIteratorData(self, "covjson")
+        return StreamFeatureListData(self, "covjson")
 
     def is_stream(self):
         return True
@@ -119,9 +119,9 @@ class CovjsonMemoryReader(Source):
         return CovjsonMemoryReader(d)
 
     def to_data_object(self):
-        from earthkit.data.data.covjson import CovjsonData
+        from earthkit.data.data.covjson import CovJsonData
 
-        return CovjsonData(self)
+        return CovJsonData(self)
 
     # def _encode_default(self, encoder, **kwargs):
     #     return encoder._encode_xarray(self.to_xarray(), **kwargs)
@@ -142,9 +142,9 @@ class CovjsonInMemory(Source, XarrayMixIn, Encodable):
         return self.data
 
     def to_data_object(self):
-        from earthkit.data.data.covjson import CovjsonData
+        from earthkit.data.data.covjson import CovJsonData
 
-        return CovjsonData(self)
+        return CovJsonData(self)
 
     def to_target(self, target, *args, **kwargs):
         from earthkit.data.targets import to_target

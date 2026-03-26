@@ -10,23 +10,14 @@ API reference guide
 Fields
 -------
 
-- :py:class:`~data.core.fieldlist.Field`
-- :py:class:`~data.core.fieldlist.FieldList`
+- :py:class:`earthkit.data.core.field.Field`
+- :py:class:`earthkit.data.core.fieldlist.FieldList`
 
+Data
+------
 
-Metadata
-----------
-
-- :py:class:`~data.core.metadata.Metadata`
-- :py:class:`~data.core.metadata.RawMetadata`
-- :py:class:`~data.readers.grib.metadata.GribMetadata`
-- :py:class:`~data.readers.grib.metadata.GribFieldMetadata`
-- :py:class:`~data.readers.grib.metadata.StandAloneGribMetadata`
-
-Numpy fields
----------------
-- :py:class:`~data.sources.numpy_list.NumpyField`
-- :py:class:`~data.sources.numpy_list.NumpyFieldList`
+- :py:class:`earthkit.data.data.Data`
+- :py:class:`earthkit.data.data.SimpleData`
 
 GRIB
 -------

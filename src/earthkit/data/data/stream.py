@@ -10,8 +10,8 @@
 from .source import SourceData
 
 
-class StreamIteratorData(SourceData):
-    _TYPE_NAME = "StreamIterator"
+class StreamFeatureListData(SourceData):
+    _TYPE_NAME = "StreamFeatureList"
 
     def __init__(self, source_or_reader, data_type=None):
         super().__init__(source_or_reader)
@@ -22,12 +22,12 @@ class StreamIteratorData(SourceData):
 
     @property
     def available_types(self):
-        return ["value"]
+        return ["featurelist"]
 
     def describe(self):
         return f"Stream data from {self._reader.path}"
 
-    def to_iterator(self):
+    def to_featurelist(self):
         return self._reader
 
 

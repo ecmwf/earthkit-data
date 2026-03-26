@@ -221,6 +221,8 @@ docs/experimental/*.png*
 docs/experimental/*.nc*
 docs/experimental/*.geojson*
 
+docs_1/
+
 # PyBuilder
 .pybuilder/
 target/

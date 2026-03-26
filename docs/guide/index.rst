@@ -6,6 +6,7 @@ Concepts
    :maxdepth: 1
 
    sources
+   from_object
    data
    data_format/index.rst
    encoders

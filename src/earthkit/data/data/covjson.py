@@ -10,7 +10,7 @@
 from .source import SourceData
 
 
-class CovjsonData(SourceData):
+class CovJsonData(SourceData):
     _TYPE_NAME = "Covjson"
 
     @property
