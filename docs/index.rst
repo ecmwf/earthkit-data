@@ -52,7 +52,7 @@ Quick start
    examples/index
    faq
    guide/index
-   api
+   API reference guide <autoapi/earthkit/data/index.rst>
 
 .. toctree::
    :maxdepth: 1

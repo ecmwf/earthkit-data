@@ -30,10 +30,10 @@ class GeoJsonData(SourceData):
 
     GeoJSON data can be converted with the following methods:
 
-    - :obj:`to_geopandas`
-    - :obj:`to_pandas`
-    - :obj:`to_xarray`
-    - :obj:`to_featurelist`
+    - :py:func:`to_geopandas`
+    - :py:func:`to_pandas`
+    - :py:func:`to_xarray`
+    - :py:func:`to_featurelist`
 
     """
 
@@ -65,12 +65,12 @@ class GeoJsonData(SourceData):
     def to_pandas(self, **kwargs) -> "pandas.DataFrame":
         """Convert into an geopandas GeoDataFrame.
 
-        This conversion is the same as :obj:`to_geopandas` and is
+        This conversion is the same as :func:`to_geopandas` and is
         provided for convenience.
 
         See Also
         --------
-        :obj:`to_geopandas`
+        :func:`to_geopandas`
         """
         return self._reader.to_pandas(**kwargs)
 

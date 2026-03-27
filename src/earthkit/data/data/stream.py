@@ -11,6 +11,22 @@ from .source import SourceData
 
 
 class StreamFeatureListData(SourceData):
+    """Data object representing a stream of features.
+
+    This class provides an interface for working with streaming data, allowing for
+    efficient processing of large datasets without loading everything into memory at once.
+
+    The stream can be converted to a FeatureList with :py:func:`to_featurelist` in two ways:
+
+    - either by providing iteration through the stream of features once, which is more
+      efficient for larger datasets and allows for processing data in chunks without consuming
+      large amounts of memory. This is the default behavior when calling :py:func:`to_featurelist`
+      without any arguments, or with ``read_all=False``.
+    - or by reading all features into memory, which may be suitable for smaller datasets or
+      when random access is needed. This can be achieved by calling :py:func:`to_featurelist`
+      with ``read_all=True``.
+    """
+
     _TYPE_NAME = "StreamFeatureList"
 
     def __init__(self, source_or_reader, data_type=None):
@@ -18,7 +34,7 @@ class StreamFeatureListData(SourceData):
 
         Parameters
         ----------
-        source_or_reader : Source or Reader
+        source_or_reader : Source|Reader
             The source or reader object that provides access to the stream data.
         data_type : str, optional
             The type of data in the stream.
@@ -26,53 +42,85 @@ class StreamFeatureListData(SourceData):
         super().__init__(source_or_reader)
         self._data_type = data_type
 
-    def is_stream(self):
-        """Return True indicating this data object represents a stream.
-
-        Returns
-        -------
-        bool
-            Always returns True.
-        """
+    def is_stream(self) -> bool:
+        """Return True as this data object represents a stream."""
         return True
 
     @property
     def available_types(self):
         """list[str]: Return the list of available types that this data object can be converted to."""
-        return ["featurelist"]
+        return [self._FEATURELIST]
 
     def describe(self):
         """Provide a description of the stream data.
 
         Returns
         -------
-        str
-            A description of the stream data including the file path.
+        :py:class:`earthkit.data.utils.summary.DataDescriber`
+            A DataDescriber object containing a description of the stream data.
         """
-        return f"Stream data from {self._reader.path}"
+        from earthkit.data.utils.summary import DataDescriber
 
-    def to_featurelist(self):
+        return DataDescriber(title="Stream of features", path=None, types=self.available_types)
+
+    def __repr__(self) -> str:
+        return "StreamFeatureListData"
+
+    def _repr_html_(self) -> str:
+        return self.describe()._repr_html_()
+
+    def to_featurelist(self, read_all=False):
         """Convert into a FeatureList.
+
+        Parameters
+        ----------
+        read_all : bool, optional
+            If False (default), return a
+            :py:class:`~earthkit.data.indexing.stream.StreamFeatureList` for streaming access.
+            If True, read all features from the stream into memory and return a
+            :py:class:`~earthkit.data.indexing.simple.SimpleFeatureList`.
 
         Returns
         -------
         FeatureList
-            The reader object that provides streaming access to features.
+            If ``read_all=False``, returns a
+            :py:class:`~earthkit.data.indexing.stream.StreamFeatureList`, the that provides
+            a single iteration through the stream of features.
+            If ``read_all=True``, returns a
+            :py:class:`~earthkit.data.indexing.simple.SimpleFeatureList` containing all features
+            in memory read from the stream.
         """
+        if read_all:
+            from earthkit.data.featurelist.simple import SimpleFeatureList
+
+            features = [f for f in self._reader]
+            r = SimpleFeatureList(features)
+            return r
+
         return self._reader
 
 
 class StreamFieldListData(SourceData):
+    """Data object representing a stream of fields.
+
+    This class provides an interface for working with streaming data, allowing for
+    efficient processing of large datasets without loading everything into memory at once.
+
+    The stream can be converted to a FieldList with :py:func:`to_fieldlist` in two ways:
+
+    - either by providing iteration through the stream of fields once, which is more
+      efficient for larger datasets and allows for processing data in chunks without consuming
+      large amounts of memory. This is the default behavior when calling :py:func:`to_fieldlist`
+      without any arguments, or with ``read_all=False``.
+    - or by reading all fields into memory, which may be suitable for smaller datasets or
+      when random access is needed. This can be achieved by calling :py:func:`to_fieldlist`
+      with ``read_all=True``.
+    """
+
     _TYPE_NAME = "StreamFieldList"
 
-    def is_stream(self):
-        """Return True indicating this data object represents a stream.
-
-        Returns
-        -------
-        bool
-            Always returns True.
-        """
+    def is_stream(self) -> bool:
+        """Return True as this data object represents a stream."""
         return True
 
     @property
@@ -85,28 +133,39 @@ class StreamFieldListData(SourceData):
 
         Returns
         -------
-        str
-            A description of the stream data including the file path.
+        :py:class:`earthkit.data.utils.summary.DataDescriber`
+            A DataDescriber object containing a description of the stream data.
         """
-        return f"Stream data from {self._reader.path}"
+        from earthkit.data.utils.summary import DataDescriber
 
-    def to_fieldlist(self, *args, read_all=False, **kwargs):
+        return DataDescriber(title="Stream of fields", path=None, types=self.available_types)
+
+    def __repr__(self) -> str:
+        return "StreamFieldListData"
+
+    def _repr_html_(self) -> str:
+        return self.describe()._repr_html_()
+
+    def to_fieldlist(self, read_all=False):
         """Convert into a FieldList.
 
         Parameters
         ----------
-        *args
-            Positional arguments (unused).
         read_all : bool, optional
-            If True, read all fields from the stream into a SimpleFieldList.
-            If False (default), return the reader for streaming access.
-        **kwargs
-            Keyword arguments (unused).
+            If False (default), return a
+            :py:class:`~earthkit.data.indexing.stream.StreamFieldList` for streaming access.
+            If True, read all fields from the stream into memory and return a
+            :py:class:`~earthkit.data.indexing.simple.SimpleFieldList`.
 
         Returns
         -------
-        :py:class:`earthkit.data.core.fieldlist.FieldList`
-            A FieldList object containing the stream data.
+        FieldList
+            If ``read_all=False``, returns a
+            :py:class:`~earthkit.data.indexing.stream.StreamFieldList`, the that provides
+            a single iteration through the stream of fields.
+            If ``read_all=True``, returns a
+            :py:class:`~earthkit.data.indexing.simple.SimpleFieldList` containing all fields
+            in memory read from the stream.
         """
         if read_all:
             from earthkit.data.indexing.simple import SimpleFieldList
@@ -116,8 +175,3 @@ class StreamFieldListData(SourceData):
             return r
 
         return self._reader
-
-    def _repr_html_(self):
-        from earthkit.data.utils.summary import make_data_repr_html
-
-        return make_data_repr_html(title="Stream of fields", path=None, types=self.available_types)

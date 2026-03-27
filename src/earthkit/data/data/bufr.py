@@ -27,14 +27,14 @@ class BUFRData(SourceData):
     Represent BUFR data.
 
     BUFR (Binary Universal Form for Representation of meteorological data) is a binary data format
-    maintained by WMO. The earthkit-data interface supports both BUFR `edition 3
+    maintained by the WMO. The earthkit-data interface supports both BUFR `edition 3
     <https://community.wmo.int/en/activity-areas/wmo-codes/manual-codes/bufr-edition-3-and-crex-edition-1>`_
     and `edition 4 <https://library.wmo.int/index.php?lvl=notice_display&id=10684>`_.
 
     BUFR data can be converted with the following methods:
 
-    - :obj:`to_pandas`
-    - :obj:`to_featurelist`
+    - :py:func:`to_pandas`
+    - :py:func:`to_featurelist`
 
     """
 

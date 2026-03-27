@@ -28,7 +28,7 @@ class ODBData(SourceData):
 
     ODB data can be converted with the following methods:
 
-    - :obj:`to_pandas`
+    - :py:func:`to_pandas`
 
     """
 

@@ -1,6 +1,6 @@
 .. _data-sources:
 
-Data sources
+Sources
 ===============
 
 .. warning::
@@ -158,7 +158,7 @@ file-pattern
 .. py:function:: from_source("file-pattern", pattern, *args, hive_partitioning=False, **kwargs)
   :noindex:
 
-  The ``file-pattern`` source reads data from paths specified by a :ref:`pattern <patterns>`.
+  Reads data from paths specified by a :ref:`pattern <patterns>`.
 
   :param pattern: input path pattern using ``{}`` brackets to define parameters that can be substituted. See :ref:`patterns <patterns>` for details.
   :type pattern: str
@@ -169,41 +169,45 @@ file-pattern
 
   The actual behaviour and the type of the returned object depend on ``hive_partitioning``:
 
-hive_partioning=False
+hive_partitioning=False
 ////////////////////////////
 
   When ``hive_partitioning`` is ``False``, first, the pattern parameters are substituted with the values specified by the ``*args`` and ``**kwargs``, see :ref:`patterns <patterns>` for details. For this, all the possible values must be specified for each pattern parameter. Next, the paths are constructed by taking the Cartesian product of the substituted values. Finally, the resulting paths are read and :ref:`from_source <data-sources-file-pattern>` returns a single object (for GRIB data it will be a :py:class:`Fieldlist`).
 
-    .. code-block:: python
+  .. code-block:: python
 
-        import datetime
-        import earthkit.data as ekd
+      import datetime
+      import earthkit.data as ekd
 
-        d = ekd.from_source(
-            "file-pattern",
-            "path/to/data-{my_date:date(%Y-%m-%d)}-{run_time}-{param}.grib",
-            {
-                "my_date": datetime.datetime(2020, 5, 2),
-                "run_time": [12, 18],
-                "param": ["t2", "msl"],
-            },
-        )
-
-
-    The code above substitutes "my_date", "run_time" and "param" into the ``pattern`` and constructs the following file paths read into single GRIB :py:class:`Fieldlist`::
-
-        path/to/data-2020-05-02-12-t2.grib
-        path/to/data-2020-05-02-12-msl.grib
-        path/to/data-2020-05-02-18-t2.grib
-        path/to/data-2020-05-02-18-msl.grib
+      d = ekd.from_source(
+          "file-pattern",
+          "path/to/data-{my_date:date(%Y-%m-%d)}-{run_time}-{param}.grib",
+          {
+              "my_date": datetime.datetime(2020, 5, 2),
+              "run_time": [12, 18],
+              "param": ["t2", "msl"],
+          },
+      )
 
 
-.. _file-pattern-hive-partioning:
+  The code above substitutes "my_date", "run_time" and "param" into the ``pattern`` and constructs the following file paths read into single GRIB :py:class:`Fieldlist`::
+
+      path/to/data-2020-05-02-12-t2.grib
+      path/to/data-2020-05-02-12-msl.grib
+      path/to/data-2020-05-02-18-t2.grib
+      path/to/data-2020-05-02-18-msl.grib
+
+
+.. _file-pattern-hive-partitioning:
 
 hive_partioning=True
 /////////////////////////////
 
-    When ``hive_partitioning`` is ``True``, the ``pattern`` defines a Hive partitioning with each pattern parameter interpreted as a metadata key. The returned object has a limited scope, we need to call :meth:`to_fieldlist` with the filter conditions to trigger a filesystem scan for all the matching files. During this scan, if the required metadata is present in the pattern no files will be opened at all to extract their metadata, which can be an enormous optimisation. Another advantage is that during the scan entire file system branches can be skipped based simply on inspecting the actual file path.
+    When ``hive_partitioning`` is ``True``, the ``pattern`` defines a Hive partitioning with each pattern parameter interpreted as a metadata key. The returned object is a :py:class:`~earthkit.data.data.hive.HiveFilePatternData` and has a limited scope, we need to call its :py:func:`~earthkit.data.data.hive.HiveFilePatternData.to_fieldlist` method with the filter conditions to extract the data as a fieldlist.
+
+    The extraction to fieldlist is done in two steps. First, a filesystem scan is performed to find all the files matching the filter conditions. For this check only the keys appearing in the hive pattern definition are used and only the file paths are inspected, the files themselves are not opened. The matching files are loaded into a FieldList. Second, if there are other keys in the filter conditions that are not part of the hive pattern definition, then :py:func:`earthkit.data.core.fieldlist.FieldList.sel` is called on the FieldList with these keys as filter conditions. This produces the final FieldList.
+
+    This approach allows for enormous optimisation, since, depending on the pattern, no files need to be opened to extract their metadata. Another advantage is that during the scan entire file system branches can be skipped based simply on inspecting the actual file path.
 
     Pattern values are optional, but can be still specified to restrict the search to a specific set of values.
 
@@ -248,7 +252,7 @@ hive_partioning=True
         fl = d.to_fieldlist(date="20230101", param=["t", "r"])
 
 
-Further examples:
+    Further examples:
 
     - :ref:`/examples/source/files.ipynb`
 

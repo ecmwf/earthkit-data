@@ -29,8 +29,8 @@ class CSVData(SourceData):
 
     CSV data can be converted with the following methods:
 
-    - :obj:`to_pandas`
-    - :obj:`to_xarray`
+    - :py:func:`to_pandas`
+    - :py:func:`to_xarray`
 
     """
 

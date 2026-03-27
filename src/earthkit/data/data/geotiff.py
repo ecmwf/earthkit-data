@@ -31,9 +31,9 @@ class GeoTIFFData(SourceData):
 
     GeoTIFF data can be converted with the following methods:
 
-    - :obj:`to_xarray`
-    - :obj:`to_pandas`
-    - :obj:`to_fieldlist`
+    - :py:func:`to_xarray`
+    - :py:func:`to_pandas`
+    - :py:func:`to_fieldlist`
 
     """
 

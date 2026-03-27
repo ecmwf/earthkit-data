@@ -19,4 +19,6 @@ class ZarrReaderBase(Reader):
         import xarray as xr
 
         options = kwargs.get("xarray_open_zarr_kwargs", kwargs)
+        if options is None:
+            options = {}
         return xr.open_zarr(self.path, **options)

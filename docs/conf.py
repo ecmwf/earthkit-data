@@ -188,6 +188,8 @@ intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "xarray": ("https://docs.xarray.dev/en/latest/", None),
     "geopandas": ("https://geopandas.org", None),
+    "ncdata": ("https://ncdata.readthedocs.io/en/latest/", None),
+    "iris": ("https://scitools-iris.readthedocs.io/en/latest/", None),
     "pyodc": ("https://pyodc.readthedocs.io/en/latest/", None),
 }
 

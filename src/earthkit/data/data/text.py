@@ -16,7 +16,10 @@ from .source import SourceData
 
 
 class TextData(SourceData):
-    """Represents text data read from a source."""
+    """Represents text data read from a source.
+
+    Text data cannot be converted into any other type.
+    """
 
     _TYPE_NAME = "Text"
 

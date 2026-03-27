@@ -42,11 +42,11 @@ class GribData(SourceData):
 
     GRIB data can be converted with the following methods:
 
-    - :obj:`to_fieldlist`
-    - :obj:`to_xarray`
-    - :obj:`to_pandas`
-    - :obj:`to_numpy`
-    - :obj:`to_array`
+    - :py:func:`to_fieldlist`
+    - :py:func:`to_xarray`
+    - :py:func:`to_pandas`
+    - :py:func:`to_numpy`
+    - :py:func:`to_array`
     """
 
     _TYPE_NAME = "GRIB"

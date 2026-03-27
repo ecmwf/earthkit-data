@@ -8,7 +8,6 @@ Concepts
    sources
    from_object
    data
-   data_format/index.rst
    encoders
    targets/index.rst
    streams
