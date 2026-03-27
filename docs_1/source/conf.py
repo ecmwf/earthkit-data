@@ -85,13 +85,13 @@ extensions = [
 autodoc_inherit_docstrings = True
 autodoc_default_options = {
     "members": True,
-    "imported-members": True,
-    "undoc-members": False,
-    "show-inheritance": True,
+    "imported-members": False,
+    "undoc-members": True,
+    "show-inheritance": False,
 }
 
-autosummary_generate = True
-autosummary_generate_overwrite = True
+autosummary_generate = False
+autosummary_generate_overwrite = False
 autosummary_imported_members = False
 
 # GitHub links configuration
@@ -119,7 +119,7 @@ templates_path = ["_templates"]
 # Modules to hide from autodocs (relative to earthkit.data)
 # These modules will not appear in the API documentation sidebar
 autodocs_hidden_modules = [
-    "aggregate",
+    "arguments",
     "version"
 ]
 
@@ -243,12 +243,6 @@ xref_links = {
     "odb": ("ODB", "https://odc.readthedocs.io/en/latest/content/introduction.html"),
     "pyodc": ("pyodc", "https://github.com/ecmwf/pyodc"),
     "s3cmd": ("s3cmd", "https://s3tools.org/s3cmd"),
-}
-
-
-intersphinx_mapping = {
-    "pandas": ("https://pandas.pydata.org/docs/", None),
-    "xarray": ("https://docs.xarray.dev/en/latest/", None),
 }
 
 

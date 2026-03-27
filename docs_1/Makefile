@@ -23,7 +23,7 @@ autodocs:
 	sphinx-apidoc --implicit-namespaces --separate -o ./$(SOURCEDIR)/autodocs ../src/earthkit/
 	@rm ./$(SOURCEDIR)/autodocs/earthkit.rst
 	@rm ./$(SOURCEDIR)/autodocs/modules.rst
-	# python ./$(SOURCEDIR)/clean_autodocs.py
+	python ./$(SOURCEDIR)/clean_autodocs.py
 
 # Build HTML documentation (depends on autodocs)
 html: autodocs
