@@ -37,6 +37,9 @@ class GribData(SourceData):
     <https://community.wmo.int/activity-areas/wmo-codes/manual-codes/grib-edition-1>`_ and
     `edition 2 <https://library.wmo.int/index.php?lvl=notice_display&id=10684>`_.
 
+    This class provides methods to convert GRIB data into various formats such as FieldLists, Xarray datasets,
+    Pandas DataFrames, and NumPy arrays.
+
     GRIB data can be converted with the following methods:
 
     - :obj:`to_fieldlist`
@@ -83,7 +86,7 @@ class GribData(SourceData):
     def to_xarray(self, **kwargs) -> "xarray.Dataset":
         """Convert into an Xarray dataset.
 
-        It is done by fist converting the GRIB data into a FieldList and then converting
+        It is done by first converting the GRIB data into a FieldList and then converting
         the FieldList into an Xarray dataset by calling the FieldList's
         :py:func:`to_xarray <earthkit.data.readers.grib.xarray.XarrayMixIn.to_xarray>`
         method.

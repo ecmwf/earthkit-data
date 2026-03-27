@@ -7,59 +7,81 @@
 # nor does it submit to any jurisdiction.
 #
 
-from . import SimpleData
+from __future__ import annotations
+
+from typing import (
+    TYPE_CHECKING,
+    Any,  # noqa: F401
+)
+
+from .source import SourceData
+
+if TYPE_CHECKING:
+    pass  # type: ignore[import]
 
 
-class ShapeFileData(SimpleData):
+class ShapeFileData(SourceData):
+    """Represent Shapefile data.
+
+    Shapefile is a popular geospatial vector data format for geographic information
+    system (GIS) software. This class provides methods to convert Shapefile data into various formats such as
+    geopandas GeoDataFrames and Xarray datasets
+
+    Shapefile data can be converted with the following methods:
+    - :obj:`to_geopandas`
+    - :obj:`to_pandas`
+    - :obj:`to_xarray`
+    - :obj:`to_featurelist`
+
+    """
+
     _TYPE_NAME = "Shapefile"
-
-    def __init__(self, reader):
-        """Initialize a ShapeFileData object with a reader.
-
-        Parameters
-        ----------
-        reader : ShapeFileReader
-            The reader object that provides access to the Shapefile data.
-        """
-        self._reader = reader
 
     @property
     def available_types(self):
         """list[str]: Return the list of available types that this data object can be converted to."""
-        return [self._GEOPANDAS, self._PANDAS, self._XARRAY, self._GEOJSON]
+        return [self._GEOPANDAS, self._PANDAS, self._XARRAY, self._NUMPY, self._FEATURELIST]
 
-    def describe(self):
+    def describe(self) -> Any:
         """Provide a description of the Shapefile data.
 
         Returns
         -------
-        str
-            A description of the Shapefile data including the file path.
+        :py:class:`earthkit.data.utils.summary.DataDescriber`
+            A DataDescriber object containing a description of the Shapefile data.
         """
-        return f"GeoJSON data from {self._reader.path}"
+        from earthkit.data.utils.summary import DataDescriber
+
+        return DataDescriber(title="Shapefile", path=self._reader.path, types=self.available_types)
+
+    def __repr__(self) -> str:
+        return f"ShapeFileData(path={self._reader.path})"
+
+    def _repr_html_(self) -> str:
+        return self.describe()._repr_html_()
 
     def to_pandas(self, **kwargs):
-        """Convert into a Pandas DataFrame.
+        """Convert into an geopandas GeoDataFrame.
 
-        Parameters
-        ----------
-        **kwargs
-            Keyword arguments to pass to the reader's to_pandas method.
+        This conversion is the same as :obj:`to_geopandas` and is
+        provided for convenience.
 
-        Returns
-        -------
-        :py:class:`pandas.DataFrame`
-            A Pandas DataFrame containing the Shapefile data.
+        See Also
+        --------
+        :obj:`to_geopandas`
         """
         return self._reader.to_pandas(**kwargs)
 
     def to_xarray(self, **kwargs):
         """Convert into an Xarray dataset.
 
+        The conversion is done by converting into a geopandas
+        GeoDataFrame first and then using :py:func:`pandas.to_xarray`.
+
         Parameters
         ----------
         **kwargs
-            Keyword arguments to pass to the reader's to_xarray method.
+            Keyword arguments to pass to :func:`geopandas.read_file`.
 
         Returns
         -------
@@ -69,12 +91,14 @@ class ShapeFileData(SimpleData):
         return self._reader.to_xarray(**kwargs)
 
     def to_geopandas(self, **kwargs):
-        """Convert into a GeoPandas GeoDataFrame.
+        """Convert into an geopandas GeoDataFrame.
+
+        The conversion is done by using :py:func:`geopandas.read_file`.
 
         Parameters
         ----------
         **kwargs
-            Keyword arguments to pass to the reader's to_geopandas method.
+            Keyword arguments to pass to :py:func:`geopandas.read_file`.
 
         Returns
         -------
@@ -83,19 +107,31 @@ class ShapeFileData(SimpleData):
         """
         return self._reader.to_geopandas(**kwargs)
 
-    def to_featurelist(self, *args, **kwargs):
-        """Convert into a FeatureList.
+    def to_numpy(self, flatten=False):
+        """Convert into a NumPy array.
+
+        The conversion is done by converting into a geopandas GeoDataFrame first and then using
+        :py:func:`geopandas.GeoDataFrame.to_numpy`.
 
         Parameters
         ----------
-        *args
-            Positional arguments (unused).
-        **kwargs
-            Keyword arguments (unused).
+        flatten: bool, optional
+            Whether to flatten the resulting NumPy array. If True, the resulting array will be 1D.
+            Default is False.
 
         Returns
         -------
-        ShapeFileList
+        :py:class:`numpy.ndarray`
+            A NumPy array containing the Shapefile data.
+        """
+        return self._reader.to_numpy(flatten=flatten)
+
+    def to_featurelist(self):
+        """Convert into a FeatureList.
+
+        Returns
+        -------
+        :py:class:`earthkit.data.readers.shapefile.file.ShapeFileList`
             A ShapeFileList containing the Shapefile data.
         """
         from earthkit.data.readers.shapefile.file import ShapeFileList

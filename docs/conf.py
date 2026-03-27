@@ -187,6 +187,7 @@ xref_links = {
 intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "xarray": ("https://docs.xarray.dev/en/latest/", None),
+    "geopandas": ("https://geopandas.org", None),
     "pyodc": ("https://pyodc.readthedocs.io/en/latest/", None),
 }
 

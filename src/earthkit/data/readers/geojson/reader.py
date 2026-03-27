@@ -10,8 +10,6 @@
 # The code is copied from skinnywms, and we should combile later
 
 
-import numpy as np
-
 from earthkit.data.sources import Source
 
 from .core import GeoJsonReaderBase
@@ -33,6 +31,11 @@ class GeojsonReader(Source, GeoJsonReaderBase):
     def to_xarray(self, **kwargs):
         return self.to_pandas(**kwargs).to_xarray()
 
+    def to_featurelist(self, *args, **kwargs):
+        from .file import GeoJsonList
+
+        return GeoJsonList(self.path)
+
     def mutate_source(self):
         # A Geojson is a source itself
         return self
@@ -43,6 +46,8 @@ class GeojsonReader(Source, GeoJsonReaderBase):
             import geopandas as gpd
         except ImportError:
             raise ImportError("Geojson handling requires 'geopandas' to be installed")
+
+        import numpy as np
 
         geo_df = gpd.pd.concat([gpd.read_file(path, **kwargs) for path in paths])
 

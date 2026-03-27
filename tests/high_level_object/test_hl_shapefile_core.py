@@ -9,21 +9,40 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data import from_object
+from earthkit.data import from_source
 from earthkit.data.utils.testing import earthkit_test_data_file
 
 
-def test_hl_geopandas_single_core():
-    import geopandas as gpd
+def test_hl_shapefile_single_core():
+    d = from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.shp.zip"))
 
-    df = gpd.read_file(earthkit_test_data_file("NUTS_RG_20M_2021_3035.geojson"))
+    assert d._TYPE_NAME == "Shapefile"
+    assert "geopandas" in d.available_types
 
-    ds = from_object(df)
-    assert ds._TYPE_NAME == "geopandas.GeoDataFrame"
-    assert "pandas" in ds.available_types
-    df2 = ds.to_pandas()
-    assert df2.equals(df)
-    assert len(df2) == 2010
+    df = d.to_pandas()
+    assert len(df) == 2010
+    r = df.iloc[1]
+    assert r.NUTS_ID == "HR"
+    assert r.NAME_LATN == "Hrvatska"
+    assert len(r.geometry.geoms) == 16
 
-    fl = ds.to_featurelist()
+    df = d.to_geopandas()
+    assert len(df) == 2010
+    r = df.iloc[1]
+    assert r.NUTS_ID == "HR"
+    assert r.NAME_LATN == "Hrvatska"
+    assert len(r.geometry.geoms) == 16
+
+    ds = d.to_xarray()
+    assert "NUTS_ID" in ds.data_vars
+    assert "NAME_LATN" in ds.data_vars
+    assert "geometry" in ds.data_vars
+
+    fl = d.to_featurelist()
     assert len(fl) == 2010
+
+    v = d.to_numpy()
+    assert v.shape == (2010, 10)
+
+    v = d.to_numpy(flatten=True)
+    assert v.shape == (2010 * 10,)
