@@ -71,7 +71,7 @@ reference systems and bounding boxes.
 
    .. grid-item-card:: API Reference Guide
       :img-top: _static/brackets-contain.svg
-      :link: api
+      :link: autodocs/earthkit.data
       :link-type: doc
       :class-card: sd-shadow-sm
 
@@ -88,7 +88,7 @@ reference systems and bounding boxes.
    how-tos/index
    concepts/index
    faqs
-   api
+   autodocs/earthkit.data
 
 
 .. toctree::
