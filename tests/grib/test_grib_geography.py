@@ -378,6 +378,7 @@ def test_grib_eckit_grid_object(fl_type, filename, shape, grid_spec, area, grid_
     "path,expected_value",
     [
         (earthkit_examples_file("test.grib"), [70.0, -20.0, 35.0, 40.0]),
+        (earthkit_test_data_file("shifted_ll_subarea.grib"), [73, -27, 33, 45]),
         (
             earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"),
             [89.877, 36.233, 84.815, 46.185],
