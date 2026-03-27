@@ -90,9 +90,9 @@ autodoc_default_options = {
     "show-inheritance": False,
 }
 
-autosummary_generate = False
-autosummary_generate_overwrite = False
-autosummary_imported_members = False
+autosummary_generate = True
+autosummary_generate_overwrite = True
+autosummary_imported_members = True
 
 # GitHub links configuration
 extlinks = {
@@ -116,22 +116,36 @@ intersphinx_mapping = {
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
-# Modules to hide from autodocs (relative to earthkit.data)
-# These modules will not appear in the API documentation sidebar
-autodocs_hidden_modules = [
-    "arguments",
-    "version"
-]
+# # Modules to hide from autodocs (relative to earthkit.data)
+# # These modules will not appear in the API documentation sidebar
+# autodocs_hidden_modules = [
+#     "arguments",
+#     "core",
+#     "encoders",
+#     "featurelist",
+#     "indexing",
+#     "mergers",
+#     "mirrors",
+#     "sources",
+#     "sphinxext",
+#     "targets",
+#     "translators",
+#     "utils",
+#     "vocabularies",
+#     "version"
+# ]
 
 # clean_autodocs.py feature flags
 # Set to False/None to disable or soften the corresponding processing step.
-autodocs_delete_hidden = True        # delete RST files for private/hidden modules
-autodocs_replace_automodule = True   # replace automodule directives with autosummary tables
-autodocs_short_display_names = True  # shorten toctree labels to the last module component
-autodocs_top_level_maxdepth = 1      # :maxdepth: on top-level page (None = keep sphinx-apidoc value)
-autodocs_rename_titles = False       # strip " package"/" module" from RST page headings
+autodocs_delete_hidden = False        # delete RST files for private/hidden modules
+autodocs_replace_automodule = False   # replace automodule directives with autosummary tables
+autodocs_short_display_names = True   # shorten toctree labels to the last module component
+autodocs_top_level_maxdepth = 1       # :maxdepth: on top-level page (None = keep sphinx-apidoc value)
+autodocs_rename_titles = True         # strip " package"/" module" from RST page headings
 autodocs_top_level_title = "API Reference"  # top-level page heading (used when rename_titles=True)
-autodocs_titlesonly = False          # inject :titlesonly: into toctree directives
+autodocs_titlesonly = True          # inject :titlesonly: into toctree directives
+autodocs_use_package_all_definition = False  # True: use __all__ for API members; False: inspect module for all public names
+autodocs_hide_from_sidebar = True   # inject :hidden: into autodocs toctrees so they don't appear in the sidebar
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

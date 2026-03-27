@@ -15,6 +15,7 @@ feature-flag block there for the full list and defaults.
 """
 
 import importlib
+import inspect
 import re
 import sys
 import types
@@ -44,6 +45,8 @@ _top_level_maxdepth: int | None = getattr(conf, "autodocs_top_level_maxdepth", 1
 _rename_titles: bool = getattr(conf, "autodocs_rename_titles", False)
 _top_level_title: str = getattr(conf, "autodocs_top_level_title", "API Reference")
 _titlesonly: bool = getattr(conf, "autodocs_titlesonly", False)
+_use_package_all_definition: bool = getattr(conf, "autodocs_use_package_all_definition", True)
+_hide_from_sidebar: bool = getattr(conf, "autodocs_hide_from_sidebar", False)
 
 
 def get_hidden_modules() -> list[str]:
@@ -97,10 +100,48 @@ def get_short_name(module_name: str) -> str:
     return module_name
 
 
-def get_module_api(module_name: str) -> list[str]:
-    """Get the public API of a module from its __all__ attribute.
+def _get_module_api_from_all(module: types.ModuleType) -> list[str]:
+    """Return public API members using the module's ``__all__`` attribute."""
+    all_names = list(getattr(module, "__all__", []))
+    return [
+        name for name in all_names
+        if not isinstance(getattr(module, name, None), types.ModuleType)
+        and not (name.startswith("__") and name.endswith("__"))
+    ]
 
-    Dynamically imports the module and returns ``__all__`` if present.
+
+def _get_module_api_from_inspect(module: types.ModuleType, module_name: str) -> list[str]:
+    """Return public API members by inspecting the module's contents.
+
+    Discovers all public names (not starting with ``_``) that are defined in
+    the module itself (i.e. whose ``__module__`` matches *module_name*).
+    Sub-modules are excluded because they are already represented in the
+    toctree.
+    """
+    members = []
+    for name, obj in inspect.getmembers(module):
+        # Skip private / dunder names
+        if name.startswith("_"):
+            continue
+        # Skip sub-modules (handled by toctree)
+        if isinstance(obj, types.ModuleType):
+            continue
+        # Only include objects defined in this module
+        obj_module = getattr(obj, "__module__", None)
+        if obj_module is not None and obj_module != module_name:
+            continue
+        members.append(name)
+    return members
+
+
+def get_module_api(module_name: str) -> list[str]:
+    """Get the public API of a module.
+
+    When ``autodocs_use_package_all_definition`` is True (the default),
+    the module's ``__all__`` attribute is used.  When False, the module
+    is introspected for all public names defined within it.  However,
+    if the module defines ``__all__`` it is always respected regardless
+    of the flag, since it represents an explicit API declaration.
 
     Args:
         module_name: Full module name (e.g., 'earthkit.transforms.temporal')
@@ -111,16 +152,11 @@ def get_module_api(module_name: str) -> list[str]:
     """
     try:
         module = importlib.import_module(module_name)
-        all_names = list(getattr(module, "__all__", []))
-        # Exclude submodule/subpackage entries — those are already represented
-        # in the toctree and must not get their own autosummary pages.
-        # Exclude dunder names (e.g. __version__) — these are internal and
-        # should never appear as individual API pages.
-        return [
-            name for name in all_names
-            if not isinstance(getattr(module, name, None), types.ModuleType)
-            and not (name.startswith("__") and name.endswith("__"))
-        ]
+        has_all = hasattr(module, "__all__") and module.__all__
+        if _use_package_all_definition or has_all:
+            return _get_module_api_from_all(module)
+        else:
+            return _get_module_api_from_inspect(module, module_name)
     except ImportError as exc:
         print(f"Warning: could not import {module_name}: {exc}")
         return []
@@ -245,6 +281,7 @@ def clean_toctree(
     max_depth: int | None = None,
     short_names: bool = True,
     titlesonly: bool = False,
+    hidden: bool = False,
 ) -> str:
     """Clean up toctree entries in RST content.
 
@@ -253,6 +290,7 @@ def clean_toctree(
       ``temporal <earthkit.transforms.temporal>``
     - Optionally overrides :maxdepth: to control how deep the TOC renders
     - Optionally injects :titlesonly: when absent
+    - Optionally injects :hidden: so toctrees don't appear in the sidebar
 
     Args:
         content: RST file content
@@ -262,6 +300,7 @@ def clean_toctree(
         short_names: If True, rewrite toctree entries to use the short module
             name as the display label.
         titlesonly: If True, inject ``:titlesonly:`` into toctrees that lack it.
+        hidden: If True, inject ``:hidden:`` into toctrees that lack it.
 
     Returns:
         Updated RST content
@@ -272,6 +311,7 @@ def clean_toctree(
     in_toctree = False
     in_options_block = False   # True while we are still in the options section
     toctree_has_titlesonly = False
+    toctree_has_hidden = False
 
     for line in lines:
         # Detect start of toctree directive
@@ -279,6 +319,7 @@ def clean_toctree(
             in_toctree = True
             in_options_block = True
             toctree_has_titlesonly = False
+            toctree_has_hidden = False
             result_lines.append(line)
             continue
 
@@ -303,6 +344,8 @@ def clean_toctree(
                 in_options_block = False
                 if titlesonly and not toctree_has_titlesonly:
                     result_lines.append("   :titlesonly:")
+                if hidden and not toctree_has_hidden:
+                    result_lines.append("   :hidden:")
             result_lines.append(line)
             continue
 
@@ -310,6 +353,8 @@ def clean_toctree(
         if stripped.startswith(":"):
             if stripped.startswith(":titlesonly:"):
                 toctree_has_titlesonly = True
+            if stripped.startswith(":hidden:"):
+                toctree_has_hidden = True
             if max_depth is not None and stripped.startswith(":maxdepth:"):
                 result_lines.append(f"{current_indent}:maxdepth: {max_depth}")
             else:
@@ -321,6 +366,8 @@ def clean_toctree(
             in_options_block = False
             if titlesonly and not toctree_has_titlesonly:
                 result_lines.append("   :titlesonly:")
+            if hidden and not toctree_has_hidden:
+                result_lines.append("   :hidden:")
 
         # Toctree entry — may be "module.name" or "display <module.name>"
         match = re.match(r"^\s*(?:.*\s+<)?([^<>\s]+)>?\s*$", line)
@@ -350,7 +397,9 @@ def clean_autodocs() -> None:
     print(
         f"Flags: delete_hidden={_delete_hidden}, replace_automodule={_replace_automodule}, "
         f"short_display_names={_short_display_names}, top_level_maxdepth={_top_level_maxdepth}, "
-        f"rename_titles={_rename_titles}, titlesonly={_titlesonly}"
+        f"rename_titles={_rename_titles}, titlesonly={_titlesonly}, "
+        f"use_package_all_definition={_use_package_all_definition}, "
+        f"hide_from_sidebar={_hide_from_sidebar}"
     )
 
     if not AUTODOCS_DIR.exists():
@@ -387,6 +436,7 @@ def clean_autodocs() -> None:
             max_depth=toctree_depth,
             short_names=_short_display_names,
             titlesonly=_titlesonly,
+            hidden=_hide_from_sidebar,
         )
 
         # --- Step 3: replace automodule with autosummary ------------------

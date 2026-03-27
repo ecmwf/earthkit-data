@@ -71,7 +71,7 @@ reference systems and bounding boxes.
 
    .. grid-item-card:: API Reference Guide
       :img-top: _static/brackets-contain.svg
-      :link: api-reference
+      :link: api
       :link-type: doc
       :class-card: sd-shadow-sm
 
@@ -87,8 +87,8 @@ reference systems and bounding boxes.
    tutorials/index
    how-tos/index
    concepts/index
-   faqs/index
-   api-reference
+   faqs
+   api
 
 
 .. toctree::
