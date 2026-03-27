@@ -29,7 +29,7 @@ class CovJsonData(SourceData):
     @property
     def available_types(self):
         """list[str]: Return the list of available types that this data object can be converted to."""
-        return [self._XARRAY, self._GEOJSON]
+        return [self._XARRAY, "geojson"]
 
     def describe(self):
         """Provide a description of the CovJSON data.
