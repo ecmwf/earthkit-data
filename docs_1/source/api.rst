@@ -10,65 +10,66 @@ API reference guide
 Fields
 -------
 
-- :py:class:`~data.core.fieldlist.Field`
-- :py:class:`~data.core.fieldlist.FieldList`
 
+- :py:class:`earthkit.data.core.field.Field`
+- :py:class:`earthkit.data.core.fieldlist.FieldList`
+- :py:class:`earthkit.data.indexing.indexed.IndexFieldListBase`
 
 Metadata
 ----------
 
-- :py:class:`~data.core.metadata.Metadata`
-- :py:class:`~data.core.metadata.RawMetadata`
-- :py:class:`~data.readers.grib.metadata.GribMetadata`
-- :py:class:`~data.readers.grib.metadata.GribFieldMetadata`
-- :py:class:`~data.readers.grib.metadata.StandAloneGribMetadata`
+- :py:class:`earthkit.data.core.metadata.Metadata`
+- :py:class:`earthkit.data.core.metadata.RawMetadata`
+- :py:class:`earthkit.data.readers.grib.metadata.GribMetadata`
+- :py:class:`earthkit.data.readers.grib.metadata.GribFieldMetadata`
+- :py:class:`earthkit.data.readers.grib.metadata.StandAloneGribMetadata`
 
 Numpy fields
 ---------------
-- :py:class:`~data.sources.numpy_list.NumpyField`
-- :py:class:`~data.sources.numpy_list.NumpyFieldList`
+- :py:class:`earthkit.data.sources.numpy_list.NumpyField`
+- :py:class:`earthkit.data.sources.numpy_list.NumpyFieldList`
 
 GRIB
 -------
 
-- :py:class:`~data.readers.grib.index.GribFieldList`
-- :py:class:`~data.readers.grib.codes.GribField`
+- :py:class:`earthkit.data.readers.grib.index.GribFieldList`
+- :py:class:`earthkit.data.readers.grib.codes.GribField`
 
 BUFR
 -----
 
-- :py:class:`~data.readers.bufr.bufr.BUFRList`
-- :py:class:`~data.readers.bufr.bufr.BUFRMessage`
+- :py:class:`earthkit.data.readers.bufr.bufr.BUFRList`
+- :py:class:`earthkit.data.readers.bufr.bufr.BUFRMessage`
 
 CSV
 ----
 
-- :py:class:`~data.readers.csv.CSVReader`
+- :py:class:`earthkit.data.readers.csv.CSVReader`
 
 
 Encoders
 ---------
 
-- :py:class:`~data.encoders.encoder.Encoder`
-- :py:class:`~data.encoders.grib.GribEncoder`
-- :py:class:`~data.encoders.netcdf.NetCDFEncoder`
-- :py:class:`~data.encoders.geotiff.GeoTiffEncoder`
-- :py:class:`~data.encoders.csv.CSVEncoder`
+- :py:class:`earthkit.data.encoders.encoder.Encoder`
+- :py:class:`earthkit.data.encoders.grib.GribEncoder`
+- :py:class:`earthkit.data.encoders.netcdf.NetCDFEncoder`
+- :py:class:`earthkit.data.encoders.geotiff.GeoTiffEncoder`
+- :py:class:`earthkit.data.encoders.csv.CSVEncoder`
 
 
 Targets
 ---------
 
-- :py:class:`~data.targets.target.Target`
-- :py:class:`~data.targets.file.FileTarget`
-- :py:class:`~data.targets.file.FilePatternTarget`
-- :py:class:`~data.targets.fdb.FdbTarget`
+- :py:class:`earthkit.data.targets.target.Target`
+- :py:class:`earthkit.data.targets.file.FileTarget`
+- :py:class:`earthkit.data.targets.file.FilePatternTarget`
+- :py:class:`earthkit.data.targets.fdb.FdbTarget`
 
 Xarray engine
 --------------
-- :py:class:`~data.xr_engine.engine.EarthkitBackendEntrypoint`
+- :py:class:`earthkit.data.xr_engine.engine.EarthkitBackendEntrypoint`
 
 Other
 --------
 
-- :py:class:`~data.utils.bbox.BoundingBox`
+- :py:class:`earthkit.data.utils.bbox.BoundingBox`
