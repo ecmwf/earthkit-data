@@ -47,6 +47,7 @@ _top_level_title: str = getattr(conf, "autodocs_top_level_title", "API Reference
 _titlesonly: bool = getattr(conf, "autodocs_titlesonly", False)
 _use_package_all_definition: bool = getattr(conf, "autodocs_use_package_all_definition", True)
 _hide_from_sidebar: bool = getattr(conf, "autodocs_hide_from_sidebar", False)
+_skip_members: dict[str, list[str]] = getattr(conf, "autodocs_skip_members", {})
 
 
 def get_hidden_modules() -> list[str]:
@@ -154,9 +155,16 @@ def get_module_api(module_name: str) -> list[str]:
         module = importlib.import_module(module_name)
         has_all = hasattr(module, "__all__") and module.__all__
         if _use_package_all_definition or has_all:
-            return _get_module_api_from_all(module)
+            members = _get_module_api_from_all(module)
         else:
-            return _get_module_api_from_inspect(module, module_name)
+            members = _get_module_api_from_inspect(module, module_name)
+
+        # Apply per-module skip list
+        blocked = _skip_members.get(module_name, [])
+        if blocked:
+            members = [m for m in members if m not in blocked]
+
+        return members
     except ImportError as exc:
         print(f"Warning: could not import {module_name}: {exc}")
         return []
@@ -399,7 +407,8 @@ def clean_autodocs() -> None:
         f"short_display_names={_short_display_names}, top_level_maxdepth={_top_level_maxdepth}, "
         f"rename_titles={_rename_titles}, titlesonly={_titlesonly}, "
         f"use_package_all_definition={_use_package_all_definition}, "
-        f"hide_from_sidebar={_hide_from_sidebar}"
+        f"hide_from_sidebar={_hide_from_sidebar}, "
+        f"skip_members={len(_skip_members)} module(s)"
     )
 
     if not AUTODOCS_DIR.exists():

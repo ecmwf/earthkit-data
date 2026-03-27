@@ -147,6 +147,115 @@ autodocs_titlesonly = True          # inject :titlesonly: into toctree directive
 autodocs_use_package_all_definition = False  # True: use __all__ for API members; False: inspect module for all public names
 autodocs_hide_from_sidebar = True   # inject :hidden: into autodocs toctrees so they don't appear in the sidebar
 
+# Per-module member skip list for autosummary tables (used by clean_autodocs.py).
+# Keys are fully-qualified module names; values are lists of names to exclude.
+autodocs_skip_members: dict[str, list[str]] = {
+    # "earthkit.data.core.field": ["DATA", "METADATA"],
+}
+
+# Per-class method skip list for autodoc (applied at Sphinx build time).
+# Keys are fully-qualified class names; values are lists of method/attribute
+# names to hide from the generated documentation.
+autodocs_skip_methods: dict[str, list[str]] = {
+    "earthkit.data.core.fieldlist.FieldList": [
+        "cache_file",
+        "dataset",
+        "from_dict",
+        "from_mask",
+        "from_multi",
+        "from_slice",
+        "full",
+        "graph",
+        "ignore",
+        "merge",
+        "mutate",
+        "new_mask_index",
+        "parent",
+        "scaled",
+        "settings",
+        "statistics",
+        "xarray_open_dataset_kwargs",
+    ],
+    "earthkit.data.readers.bufr.file.BUFRList": [
+        "cache_file",
+        "dataset",
+        "from_dict",
+        "from_mask",
+        "from_multi",
+        "from_slice",
+        "full",
+        "graph",
+        "ignore",
+        "merge",
+        "mutate",
+        "new_mask_index",
+        "parent",
+        "settings",
+        "to_numpy",
+    ],
+    "earthkit.data.readers.bufr.message.BUFRMessage": [
+        "merge",
+        "mutate",
+        "to_numpy",
+    ],
+    "earthkit.data.readers.grib.index.GribFieldList": [
+        "cache_file",
+        "dataset",
+        "from_dict",
+        "from_mask",
+        "from_multi",
+        "from_slice",
+        "full",
+        "graph",
+        "ignore",
+        "merge",
+        "mutate",
+        "new_mask_index",
+        "parent",
+        "scaled",
+        "settings",
+        "statistics",
+        "xarray_open_dataset_kwargs",
+    ],
+    "earthkit.data.readers.csv.reader.CSVReader": [
+        "bounding_box",
+        "cache_file",
+        "to_numpy",
+        "ignore",
+        "datetime",
+        "index_content",
+        "isel",
+        "merge",
+        "metadata",
+        "mutate",
+        "mutate_source",
+        "order_by",
+        "sel",
+        "filter",
+        "merger",
+        "source",
+    ],
+    "earthkit.data.sources.numpy_list.NumpyFieldList": [
+        "cache_file",
+        "dataset",
+        "from_dict",
+        "from_mask",
+        "from_multi",
+        "from_slice",
+        "full",
+        "graph",
+        "ignore",
+        "merge",
+        "mutate",
+        "new_mask_index",
+        "parent",
+        "scaled",
+        "settings",
+        "statistics",
+        "xarray_open_dataset_kwargs",
+    ],
+}
+
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
@@ -273,5 +382,26 @@ def _write_earthkit_packages_js(app):
         fh.write(f"window.earthkitPackages = {json.dumps(packages)};\n")
 
 
+def _autodoc_skip_member(app, what, name, obj, skip, options):
+    """Skip methods/attributes listed in autodocs_skip_methods."""
+    if skip:
+        return skip
+    if what in ("method", "attribute"):
+        skip_methods = getattr(app.config, "autodocs_skip_methods", {})
+        # obj is the actual Python object; its __qualname__ gives "Class.method"
+        qualname = getattr(obj, "__qualname__", "") or ""
+        obj_module = getattr(obj, "__module__", "") or ""
+        if "." in qualname:
+            class_name = qualname.rsplit(".", 1)[0]
+            fq_class = f"{obj_module}.{class_name}"
+            method_name = name.split(".")[-1]
+            # Check this class and all its parent classes in the MRO
+            blocked = skip_methods.get(fq_class, [])
+            if method_name in blocked:
+                return True
+    return None
+
+
 def setup(app):
     app.connect("builder-inited", _write_earthkit_packages_js)
+    app.connect("autodoc-skip-member", _autodoc_skip_member)
