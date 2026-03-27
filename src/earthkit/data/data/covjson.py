@@ -15,16 +15,60 @@ class CovJsonData(SourceData):
 
     @property
     def available_types(self):
+        """list[str]: Return the list of available types that this data object can be converted to."""
         return [self._XARRAY, self._FIELDLIST]
 
     def describe(self):
+        """Provide a description of the CovJSON data.
+
+        Returns
+        -------
+        :py:class:`earthkit.data.utils.summary.DataDescriber`
+            A DataDescriber object containing a description of the CovJSON data.
+        """
         pass
 
     def to_xarray(self, **kwargs):
+        """Convert into an Xarray dataset.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments to pass to the reader's to_xarray method.
+
+        Returns
+        -------
+        :py:class:`xarray.Dataset`
+            An Xarray dataset containing the CovJSON data.
+        """
         return self._reader.to_xarray(**kwargs)
 
     def to_fieldlist(self, **kwargs):
+        """Convert into a FieldList.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments to pass to the reader's to_fieldlist method.
+
+        Returns
+        -------
+        :py:class:`earthkit.data.core.fieldlist.FieldList`
+            A FieldList containing the CovJSON data.
+        """
         return self._reader.to_fieldlist(**kwargs)
 
     def to_geojson(self, **kwargs):
+        """Convert into GeoJSON format.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments to pass to the reader's to_geojson method.
+
+        Returns
+        -------
+        dict or GeoJSON
+            The data in GeoJSON format.
+        """
         return self._reader.to_geojson(**kwargs)

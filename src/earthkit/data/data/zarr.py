@@ -15,18 +15,59 @@ class ZarrData(SourceData):
 
     @property
     def available_types(self):
+        """list[str]: Return the list of available types that this data object can be converted to."""
         return [self._XARRAY, self._FIELDLIST]
 
     def describe(self):
+        """Provide a description of the Zarr data.
+
+        Returns
+        -------
+        :py:class:`earthkit.data.utils.summary.DataDescriber`
+            A DataDescriber object containing a description of the Zarr data.
+        """
         pass
 
     def to_fieldlist(self, *args, **kwargs):
-        """Convert into a field list."""
+        """Convert into a FieldList.
+
+        Parameters
+        ----------
+        *args
+            Positional arguments to pass to the reader's to_fieldlist method.
+        **kwargs
+            Keyword arguments to pass to the reader's to_fieldlist method.
+
+        Returns
+        -------
+        :py:class:`earthkit.data.core.fieldlist.FieldList`
+            A FieldList containing the Zarr data.
+        """
         return self._reader.to_fieldlist(*args, **kwargs)
 
     def to_xarray(self, *args, **kwargs):
-        """Convert into an xarray dataset."""
+        """Convert into an Xarray dataset.
+
+        Parameters
+        ----------
+        *args
+            Positional arguments to pass to the reader's to_xarray method.
+        **kwargs
+            Keyword arguments to pass to the reader's to_xarray method.
+
+        Returns
+        -------
+        :py:class:`xarray.Dataset`
+            An Xarray dataset containing the Zarr data.
+        """
         return self._reader.to_xarray(*args, **kwargs)
 
     def _default_encoder(self):
+        """Return the default encoder for Zarr data.
+
+        Returns
+        -------
+        Encoder
+            The default encoder object.
+        """
         return self._source._default_encoder()

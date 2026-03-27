@@ -127,7 +127,7 @@ _skip_methods = {
 
 
 # define skip rules for autoapi
-def _skip_api_items(app, what, name, obj, skip, options):
+def _skip_api_items_1(app, what, name, obj, skip, options):
     # if what == "package":
     #     print(f"{name}[{what}]")
 
@@ -209,4 +209,17 @@ def _skip_api_items(app, what, name, obj, skip, options):
 
     # if not skip:
     #     print(f"{what} {name}")
+    return skip
+
+
+def _skip_api_items(app, what, name, obj, skip, options):
+    # if what == "package":
+    #     print(f"{name}[{what}]")
+
+    # if "ArrayLike" in name:
+    #     print(f"Skipping {what} {name} {obj}")
+
+    if what == "data" and ".ArrayLike" in name:
+        skip = True
+
     return skip

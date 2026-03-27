@@ -18,7 +18,15 @@ class UnknownData(SourceData):
 
     @property
     def available_types(self):
+        """list[str] or None: Return the list of available types that this data object can be converted to."""
         return None
 
     def describe(self):
+        """Provide a description of the unknown data.
+
+        Returns
+        -------
+        str
+            A description of the unknown data including the file path.
+        """
         return f"Unknown data from {self._reader.path}"

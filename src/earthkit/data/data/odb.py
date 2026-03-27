@@ -7,32 +7,72 @@
 # nor does it submit to any jurisdiction.
 #
 
+from __future__ import annotations
+
+from typing import (
+    TYPE_CHECKING,
+    Any,  # noqa: F401
+)
 
 from .source import SourceData
 
+if TYPE_CHECKING:
+    import pandas  # type: ignore[import]
+
 
 class ODBData(SourceData):
+    """
+    Represents data in the ODB format.
+
+    :xref:`odb` is a bespoke format developed at ECMWF to store observations.
+
+    ODB data can be converted with the following methods:
+
+    - :obj:`to_pandas`
+
+    """
+
     _TYPE_NAME = "ODB"
 
     @property
     def available_types(self):
+        """list[str]: Return the list of available types that this data object can be converted to."""
         return [self._PANDAS]
 
-    def describe(self):
-        return f"ODB data from {self._reader.path}"
+    def describe(self) -> Any:
+        """Provide a description of the ODB data.
 
-    def to_pandas(self, **kwargs):
-        return self._reader.to_pandas(**kwargs)
+        Returns
+        -------
+        :py:class:`earthkit.data.utils.summary.DataDescriber`
+            A DataDescriber object containing a description of the ODB data.
+        """
+        from earthkit.data.utils.summary import DataDescriber
 
-    def to_target(self, target, *args, **kwargs):
-        if target == "file":
-            return self._reader.to_target(target, *args, **kwargs)
-        else:
-            from earthkit.data import to_target
+        return DataDescriber(title="ODB file", path=self._reader.path, types=self.available_types)
 
-            return to_target(target, *args, data=self._reader, **kwargs)
+    def __repr__(self) -> str:
+        return f"ODBData(path={self._reader.path})"
 
-    def _repr_html_(self):
-        from earthkit.data.utils.summary import make_data_repr_html
+    def _repr_html_(self) -> str:
+        return self.describe()._repr_html_()
 
-        return make_data_repr_html(title="ODB file", path=self._reader.path, types=self.available_types)
+    def to_pandas(self, odc_read_odb_kwargs=None) -> "pandas.DataFrame":
+        """Convert into a pandas DataFrame.
+
+        It is implemented by :xref:`pyodc`.
+
+        Parameters
+        ----------
+        odc_read_odb_kwargs : dict, None,optional
+            Keyword arguments to pass to :xref:`read_odb`. Please note if
+            the ``single`` argument is not provided, it will be set to ``True``
+            by default.
+
+        Returns
+        -------
+        :py:class:`pandas.DataFrame`
+            A pandas DataFrame created from the ODB data.
+
+        """
+        return self._reader.to_pandas(odc_read_odb_kwargs=odc_read_odb_kwargs)

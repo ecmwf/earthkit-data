@@ -172,10 +172,14 @@ xref_links = {
     "pdbufr": ("pdbufr", "https://github.com/ecmwf/pdbufr"),
     "read_bufr": (
         "pdbufr.read_bufr()",
-        "https://pdbufr.readthedocs.io/en/latest/read_bufr.html",
+        "https://pdbufr.readthedocs.io/en/latest/guide/read_bufr.html",
     ),
     "odb": ("ODB", "https://odc.readthedocs.io/en/latest/content/introduction.html"),
-    "pyodc": ("pyodc", "https://github.com/ecmwf/pyodc"),
+    "pyodc": ("pyodc", "https://pyodc.readthedocs.io/en/latest/"),
+    "read_odb": (
+        "pyodc.read_odb()",
+        "https://pyodc.readthedocs.io/en/latest/content/api.html",
+    ),
     "s3cmd": ("s3cmd", "https://s3tools.org/s3cmd"),
 }
 
@@ -183,10 +187,11 @@ xref_links = {
 intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "xarray": ("https://docs.xarray.dev/en/latest/", None),
+    "pyodc": ("https://pyodc.readthedocs.io/en/latest/", None),
 }
 
 
-# def setup(app):
-#     from skip_api_rules import _skip_api_items
+def setup(app):
+    from skip_api_rules import _skip_api_items
 
-#     app.connect("autoapi-skip-member", _skip_api_items)
+    app.connect("autoapi-skip-member", _skip_api_items)

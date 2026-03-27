@@ -28,7 +28,7 @@ class CSVReader(Reader):
         self.compression = compression
         self.dialect, self.has_header = probe_csv(path, compression=compression)
 
-    def to_pandas(self, comment="#", pandas_read_csv_kwargs=None, **kwargs):
+    def to_pandas(self, comment="#", pandas_read_csv_kwargs=None):
         """Convert CSV data into a :py:class:`pandas.DataFrame` using :py:func:`pandas.read_csv`.
 
         Please note that Earthkit should be able to handle compressed file objects.

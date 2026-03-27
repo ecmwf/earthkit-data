@@ -16,10 +16,32 @@ class HiveFilePatternData(SourceData):
 
     @property
     def available_types(self):
+        """list[str]: Return the list of available types that this data object can be converted to."""
         return [self._FIELDLIST]
 
     def describe(self):
+        """Provide a description of the HiveFilePattern data.
+
+        Returns
+        -------
+        :py:class:`earthkit.data.utils.summary.DataDescriber`
+            A DataDescriber object containing a description of the HiveFilePattern data.
+        """
         pass
 
     def to_fieldlist(self, *args, **kwargs):
+        """Convert into a FieldList.
+
+        Parameters
+        ----------
+        *args
+            Positional arguments to pass to the source's to_fieldlist method.
+        **kwargs
+            Keyword arguments to pass to the source's to_fieldlist method.
+
+        Returns
+        -------
+        :py:class:`earthkit.data.core.fieldlist.FieldList`
+            A FieldList containing the HiveFilePattern data.
+        """
         return self._source.to_fieldlist(*args, **kwargs)

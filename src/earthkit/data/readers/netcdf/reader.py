@@ -24,7 +24,7 @@ class NetCDFReader(Source, NetCDFReaderBase):
         return "NetCDFReader(%s)" % (self.path,)
 
     @abstractmethod
-    def to_fieldlist(self):
+    def to_fieldlist(self, *args, **kwargs):
         """Convert into a field list."""
         # return NetCDFFieldListFromFile(self._ori_source, self.path)
         pass
@@ -42,7 +42,7 @@ class NetCDFReader(Source, NetCDFReaderBase):
         return type(self).to_xarray_multi_from_paths([self.path], **kwargs)
 
     @classmethod
-    def to_xarray_multi_from_paths(cls, paths, *args, **kwargs):
+    def to_xarray_multi_from_paths(cls, paths, **kwargs):
         import xarray as xr
 
         if not isinstance(paths, list):
@@ -84,9 +84,9 @@ class NetCDFFileReader(NetCDFReader):
         # self.path = path
         super().__init__(source, path)
 
-    def to_fieldlist(self):
+    def to_fieldlist(self, *args, **kwargs):
         """Convert into a field list."""
-        return NetCDFFieldListFromFile(self.path)
+        return NetCDFFieldListFromFile(self.path, *args, **kwargs)
 
     def __repr__(self):
         return "NetCDFFileReader(%s)" % (self.path,)
@@ -98,9 +98,9 @@ class NetCDFUrlReader(NetCDFReader):
         self.url = url
         super().__init__(source, "")
 
-    def to_fieldlist(self):
+    def to_fieldlist(self, *args, **kwargs):
         """Convert into a field list."""
-        return NetCDFFieldListFromURL(self.url)
+        return NetCDFFieldListFromURL(self.url, *args, **kwargs)
 
     def __repr__(self):
         return "NetCDFUrlReader(%s)" % (self.url,)
@@ -122,7 +122,7 @@ class MultiNetCDFReader(Source, NetCDFReaderBase):
             else:
                 yield s
 
-    def to_fieldlist(self):
+    def to_fieldlist(self, *args, **kwargs):
         from earthkit.data.mergers import make_merger
 
         merged = make_merger(None, self.sources).to_fieldlist()

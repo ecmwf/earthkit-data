@@ -8,10 +8,23 @@
 #
 
 
+from __future__ import annotations
+
 from abc import abstractmethod
+from typing import TYPE_CHECKING
 from typing import Any
+from typing import TypeAlias
 
 from earthkit.data.core import Encodable
+
+
+if TYPE_CHECKING:
+    import xarray  # type: ignore[import]
+    from earthkit.data.core.fieldlist import FieldList  # type: ignore[import]
+    import pandas  # type: ignore[import]
+    import numpy  # type: ignore[import]
+
+ArrayLike: TypeAlias = Any
 
 
 class Data(Encodable):
@@ -41,11 +54,16 @@ class Data(Encodable):
 
     @abstractmethod
     def is_stream(self) -> bool:
-        """bool: Return True if this data object represents a stream."""
+        """Return True if this data object represents a stream.
+
+        Returns
+        -------
+        bool
+            True if this data object represents a stream, False otherwise."""
         pass
 
     @abstractmethod
-    def describe(self):
+    def describe(self) -> Any:
         """Provide a description of the data object."""
         pass
 
@@ -55,11 +73,10 @@ class Data(Encodable):
 
         Parameters
         ----------
-        to_type : str or any
-            The type to convert to. This can be a string (e.g. "fieldlist"), an earthkit-data object
-            (e.g. a Data object or FieldList), or a data object that earthkit-data supports (e.g. an
-            xarray dataset) that can be used to determine the target type. ``to_type``
-            is used to determine the target type for conversion. If no suitable conversion method is found, a
+        to_type : str or Any
+            The type to convert to. It can be a str or an object that can be used to determine the target type.
+            In the latter case, the object can be an earthkit-data object or an object that earthkit-data
+            supports as an input. If no suitable conversion method is found, a
             NotImplementedError will be raised.
         *args
             Positional arguments to pass to the conversion method.
@@ -79,17 +96,17 @@ class Data(Encodable):
         pass
 
     @abstractmethod
-    def to_fieldlist(self, *args, **kwargs):
+    def to_fieldlist(self, *args, **kwargs) -> "FieldList":
         """Convert into a fieldlist."""
         pass
 
     @abstractmethod
-    def to_xarray(self, *args, **kwargs):
+    def to_xarray(self, *args, **kwargs) -> "xarray.Dataset":
         """Convert into an Xarray dataset."""
         pass
 
     @abstractmethod
-    def to_pandas(self, *args, **kwargs):
+    def to_pandas(self, *args, **kwargs) -> "pandas.DataFrame":
         """Convert into a pandas dataframe"""
         pass
 
@@ -99,17 +116,17 @@ class Data(Encodable):
         pass
 
     @abstractmethod
-    def to_featurelist(self, *args, **kwargs):
+    def to_featurelist(self, *args, **kwargs) -> "FeatureList":
         """Convert into a list of featurelist."""
         pass
 
     @abstractmethod
-    def to_numpy(self, *args, **kwargs):
+    def to_numpy(self, *args, **kwargs) -> "numpy.ndarray":
         """Convert into a numpy array."""
         pass
 
     @abstractmethod
-    def to_array(self, *args, **kwargs):
+    def to_array(self, *args, **kwargs) -> ArrayLike:
         """Convert into an array-like object."""
         pass
 
@@ -118,7 +135,8 @@ class SimpleData(Data):
     """A simple implementation of the Data interface that provides default implementations
     for some methods."""
 
-    def is_stream(self):
+    def is_stream(self) -> bool:
+        """Return False as this data object is not a stream."""
         return False
 
     def to(self, to_type, *args, **kwargs):
@@ -144,49 +162,78 @@ class SimpleData(Data):
             raise NotImplementedError(f"Conversion to {type_str} is not implemented")
         return method(*args, **kwargs)
 
-    def to_fieldlist(self, *args, **kwargs):
+    def to_fieldlist(self, *args, **kwargs) -> "FieldList":
         """Convert into a fieldlist.
-        This is a default implementation that raises NotImplementedError.
+
+        This method is not implemented for this data object and raises NotImplementedError.
         """
         self._conversion_not_implemented()
 
-    def to_xarray(self, *args, **kwargs):
+    def to_xarray(self, *args, **kwargs) -> "xarray.Dataset":
         """Convert into an Xarray dataset.
-        This is a default implementation that raises NotImplementedError."""
+
+        This method is not implemented for this data object and raises NotImplementedError.
+        """
         self._conversion_not_implemented()
 
-    def to_pandas(self, *args, **kwargs):
+    def to_pandas(self, *args, **kwargs) -> "pandas.DataFrame":
         """Convert into a pandas dataframe.
-        This is a default implementation that raises NotImplementedError."""
+
+        This method is not implemented for this data object and raises NotImplementedError.
+        """
         self._conversion_not_implemented()
 
     def to_geopandas(self, **kwargs):
         """Convert into a GeoPandas dataframe.
-        This is a default implementation that raises NotImplementedError."""
+
+        This method is not implemented for this data object and raises NotImplementedError.
+        """
         self._conversion_not_implemented()
 
     def to_featurelist(self, *args, **kwargs):
-        """Convert into a list of featurelist.
-        This is a default implementation that raises NotImplementedError."""
+        """Convert into a featurelist.
+
+        This method is not implemented for this data object and raises NotImplementedError.
+        """
         self._conversion_not_implemented()
 
-    def to_numpy(self, *args, **kwargs):
+    def to_numpy(self, *args, **kwargs) -> Any:
         """Convert into a numpy array.
-        This is a default implementation that raises NotImplementedError."""
+
+        This method is not implemented for this data object and raises NotImplementedError.
+        """
         self._conversion_not_implemented()
 
-    def to_array(self, *args, **kwargs):
-        """Convert into an array-like object.
-        This is a default implementation that raises NotImplementedError."""
+    def to_array(self, *args, **kwargs) -> Any:
+        """Convert into an array of a given array-like type.
+
+        This method is not implemented for this data object and raises NotImplementedError.
+        """
         self._conversion_not_implemented()
 
-    def to_values(self, *args, **kwargs):
+    def to_value(self, *args, **kwargs) -> Any:
         """Convert into a single value.
-        This is a default implementation that raises NotImplementedError. Subclasses that can
-        be converted to a single value should override this method."""
+
+        This method is not implemented for this data object and raises NotImplementedError.
+        """
         self._conversion_not_implemented()
 
     def to_target(self, target, *args, **kwargs):
+        """Write the data to a target.
+
+        Parameters
+        ----------
+        target: str
+            The target to write to. See :py:func:`to_target` for more details on the supported targets.
+        *args
+            Positional arguments to pass to the :func:`to_target`
+        **kwargs
+            Keyword arguments to pass to the :func:`to_target`. Cannot specify ``data`` in kwargs.
+
+        See Also
+        --------
+        :py:func:`to_target`
+        """
         from earthkit.data.targets import to_target
 
         if "data" in kwargs:

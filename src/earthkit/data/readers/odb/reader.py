@@ -17,7 +17,7 @@ LOG = logging.getLogger(__name__)
 class ODBReader(Reader):
     _format = "odb"
 
-    def to_pandas(self, **kwargs):
+    def to_pandas(self, odc_read_odb_kwargs=None):
         try:
             import codc as odc
         except Exception:
@@ -27,8 +27,11 @@ class ODBReader(Reader):
                 raise ImportError("ODC handling requires 'pyodc' to be installed")
             LOG.debug("Using pure Python odc decoder.")
 
-        odc_read_odb_kwargs = kwargs.get("odc_read_odb_kwargs", {})
-        return odc.read_odb(self.path, single=True, **odc_read_odb_kwargs)
+        odc_read_odb_kwargs = odc_read_odb_kwargs or {}
+        if "single" not in odc_read_odb_kwargs:
+            odc_read_odb_kwargs["single"] = True
+
+        return odc.read_odb(self.path, **odc_read_odb_kwargs)
 
     def to_data_object(self):
         from earthkit.data.data.odb import ODBData

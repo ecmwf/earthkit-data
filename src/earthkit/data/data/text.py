@@ -7,18 +7,38 @@
 # nor does it submit to any jurisdiction.
 #
 
+
+from __future__ import annotations
+
+from typing import Any  # noqa: F401
+
 from .source import SourceData
 
 
 class TextData(SourceData):
-    _TYPE_NAME = "Text"
+    """Represents text data read from a source."""
 
-    # def __init__(self, reader):
-    #     self._reader = reader
+    _TYPE_NAME = "Text"
 
     @property
     def available_types(self):
+        """list[str] or None: Return the list of available types that this data object can be converted to."""
         return None
 
-    def describe(self):
-        return f"Text data from {self._reader.path}"
+    def describe(self) -> Any:
+        """Provide a description of the Text data.
+
+        Returns
+        -------
+        :py:class:`earthkit.data.utils.summary.DataDescriber`
+            A DataDescriber object containing a description of the Text data.
+        """
+        from earthkit.data.utils.summary import DataDescriber
+
+        return DataDescriber(title="Text file", path=self._reader.path, types=self.available_types)
+
+    def __repr__(self) -> str:
+        return f"TextData(path={self._reader.path})"
+
+    def _repr_html_(self) -> str:
+        return self.describe()._repr_html_()

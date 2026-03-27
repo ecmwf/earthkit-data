@@ -527,8 +527,8 @@ class BUFRReader(Source, BUFRReaderBase):
 
         Reader.__init__(self, source, path)
 
-    def to_featurelist(self, *args, **kwargs):
-        return BUFRListInFile(self.path, **self._kwargs, **kwargs)
+    def to_featurelist(self):
+        return BUFRListInFile(self.path, **self._kwargs)
 
     def to_pandas(self, *args, **kwargs):
         return self.to_featurelist().to_pandas(*args, **kwargs)

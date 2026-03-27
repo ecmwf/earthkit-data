@@ -20,15 +20,18 @@ class GeoTIFFReader(Source, GeoTIFFReaderBase):
     def __repr__(self):
         return f"GeoTIFFReader({self.path})"
 
-    def rioxarray_read(self, **kwargs):
+    def rioxarray_read(self, rioxarray_open_rasterio_kwargs=None, **kwargs):
         try:
             import rioxarray
         except ImportError:
             raise ImportError("geotiff handling requires 'rioxarray' to be installed")
 
         options = dict(DEFAULT_XARRAY_KWARGS)
+
         # Read options from dedicated kwarg if exists, otherwise use all kwargs
-        options.update(kwargs.get("rioxarray_open_rasterio_kwargs", kwargs))
+        if rioxarray_open_rasterio_kwargs is None:
+            rioxarray_open_rasterio_kwargs = kwargs.copy()
+        options.update(rioxarray_open_rasterio_kwargs)
 
         return rioxarray.open_rasterio(self.path, **options)
 
