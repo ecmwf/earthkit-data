@@ -1,7 +1,7 @@
 .. _install:
 
-Installation
-============
+Installation and getting started
+================================
 
 Installing from PyPI
 ------------------------------------
