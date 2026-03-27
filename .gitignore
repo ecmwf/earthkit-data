@@ -208,32 +208,19 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
-docs/examples/*.tar
-docs/examples/*.zip
-docs/examples/_*
-docs/examples/earthkit_use_cases/*.grib
-docs/examples/*/_*
-docs/experimental/_*
-docs/experimental/*.grib*
-docs/experimental/*.pp*
-docs/experimental/*.png*
-docs/experimental/*.nc*
-docs/experimental/*.geojson*
-
-docs_1/_build/
-docs_1/source/autodocs
-docs_1/source/examples/*.tar
-docs_1/source/examples/*.zip
-docs_1/source/examples/_*
-docs_1/source/examples/earthkit_use_cases/*.grib
-docs_1/source/examples/*/_*
-docs_1/source/experimental/_*
-docs_1/source/experimental/*.grib*
-docs_1/source/experimental/*.pp*
-docs_1/source/experimental/*.png*
-docs_1/source/experimental/*.nc*
-docs_1/source/experimental/*.geojson*
+_build/
+autodocs/
+examples/*.tar
+examples/*.zip
+examples/_*
+examples/earthkit_use_cases/*.grib
+examples/*/_*
+experimental/_*
+experimental/*.grib*
+experimental/*.pp*
+experimental/*.png*
+experimental/*.nc*
+experimental/*.geojson*
 
 
 # PyBuilder

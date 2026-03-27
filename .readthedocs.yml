@@ -13,16 +13,16 @@ build:
   jobs:
     pre_build:
     - rm -rf _build
-    - rm -rf docs_1/_build
-    - cd docs_1 && make autodocs
+    - rm -rf docs/_build
+    - cd docs && make autodocs
     # You can also specify other tool versions:
     # nodejs: "19"
     # rust: "1.64"
     # golang: "1.19"
 
-# Build documentation in the "docs_1/" directory with Sphinx
+# Build documentation in the "docs/" directory with Sphinx
 sphinx:
-  configuration: docs_1/source/conf.py
+  configuration: docs/source/conf.py
 
 # Optionally build your docs in additional formats such as PDF and ePub
 # formats:
