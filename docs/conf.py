@@ -9,6 +9,11 @@
 import datetime
 import os
 import sys
+import json
+
+
+import yaml
+
 
 sys.path.insert(0, os.path.abspath("../src"))
 sys.path.insert(0, os.path.abspath("./"))
@@ -17,6 +22,8 @@ sys.path.insert(0, os.path.abspath("../"))
 # -- Project information -----------------------------------------------------
 
 project = "earthkit-data"
+module_prefix = project.replace("-", ".")
+
 author = "European Centre for Medium Range Weather Forecasts"
 
 year = datetime.datetime.now().year
@@ -42,6 +49,7 @@ extensions = [
     "sphinx_copybutton",
     "earthkit.data.sphinxext.xref",
     "earthkit.data.sphinxext.module_output",
+    "sphinx_design",
 ]
 
 # autodoc configuration
@@ -95,10 +103,16 @@ html_theme = "furo"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-html_css_files = ["style.css"]
+html_css_files = ["custom.css"]
 
 # html_logo = "https://github.com/ecmwf/logos/raw/refs/heads/main/logos/earthkit/earthkit-data-dark.svg"
 
+html_js_files = [
+    "earthkit-packages.js",  # generated from earthkit-packages.yml at build time
+    "custom.js",
+]
+
+html_favicon = "https://raw.githubusercontent.com/ecmwf/logos/refs/heads/main/logos/earthkit/earthkit-logo-only.svg"
 
 html_theme_options = {
     "light_css_variables": {
@@ -127,7 +141,7 @@ html_theme_options = {
     "dark_logo": "earthkit-data-dark.svg",
     "source_repository": "https://github.com/ecmwf/earthkit-data/",
     # "source_branch": source_branch,
-    "source_directory": "docs/source",
+    "source_directory": "docs",
     "footer_icons": [
         {
             "name": "GitHub",
@@ -194,7 +208,21 @@ intersphinx_mapping = {
 }
 
 
+def _write_earthkit_packages_js(app):
+    """Read earthkit-packages.yml and write a JS data file into the output _static dir."""
+    config_path = os.path.join(os.path.dirname(__file__), "earthkit-packages.yml")
+    with open(config_path, encoding="utf-8") as fh:
+        config = yaml.safe_load(fh)
+    packages = config.get("packages", [])
+    static_dir = os.path.join(app.outdir, "_static")
+    os.makedirs(static_dir, exist_ok=True)
+    js_path = os.path.join(static_dir, "earthkit-packages.js")
+    with open(js_path, "w", encoding="utf-8") as fh:
+        fh.write(f"window.earthkitPackages = {json.dumps(packages)};\n")
+
+
 def setup(app):
     from skip_api_rules import _skip_api_items
 
+    app.connect("builder-inited", _write_earthkit_packages_js)
     app.connect("autoapi-skip-member", _skip_api_items)

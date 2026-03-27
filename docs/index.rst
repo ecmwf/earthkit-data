@@ -1,4 +1,4 @@
-Welcome to earthkit-data's documentation
+Earthkit-data's documentation
 ======================================================
 
 |Static Badge| |image1| |License: Apache 2.0| |Latest
@@ -30,51 +30,79 @@ familiar scientific Python objects (including numpy arrays, pandas dataframes, x
 features of your input data, such as data dimensionality, axes, coordinate
 reference systems and bounding boxes.
 
-Quick start
------------
 
-.. code-block:: python
+.. grid:: 1
+   :gutter: 2
 
-    import earthkit.data as ekd
+   .. grid-item-card:: Installation and Getting Started
+      :img-top: _static/rocket.svg
+      :link: getting-started
+      :link-type: doc
+      :class-card: sd-shadow-sm
 
-    data = ekd.from_source("sample", "test.grib")
-    fl = data.to_fieldlist()
-    arr = data.to_numpy()
-    df = data.to_pandas()
-    dataset = data.to_xarray()
+      New to earthkit-data? Start here with installation and a quick overview.
+
+.. grid:: 1 1 2 2
+   :gutter: 2
+
+   .. grid-item-card:: Tutorials
+      :img-top: _static/book.svg
+      :link: tutorials/index
+      :link-type: doc
+      :class-card: sd-shadow-sm
+
+      Step-by-step guides to learn earthkit-data.
+
+   .. grid-item-card:: How-tos
+      :img-top: _static/tool.svg
+      :link: how-tos/index
+      :link-type: doc
+      :class-card: sd-shadow-sm
+
+      Practical recipes for common tasks.
+
+   .. grid-item-card:: Concepts and Explanations
+      :img-top: _static/bulb.svg
+      :link: explanations/index
+      :link-type: doc
+      :class-card: sd-shadow-sm
+
+      Understand the core ideas behind earthkit-data.
+
+   .. grid-item-card:: API Reference Guide
+      :img-top: _static/brackets-contain.svg
+      :link: autoapi/earthkit/data/index
+      :link-type: doc
+      :class-card: sd-shadow-sm
+
+      Detailed documentation of all functions and classes.
 
 
 .. toctree::
-   :maxdepth: 1
    :caption: User guide
+   :maxdepth: 2
+   :hidden:
 
-   install
-   examples/index
-   faq
-   guide/index
-   API reference guide <autoapi/earthkit/data/index.rst>
+   getting-started
+   installation
+   tutorials/index
+   how-tos/index
+   explanations/index
+   API Reference guide <autoapi/earthkit/data/index.rst>
 
 .. toctree::
-   :maxdepth: 1
    :caption: Developer guide
+   :maxdepth: 2
+   :hidden:
 
    development/index
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Extra
 
-   release_notes/index
+.. toctree::
+   :maxdepth: 2
+   :caption: Extras
+   :hidden:
+
+   release-notes/index
    licence
-   :ref:`genindex`
-
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Related projects
-
-   earthkit <https://earthkit.readthedocs.io/en/latest>
-   earthkit-geo <https://earthkit-geo.readthedocs.io/en/release-1.0.0rc0>
-   earthkit-meteo <https://earthkit-meteo.readthedocs.io/en/release-1.0.0rc0>
-   earthkit-plots <https://earthkit-plots.readthedocs.io/en/release-1.0.0rc0>
-   earthkit-transforms <https://earthkit-transforms.readthedocs.io/en/release-1.0.0rc0>
+   genindex
