@@ -1,9 +1,0 @@
-{
-    "_ARRAY_DIMENSIONS": [
-        "step"
-    ],
-    "dtype": "timedelta64[ns]",
-    "long_name": "time since forecast_reference_time",
-    "standard_name": "forecast_period",
-    "units": "hours"
-}

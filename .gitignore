@@ -209,11 +209,11 @@ instance/
 
 # Sphinx documentation
 docs/_build/
-docs/examples/*.tar
-docs/examples/*.zip
-docs/examples/_*
-docs/examples/earthkit_use_cases/*.grib
-docs/examples/*/_*
+docs/how-tos/*.tar
+docs/how-tos/*.zip
+docs/how-tos/_*
+docs/how-tos/earthkit_use_cases/*.grib
+docs/how-tos/*/_*
 docs/experimental/_*
 docs/experimental/*.grib*
 docs/experimental/*.pp*
