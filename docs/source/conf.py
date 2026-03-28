@@ -82,17 +82,17 @@ extensions = [
     "sphinx_design",
 ]
 
-autodoc_inherit_docstrings = True
+autodoc_inherit_docstrings = True # allow class methods to inherit docstrings from parent classes, so that if a method doesn't have its own docstring, it will use the one from the nearest parent class that has it. This helps avoid duplication and ensures that inherited methods are documented even if they don't have their own docstrings.
 autodoc_default_options = {
-    "members": True,
-    "imported-members": False,
-    "undoc-members": True,
-    "show-inheritance": False,
+    "members": True,           # include documented members of modules/classes/functions in the generated documentation
+    "imported-members": False, # don't include members imported from other modules, to avoid cluttering the docs with irrelevant items
+    "undoc-members": False,    # don't include members without docstrings, to encourage documenting all public API items
+    "show-inheritance": False, # don't show the class inheritance hierarchy, to reduce visual clutter; can be re-enabled for specific classes using the :show-inheritance: option in the docstring if desired
 }
 
-autosummary_generate = True
-autosummary_generate_overwrite = True
-autosummary_imported_members = True
+autosummary_generate = True # enable autosummary to automatically generate summary tables for modules/classes/functions based on their docstrings, which provides a convenient overview of the API and helps users navigate the documentation more easily
+autosummary_generate_overwrite = False # don't overwrite existing autosummary files on each build, to avoid losing any manual edits or customizations made to those files; set to True if you want to regenerate all autosummary files from scratch on each build, which can be useful during initial documentation development but may not be desirable for ongoing maintenance
+autosummary_imported_members = False # don't include members imported from other modules in the autosummary tables, to keep the focus on the items defined in each module and avoid cluttering the summary with irrelevant items; set to True if you want to include imported members in the autosummary tables, which can be useful for providing a more comprehensive overview of the API but may make the tables more difficult to read
 
 # GitHub links configuration
 extlinks = {
@@ -123,123 +123,22 @@ templates_path = ["_templates"]
 # clean_autodocs.py feature flags
 # Set to False/None to disable or soften the corresponding processing step.
 autodocs_delete_hidden = False        # delete RST files for private/hidden modules
-autodocs_replace_automodule = True    # replace automodule directives with autosummary tables
+autodocs_replace_automodule = False    # replace automodule directives with autosummary tables
 autodocs_short_display_names = True   # shorten toctree labels to the last module component
-autodocs_top_level_maxdepth = 1       # :maxdepth: on top-level page (None = keep sphinx-apidoc value)
-autodocs_rename_titles = True         # strip " package"/" module" from RST page headings
+autodocs_top_level_maxdepth = 4       # :maxdepth: on top-level page (None = keep sphinx-apidoc value)
+autodocs_rename_titles = True        # strip " package"/" module" from RST page headings
 autodocs_top_level_title = "API Reference"  # top-level page heading (used when rename_titles=True)
 autodocs_titlesonly = True          # inject :titlesonly: into toctree directives
 autodocs_use_package_all_definition = False  # True: use __all__ for API members; False: inspect module for all public names
 autodocs_hide_from_sidebar = False   # inject :hidden: into autodocs toctrees so they don't appear in the sidebar
 
-# Per-module member skip list for autosummary tables (used by clean_autodocs.py).
-# Keys are fully-qualified module names; values are lists of names to exclude.
-autodocs_skip_members: dict[str, list[str]] = {
-    # "earthkit.data.core.field": ["DATA", "METADATA"],
-}
-
-# Per-class method skip list for autodoc (applied at Sphinx build time).
-# Keys are fully-qualified class names; values are lists of method/attribute
-# names to hide from the generated documentation.
-autodocs_skip_methods: dict[str, list[str]] = {
-    "earthkit.data.core.fieldlist.FieldList": [
-        "cache_file",
-        "dataset",
-        "from_dict",
-        "from_mask",
-        "from_multi",
-        "from_slice",
-        "full",
-        "graph",
-        "ignore",
-        "merge",
-        "mutate",
-        "new_mask_index",
-        "parent",
-        "scaled",
-        "settings",
-        "statistics",
-        "xarray_open_dataset_kwargs",
-    ],
-    "earthkit.data.readers.bufr.file.BUFRList": [
-        "cache_file",
-        "dataset",
-        "from_dict",
-        "from_mask",
-        "from_multi",
-        "from_slice",
-        "full",
-        "graph",
-        "ignore",
-        "merge",
-        "mutate",
-        "new_mask_index",
-        "parent",
-        "settings",
-        "to_numpy",
-    ],
-    "earthkit.data.readers.bufr.message.BUFRMessage": [
-        "merge",
-        "mutate",
-        "to_numpy",
-    ],
-    "earthkit.data.readers.grib.index.GribFieldList": [
-        "cache_file",
-        "dataset",
-        "from_dict",
-        "from_mask",
-        "from_multi",
-        "from_slice",
-        "full",
-        "graph",
-        "ignore",
-        "merge",
-        "mutate",
-        "new_mask_index",
-        "parent",
-        "scaled",
-        "settings",
-        "statistics",
-        "xarray_open_dataset_kwargs",
-    ],
-    "earthkit.data.readers.csv.reader.CSVReader": [
-        "bounding_box",
-        "cache_file",
-        "to_numpy",
-        "ignore",
-        "datetime",
-        "index_content",
-        "isel",
-        "merge",
-        "metadata",
-        "mutate",
-        "mutate_source",
-        "order_by",
-        "sel",
-        "filter",
-        "merger",
-        "source",
-    ],
-    "earthkit.data.sources.numpy_list.NumpyFieldList": [
-        "cache_file",
-        "dataset",
-        "from_dict",
-        "from_mask",
-        "from_multi",
-        "from_slice",
-        "full",
-        "graph",
-        "ignore",
-        "merge",
-        "mutate",
-        "new_mask_index",
-        "parent",
-        "scaled",
-        "settings",
-        "statistics",
-        "xarray_open_dataset_kwargs",
-    ],
-}
+# Per-module and per-class skip lists loaded from external YAML file.
+# See autodocs_skip_elements.yml for the format.
+_skip_elements_path = os.path.join(os.path.dirname(__file__), "autodocs_skip_elements.yml")
+with open(_skip_elements_path, encoding="utf-8") as _fh:
+    _skip_elements = yaml.safe_load(_fh) or {}
+autodocs_skip_members: dict[str, list[str]] = _skip_elements.get("skip_members", {}) or {}
+autodocs_skip_methods: dict[str, list[str]] = _skip_elements.get("skip_methods", {}) or {}
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -296,7 +195,7 @@ html_theme_options = {
         "color-sidebar-item-background--hover": "#001F3F",
         "color-sidebar-item-expander-background--hover": "#001F3F",
     },
-    "light_logo": "earthkit-data-dark.svg",
+    "light_logo": "earthkit-data-light.svg",
     "dark_logo": "earthkit-data-dark.svg",
     "source_repository": "https://github.com/ecmwf/earthkit-data/",
     "source_branch": source_branch,

@@ -1,0 +1,107 @@
+# Per-module member skip list for autosummary tables (used by clean_autodocs.py).
+# Keys are fully-qualified module names; values are lists of names to exclude.
+skip_members:
+  # earthkit.data.core.field:
+  #   - DATA
+  #   - METADATA
+
+# Per-class method skip list for autodoc (applied at Sphinx build time).
+# Keys are fully-qualified class names; values are lists of method/attribute
+# names to hide from the generated documentation.
+skip_methods:
+  earthkit.data.core.fieldlist.FieldList:
+    - cache_file
+    - dataset
+    - from_dict
+    - from_mask
+    - from_multi
+    - from_slice
+    - full
+    - graph
+    - ignore
+    - merge
+    - mutate
+    - new_mask_index
+    - parent
+    - scaled
+    - settings
+    - statistics
+    - xarray_open_dataset_kwargs
+
+  earthkit.data.readers.bufr.file.BUFRList:
+    - cache_file
+    - dataset
+    - from_dict
+    - from_mask
+    - from_multi
+    - from_slice
+    - full
+    - graph
+    - ignore
+    - merge
+    - mutate
+    - new_mask_index
+    - parent
+    - settings
+    - to_numpy
+
+  earthkit.data.readers.bufr.message.BUFRMessage:
+    - merge
+    - mutate
+    - to_numpy
+
+  earthkit.data.readers.grib.index.GribFieldList:
+    - cache_file
+    - dataset
+    - from_dict
+    - from_mask
+    - from_multi
+    - from_slice
+    - full
+    - graph
+    - ignore
+    - merge
+    - mutate
+    - new_mask_index
+    - parent
+    - scaled
+    - settings
+    - statistics
+    - xarray_open_dataset_kwargs
+
+  earthkit.data.readers.csv.reader.CSVReader:
+    - bounding_box
+    - cache_file
+    - to_numpy
+    - ignore
+    - datetime
+    - index_content
+    - isel
+    - merge
+    - metadata
+    - mutate
+    - mutate_source
+    - order_by
+    - sel
+    - filter
+    - merger
+    - source
+
+  earthkit.data.sources.numpy_list.NumpyFieldList:
+    - cache_file
+    - dataset
+    - from_dict
+    - from_mask
+    - from_multi
+    - from_slice
+    - full
+    - graph
+    - ignore
+    - merge
+    - mutate
+    - new_mask_index
+    - parent
+    - scaled
+    - settings
+    - statistics
+    - xarray_open_dataset_kwargs

@@ -19,6 +19,7 @@ import inspect
 import re
 import sys
 import types
+from functools import lru_cache
 from pathlib import Path
 
 # Ensure conf.py's directory is on sys.path so it can be imported when this
@@ -101,6 +102,32 @@ def get_short_name(module_name: str) -> str:
     return module_name
 
 
+@lru_cache(maxsize=None)
+def _import_module(module_name: str) -> types.ModuleType:
+    """Import a module, caching the result."""
+    return importlib.import_module(module_name)
+
+
+@lru_cache(maxsize=None)
+def _get_module_members(module_name: str) -> tuple[str, ...]:
+    """Get all public member names defined in a module (cached)."""
+    try:
+        module = _import_module(module_name)
+    except ImportError:
+        return ()
+    members = []
+    for name, obj in inspect.getmembers(module):
+        if name.startswith("_"):
+            continue
+        if isinstance(obj, types.ModuleType):
+            continue
+        obj_module = getattr(obj, "__module__", None)
+        if obj_module is not None and obj_module != module_name:
+            continue
+        members.append(name)
+    return tuple(members)
+
+
 def _get_module_api_from_all(module: types.ModuleType) -> list[str]:
     """Return public API members using the module's ``__all__`` attribute."""
     all_names = list(getattr(module, "__all__", []))
@@ -118,21 +145,10 @@ def _get_module_api_from_inspect(module: types.ModuleType, module_name: str) -> 
     the module itself (i.e. whose ``__module__`` matches *module_name*).
     Sub-modules are excluded because they are already represented in the
     toctree.
+
+    Uses a cached helper to avoid repeated inspect.getmembers() calls.
     """
-    members = []
-    for name, obj in inspect.getmembers(module):
-        # Skip private / dunder names
-        if name.startswith("_"):
-            continue
-        # Skip sub-modules (handled by toctree)
-        if isinstance(obj, types.ModuleType):
-            continue
-        # Only include objects defined in this module
-        obj_module = getattr(obj, "__module__", None)
-        if obj_module is not None and obj_module != module_name:
-            continue
-        members.append(name)
-    return members
+    return list(_get_module_members(module_name))
 
 
 def get_module_api(module_name: str) -> list[str]:
@@ -152,7 +168,7 @@ def get_module_api(module_name: str) -> list[str]:
 
     """
     try:
-        module = importlib.import_module(module_name)
+        module = _import_module(module_name)
         has_all = hasattr(module, "__all__") and module.__all__
         if _use_package_all_definition or has_all:
             members = _get_module_api_from_all(module)
@@ -418,6 +434,16 @@ def clean_autodocs() -> None:
     # Process all RST files
     rst_files = list(AUTODOCS_DIR.glob("*.rst"))
     print(f"Found {len(rst_files)} RST files")
+
+    # Batch pre-import: pay the import cost once upfront rather than
+    # per-file during processing.  Modules that fail to import are
+    # silently skipped here and re-reported later during processing.
+    if _replace_automodule:
+        for f in rst_files:
+            try:
+                _import_module(f.stem)
+            except ImportError:
+                pass
 
     files_deleted = 0
     files_updated = 0
