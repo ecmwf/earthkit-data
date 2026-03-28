@@ -51,4 +51,4 @@ Built in encoders
 
 Examples
 ----------
-    - :ref:`/examples/target/grib_encoder.ipynb`
+    - :ref:`/how-tos/target/grib_encoder.ipynb`

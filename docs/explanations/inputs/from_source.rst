@@ -1,24 +1,20 @@
 .. _data-sources:
 
-Sources
+from_source
 ===============
 
 .. warning::
    This guide is currently under construction and may be incomplete or inaccurate.
 
 
-Getting data from a source
-----------------------------
-
-We can get data from a given source by using :func:`from_source`:
-
 .. py:function:: from_source(name, *args, **kwargs)
 
-  Return a :ref:`data object <data-object>` from the source specified by ``name`` .
+  Read data from a source.
 
   :param str name: the source (see below)
   :param tuple *args: specifies the data location and additional parameters to access the data
   :param dict **kwargs: provides **additional functionalities** including caching, filtering, sorting and indexing
+  :return: a :ref:`data object <data-object>` containing the data read from the source
 
   **earthkit-data** has the following built-in sources:
 
@@ -140,15 +136,15 @@ file
 
   Further examples:
 
-    - :ref:`/examples/source/files.ipynb`
-    - :ref:`/examples/source/multi_files.ipynb`
-    - :ref:`/examples/source/file_parts.ipynb`
-    - :ref:`/examples/source/file_stream.ipynb`
-    - :ref:`/examples/source/tar_files.ipynb`
-    - :ref:`/examples/grib/grib_overview.ipynb`
-    - :ref:`/examples/bufr/bufr_temp.ipynb`
-    - :ref:`/examples/netcdf/netcdf.ipynb`
-    - :ref:`/examples/odb/odb.ipynb`
+    - :ref:`/how-tos/source/files.ipynb`
+    - :ref:`/how-tos/source/multi_files.ipynb`
+    - :ref:`/how-tos/source/file_parts.ipynb`
+    - :ref:`/how-tos/source/file_stream.ipynb`
+    - :ref:`/how-tos/source/tar_files.ipynb`
+    - :ref:`/how-tos/grib/grib_overview.ipynb`
+    - :ref:`/how-tos/bufr/bufr_temp.ipynb`
+    - :ref:`/how-tos/netcdf/netcdf.ipynb`
+    - :ref:`/how-tos/odb/odb.ipynb`
 
 .. _data-sources-file-pattern:
 
@@ -205,7 +201,7 @@ hive_partioning=True
 
     When ``hive_partitioning`` is ``True``, the ``pattern`` defines a Hive partitioning with each pattern parameter interpreted as a metadata key. The returned object is a :py:class:`~earthkit.data.data.hive.HiveFilePatternData` and has a limited scope, we need to call its :py:func:`~earthkit.data.data.hive.HiveFilePatternData.to_fieldlist` method with the filter conditions to extract the data as a fieldlist.
 
-    The extraction to fieldlist is done in two steps. First, a filesystem scan is performed to find all the files matching the filter conditions. For this check only the keys appearing in the hive pattern definition are used and only the file paths are inspected, the files themselves are not opened. The matching files are loaded into a FieldList. Second, if there are other keys in the filter conditions that are not part of the hive pattern definition, then :py:func:`earthkit.data.core.fieldlist.FieldList.sel` is called on the FieldList with these keys as filter conditions. This produces the final FieldList.
+    The extraction to fieldlist is done in two steps. First, a filesystem scan is performed to find all the files matching the filter conditions. For this check only the keys appearing in the hive pattern definition are used and only the file paths are inspected, the files themselves are not opened. The matching files are loaded into a FieldList. Second, if there are other keys in the filter conditions that are not part of the hive pattern definition, then :py:func:`earthkit.earthkit.data.core.fieldlist.FieldList.sel` is called on the FieldList with these keys as filter conditions. This produces the final FieldList.
 
     This approach allows for enormous optimisation, since, depending on the pattern, no files need to be opened to extract their metadata. Another advantage is that during the scan entire file system branches can be skipped based simply on inspecting the actual file path.
 
@@ -254,7 +250,7 @@ hive_partioning=True
 
     Further examples:
 
-    - :ref:`/examples/source/files.ipynb`
+    - :ref:`/how-tos/source/files.ipynb`
 
 
 .. _data-sources-url:
@@ -280,7 +276,7 @@ url
       >>> import earthkit.data as ekd
       >>> fl = ekd.from_source(
       ...     "url",
-      ...     "https://sites.ecmwf.int/repository/earthkit-data/examples/test4.grib",
+      ...     "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test4.grib",
       ... ).to_fieldlist()
       >>> fl.ls()
         centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
@@ -294,7 +290,7 @@ url
       >>> import earthkit.data as ekd
       >>> fl = ekd.from_source(
       ...     "url",
-      ...     "https://sites.ecmwf.int/repository/earthkit-data/examples/test4.grib",
+      ...     "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test4.grib",
       ...     parts=[(0, 130428), (260856, 130428)],
       ... ).to_fieldlist()
       >>> fl.ls()
@@ -304,9 +300,9 @@ url
 
   Further examples:
 
-    - :ref:`/examples/source/url.ipynb`
-    - :ref:`/examples/source/url_parts.ipynb`
-    - :ref:`/examples/source/url_stream.ipynb`
+    - :ref:`/how-tos/source/url.ipynb`
+    - :ref:`/how-tos/source/url_parts.ipynb`
+    - :ref:`/how-tos/source/url_stream.ipynb`
 
 
 .. _data-sources-url-pattern:
@@ -394,7 +390,7 @@ stream
   .. code-block:: python
 
       >>> import earthkit.data as ekd
-      >>> stream = open("docs/examples/test4.grib", "rb")
+      >>> stream = open("docs/how-tos/test4.grib", "rb")
       >>> fl = ekd.from_source("stream", stream).to_fieldlist()
 
       # f is a GribField
@@ -411,7 +407,7 @@ stream
     .. code-block:: python
 
       >>> import earthkit.data as ekd
-      >>> stream = open("docs/examples/test4.grib", "rb")
+      >>> stream = open("docs/how-tos/test4.grib", "rb")
       >>> fl = ekd.from_source("stream", stream).to_fieldlist()
 
        # f is a FieldList
@@ -427,7 +423,7 @@ stream
     .. code-block:: python
 
       >>> import earthkit.data as ekd
-      >>> stream = open("docs/examples/test4.grib", "rb")
+      >>> stream = open("docs/how-tos/test4.grib", "rb")
       >>> fl = ekd.from_source("stream", stream).to_fieldlist()
 
       # f is a FieldList
@@ -440,9 +436,9 @@ stream
 
   See the following notebook examples for further details:
 
-    - :ref:`/examples/source/data_from_stream.ipynb`
-    - :ref:`/examples/source/fdb.ipynb`
-    - :ref:`/examples/source/url_stream.ipynb`
+    - :ref:`/how-tos/source/data_from_stream.ipynb`
+    - :ref:`/how-tos/source/fdb.ipynb`
+    - :ref:`/how-tos/source/url_stream.ipynb`
 
 
 .. _data-sources-memory:
@@ -515,9 +511,9 @@ list-of-dicts
 
   Further examples:
 
-      - :ref:`/examples/dict/fields_from_dict_in_loop.ipynb`
-      - :ref:`/examples/dict/list_of_dicts_overview.ipynb`
-      - :ref:`/examples/dict/list_of_dicts_geography.ipynb`
+      - :ref:`/how-tos/dict/fields_from_dict_in_loop.ipynb`
+      - :ref:`/how-tos/dict/list_of_dicts_overview.ipynb`
+      - :ref:`/how-tos/dict/list_of_dicts_geography.ipynb`
 
 .. _data-sources-multi:
 
@@ -595,7 +591,7 @@ ads
 
   Further examples:
 
-      - :ref:`/examples/source/ads.ipynb`
+      - :ref:`/how-tos/source/ads.ipynb`
 
 
 .. _data-sources-cds:
@@ -650,7 +646,7 @@ cds
 
   Further examples:
 
-      - :ref:`/examples/source/cds.ipynb`
+      - :ref:`/how-tos/source/cds.ipynb`
 
 
 .. _data-sources-ecfs:
@@ -706,7 +702,7 @@ ecmwf-open-data
 
   Further examples:
 
-      - :ref:`/examples/source/ecmwf_open_data.ipynb`
+      - :ref:`/how-tos/source/ecmwf_open_data.ipynb`
 
 
 .. _data-sources-fdb:
@@ -730,7 +726,7 @@ fdb
 
     - GRIB data is not retrieved until it is explicitly/implictly requested for a given field
     - metadata related calls (e.g. :func:`metadata` or :func:`sel`) work without retrieving the GRIB data
-    - :meth:`~data.core.fieldlist.FieldList.to_xarray` works without retrieving the GRIB data
+    - :meth:`~earthkit.data.core.fieldlist.FieldList.to_xarray` works without retrieving the GRIB data
     - the retrieved GRIB data is not cached (either in memory or on disk) but gets deleted as soon as the data values are extracted. Repeated request for the data values will trigger a new retrieval.
     - the resulting :py:class:`FieldList` always retrives one GRIB field as a reference and stores it in memory throughout the lifetime of the :py:class:`FieldList`. This is managed internally.
 
@@ -799,8 +795,8 @@ fdb
 
   Further examples:
 
-      - :ref:`/examples/source/fdb.ipynb`
-      - :ref:`/examples/grib/grib_fdb_write.ipynb`
+      - :ref:`/how-tos/source/fdb.ipynb`
+      - :ref:`/how-tos/grib/grib_fdb_write.ipynb`
 
 
 
@@ -882,7 +878,7 @@ gribjump
 
   Further examples:
 
-      - :ref:`/examples/source/gribjump.ipynb`
+      - :ref:`/how-tos/source/gribjump.ipynb`
 
 
 .. _data-sources-mars:
@@ -965,7 +961,7 @@ mars
 
   Further examples:
 
-      - :ref:`/examples/source/mars.ipynb`
+      - :ref:`/how-tos/source/mars.ipynb`
 
 
 .. _data-sources-opendap:
@@ -982,7 +978,7 @@ opendap
 
   Examples:
 
-      - :ref:`/examples/source/netcdf_opendap.ipynb`
+      - :ref:`/how-tos/source/netcdf_opendap.ipynb`
 
 
 .. _data-sources-polytope:
@@ -1040,11 +1036,11 @@ polytope
 
   Further examples:
 
-      - :ref:`/examples/source/polytope.ipynb`
-      - :ref:`/examples/source/polytope_feature.ipynb`
-      - :ref:`/examples/covjson/polytope_time_series.ipynb`
-      - :ref:`/examples/covjson/polytope_polygon_coverage.ipynb`
-      - :ref:`/examples/covjson/polytope_vertical_profile.ipynb`
+      - :ref:`/how-tos/source/polytope.ipynb`
+      - :ref:`/how-tos/source/polytope_feature.ipynb`
+      - :ref:`/how-tos/covjson/polytope_time_series.ipynb`
+      - :ref:`/how-tos/covjson/polytope_polygon_coverage.ipynb`
+      - :ref:`/how-tos/covjson/polytope_vertical_profile.ipynb`
 
 .. _data-sources-s3:
 
@@ -1147,7 +1143,7 @@ s3
 
   Further examples:
 
-      - :ref:`/examples/source/s3.ipynb`
+      - :ref:`/how-tos/source/s3.ipynb`
 
 
 .. _data-sources-wekeo:
@@ -1197,7 +1193,7 @@ wekeo
 
   Further examples:
 
-      - :ref:`/examples/source/wekeo.ipynb`
+      - :ref:`/how-tos/source/wekeo.ipynb`
 
 
 .. _data-sources-wekeocds:
@@ -1250,7 +1246,7 @@ wekeocds
 
   Further examples:
 
-      - :ref:`/examples/source/wekeo.ipynb`
+      - :ref:`/how-tos/source/wekeo.ipynb`
 
 
 

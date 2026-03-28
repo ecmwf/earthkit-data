@@ -68,7 +68,7 @@ Tests marked with ``pytest.mark.no_cache_init`` use the ``pytest-forked`` plugin
 Notebooks
 ~~~~~~~~~~~~~
 
-The notebook examples from the ``docs/examples`` folder are part of the test suite and are run automatically. However, some notebooks are skipped mainly because they use remote data sources. This is controlled via the ``SKIP`` list in ``tests/documentation/test_notebooks.py``. You can modify this list to add or remove notebooks to be skipped.
+The notebook examples from the ``docs/how-tos`` folder are part of the test suite and are run automatically. However, some notebooks are skipped mainly because they use remote data sources. This is controlled via the ``SKIP`` list in ``tests/documentation/test_notebooks.py``. You can modify this list to add or remove notebooks to be skipped.
 
 To run only the notebooks tests you can use:
 

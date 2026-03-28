@@ -53,7 +53,7 @@ Then we can call any of the corresponding ``to_*`` methods to convert the data t
 
 Examples:
 
- -  :ref:`/examples/source/data.ipynb`
+ -  :ref:`/how-tos/source/data.ipynb`
 
 
 The ``read_all`` kwarg
@@ -68,7 +68,7 @@ Old way:
 
     import earthkit.data as ekd
 
-    url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test.grib"
+    url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test.grib"
     fl = ekd.from_source("url", url, stream=True, read_all=True)
 
 New way:
@@ -77,7 +77,7 @@ New way:
 
     import earthkit.data as ekd
 
-    url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test.grib"
+    url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test.grib"
     fl = ekd.from_source("url", url, stream=True).to_fieldlist(read_all=True)
 
 
@@ -134,7 +134,7 @@ Raw metadata keys are still available but they are only accessible either by usi
 Notebook examples
 ++++++++++++++++++++++++
 
-- :ref:`/examples/field/field.ipynb`
+- :ref:`/how-tos/field/field.ipynb`
 
 
 Changes in the Field API

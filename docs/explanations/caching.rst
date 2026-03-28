@@ -41,7 +41,7 @@ The cache location can be read and modified with Python (see the details below).
 
 .. tip::
 
-   See the :ref:`/examples/misc/cache.ipynb` notebook for examples.
+   See the :ref:`/how-tos/misc/cache.ipynb` notebook for examples.
 
 .. note::
 
@@ -55,7 +55,7 @@ Off cache policy
 
 When the ``cache-policy`` is "off" no caching is available. This is the **default** value. In this case all files are downloaded into an **unmanaged** temporary directory created by ``tempfile.TemporaryDirectory``. Since caching is disabled, all repeated calls to :func:`from_source` for remote services and URLSs will download the data again! This temporary directory will be unique for each earthkit-data session. When the directory object goes out of scope (at the latest on exit) the directory will be **cleaned up**.
 
-Due to the temporary nature of this directory path it cannot be queried via the :doc:`config`, but we need to call the :meth:`~data.core.caching.Cache.directory` :ref:`cache method <cache_methods>`.
+Due to the temporary nature of this directory path it cannot be queried via the :doc:`config`, but we need to call the :meth:`~earthkit.data.core.caching.Cache.directory` :ref:`cache method <cache_methods>`.
 
 .. code-block:: python
 
@@ -84,7 +84,7 @@ Temporary cache policy
 
 When the ``cache-policy`` is "temporary" the **cache will be active and located in a managed** temporary directory created by ``tempfile.TemporaryDirectory``. This directory will be unique for each earthkit-data session. When the directory object goes out of scope (at the latest on exit) the cache is **cleaned up**.
 
-Due to the temporary nature of this directory path it cannot be queried via the :doc:`config`, but we need to call the :meth:`~data.core.caching.Cache.directory` :ref:`cache method <cache_methods>`.
+Due to the temporary nature of this directory path it cannot be queried via the :doc:`config`, but we need to call the :meth:`~earthkit.data.core.caching.Cache.directory` :ref:`cache method <cache_methods>`.
 
 .. code-block:: python
 
@@ -122,7 +122,7 @@ The default value of the user cache directory depends on your system:
   - ``/tmp/.../earthkit-data-$USER`` for MacOS
 
 
-We can query the directory path via the :doc:`config` and also by calling the :meth:`~data.core.caching.Cache.directory` :ref:`cache method <cache_methods>`.
+We can query the directory path via the :doc:`config` and also by calling the :meth:`~earthkit.data.core.caching.Cache.directory` :ref:`cache method <cache_methods>`.
 
 .. code-block:: python
 
@@ -166,7 +166,7 @@ The cache is controlled by a global object, which we can access as ``earthkit.da
 
   >>> from earthkit.data import cache
   >>> cache
-  <earthkit.data.core.caching.Cache object at 0x117be7040>
+  <earthkit.earthkit.data.core.caching.Cache object at 0x117be7040>
 
 
 When ``cache-policy`` is :ref:`user <user_cache_policy>` or :ref:`temporary <temporary_cache_policy>`
@@ -178,24 +178,24 @@ there are a set of methods available on this object to manage and interact with 
    * - Methods
      - Description
 
-   * - :attr:`~data.core.caching.Cache.policy`
+   * - :attr:`~earthkit.data.core.caching.Cache.policy`
      - Get the current cache policy object.
-   * - :meth:`~data.core.caching.Cache.directory`
+   * - :meth:`~earthkit.data.core.caching.Cache.directory`
      - Return the path to the current cache directory
-   * - :meth:`~data.core.caching.Cache.size`
+   * - :meth:`~earthkit.data.core.caching.Cache.size`
      - Return the total number of bytes stored in the cache
-   * - :meth:`~data.core.caching.Cache.check_size`
+   * - :meth:`~earthkit.data.core.caching.Cache.check_size`
      - Check the cache size and trim it down when needed.
-   * - :meth:`~data.core.caching.Cache.entries`
+   * - :meth:`~earthkit.data.core.caching.Cache.entries`
      - Dump the entries stored in the cache
-   * - :meth:`~data.core.caching.Cache.summary_dump_database`
+   * - :meth:`~earthkit.data.core.caching.Cache.summary_dump_database`
      - Return the number of items and total size of the cache
-   * - :meth:`~data.core.caching.Cache.purge`
+   * - :meth:`~earthkit.data.core.caching.Cache.purge`
      - Delete entries from the cache
 
 .. warning::
 
-    :meth:`~data.core.caching.Cache.check_size` automatically runs when a new
+    :meth:`~earthkit.data.core.caching.Cache.check_size` automatically runs when a new
     entry is added to the cache or any of the :ref:`cache_config` changes.
 
 Examples:

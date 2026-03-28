@@ -8,7 +8,7 @@ Version 0.11.4
 Fixes
 ++++++
 
-- Enforced the use of ``headers_only_clone=False`` when calling :meth:`GribMetadata.override() <data.readers.grib.metadata.GribMetadata.override>`. It was a necessary step to fix issues when writing :py:class:`ArrayField`\ containing :class:`~data.readers.grib.metadata.grib.GribMetadata` to disk. This is considered a temporary change until the issues with ``headers_only_clone`` are sorted out (:pr:`555`).
+- Enforced the use of ``headers_only_clone=False`` when calling :meth:`GribMetadata.override() <data.readers.grib.metadata.GribMetadata.override>`. It was a necessary step to fix issues when writing :py:class:`ArrayField`\ containing :class:`~earthkit.data.readers.grib.metadata.grib.GribMetadata` to disk. This is considered a temporary change until the issues with ``headers_only_clone`` are sorted out (:pr:`555`).
 
 
 Version 0.11.3
@@ -48,7 +48,7 @@ Version 0.11.0
 New Xarray engine
 ++++++++++++++++++
 
-- Added new Xarray engine called ``"earthkit"``. This is the new default when calling :meth:`~data.core.fieldlist.FieldList.to_xarray`. The ``"cfgrib"`` engine is still available and can be used by passing ``engine="cfgrib"`` to :meth:`~data.core.fieldlist.FieldList.to_xarray`. For details see:
+- Added new Xarray engine called ``"earthkit"``. This is the new default when calling :meth:`~earthkit.data.core.fieldlist.FieldList.to_xarray`. The ``"cfgrib"`` engine is still available and can be used by passing ``engine="cfgrib"`` to :meth:`~earthkit.data.core.fieldlist.FieldList.to_xarray`. For details see:
 
   - :ref:`xr_engine`
   - :ref:`examples_xr_engine` (notebook examples)
@@ -58,7 +58,7 @@ API changes
 
 - No array backend is assigned to a Fieldlist any longer. Removed the ``array_backend`` property from FieldList, and the ``array_backend`` keyword from :func:`from_source`. Data accessing methods like :py:meth:`to_array` and :py:meth:`data` still accept the ``array_backend`` option. Now, each Field in a FieldList can have a different array backend reflecting the actual storage type of the values (:pr:`471`).
 
-  You can still create a :py:class:`SimpleFieldList` with a single array backend by using the :meth:`~data.core.fieldlist.FieldList.to_fieldlist` method. For example:
+  You can still create a :py:class:`SimpleFieldList` with a single array backend by using the :meth:`~earthkit.data.core.fieldlist.FieldList.to_fieldlist` method. For example:
 
   .. code-block:: python
 
@@ -69,30 +69,30 @@ API changes
       ds = from_source("file", "my.grib").to_fieldlist(array_backend="pytorch")
 
 - Removed :py:class:`ArrayFieldList`. Its functionality is covered by :py:class:`SimpleFieldList` (:pr:`471`).
-- :meth:`~data.core.fieldlist.FieldList.from_array` and :meth:`~data.core.fieldlist.FieldList.to_fieldlist` now return an :py:class:`SimpleFieldList`
+- :meth:`~earthkit.data.core.fieldlist.FieldList.from_array` and :meth:`~earthkit.data.core.fieldlist.FieldList.to_fieldlist` now return an :py:class:`SimpleFieldList`
 
-See :ref:`/examples/grib/grib_array_namespace.ipynb` for more details.
+See :ref:`/how-tos/grib/grib_array_namespace.ipynb` for more details.
 
 
 Changes
 ++++++++
 - Added the :ref:`data-sources-s3` source to access AWS S3 buckets (:pr:`484`). See the notebook examples:
 
-  - :ref:`/examples/source/s3.ipynb`
+  - :ref:`/how-tos/source/s3.ipynb`
 
 - Added support for geotiff files (:pr:`503`). See the notebook examples:
 
-  - :ref:`/examples/geotiff/geotiff.ipynb`
+  - :ref:`/how-tos/geotiff/geotiff.ipynb`
 
 - Added :ref:`stream <streams>` support for the :ref:`data-sources-file` source (:pr:`500`)
 - Allowed concatenation of :ref:`stream <streams>` sources (:pr:`500`)
 - Added :py:class:`SimpleFieldList`, which can store a list of arbitrary Fields (:pr:`471`). See the notebook examples:
 
-  - :ref:`/examples/grib/grib_array_namespace.ipynb`
+  - :ref:`/how-tos/grib/grib_array_namespace.ipynb`
 
-- Added :meth:`~data.core.fieldlist.Field.clone` and :py:meth:`~data.core.fieldlist.Field.copy` to alter field metadata and values (:pr:`493`, :pr:`496`, :pr:`522`). See the notebook examples:
+- Added :meth:`~earthkit.data.core.fieldlist.Field.clone` and :py:meth:`~earthkit.data.core.fieldlist.Field.copy` to alter field metadata and values (:pr:`493`, :pr:`496`, :pr:`522`). See the notebook examples:
 
-  - :ref:`/examples/legacy/grib_modification.ipynb`
+  - :ref:`/how-tos/legacy/grib_modification.ipynb`
 
 - Reimplemented and documented the :ref:`data-sources-lod` source, which is now generating a :py:class:`SimpleFieldList` and is not bound to GRIB specific metadata (:pr:`461`, :pr:`511`). See the notebook examples:
 

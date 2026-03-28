@@ -16,7 +16,7 @@ Creating Xarray from GRIB
 Using to_xarray()
 ++++++++++++++++++
 
-We can convert :ref:`grib` data into an Xarray dataset by using :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` on a GRIB fieldlist object.
+We can convert :ref:`grib` data into an Xarray dataset by using :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray` on a GRIB fieldlist object.
 
 .. code-block:: python
 
@@ -40,7 +40,7 @@ We can convert :ref:`grib` data into an Xarray dataset by using :py:meth:`~data.
 
 .. note::
 
-    By default, :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` uses the "earthkit" engine to generate Xarray. The previously used :xref:`cfgrib` engine is still available and can be invoked with the ``engine="cfgrib"`` option.
+    By default, :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray` uses the "earthkit" engine to generate Xarray. The previously used :xref:`cfgrib` engine is still available and can be invoked with the ``engine="cfgrib"`` option.
 
 
 Using open_dataset()
@@ -59,19 +59,19 @@ We can also use the Xarray engine to read GRIB data directly with the :py:func:`
 Dimensions
 ++++++++++
 
-The pivotal question when generating the Xarray dataset is how to form the dimensions. The :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` method has a number of options to control the dimensions. Please see more details in the :ref:`dimensions <xr_dim>` section.
+The pivotal question when generating the Xarray dataset is how to form the dimensions. The :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray` method has a number of options to control the dimensions. Please see more details in the :ref:`dimensions <xr_dim>` section.
 
 
 Profiles
 +++++++++
 
-:py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` has a large number of keyword arguments to control how the Xarray dataset is generated. To simplify the usage we can define :ref:`profiles <xr_profile>` providing custom defaults for most of the keyword arguments. For more details see :ref:`xr_profile`.
+:py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray` has a large number of keyword arguments to control how the Xarray dataset is generated. To simplify the usage we can define :ref:`profiles <xr_profile>` providing custom defaults for most of the keyword arguments. For more details see :ref:`xr_profile`.
 
 
 Examples
 +++++++++
 
-The following notebooks give details about how :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` can be used:
+The following notebooks give details about how :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray` can be used:
 
 - :ref:`Xarray engine examples <examples_xr_engine>`
 
@@ -86,7 +86,7 @@ Converting Xarray to GRIB
 
     This is an experimental feature and it is not yet fully supported.
 
-By default, ``add_earthkit_attrs=True`` in :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` and some special earthkit attributes are added to the dataset. This is needed for the Xarray to GRIB conversion. For this reason, if the Xarray is modified we must ensure the variable attributes are copied to the new Xarray dataset. By default, variable attributes are not kept in Xarray computations so we need to set the global Xarray ``keep_attrs`` option to enable it.See the examples below for details.
+By default, ``add_earthkit_attrs=True`` in :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray` and some special earthkit attributes are added to the dataset. This is needed for the Xarray to GRIB conversion. For this reason, if the Xarray is modified we must ensure the variable attributes are copied to the new Xarray dataset. By default, variable attributes are not kept in Xarray computations so we need to set the global Xarray ``keep_attrs`` option to enable it.See the examples below for details.
 
 Using to_target
 ++++++++++++++++
@@ -132,7 +132,7 @@ The generated GRIB fieldlist can be saved to disk using the :func:`to_target` me
 
 For further details see the following notebook:
 
-- :ref:`/examples/xr_engine/xarray_engine_to_grib.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_to_grib.ipynb`
 
 
 .. _xr_grib_to_netcdf:
@@ -141,7 +141,7 @@ For further details see the following notebook:
 Converting GRIB to NetCDF
 ----------------------------
 
-To convert GRIB data to NetCDF first we need to convert GRIB to Xarray with :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` then generate NetCDF from it with :py:meth:`xarray.Dataset.to_netcdf`. We have 3 options to do this:
+To convert GRIB data to NetCDF first we need to convert GRIB to Xarray with :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray` then generate NetCDF from it with :py:meth:`xarray.Dataset.to_netcdf`. We have 3 options to do this:
 
 Using the earthkit accessor
 ++++++++++++++++++++++++++++
@@ -159,7 +159,7 @@ By default, the earthkit Xarray engine attaches some special attributes to the g
 Using the ``add_earthkit_attrs=False`` option
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Alternatively, we can use the ``add_earthkit_attrs=False`` option in :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray`.  With this the earthkit attributes are not added to the generated dataset and it is safe to call :py:meth:`to_netcdf <xarray.Dataset.to_netcdf>` directly on it.
+Alternatively, we can use the ``add_earthkit_attrs=False`` option in :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray`.  With this the earthkit attributes are not added to the generated dataset and it is safe to call :py:meth:`to_netcdf <xarray.Dataset.to_netcdf>` directly on it.
 
 .. code-block:: python
 
@@ -196,4 +196,4 @@ To control the Xarray conversion we can pass options to the earthkit Xarray engi
 
 For further details see the following notebook:
 
-- :ref:`/examples/grib/grib_to_netcdf.ipynb`
+- :ref:`/how-tos/grib/grib_to_netcdf.ipynb`

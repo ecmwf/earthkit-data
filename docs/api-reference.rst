@@ -5,15 +5,21 @@ API Reference Guide
    This guide is currently under construction and may be incomplete or inaccurate.
 
 
-from_source
+Reading data from sources
 -------------------------
 
-- :ref:`data sources <data-sources>`
+- :ref:`from_source() <data-sources>`
 
-from_object
+Reading data from objects
 -------------------------
 
 - :ref:`from_object <from_object>`
+
+
+Writing data to targets
+-------------------------
+
+- :ref:`to_target() <to-target>`
 
 
 The full API reference guide

@@ -3,10 +3,9 @@ Concepts and Explanations
 ===========================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   sources
-   from_object
+   inputs/index.rst
    data
    encoders
    targets/index.rst

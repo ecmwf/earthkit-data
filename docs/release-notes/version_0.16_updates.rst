@@ -95,15 +95,15 @@ Xarray engine
 
 - Implemented mono variable (single dataarray containing all the parameters from a GRIB fieldlist) in Xarray engine (:pr:`734`). See the notebook examples:
 
-  -  :ref:`/examples/xr_engine/xarray_engine_mono_variable.ipynb`
-  -  :ref:`/examples/xr_engine/xarray_engine_mono_variable_remapping.ipynb`
+  -  :ref:`/how-tos/xr_engine/xarray_engine_mono_variable.ipynb`
+  -  :ref:`/how-tos/xr_engine/xarray_engine_mono_variable_remapping.ipynb`
 
-- Allowed specifying metadata defaults for :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` (:pr:`738`) via the ``fill_metadata`` option. See the notebook example :ref:`/examples/xr_engine/xarray_engine_mono_variable.ipynb`
+- Allowed specifying metadata defaults for :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray` (:pr:`738`) via the ``fill_metadata`` option. See the notebook example :ref:`/how-tos/xr_engine/xarray_engine_mono_variable.ipynb`
 - Improved the Xarray support in the encoders (:pr:`750`).
 
 
 Experimental features
 ------------------------------
 
-- Added GPU support for the Xarray engine (:pr:`745`). See the notebook example :ref:`/examples/xr_engine/xarray_cupy.ipynb`
+- Added GPU support for the Xarray engine (:pr:`745`). See the notebook example :ref:`/how-tos/xr_engine/xarray_cupy.ipynb`
 - Added the ``grid_spec`` property to Xarray earthkit accessor (:pr:`751`).

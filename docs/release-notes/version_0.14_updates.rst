@@ -39,7 +39,7 @@ Fixes
 +++++++++++++++++
 
 - Fixed issue when the :ref:`data-sources-file-pattern` source did not return the right data object when the ``hive_partitioning`` option was set to ``False`` (:pr:`697`).
-- Fixed issue when disabling the ``add_earthkit_attrs`` option in :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` caused a crash (:pr:`696`).
+- Fixed issue when disabling the ``add_earthkit_attrs`` option in :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray` caused a crash (:pr:`696`).
 
 
 Version 0.14.1
@@ -62,9 +62,9 @@ The date request parameter(s) in the :ref:`data-sources-cds` and :ref:`data-sour
 Xarray engine ``split_dims``
 ++++++++++++++++++++++++++++++
 
-When :meth:`~data.core.fieldlist.FieldList.to_xarray` is called with ``split_dims``, the engine will now return a tuple with two lists: the first list contains the Xarray datasets, while the second one contains the corresponding dictionaries with the spitting keys/values (one dictionary per dataset) (:pr:`688`). Previously, a list of datasets was returned so this is a **breaking change**.
+When :meth:`~earthkit.data.core.fieldlist.FieldList.to_xarray` is called with ``split_dims``, the engine will now return a tuple with two lists: the first list contains the Xarray datasets, while the second one contains the corresponding dictionaries with the spitting keys/values (one dictionary per dataset) (:pr:`688`). Previously, a list of datasets was returned so this is a **breaking change**.
 
-See the :ref:`/examples/xr_engine/xarray_engine_split.ipynb` notebook example.
+See the :ref:`/how-tos/xr_engine/xarray_engine_split.ipynb` notebook example.
 
 
 Patterns

@@ -21,9 +21,9 @@ from earthkit.data.utils.args import metadata_argument_new
 from earthkit.data.utils.array import flatten_array, outer_indexing, reshape_array, target_shape
 from earthkit.data.utils.compute import wrap_maths
 
-GRIB = "grib"
+GRIB_ = "grib"
 
-LS_KEYS = [
+LS_KEYS_ = [
     "parameter.variable",
     "time.valid_datetime",
     "time.base_datetime",
@@ -36,28 +36,28 @@ LS_KEYS = [
 
 
 # Define field component names
-DATA = "data"
-TIME = "time"
-PARAMETER = "parameter"
-GEOGRAPHY = "geography"
-VERTICAL = "vertical"
-ENSEMBLE = "ensemble"
-PROC = "proc"
-LABELS = "labels"
-METADATA = "metadata"
+DATA_ = "data"
+TIME_ = "time"
+PARAMETER_ = "parameter"
+GEOGRAPHY_ = "geography"
+VERTICAL_ = "vertical"
+ENSEMBLE_ = "ensemble"
+PROC_ = "proc"
+LABELS_ = "labels"
+METADATA_ = "metadata"
 
-DESCRIBE_ORDER = [
-    DATA,
-    PARAMETER,
-    TIME,
-    VERTICAL,
-    ENSEMBLE,
-    GEOGRAPHY,
-    PROC,
-    LABELS,
+DESCRIBE_ORDER_ = [
+    DATA_,
+    PARAMETER_,
+    TIME_,
+    VERTICAL_,
+    ENSEMBLE_,
+    GEOGRAPHY_,
+    PROC_,
+    LABELS_,
 ]
 
-DEFAULT_DESCRIBE_SELECTION = PARAMETER
+DEFAULT_DESCRIBE_SELECTION_ = PARAMETER_
 
 
 class _ComponentMaker:
@@ -84,14 +84,14 @@ class _ComponentMaker:
         from earthkit.data.field.handler.vertical import VerticalFieldComponentHandler
 
         return {
-            DATA: DataFieldComponentHandler,
-            TIME: TimeFieldComponentHandler,
-            PARAMETER: ParameterFieldComponentHandler,
-            GEOGRAPHY: GeographyFieldComponentHandler,
-            VERTICAL: VerticalFieldComponentHandler,
-            ENSEMBLE: EnsembleFieldComponentHandler,
-            PROC: ProcFieldComponentHandler,
-            LABELS: SimpleLabels,
+            DATA_: DataFieldComponentHandler,
+            TIME_: TimeFieldComponentHandler,
+            PARAMETER_: ParameterFieldComponentHandler,
+            GEOGRAPHY_: GeographyFieldComponentHandler,
+            VERTICAL_: VerticalFieldComponentHandler,
+            ENSEMBLE_: EnsembleFieldComponentHandler,
+            PROC_: ProcFieldComponentHandler,
+            LABELS_: SimpleLabels,
         }
 
     def empty_object(self, name):
@@ -99,7 +99,7 @@ class _ComponentMaker:
         if cls is None:
             raise ValueError(f"Unknown component name: {name}")
 
-        if name == LABELS:
+        if name == LABELS_:
             return cls()
         return cls.create_empty()
 
@@ -155,14 +155,14 @@ class Field(Base):
     """
 
     _COMPONENT_NAMES = (
-        DATA,
-        TIME,
-        PARAMETER,
-        GEOGRAPHY,
-        VERTICAL,
-        ENSEMBLE,
-        PROC,
-        LABELS,
+        DATA_,
+        TIME_,
+        PARAMETER_,
+        GEOGRAPHY_,
+        VERTICAL_,
+        ENSEMBLE_,
+        PROC_,
+        LABELS_,
     )
 
     def __init__(
@@ -183,14 +183,14 @@ class Field(Base):
             return value
 
         self._components = {
-            DATA: _ensure(DATA, data),
-            TIME: _ensure(TIME, time),
-            PARAMETER: _ensure(PARAMETER, parameter),
-            GEOGRAPHY: _ensure(GEOGRAPHY, geography),
-            VERTICAL: _ensure(VERTICAL, vertical),
-            ENSEMBLE: _ensure(ENSEMBLE, ensemble),
-            PROC: _ensure(PROC, proc),
-            LABELS: _ensure(LABELS, labels),
+            DATA_: _ensure(DATA_, data),
+            TIME_: _ensure(TIME_, time),
+            PARAMETER_: _ensure(PARAMETER_, parameter),
+            GEOGRAPHY_: _ensure(GEOGRAPHY_, geography),
+            VERTICAL_: _ensure(VERTICAL_, vertical),
+            ENSEMBLE_: _ensure(ENSEMBLE_, ensemble),
+            PROC_: _ensure(PROC_, proc),
+            LABELS_: _ensure(LABELS_, labels),
         }
 
         self._private = dict()
@@ -246,14 +246,14 @@ class Field(Base):
             or specified in the keyword arguments.
         """
         _kwargs = {
-            DATA: data,
-            TIME: time,
-            PARAMETER: parameter,
-            GEOGRAPHY: geography,
-            VERTICAL: vertical,
-            ENSEMBLE: ensemble,
-            PROC: proc,
-            LABELS: labels,
+            DATA_: data,
+            TIME_: time,
+            PARAMETER_: parameter,
+            GEOGRAPHY_: geography,
+            VERTICAL_: vertical,
+            ENSEMBLE_: ensemble,
+            PROC_: proc,
+            LABELS_: labels,
         }
 
         for name in Field._COMPONENT_NAMES:
@@ -302,28 +302,28 @@ class Field(Base):
 
         # if "values" in d:
         #     values = d.pop("values")
-        #     components[DATA] = cls._DEFAULT_PART_CLS[DATA].from_dict({"values": values})
-        #     shape_hint = components[DATA].get_values(copy=False).shape
+        #     components[DATA_] = cls._DEFAULT_PART_CLS[DATA_].from_dict({"values": values})
+        #     shape_hint = components[DATA_].get_values(copy=False).shape
 
-        # for name in [TIME, PARAMETER, VERTICAL, ENSEMBLE, GEOGRAPHY]:
+        # for name in [TIME_, PARAMETER_, VERTICAL_, ENSEMBLE_, GEOGRAPHY_]:
         #     d_component = {}
         #     for k in list(d.keys()):
         #         if k.startswith(name + "."):
         #             d_component[k.split(".", 1)[1]] = d.pop(k)
 
         #     # geography may need shape hint from data so handled separately
-        #     if name == GEOGRAPHY:
+        #     if name == GEOGRAPHY_:
         #         components[name] = cls._DEFAULT_PART_CLS[name].from_dict(d_component, shape_hint=shape_hint)
         #     else:
         #         components[name] = cls._DEFAULT_PART_CLS[name].from_dict(d_component)
 
         # # geography may need shape hint from data so handled separately
         # shape_hint = None
-        # if components.get(DATA):
-        #     shape_hint = components[DATA].get_values(copy=False).shape
+        # if components.get(DATA_):
+        #     shape_hint = components[DATA_].get_values(copy=False).shape
 
-        # # d_component = {k.split(".")[1]: v for k, v in d.items() if k.startswith(GEOGRAPHY + ".")}
-        # # components[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_dict(d, shape_hint=shape_hint)
+        # # d_component = {k.split(".")[1]: v for k, v in d.items() if k.startswith(GEOGRAPHY_ + ".")}
+        # # components[GEOGRAPHY_] = cls._DEFAULT_PART_CLS[GEOGRAPHY_].from_dict(d, shape_hint=shape_hint)
 
         # # the unused items are added as labels
         # labels = SimpleLabels(d)
@@ -371,23 +371,23 @@ class Field(Base):
             or specified in the keyword arguments.
         """
         _kwargs = {
-            TIME: time,
-            PARAMETER: parameter,
-            VERTICAL: vertical,
-            ENSEMBLE: ensemble,
-            PROC: proc,
-            LABELS: labels,
+            TIME_: time,
+            PARAMETER_: parameter,
+            VERTICAL_: vertical,
+            ENSEMBLE_: ensemble,
+            PROC_: proc,
+            LABELS_: labels,
         }
 
         components = {}
 
         shape_hint = None
         if values is not None:
-            components[DATA] = _COMPONENT_MAKER.default_cls(DATA).from_dict({"values": values})
-            shape_hint = components[DATA].get_values(copy=False).shape
+            components[DATA_] = _COMPONENT_MAKER.default_cls(DATA_).from_dict({"values": values})
+            shape_hint = components[DATA_].get_values(copy=False).shape
         elif data is not None:
-            components[DATA] = _COMPONENT_MAKER.default_cls(DATA).from_any(data)
-            shape_hint = components[DATA].get_values(copy=False).shape
+            components[DATA_] = _COMPONENT_MAKER.default_cls(DATA_).from_any(data)
+            shape_hint = components[DATA_].get_values(copy=False).shape
 
         for name, v in _kwargs.items():
             if v is not None:
@@ -395,45 +395,47 @@ class Field(Base):
                 components[name] = component
 
         if isinstance(geography, dict):
-            components[GEOGRAPHY] = _COMPONENT_MAKER.default_cls(GEOGRAPHY).from_dict(geography, shape_hint=shape_hint)
+            components[GEOGRAPHY_] = _COMPONENT_MAKER.default_cls(GEOGRAPHY_).from_dict(
+                geography, shape_hint=shape_hint
+            )
         elif geography is not None:
-            components[GEOGRAPHY] = _COMPONENT_MAKER.default_cls(GEOGRAPHY).from_any(geography)
+            components[GEOGRAPHY_] = _COMPONENT_MAKER.default_cls(GEOGRAPHY_).from_any(geography)
         return cls(**components)
 
     @property
     def ensemble(self):
         """Ensemble: Return the ensemble component of the field."""
-        return self._components[ENSEMBLE].component
+        return self._components[ENSEMBLE_].component
 
     @property
     def time(self):
         """Time: Return the time component of the field."""
-        return self._components[TIME].component
+        return self._components[TIME_].component
 
     @property
     def vertical(self):
         """Vertical: Return the vertical component of the field."""
-        return self._components[VERTICAL].component
+        return self._components[VERTICAL_].component
 
     @property
     def parameter(self):
         """Parameter: Return the parameter component of the field."""
-        return self._components[PARAMETER].component
+        return self._components[PARAMETER_].component
 
     @property
     def geography(self):
         """Geography: Return the geography component of the field."""
-        return self._components[GEOGRAPHY].component
+        return self._components[GEOGRAPHY_].component
 
     @property
     def proc(self):
         """Proc: Return the proc component of the field."""
-        return self._components[PROC].component
+        return self._components[PROC_].component
 
     @property
     def labels(self):
         """SimpleLabels: Return the labels of the field."""
-        return self._components[LABELS]
+        return self._components[LABELS_]
 
     @property
     def array_namespace(self):
@@ -441,12 +443,12 @@ class Field(Base):
         return eku_array_namespace(self.values)
 
     # def free(self):
-    #     self._components[DATA] = self._components[DATA].Offloader(self._components[DATA])
+    #     self._components[DATA_] = self._components[DATA_].Offloader(self._components[DATA_])
 
     @property
     def values(self):
         """array-like: Return the values of the field."""
-        return self._components[DATA].values
+        return self._components[DATA_].values
 
     @property
     def shape(self):
@@ -480,7 +482,7 @@ class Field(Base):
             Field values
 
         """
-        v = self._components[DATA].get_values(dtype=dtype, copy=copy)
+        v = self._components[DATA_].get_values(dtype=dtype, copy=copy)
         v = convert_array(v, array_namespace="numpy")
         v = flatten_array(v) if flatten else reshape_array(v, self.shape)
 
@@ -525,7 +527,7 @@ class Field(Base):
             Field values.
 
         """
-        v = self._components[DATA].get_values(dtype=dtype, copy=copy)
+        v = self._components[DATA_].get_values(dtype=dtype, copy=copy)
         if array_namespace is not None:
             v = convert_array(v, array_namespace=array_namespace, device=device)
 
@@ -623,7 +625,7 @@ class Field(Base):
         if ll:
             sample = r.get("value", None)
             if sample is None:
-                sample = self._components[DATA].get_values(dtype=dtype)
+                sample = self._components[DATA_].get_values(dtype=dtype)
             target_xp = eku_array_namespace(sample)
             device = target_xp.device(sample)
             target_dtype = None
@@ -645,8 +647,8 @@ class Field(Base):
         if "." in key:
             component_name, name = key.split(".", 1)
             return component_name, self._components.get(component_name), name
-        elif key in self._components[DATA]:
-            return DATA, self._components[DATA], key
+        elif key in self._components[DATA_]:
+            return DATA_, self._components[DATA_], key
         return None, None, key
 
     def _get_single(self, key, default=None, astype=None, raise_on_missing=False):
@@ -682,7 +684,7 @@ class Field(Base):
 
         if component:
             return component.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
-        elif component_name == METADATA:
+        elif component_name == METADATA_:
             for _, private_component in self._private.items():
                 if hasattr(private_component, "metadata"):
                     return private_component.metadata(
@@ -716,7 +718,7 @@ class Field(Base):
             return component.component.to_dict()
         else:
             prefix, _, sub_name = component_name.rpartition(".")
-            if prefix == METADATA:
+            if prefix == METADATA_:
                 for _, private_component in self._private.items():
                     if hasattr(private_component, "as_namespace"):
                         return private_component.as_namespace(sub_name)
@@ -1058,7 +1060,7 @@ class Field(Base):
         return None
 
     def _set_values(self, array):
-        data = self._components[DATA].set_values(array)
+        data = self._components[DATA_].set_values(array)
         return Field.from_field(self, data=data)
 
     def to_target(self, target, *args, **kwargs):
@@ -1223,7 +1225,7 @@ class Field(Base):
         d = self._dump_component(component, filter=filter, unwrap_single=False)
 
         d1 = {}
-        for k in DESCRIBE_ORDER:
+        for k in DESCRIBE_ORDER_:
             if k in d:
                 d1[k] = d.pop(k)
 
@@ -1240,11 +1242,11 @@ class Field(Base):
                     "tooltip": f"Keys in the {ns} namespace",
                 })
 
-        return format_namespace_dump(r, selected=DEFAULT_DESCRIBE_SELECTION, details=self.__class__.__name__, **kwargs)
+        return format_namespace_dump(r, selected=DEFAULT_DESCRIBE_SELECTION_, details=self.__class__.__name__, **kwargs)
 
     @property
     def default_ls_keys(self):
-        return LS_KEYS
+        return LS_KEYS_
 
     def ls(self, *args, **kwargs):
         r"""Generate a list-like summary using a set of metadata keys.
@@ -1295,7 +1297,7 @@ class Field(Base):
         return self._private.get(name)
 
     def _get_grib(self):
-        if self._private and "metadata" in self._private and getattr(self._private["metadata"], "NAME", None) == GRIB:
+        if self._private and "metadata" in self._private and getattr(self._private["metadata"], "NAME", None) == GRIB_:
             return self._private["metadata"]
 
         return None
@@ -1357,7 +1359,7 @@ class Field(Base):
 
     def __repr__(self):
         r = []
-        for k in LS_KEYS:
+        for k in LS_KEYS_:
             r.append(f"{self.get(k, default=None)}")
         return f"Field({', '.join(r)})"
 

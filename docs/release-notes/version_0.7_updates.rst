@@ -14,11 +14,11 @@ New features
 ++++++++++++++++
 
 - implemented the :ref:`parts <parts>` option for :ref:`file <data-sources-file>` sources with :ref:`grib` and :ref:`bufr` data
-- added shapefile support. See the :ref:`/examples/shapefile/shapefile.ipynb` notebook example.
-- added the :ref:`data-sources-opendap` source to access NetCDF data from OPEnDAP services. See the :ref:`/examples/source/netcdf_opendap.ipynb` notebook example.
+- added shapefile support. See the :ref:`/how-tos/shapefile/shapefile.ipynb` notebook example.
+- added the :ref:`data-sources-opendap` source to access NetCDF data from OPEnDAP services. See the :ref:`/how-tos/source/netcdf_opendap.ipynb` notebook example.
 - added the :ref:`data-sources-sample` source to access data used in tests and examples
-- added the ``array_backend`` option for :class:`~data.core.fieldlist.FieldList`\ s to allow specifying other array backends than numpy. Also added the :meth:`FieldList.array() <data.core.fieldlist.FieldList.array>` and :meth:`Field.array() <data.core.fieldlist.Field.array>` methods to extract the values using the given array backend. See the :ref:`/examples/grib/grib_array_namespace.ipynb` notebook example.
-- added support for Lambert Conformal projection when using :meth:`Field.projection() <data.core.fieldlist.Field.projection>`
+- added the ``array_backend`` option for :class:`~earthkit.data.core.fieldlist.FieldList`\ s to allow specifying other array backends than numpy. Also added the :meth:`FieldList.array() <earthkit.data.core.fieldlist.FieldList.array>` and :meth:`Field.array() <earthkit.data.core.fieldlist.Field.array>` methods to extract the values using the given array backend. See the :ref:`/how-tos/grib/grib_array_namespace.ipynb` notebook example.
+- added support for Lambert Conformal projection when using :meth:`Field.projection() <earthkit.data.core.fieldlist.Field.projection>`
 - changed the default of the ``bits_per_value`` option to None in :meth:`NumpyFieldList.save() <data.sources.numpy_list.NumpyFieldList.save>`. None means the original ``bits_per_value`` in the GRIB header is kept when the data is written to disk.
 - added the ``model`` option to the :ref:`data-sources-eod` source
 - added the ``prompt`` optional argument to certain retrievals to control whether the prompt is to be used. When enabled (default), the prompt asks the user to provide credentials when none seems to be specified. See the :ref:`data-sources-cds`, :ref:`data-sources-mars`, :ref:`data-sources-wekeo`, :ref:`data-sources-wekeocds` sources for more information on how the prompt works.

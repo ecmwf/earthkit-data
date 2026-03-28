@@ -87,7 +87,7 @@ To access the stream we need to convert the data into a stream fieldlist (GRIB) 
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test4.grib"
+    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test4.grib"
     >>> ds = ekd.from_source("url", url, stream=True)
     >>> fl = ds.to_fieldlist()
     >>> for f in fl:
@@ -102,10 +102,10 @@ To access the stream we need to convert the data into a stream fieldlist (GRIB) 
 Examples
 ////////////////
 
-    - :ref:`/examples/source/data_from_stream.ipynb`
-    - :ref:`/examples/source/file_stream.ipynb`
-    - :ref:`/examples/source/fdb.ipynb`
-    - :ref:`/examples/source/url_stream.ipynb`
+    - :ref:`/how-tos/source/data_from_stream.ipynb`
+    - :ref:`/how-tos/source/file_stream.ipynb`
+    - :ref:`/how-tos/source/fdb.ipynb`
+    - :ref:`/how-tos/source/url_stream.ipynb`
 
 
 Special cases

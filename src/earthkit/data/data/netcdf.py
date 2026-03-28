@@ -52,15 +52,18 @@ class NetCDFData(SourceData):
         """
         return self._reader.to_fieldlist(*args, **kwargs)
 
-    def to_xarray(self, *args, **kwargs):
+    def to_xarray(self, *args, xarray_open_mfdataset_kwargs=None, **kwargs):
         """Convert into an Xarray dataset.
+
+        The conversion is performed using :py:func:`xarray.open_mfdataset`.
 
         Parameters
         ----------
-        *args
-            Positional arguments to pass to the reader's to_xarray method.
+        xarray_open_mfdataset_kwargs: dict, None, optional
+            Keyword arguments passed to :py:func:`xarray.open_mfdataset`.
         **kwargs
-            Keyword arguments to pass to the reader's to_xarray method.
+            Keyword arguments passed to  :py:func:`xarray.open_mfdataset`
+            ``xarray_open_mfdataset_kwargs`` is not set.
 
         Returns
         -------

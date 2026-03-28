@@ -13,4 +13,4 @@ The recommended way to work with ODB is to extract data with ``to_pandas()`` int
 
 Examples:
 
-    - :ref:`/examples/odb/odb.ipynb`
+    - :ref:`/how-tos/odb/odb.ipynb`

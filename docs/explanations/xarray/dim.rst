@@ -3,7 +3,7 @@
 Dimensions
 ==================
 
-One of the most important aspect of the :ref:`Xarray engine <xr_engine>` is how it generates dimensions in the Xarray dataset with :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray`.
+One of the most important aspect of the :ref:`Xarray engine <xr_engine>` is how it generates dimensions in the Xarray dataset with :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray`.
 
 .. _xr_dim_roles:
 .. _xr_predefined_dims:
@@ -101,9 +101,9 @@ while ``dim_roles`` (together with ``dim_name_from_role_name``) controls their n
 
 The following examples demonstrate the temporal dimensions modes:
 
-- :ref:`/examples/xr_engine/xarray_engine_temporal.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_temporal.ipynb`
 
-- :ref:`/examples/xr_engine/xarray_engine_seasonal.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_seasonal.ipynb`
 
 
 .. list-table:: Vertical dimensions modes
@@ -132,7 +132,7 @@ The following examples demonstrate the temporal dimensions modes:
 
 The following example demonstrates the vertical dimensions modes:
 
-- :ref:`/examples/xr_engine/xarray_engine_level.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_level.ipynb`
 
 
 .. _xr_squeeze_and_ensure_dims:
@@ -148,7 +148,7 @@ even if they have only one value. This is useful when you want to keep the dimen
 
 See the following notebook for examples of how this works:
 
-- :ref:`/examples/xr_engine/xarray_engine_squeeze.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_squeeze.ipynb`
 
 
 .. _xr_dims_as_attrs:
@@ -174,7 +174,7 @@ exposed as a variable attribute.
 
 For a detailed discussion and examples, see the following notebook:
 
-- :ref:`/examples/xr_engine/xarray_engine_dims_as_attrs.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_dims_as_attrs.ipynb`
 
 
 Extra dimensions
@@ -191,7 +191,7 @@ Extra dimensions are handled in the same way as predefined dimensions: if an ext
 
 For a detailed discussion and examples, see the following notebook:
 
-- :ref:`/examples/xarray_engine_extra_dims.ipynb`
+- :ref:`/how-tos/xarray_engine_extra_dims.ipynb`
 
 
 Remapping
@@ -209,4 +209,4 @@ In particular, a virtual metadata key can be used:
 
 For a detailed discussion and examples, see the following notebook:
 
-- :ref:`/examples/xr_engine/xarray_engine_remapping.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_remapping.ipynb`

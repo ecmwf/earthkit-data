@@ -21,7 +21,7 @@ We can read :ref:`grib` data as a :ref:`stream <streams>` iterator e.g. with the
 
     import earthkit.data as ekd
 
-    url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
+    url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test6.grib"
     ds = ekd.from_source("url", url, stream=True)
     for f in fields:
         print(f)
@@ -37,7 +37,7 @@ We can load :ref:`grib` data fully into memory when we read it as a :ref:`stream
 
     import earthkit.data as ekd
 
-    url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
+    url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test6.grib"
     ds = ekd.from_source("url", url, stream=True, read_all=True)
 
 With this, the entire ``ds`` fieldlist, including all the fields and the related GRIB handles, are stored in memory.

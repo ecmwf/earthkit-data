@@ -71,7 +71,7 @@ Changes
 
 - Enabled using environment variables to control the :ref:`settings <settings>` (:pr:`565`). See the notebook example:
 
-  - :ref:`/examples/misc/config_env_vars.ipynb`
+  - :ref:`/how-tos/misc/config_env_vars.ipynb`
 
 - Re-enabled ``headers_only_clone=True`` when calling :meth:`GribMetadata.override() <data.readers.grib.metadata.GribMetadata.override>` (:pr:`567`)
 

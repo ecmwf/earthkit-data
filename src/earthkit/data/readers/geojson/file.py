@@ -70,6 +70,15 @@ class GeoPandasListBase(IndexFeatureListBase):
         # TODO: to be decided what to do
         return None
 
+    @classmethod
+    def new_mask_index(cls, *args, **kwargs):
+        from earthkit.data.featurelist.simple import SimpleFeatureList
+
+        assert len(args) == 2
+        fs = args[0]
+        indices = list(args[1])
+        return SimpleFeatureList([fs[i] for i in indices])
+
 
 class GeoPandasList(GeoPandasListBase):
     def __init__(self, gdf):

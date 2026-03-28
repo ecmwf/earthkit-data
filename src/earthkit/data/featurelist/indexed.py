@@ -187,26 +187,12 @@ class IndexFeatureListBase(Index, FeatureList):
     def _encode_default(self, encoder, *args, **kwargs):
         return encoder._encode_featurelist(self, *args, **kwargs)
 
-    # def describe(self, *args, **kwargs):
-    #     r"""Generate a summary of the fieldlist."""
-    #     from earthkit.data.utils.summary import format_describe
+    def describe(self, *args, **kwargs):
+        pass
 
-    #     def _proc():
-    #         for f in self:
-    #             # PW: TODO: `default` and `astype` kwargs of `f._get_fast()` might need to be aligned with `keys`
-    #             yield (f._get_fast(self._describe_keys, output=dict))
-
-    #     return format_describe(_proc(), *args, **kwargs)
-
-    # retur
-    # def _normalise_sel_input(self, **kwargs):
-    #     from .field import Field
-
-    #     return Field._normalise_sel_input(**kwargs)
-
-    # @staticmethod
-    # def _normalise_key_values(**kwargs):
-    #     from ..core.field import Field
+    @staticmethod
+    def _normalise_key_values(**kwargs):
+        return kwargs
 
     @classmethod
     def new_mask_index(cls, *args, **kwargs):

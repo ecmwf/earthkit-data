@@ -21,7 +21,15 @@ class NetCDFFieldList(XArrayFieldList):
         # self.path = path
         import xarray as xr
 
-        ds = xr.open_dataset(path, decode_timedelta=True)
+        options = dict()
+        options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
+        if not options:
+            options = dict(**kwargs)
+
+        if "decode_timedelta" not in options:
+            options["decode_timedelta"] = True
+
+        ds = xr.open_dataset(path, **options)
         ds = XArrayFieldList.from_xarray(ds)
         super().__init__(ds.ds, ds.variables)
 
@@ -110,8 +118,8 @@ class NetCDFFieldList(XArrayFieldList):
 
 
 class NetCDFFieldListFromFile(NetCDFFieldList, NetCDFReaderBase):
-    def __init__(self, path):
-        NetCDFFieldList.__init__(self, path)
+    def __init__(self, path, **kwargs):
+        NetCDFFieldList.__init__(self, path, **kwargs)
         NetCDFReaderBase.__init__(self, self, path)
 
     def __repr__(self):
@@ -129,9 +137,9 @@ class NetCDFFieldListFromFile(NetCDFFieldList, NetCDFReaderBase):
 
 
 class NetCDFFieldListFromURL(NetCDFFieldList, NetCDFReaderBase):
-    def __init__(self, url):
+    def __init__(self, url, **kwargs):
         self.url = url
-        NetCDFFieldList.__init__(self, url)
+        NetCDFFieldList.__init__(self, url, **kwargs)
         NetCDFReaderBase.__init__(self, self, url)
 
     def __repr__(self):

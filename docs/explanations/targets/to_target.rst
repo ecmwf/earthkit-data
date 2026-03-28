@@ -1,13 +1,14 @@
 .. _to-target:
 
-to_target()
+to_target
 ====================
 
-We can write data to a given target by using :func:`to_target`. It can be either invoked on a :ref:`data object <data-object>` or the :ref:`data object <data-object>` can be specified as ``data``.
 
 .. py:function:: to_target(name, *args, data=None, **kwargs)
 
-  Write data to the target specified by ``name`` .
+  Write data to a target.
+
+  The function can be either invoked on a :ref:`data object <data-object>` or the :ref:`data object <data-object>` can be specified as ``data``.
 
   :param str name: the target (see below)
   :param tuple *args: specify target parameters
@@ -85,10 +86,10 @@ file
 
   Notebook examples:
 
-    - :ref:`/examples/file_target.ipynb`
-    - :ref:`/examples/grib_to_file_target.ipynb`
-    - :ref:`/examples/grib_to_file_pattern_target.ipynb`
-    - :ref:`/examples/grib_to_geotiff.ipynb`
+    - :ref:`/how-tos/file_target.ipynb`
+    - :ref:`/how-tos/grib_to_file_target.ipynb`
+    - :ref:`/how-tos/grib_to_file_pattern_target.ipynb`
+    - :ref:`/how-tos/grib_to_geotiff.ipynb`
 
 .. _targets-file-pattern:
 
@@ -127,7 +128,7 @@ file-pattern
 
   Notebook examples:
 
-    - :ref:`/examples/target/grib_to_file_pattern_target.ipynb`
+    - :ref:`/how-tos/target/grib_to_file_pattern_target.ipynb`
 
 
 .. _targets-fdb:
@@ -171,7 +172,7 @@ fdb
 
   Notebook examples:
 
-    - :ref:`/examples/target/grib_to_fdb_target.ipynb`
+    - :ref:`/how-tos/target/grib_to_fdb_target.ipynb`
 
 
 .. _targets-zarr:
@@ -192,7 +193,7 @@ zarr
 
   Notebook examples:
 
-    - :ref:`/examples/target/grib_to_zarr_target.ipynb`
+    - :ref:`/how-tos/target/grib_to_zarr_target.ipynb`
 
 
 .. .. _data-targets-multio:

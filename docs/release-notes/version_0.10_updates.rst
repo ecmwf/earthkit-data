@@ -95,15 +95,15 @@ New features
 ++++++++++++++++
 
 - Refined :ref:`GRIB` data memory management when reading from a file (:pr:`428`). See :ref:`grib-memory` for an overview.
-- Refined how GRIB the metadata object manages the GRIB handle (:pr:`430`). See the :ref:`/examples/legacy/grib_metadata_object.ipynb` notebook example for details.
+- Refined how GRIB the metadata object manages the GRIB handle (:pr:`430`). See the :ref:`/how-tos/legacy/grib_metadata_object.ipynb` notebook example for details.
 - Added the ``index`` keyword argument for data subsetting to the following methods (:pr:`407`):
 
-  -  field:  :meth:`~data.core.fieldlist.Field.to_numpy`, :meth:`~data.core.fieldlist.Field.to_array`, :meth:`~data.core.fieldlist.Field.data`, :meth:`~data.core.fieldlist.Field.to_latlon`, :meth:`~data.core.fieldlist.Field.to_points`
-  - fieldlist:  :meth:`~data.core.fieldlist.FieldList.to_numpy`, :meth:`~data.core.fieldlist.FieldList.to_array`, :meth:`~data.core.fieldlist.FieldList.data`, :meth:`~data.core.fieldlist.FieldList.to_latlon`, :meth:`~data.core.fieldlist.FieldList.to_points`
+  -  field:  :meth:`~earthkit.data.core.fieldlist.Field.to_numpy`, :meth:`~earthkit.data.core.fieldlist.Field.to_array`, :meth:`~earthkit.data.core.fieldlist.Field.data`, :meth:`~earthkit.data.core.fieldlist.Field.to_latlon`, :meth:`~earthkit.data.core.fieldlist.Field.to_points`
+  - fieldlist:  :meth:`~earthkit.data.core.fieldlist.FieldList.to_numpy`, :meth:`~earthkit.data.core.fieldlist.FieldList.to_array`, :meth:`~earthkit.data.core.fieldlist.FieldList.data`, :meth:`~earthkit.data.core.fieldlist.FieldList.to_latlon`, :meth:`~earthkit.data.core.fieldlist.FieldList.to_points`
 
-- Removed normalisation of GRIB metadata keys when passed to methods like :meth:`~data.core.fieldlist.FieldList.sel`,  :meth:`~data.core.fieldlist.FieldList.isel`, :meth:`~data.core.fieldlist.FieldList.order_by` and :func:`unique_values` (:pr:`429`).
+- Removed normalisation of GRIB metadata keys when passed to methods like :meth:`~earthkit.data.core.fieldlist.FieldList.sel`,  :meth:`~earthkit.data.core.fieldlist.FieldList.isel`, :meth:`~earthkit.data.core.fieldlist.FieldList.order_by` and :func:`unique_values` (:pr:`429`).
 
-- Improved the implementation of :meth:`~data.core.fieldlist.FieldList.indices` and :meth:`~data.core.fieldlist.FieldList.index` (:pr:`436`)
+- Improved the implementation of :meth:`~earthkit.data.core.fieldlist.FieldList.indices` and :meth:`~earthkit.data.core.fieldlist.FieldList.index` (:pr:`436`)
 - Changed the default to False for the ``progress_bar`` keyword argument in :func:`unique_values`
 
 Installation

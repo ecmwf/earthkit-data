@@ -85,4 +85,4 @@ The integration is performed by ``entry_points`` defined in  ``pyproject.toml``.
     entry-points."earthkit.data.targets".demo-target = "earthkit_data_demo_target:DemoTarget"
 
 
-.. See the :ref:`/examples/demo_targets_plugin.ipynb` notebook for the full example.
+.. See the :ref:`/how-tos/demo_targets_plugin.ipynb` notebook for the full example.

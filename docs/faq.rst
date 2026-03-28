@@ -29,7 +29,7 @@ save the results of a :ref:`MARS retrieval <data-sources-mars>` into a file:
 How to convert GRIB to Xarray?
 --------------------------------------------------------------
 
-You can convert GRIB data to Xarray by calling :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` on
+You can convert GRIB data to Xarray by calling :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray` on
 a GRIB fieldlist object. See :ref:`xr_engine` for details.
 
 

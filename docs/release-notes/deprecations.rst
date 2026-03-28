@@ -12,7 +12,7 @@ Version 0.15.0
 The "ens" dimension role has been renamed to "number"
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The name of the ensemble member :ref:`dimension role <_xr_dim_roles>` changed to "number" from "ens" in the ``dim_roles`` option of :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray`. The old name is still available for backward compatibility but will be removed in a future release.
+The name of the ensemble member :ref:`dimension role <_xr_dim_roles>` changed to "number" from "ens" in the ``dim_roles`` option of :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray`. The old name is still available for backward compatibility but will be removed in a future release.
 
 .. list-table::
    :header-rows: 0
@@ -33,7 +33,7 @@ The name of the ensemble member :ref:`dimension role <_xr_dim_roles>` changed to
 The "to_grib" method on the earthkit Xarray accessor is deprecated
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The :func:`to_grib` method on the ``earthkit`` Xarray accessor is deprecated. Use :func:`to_target` instead. The method is still available for backward compatibility but will be removed in a future release. See :ref:`/examples/xr_engine/xarray_engine_to_grib.ipynb` notebook for details on how to use the new API.
+The :func:`to_grib` method on the ``earthkit`` Xarray accessor is deprecated. Use :func:`to_target` instead. The method is still available for backward compatibility but will be removed in a future release. See :ref:`/how-tos/xr_engine/xarray_engine_to_grib.ipynb` notebook for details on how to use the new API.
 
 .. list-table::
    :header-rows: 0

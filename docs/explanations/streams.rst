@@ -25,7 +25,7 @@ The example below shows how we iterate through a GRIB data stream field by field
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
+    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test6.grib"
     >>> fl = ekd.from_source("url", url, stream=True).to_fieldlist()
     >>> for f in fl:
     ...     print(f)
@@ -37,12 +37,12 @@ The example below shows how we iterate through a GRIB data stream field by field
     GribField(u,850,20180801,1200,0,0)
     GribField(v,850,20180801,1200,0,0)
 
-We can also use :meth:`~data.core.fieldlist.FieldList.batched` to iterate in batches of fixed size. Each iteration step now yields a :class:`Fieldlist`.
+We can also use :meth:`~earthkit.data.core.fieldlist.FieldList.batched` to iterate in batches of fixed size. Each iteration step now yields a :class:`Fieldlist`.
 
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
+    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test6.grib"
     >>> fl = ekd.from_source("url", url, stream=True).to_fieldlist()
     >>> for f in fl.batched(2):
     ...     print(f"len={len(f)} {f.get(('parameter.variable', 'vertical.level'))}")
@@ -51,12 +51,12 @@ We can also use :meth:`~data.core.fieldlist.FieldList.batched` to iterate in bat
     len=2 [('v', 1000), ('t', 850)]
     len=2 [('u', 850), ('v', 850)]
 
-Another option is to use :meth:`~data.core.fieldlist.FieldList.group_by` to iterate in groups defined by metadata keys. Each iteration step results in a :class:`Fieldlist`, which is built by consuming GRIB messages from the stream until the values of the metadata keys change.
+Another option is to use :meth:`~earthkit.data.core.fieldlist.FieldList.group_by` to iterate in groups defined by metadata keys. Each iteration step results in a :class:`Fieldlist`, which is built by consuming GRIB messages from the stream until the values of the metadata keys change.
 
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
+    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test6.grib"
     >>> fl = ekd.from_source("url", url, stream=True).to_fieldlist()
     >>> for f in fl.group_by("vertical.level"):
     ...     print(f"len={len(f)} {f.get(('parameter.variable', 'vertical.level'))}")
@@ -75,7 +75,7 @@ We can load the whole stream into memory by using  ``read_all=True`` in :meth:`t
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
+    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test6.grib"
     >>> fl = ekd.from_source("url", url, stream=True).to_fieldlist(read_all=True)
     >>> len(fl)
     6
@@ -83,7 +83,7 @@ We can load the whole stream into memory by using  ``read_all=True`` in :meth:`t
 Further examples
 -----------------
 
-- :ref:`/examples/source/data_from_stream.ipynb`
-- :ref:`/examples/source/file_stream.ipynb`
-- :ref:`/examples/source/fdb.ipynb`
-- :ref:`/examples/source/url_stream.ipynb`
+- :ref:`/how-tos/source/data_from_stream.ipynb`
+- :ref:`/how-tos/source/file_stream.ipynb`
+- :ref:`/how-tos/source/fdb.ipynb`
+- :ref:`/how-tos/source/url_stream.ipynb`

@@ -85,4 +85,4 @@ The integration is performed by ``entry_points`` defined in  ``pyproject.toml``.
     entry-points."earthkit.data.encoders".demo-encoder-png = "earthkit_data_demo_encoder_png:DemoEncoderPng"
 
 
-.. See the :ref:`/examples/demo_encoders_plugin.ipynb` notebook for the full example.
+.. See the :ref:`/how-tos/demo_encoders_plugin.ipynb` notebook for the full example.

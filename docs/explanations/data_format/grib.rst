@@ -15,12 +15,12 @@ We can read/retrieve GRIB data with :func:`from_source`.
 to_fieldlist()
 
 
-The resulting object will be a :class:`~data.readers.grib.index.GribFieldList` representing a list of :class:`~data.readers.grib.codes.GribField`\ s, which we can iterate through:
+The resulting object will be a :class:`~earthkit.data.readers.grib.index.GribFieldList` representing a list of :class:`~earthkit.data.readers.grib.codes.GribField`\ s, which we can iterate through:
 
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> ds = ekd.from_source("file", "docs/examples/test.grib")
+    >>> ds = ekd.from_source("file", "docs/how-tos/test.grib")
 
     >>> len(ds)
     2
@@ -32,7 +32,7 @@ The resulting object will be a :class:`~data.readers.grib.index.GribFieldList` r
     GribField(msl,1000,20200513,1200,0,0)
 
 
-The following table gives us an overview of the GRIB :class:`~data.readers.grib.index.FieldList` API:
+The following table gives us an overview of the GRIB :class:`~earthkit.data.readers.grib.index.FieldList` API:
 
 .. list-table:: Highlights of the GRIB FieldList API
    :header-rows: 1
@@ -40,42 +40,42 @@ The following table gives us an overview of the GRIB :class:`~data.readers.grib.
    * - Methods/Operators
      - API
    * - :ref:`conversion`
-     - :meth:`~data.readers.grib.index.GribFieldList.to_xarray`
+     - :meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray`
    * - :ref:`concat`
      -
    * - :ref:`iter`
      -
    * - :ref:`batched`
-     - :meth:`~data.readers.grib.index.GribFieldList.batched`
+     - :meth:`~earthkit.data.readers.grib.index.GribFieldList.batched`
    * - :ref:`group_by`
-     - :meth:`~data.readers.grib.index.GribFieldList.group_by`
+     - :meth:`~earthkit.data.readers.grib.index.GribFieldList.group_by`
    * - :ref:`slice`
      -
    * - :ref:`sel`
-     - :meth:`~data.readers.grib.index.GribFieldList.sel`
+     - :meth:`~earthkit.data.readers.grib.index.GribFieldList.sel`
    * - :ref:`order_by`
-     - :meth:`~data.readers.grib.index.GribFieldList.order_by`
+     - :meth:`~earthkit.data.readers.grib.index.GribFieldList.order_by`
    * - :ref:`data_values`
-     - :meth:`~data.readers.grib.index.GribFieldList.to_numpy`
+     - :meth:`~earthkit.data.readers.grib.index.GribFieldList.to_numpy`
    * - :ref:`metadata`
-     - :meth:`~data.readers.grib.index.GribFieldList.metadata`
+     - :meth:`~earthkit.data.readers.grib.index.GribFieldList.metadata`
    * - :ref:`inspection`
-     - :meth:`~data.readers.grib.index.GribFieldList.ls`, :meth:`~data.readers.grib.index.GribFieldList.head` and :meth:`~data.readers.grib.index.GribFieldList.tail`
+     - :meth:`~earthkit.data.readers.grib.index.GribFieldList.ls`, :meth:`~earthkit.data.readers.grib.index.GribFieldList.head` and :meth:`~earthkit.data.readers.grib.index.GribFieldList.tail`
 
 Fields
 +++++++
 
-A :class:`~data.readers.grib.codes.GribField` represent a single GRIB field. It primarily offers methods to:
+A :class:`~earthkit.data.readers.grib.codes.GribField` represent a single GRIB field. It primarily offers methods to:
 
- - :ref:`extract field values <data_values>`, such as :meth:`~data.readers.grib.codes.GribField.to_numpy`
- - :ref:`extract field metadata <metadata>`, such as :meth:`~data.readers.grib.codes.GribField.metadata`
+ - :ref:`extract field values <data_values>`, such as :meth:`~earthkit.data.readers.grib.codes.GribField.to_numpy`
+ - :ref:`extract field metadata <metadata>`, such as :meth:`~earthkit.data.readers.grib.codes.GribField.metadata`
 
 Examples:
 
-    - :ref:`/examples/grib/grib_overview.ipynb`
-    - :ref:`/examples/legacy/grib_metadata.ipynb`
-    - :ref:`/examples/grib/grib_selection.ipynb`
-    - :ref:`/examples/grib/grib_missing.ipynb`
+    - :ref:`/how-tos/grib/grib_overview.ipynb`
+    - :ref:`/how-tos/legacy/grib_metadata.ipynb`
+    - :ref:`/how-tos/grib/grib_selection.ipynb`
+    - :ref:`/how-tos/grib/grib_missing.ipynb`
 
 
 Memory management

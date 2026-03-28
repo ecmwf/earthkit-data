@@ -117,6 +117,4 @@ class GeoJsonData(SourceData):
         :py:class:`earthkit.data.readers.geojson.file.GeoJsonList`
             A GeoJsonList containing the GeoJSON data.
         """
-        from earthkit.data.readers.geojson.file import GeoJsonList
-
-        return GeoJsonList(self._reader.path)
+        return self._reader.to_featurelist()

@@ -12,7 +12,7 @@ Release|
    :target: https://opensource.org/licenses/apache-2-0
 .. |Latest Release| image:: https://img.shields.io/github/v/release/ecmwf/earthkit-data?color=blue&label=Release&style=flat-square
    :target: https://github.com/ecmwf/earthkit-data/releases
-=
+
 
 **earthkit-data** is a format-agnostic Python interface for geospatial data with a focus on meteorology and
 climate science. It is the data handling component of :xref:`earthkit`.
