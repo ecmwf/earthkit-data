@@ -5,22 +5,21 @@ API Reference Guide
    This guide is currently under construction and may be incomplete or inaccurate.
 
 
-Reading data from sources
+Top level API functions
 -------------------------
 
-- :ref:`from_source() <data-sources>`
+.. list-table:: Top level API functions
+   :header-rows: 1
+   :widths: 30 70
 
-Reading data from objects
--------------------------
-
-- :ref:`from_object <from_object>`
-
-
-Writing data to targets
--------------------------
-
-- :ref:`to_target() <to-target>`
-
+   * - Function
+     - Description
+   * - :func:`from_source`
+     - Read data from a given source and return a :ref:`data object <data-object>`
+   * - :func:`from_object`
+     - Read data from a given object and return a :ref:`data object <data-object>`
+   * - :func:`to_target`
+     - Write data to a given target
 
 The full API reference guide
 -------------------------------
