@@ -130,7 +130,6 @@ autodocs_rename_titles = True        # strip " package"/" module" from RST page 
 autodocs_top_level_title = "API Reference"  # top-level page heading (used when rename_titles=True)
 autodocs_titlesonly = True          # inject :titlesonly: into toctree directives
 autodocs_use_package_all_definition = False  # True: use __all__ for API members; False: inspect module for all public names
-autodocs_hide_from_sidebar = False   # inject :hidden: into autodocs toctrees so they don't appear in the sidebar
 
 # Per-module and per-class skip lists loaded from external YAML file.
 # See autodocs_skip_elements.yml for the format.

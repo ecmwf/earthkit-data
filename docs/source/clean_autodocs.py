@@ -47,7 +47,6 @@ _rename_titles: bool = getattr(conf, "autodocs_rename_titles", False)
 _top_level_title: str = getattr(conf, "autodocs_top_level_title", "API Reference")
 _titlesonly: bool = getattr(conf, "autodocs_titlesonly", False)
 _use_package_all_definition: bool = getattr(conf, "autodocs_use_package_all_definition", True)
-_hide_from_sidebar: bool = getattr(conf, "autodocs_hide_from_sidebar", False)
 _skip_members: dict[str, list[str]] = getattr(conf, "autodocs_skip_members", {})
 
 
@@ -305,7 +304,6 @@ def clean_toctree(
     max_depth: int | None = None,
     short_names: bool = True,
     titlesonly: bool = False,
-    hidden: bool = False,
 ) -> str:
     """Clean up toctree entries in RST content.
 
@@ -314,7 +312,6 @@ def clean_toctree(
       ``temporal <earthkit.transforms.temporal>``
     - Optionally overrides :maxdepth: to control how deep the TOC renders
     - Optionally injects :titlesonly: when absent
-    - Optionally injects :hidden: so toctrees don't appear in the sidebar
 
     Args:
         content: RST file content
@@ -324,7 +321,6 @@ def clean_toctree(
         short_names: If True, rewrite toctree entries to use the short module
             name as the display label.
         titlesonly: If True, inject ``:titlesonly:`` into toctrees that lack it.
-        hidden: If True, inject ``:hidden:`` into toctrees that lack it.
 
     Returns:
         Updated RST content
@@ -368,8 +364,6 @@ def clean_toctree(
                 in_options_block = False
                 if titlesonly and not toctree_has_titlesonly:
                     result_lines.append("   :titlesonly:")
-                if hidden and not toctree_has_hidden:
-                    result_lines.append("   :hidden:")
             result_lines.append(line)
             continue
 
@@ -390,8 +384,6 @@ def clean_toctree(
             in_options_block = False
             if titlesonly and not toctree_has_titlesonly:
                 result_lines.append("   :titlesonly:")
-            if hidden and not toctree_has_hidden:
-                result_lines.append("   :hidden:")
 
         # Toctree entry — may be "module.name" or "display <module.name>"
         match = re.match(r"^\s*(?:.*\s+<)?([^<>\s]+)>?\s*$", line)
@@ -423,7 +415,6 @@ def clean_autodocs() -> None:
         f"short_display_names={_short_display_names}, top_level_maxdepth={_top_level_maxdepth}, "
         f"rename_titles={_rename_titles}, titlesonly={_titlesonly}, "
         f"use_package_all_definition={_use_package_all_definition}, "
-        f"hide_from_sidebar={_hide_from_sidebar}, "
         f"skip_members={len(_skip_members)} module(s)"
     )
 
@@ -471,7 +462,6 @@ def clean_autodocs() -> None:
             max_depth=toctree_depth,
             short_names=_short_display_names,
             titlesonly=_titlesonly,
-            hidden=_hide_from_sidebar,
         )
 
         # --- Step 3: replace automodule with autosummary ------------------
