@@ -1,6 +1,10 @@
 API Reference Guide
 ===================
 
+.. warning::
+   This guide is currently under construction and may be incomplete or inaccurate.
+
+
 from_source
 -------------------------
 
