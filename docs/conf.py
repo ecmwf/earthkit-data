@@ -11,8 +11,25 @@ import os
 import sys
 import json
 
-
 import yaml
+
+
+on_rtd = os.environ.get("READTHEDOCS") == "True"
+
+if on_rtd:
+    version = os.environ.get("READTHEDOCS_VERSION", "latest")
+    release = version
+else:
+    version = "dev"
+    release = "dev"
+
+rtd_version = version if version != "latest" else "develop"
+rtd_version_type = os.environ.get("READTHEDOCS_VERSION_TYPE", "branch")
+
+if rtd_version_type in ("branch", "tag"):
+    source_branch = rtd_version
+else:
+    source_branch = "main"
 
 
 sys.path.insert(0, os.path.abspath("../src"))
@@ -140,7 +157,7 @@ html_theme_options = {
     "light_logo": "earthkit-data-light.svg",
     "dark_logo": "earthkit-data-dark.svg",
     "source_repository": "https://github.com/ecmwf/earthkit-data/",
-    # "source_branch": source_branch,
+    "source_branch": source_branch,
     "source_directory": "docs",
     "footer_icons": [
         {

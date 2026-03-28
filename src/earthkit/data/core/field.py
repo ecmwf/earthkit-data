@@ -569,10 +569,10 @@ class Field(Base):
 
         Examples
         --------
-        - :ref:`/examples/grib/grib_lat_lon_value_ll.ipynb`
+        - :ref:`/how-tos/grib/grib_lat_lon_value_ll.ipynb`
 
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test6.grib")
         >>> d = ds[0].data()
         >>> d.shape
         (3, 7, 12)
@@ -1156,7 +1156,7 @@ class Field(Base):
 
         Examples
         --------
-        :ref:`/examples/grib/grib_contents.ipynb`
+        :ref:`/how-tos/grib/grib_contents.ipynb`
 
         """
         if component is None or component == "":
@@ -1215,7 +1215,7 @@ class Field(Base):
 
         Examples
         --------
-        :ref:`/examples/grib/grib_contents.ipynb`
+        :ref:`/how-tos/grib/grib_contents.ipynb`
 
         """
         from earthkit.data.utils.summary import format_namespace_dump

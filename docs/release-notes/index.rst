@@ -1,4 +1,4 @@
-Release notes
+Release Notes
 =============
 
 Migration to version 1.0

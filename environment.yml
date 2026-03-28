@@ -50,6 +50,7 @@ dependencies:
   - sphinx-autoapi>=3.0.0
 - sphinx_rtd_theme
 - sphinxcontrib-apidoc
+- sphinx-design
 - sphinx-issues
 - sphinx-tabs
 - sphinx-copybutton

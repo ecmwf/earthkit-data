@@ -12,12 +12,7 @@ Release|
    :target: https://opensource.org/licenses/apache-2-0
 .. |Latest Release| image:: https://img.shields.io/github/v/release/ecmwf/earthkit-data?color=blue&label=Release&style=flat-square
    :target: https://github.com/ecmwf/earthkit-data/releases
-
-
-.. important::
-
-    This software is **Incubating** and subject to ECMWF's guidelines on `Software Maturity <https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity>`_.
-
+=
 
 **earthkit-data** is a format-agnostic Python interface for geospatial data with a focus on meteorology and
 climate science. It is the data handling component of :xref:`earthkit`.
@@ -71,7 +66,7 @@ reference systems and bounding boxes.
 
    .. grid-item-card:: API Reference Guide
       :img-top: _static/brackets-contain.svg
-      :link: autoapi/earthkit/data/index
+      :link: api-reference
       :link-type: doc
       :class-card: sd-shadow-sm
 
@@ -84,11 +79,10 @@ reference systems and bounding boxes.
    :hidden:
 
    getting-started
-   installation
    tutorials/index
    how-tos/index
    explanations/index
-   API Reference guide <autoapi/earthkit/data/index.rst>
+   api-reference
 
 .. toctree::
    :caption: Developer guide

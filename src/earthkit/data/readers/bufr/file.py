@@ -126,7 +126,7 @@ class BUFRList(IndexFeatureListBase):
         Examples
         --------
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test.grib")
         >>> ds.get("parameter.variable")
         ['2t', 'msl']
         >>> ds.get(["parameter.variable", "parameter.units"])
@@ -238,7 +238,7 @@ class BUFRList(IndexFeatureListBase):
 
         Examples
         --------
-        :ref:`/examples/bufr/bufr_temp.ipynb`
+        :ref:`/how-tos/bufr/bufr_temp.ipynb`
 
         """
         from earthkit.data.utils.summary import ls as summary_ls
@@ -419,8 +419,8 @@ class BUFRList(IndexFeatureListBase):
 
         Examples
         --------
-        - :ref:`/examples/bufr/bufr_temp.ipynb`
-        - :ref:`/examples/bufr/bufr_synop.ipynb`
+        - :ref:`/how-tos/bufr/bufr_temp.ipynb`
+        - :ref:`/how-tos/bufr/bufr_synop.ipynb`
 
         """
         import pdbufr

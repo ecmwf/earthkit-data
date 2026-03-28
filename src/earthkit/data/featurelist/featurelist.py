@@ -119,7 +119,7 @@ class FeatureList(Source, Encodable):
         Examples
         --------
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test.grib")
         >>> ds.get("parameter.variable")
         ['2t', 'msl']
         >>> ds.get(["parameter.variable", "parameter.units"])
@@ -151,7 +151,7 @@ class FeatureList(Source, Encodable):
         Examples
         --------
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test.grib")
         >>> ds.metadata("param")
         ['2t', 'msl']
         >>> ds.metadata("param", "units")
@@ -371,7 +371,7 @@ class FeatureList(Source, Encodable):
         Examples
         --------
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/tuv_pl.grib")
         >>> len(ds)
         18
 
@@ -452,7 +452,7 @@ class FeatureList(Source, Encodable):
         is ``ascending``:
 
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test6.grib")
         >>> for f in ds.order_by("parameter.variable"):
         ...     print(f)
         ...

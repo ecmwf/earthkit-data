@@ -64,7 +64,7 @@ class FieldList(Source, Encodable):
         to_array
 
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test.grib")
         >>> for f in ds:
         ...     print(f.values.shape)
         ...
@@ -179,10 +179,10 @@ class FieldList(Source, Encodable):
 
         Examples
         --------
-        - :ref:`/examples/grib/grib_lat_lon_value_ll.ipynb`
+        - :ref:`/how-tos/grib/grib_lat_lon_value_ll.ipynb`
 
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test6.grib")
         >>> len(ds)
         6
         >>> d = ds.data()
@@ -292,7 +292,7 @@ class FieldList(Source, Encodable):
         Examples
         --------
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test.grib")
         >>> ds.get("parameter.variable")
         ['2t', 'msl']
         >>> ds.get(["parameter.variable", "parameter.units"])
@@ -324,7 +324,7 @@ class FieldList(Source, Encodable):
         Examples
         --------
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test.grib")
         >>> ds.metadata("param")
         ['2t', 'msl']
         >>> ds.metadata("param", "units")
@@ -559,7 +559,7 @@ class FieldList(Source, Encodable):
         Examples
         --------
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/tuv_pl.grib")
         >>> len(ds)
         18
 
@@ -640,7 +640,7 @@ class FieldList(Source, Encodable):
         is ``ascending``:
 
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test6.grib")
         >>> for f in ds.order_by("parameter.variable"):
         ...     print(f)
         ...
@@ -731,9 +731,9 @@ class FieldList(Source, Encodable):
 
         >>> import numpy as np
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/tuv_pl.grib")
         >>> ds.path
-        'docs/examples/tuv_pl.grib'
+        'docs/how-tos/tuv_pl.grib'
         >>> r = ds.to_fieldlist(array_namespace="numpy", dtype=np.float32)
         >>> r
         SimpleFieldList(fields=18)
