@@ -24,7 +24,7 @@ fixture.diff_color_words = False
 # See https://www.blog.pythonlibrary.org/2018/10/16/testing-jupyter-notebooks/
 
 
-EXAMPLES = earthkit_file("docs", "how-tos")
+EXAMPLES = earthkit_file("docs", "source", "how-tos")
 
 SKIP = [
     "ads.ipynb",

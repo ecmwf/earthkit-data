@@ -47,7 +47,7 @@ SKIP = [
     "migrated_new_grib_output_split.py",
 ]
 
-EXAMPLES = earthkit_file("docs")
+EXAMPLES = earthkit_file("docs", "source")
 
 
 def example_list():

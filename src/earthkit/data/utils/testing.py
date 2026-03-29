@@ -38,7 +38,7 @@ _NETWORK_PATCHER = patch("socket.socket", side_effect=OfflineError)
 
 _REMOTE_ROOT_URL = "https://sites.ecmwf.int/repository/earthkit-data/"
 _REMOTE_TEST_DATA_URL = "https://sites.ecmwf.int/repository/earthkit-data/test-data/"
-_REMOTE_EXAMPLES_URL = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/"
+_REMOTE_EXAMPLES_URL = "https://sites.ecmwf.int/repository/earthkit-data/examples/"
 
 _ROOT_DIR = top = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 if not os.path.exists(os.path.join(_ROOT_DIR, "tests", "data")):
@@ -80,7 +80,7 @@ def earthkit_file(*args):
 
 
 def earthkit_examples_file(*args):
-    return os.path.join(_ROOT_DIR, "docs", "how-tos", *args)
+    return os.path.join(_ROOT_DIR, "docs", "source", "how-tos", *args)
 
 
 def earthkit_test_data_file(*args):

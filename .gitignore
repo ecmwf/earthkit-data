@@ -209,17 +209,17 @@ instance/
 
 # Sphinx documentation
 docs/_build/
-docs/how-tos/*.tar
-docs/how-tos/*.zip
-docs/how-tos/_*
-docs/how-tos/earthkit_use_cases/*.grib
-docs/how-tos/*/_*
-docs/experimental/_*
-docs/experimental/*.grib*
-docs/experimental/*.pp*
-docs/experimental/*.png*
-docs/experimental/*.nc*
-docs/experimental/*.geojson*
+docs/source/how-tos/*.tar
+docs/source/how-tos/*.zip
+docs/source/how-tos/_*
+docs/source/how-tos/earthkit_use_cases/*.grib
+docs/source/how-tos/*/_*
+docs/source/experimental/_*
+docs/source/experimental/*.grib*
+docs/source/experimental/*.pp*
+docs/source/experimental/*.png*
+docs/source/experimental/*.nc*
+docs/source/experimental/*.geojson*
 
 autodocs/
 
