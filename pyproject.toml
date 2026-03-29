@@ -55,15 +55,24 @@ optional-dependencies.dev = [
   "earthkit-data[all,docs,test,geotiff,iris]"
 ]
 optional-dependencies.docs = [
+  "docutils",
+  "entrypoints",
+  "filelock",
+  "furo",
+  "ipykernel",
   "nbsphinx",
+  "pandas",
   "pygments>=2.6.1",
+  "setuptools",
   "sphinx>=7.3.7",
   "sphinx-autoapi",
   "sphinx-copybutton",
   "sphinx-design",
   "sphinx-issues",
   "sphinx-rtd-theme",
-  "sphinx-tabs"
+  "sphinx-tabs",
+  "tqdm",
+  "xarray"
 ]
 optional-dependencies.ecmwf-opendata = ["ecmwf-opendata>=0.3.3"]
 optional-dependencies.fdb = ["pyfdb>=0.1,<1.0"]

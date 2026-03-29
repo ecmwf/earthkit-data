@@ -1,6 +1,6 @@
 
-Concepts and Explanations
-===========================
+Concepts
+========
 
 .. toctree::
    :maxdepth: 2
