@@ -56,9 +56,9 @@ reference systems and bounding boxes.
 
       Practical recipes for common tasks.
 
-   .. grid-item-card:: Concepts and Explanations
+   .. grid-item-card:: Concepts
       :img-top: _static/bulb.svg
-      :link: explanations/index
+      :link: concepts/index
       :link-type: doc
       :class-card: sd-shadow-sm
 
@@ -81,7 +81,7 @@ reference systems and bounding boxes.
    getting-started
    tutorials/index
    how-tos/index
-   explanations/index
+   concepts/index
    api-reference
 
 .. toctree::
