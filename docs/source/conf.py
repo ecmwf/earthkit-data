@@ -82,17 +82,17 @@ extensions = [
     "sphinx_design",
 ]
 
-autodoc_inherit_docstrings = True # allow class methods to inherit docstrings from parent classes, so that if a method doesn't have its own docstring, it will use the one from the nearest parent class that has it. This helps avoid duplication and ensures that inherited methods are documented even if they don't have their own docstrings.
+autodoc_inherit_docstrings = True  # allow class methods to inherit docstrings from parent classes, so that if a method doesn't have its own docstring, it will use the one from the nearest parent class that has it. This helps avoid duplication and ensures that inherited methods are documented even if they don't have their own docstrings.
 autodoc_default_options = {
-    "members": True,           # include documented members of modules/classes/functions in the generated documentation
-    "imported-members": False, # don't include members imported from other modules, to avoid cluttering the docs with irrelevant items
-    "undoc-members": False,    # don't include members without docstrings, to encourage documenting all public API items
-    "show-inheritance": False, # don't show the class inheritance hierarchy, to reduce visual clutter; can be re-enabled for specific classes using the :show-inheritance: option in the docstring if desired
+    "members": True,            # include documented members of modules/classes/functions in the generated documentation
+    "imported-members": False,  # don't include members imported from other modules, to avoid cluttering the docs with irrelevant items
+    "undoc-members": False,     # don't include members without docstrings, to encourage documenting all public API items
+    "show-inheritance": False,  # don't show the class inheritance hierarchy, to reduce visual clutter; can be re-enabled for specific classes using the :show-inheritance: option in the docstring if desired
 }
 
-autosummary_generate = True # enable autosummary to automatically generate summary tables for modules/classes/functions based on their docstrings, which provides a convenient overview of the API and helps users navigate the documentation more easily
-autosummary_generate_overwrite = False # don't overwrite existing autosummary files on each build, to avoid losing any manual edits or customizations made to those files; set to True if you want to regenerate all autosummary files from scratch on each build, which can be useful during initial documentation development but may not be desirable for ongoing maintenance
-autosummary_imported_members = False # don't include members imported from other modules in the autosummary tables, to keep the focus on the items defined in each module and avoid cluttering the summary with irrelevant items; set to True if you want to include imported members in the autosummary tables, which can be useful for providing a more comprehensive overview of the API but may make the tables more difficult to read
+autosummary_generate = True  # enable autosummary to automatically generate summary tables for modules/classes/functions based on their docstrings, which provides a convenient overview of the API and helps users navigate the documentation more easily
+autosummary_generate_overwrite = False  # don't overwrite existing autosummary files on each build, to avoid losing any manual edits or customizations made to those files; set to True if you want to regenerate all autosummary files from scratch on each build, which can be useful during initial documentation development but may not be desirable for ongoing maintenance
+autosummary_imported_members = False  # don't include members imported from other modules in the autosummary tables, to keep the focus on the items defined in each module and avoid cluttering the summary with irrelevant items; set to True if you want to include imported members in the autosummary tables, which can be useful for providing a more comprehensive overview of the API but may make the tables more difficult to read
 
 # GitHub links configuration
 extlinks = {
@@ -122,11 +122,11 @@ templates_path = ["_templates"]
 
 # clean_autodocs.py feature flags
 # Set to False/None to disable or soften the corresponding processing step.
-autodocs_delete_hidden = False        # delete RST files for private/hidden modules
-autodocs_replace_automodule = False    # replace automodule directives with autosummary tables
+autodocs_delete_hidden = True         # delete RST files for private/hidden modules
+autodocs_replace_automodule = False   # replace automodule directives with autosummary tables
 autodocs_short_display_names = True   # shorten toctree labels to the last module component
 autodocs_top_level_maxdepth = 4       # :maxdepth: on top-level page (None = keep sphinx-apidoc value)
-autodocs_rename_titles = True        # strip " package"/" module" from RST page headings
+autodocs_rename_titles = True         # strip " package"/" module" from RST page headings
 autodocs_top_level_title = "API Reference"  # top-level page heading (used when rename_titles=True)
 autodocs_titlesonly = True          # inject :titlesonly: into toctree directives
 autodocs_use_package_all_definition = False  # True: use __all__ for API members; False: inspect module for all public names
