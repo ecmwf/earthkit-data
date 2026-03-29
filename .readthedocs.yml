@@ -14,7 +14,7 @@ build:
     pre_build:
     - rm -rf _build
     - rm -rf docs/_build
-    - cd docs
+    - cd docs && make autodocs
     # You can also specify other tool versions:
     # nodejs: "19"
     # rust: "1.64"

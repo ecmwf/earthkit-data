@@ -208,20 +208,20 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
-docs/how-tos/*.tar
-docs/how-tos/*.zip
-docs/how-tos/_*
-docs/how-tos/earthkit_use_cases/*.grib
-docs/how-tos/*/_*
-docs/experimental/_*
-docs/experimental/*.grib*
-docs/experimental/*.pp*
-docs/experimental/*.png*
-docs/experimental/*.nc*
-docs/experimental/*.geojson*
-
+_build/
 autodocs/
+examples/*.tar
+examples/*.zip
+examples/_*
+examples/earthkit_use_cases/*.grib
+examples/*/_*
+experimental/_*
+experimental/*.grib*
+experimental/*.pp*
+experimental/*.png*
+experimental/*.nc*
+experimental/*.geojson*
+
 
 # PyBuilder
 .pybuilder/
