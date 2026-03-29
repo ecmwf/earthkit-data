@@ -11,8 +11,8 @@ To build the documentation locally, please install the Python dependencies first
 
 .. code-block:: shell
 
+    pip install ".[docs]"
     cd docs
-    pip install -r requirements.txt
 
 Then the documentation can be built by running the following command from the ``docs`` folder:
 
