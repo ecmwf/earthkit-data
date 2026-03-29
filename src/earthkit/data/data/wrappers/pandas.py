@@ -18,7 +18,7 @@ class PandasSeriesData(ObjectWrapperData):
 
     @property
     def available_types(self):
-        return [self._PANDAS, self._XARRAY, self._NUMPY]
+        return [self._PANDAS, self._XARRAY, self._NUMPY, self._FEATURELIST]
 
     def describe():
         pass
@@ -44,6 +44,11 @@ class PandasSeriesData(ObjectWrapperData):
         numpy.array
         """
         return self._data.to_numpy(**kwargs)
+
+    def to_featurelist(self, *args, **kwargs):
+        from earthkit.data.readers.pandas.featurelist import PandasList
+
+        return PandasList(self._data)
 
 
 class PandasDataFrameData(PandasSeriesData):

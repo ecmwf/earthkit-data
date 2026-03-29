@@ -46,7 +46,7 @@ Version 0.18.2
 Fixes
 ++++++++
 
-- Fixed issue when the ``time_dim_mode="valid_time"`` option in :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray` did not work correctly when converted a :ref:`data-sources-lod` FieldList to Xarray (:pr:`850`).
+- Fixed issue when the ``time_dim_mode="valid_time"`` option in :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray` did not work correctly when converted a :ref:`data-sources-lod` FieldList to Xarray (:pr:`850`).
 
 
 
@@ -79,7 +79,7 @@ with:
     - ``**kwargs`` : dict. Keyword arguments representing request parameters.
     - ``request`` : dict or list of dict. A single request dictionary or a list/tuple of request dictionaries.
 
-The logic applied to build the requests is described :doc:`here </guide/misc/request_args>`.
+The logic applied to build the requests is described :doc:`here </concepts/misc/request_args>`.
 
 This is implemented for the following sources: :ref:`data-sources-ads`, :ref:`data-sources-cds`, :ref:`data-sources-fdb`, :ref:`data-sources-mars`, :ref:`data-sources-eod`, :ref:`data-sources-polytope`, :ref:`data-sources-wekeo`, and :ref:`data-sources-wekeocds`.
 

@@ -9,8 +9,8 @@ What is a target?
 ------------------
 
 A :class:`Target` is a Python class in earthkit-data that can write/add data
-to a given location. There are several built-in :ref:`target <data-targets>`, the most
-common being the :ref:`file <data-targets-file>` target.
+to a given location. There are several built-in :ref:`target <targets>`, the most
+common being the :ref:`file <targets-file>` target.
 
 Adding a new target as a pip plugin
 -------------------------------------

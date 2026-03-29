@@ -13,8 +13,8 @@ from .source import SourceData
 class ZarrData(SourceData):
     """Data object representing Zarr data.
 
-    This object is generated when data is read via the :ref:`data-source-zarr`
-    source with :ref:`from_source() <data-source-zarr>`.
+    This object is generated when data is read via the :ref:`data-sources-zarr`
+    source with :ref:`from_source() <data-sources-zarr>`.
 
     The Zarr data can be converted to a FieldList or an Xarray dataset using the
     corresponding methods provided by this class:
@@ -72,9 +72,8 @@ class ZarrData(SourceData):
     def to_xarray(self, xarray_open_zarr_kwargs=None):
         """Convert into an Xarray dataset.
 
-                This method uses :py:func:`xarray.open_zarr` to read the Zarr data and convert it
-                into an Xarray dataset.
-        s
+        This method uses :py:func:`xarray.open_zarr` to read the Zarr data and convert it
+        into an Xarray dataset.
 
         Parameters
         ----------

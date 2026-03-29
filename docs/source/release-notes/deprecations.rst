@@ -12,7 +12,7 @@ Version 0.15.0
 The "ens" dimension role has been renamed to "number"
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The name of the ensemble member :ref:`dimension role <_xr_dim_roles>` changed to "number" from "ens" in the ``dim_roles`` option of :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray`. The old name is still available for backward compatibility but will be removed in a future release.
+The name of the ensemble member :ref:`dimension role <_xr_dim_roles>` changed to "number" from "ens" in the ``dim_roles`` option of :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray`. The old name is still available for backward compatibility but will be removed in a future release.
 
 .. list-table::
    :header-rows: 0
@@ -91,7 +91,7 @@ See details :ref:`here <deprecated-settings>`.
 Data object :func:`save` is deprecated
 ++++++++++++++++++++++++++++++++++++++++++++
 
-This functionality is replaced by the :ref:`targets <data-targets>`.
+This functionality is replaced by the :ref:`targets <targets>`.
 
 .. list-table::
    :header-rows: 0
@@ -112,7 +112,7 @@ This functionality is replaced by the :ref:`targets <data-targets>`.
 Data object :func:`write` is deprecated
 ++++++++++++++++++++++++++++++++++++++++++++
 
-This functionality is now replaced by the :ref:`targets <data-targets>`.
+This functionality is now replaced by the :ref:`targets <targets>`.
 
 .. list-table::
    :header-rows: 0
@@ -134,7 +134,7 @@ This functionality is now replaced by the :ref:`targets <data-targets>`.
 :func:`new_grib_output` is deprecated
 ++++++++++++++++++++++++++++++++++++++++++++
 
-:func:`new_grib_output` returns a new :py:class:`GribOutput` object. Its functionality is replaced by the :ref:`targets <data-targets>`.
+:func:`new_grib_output` returns a new :py:class:`GribOutput` object. Its functionality is replaced by the :ref:`targets <targets>`.
 
 .. warning::
 
@@ -172,7 +172,7 @@ The ``split_output=True`` option of  :func:`new_grib_output` is not supported by
 
 .. warning::
 
-    When using :func:`new_grib_output` the ``{param}`` pattern substitutes the value of the ``"param"`` ecCodes key from the GRIB header. However, with the :ref:`targets <data-targets>` the ``{param}`` pattern substitutes the value of the ``"shortName"`` key. This is to match the behaviour of ``Field.metadata("param")``, which always returns the value of the ``"shortName"``. If you still want to use the value of the ``"param"`` ecCodes key you need to use the ``{mars.param}`` pattern instead.
+    When using :func:`new_grib_output` the ``{param}`` pattern substitutes the value of the ``"param"`` ecCodes key from the GRIB header. However, with the :ref:`targets <targets>` the ``{param}`` pattern substitutes the value of the ``"shortName"`` key. This is to match the behaviour of ``Field.metadata("param")``, which always returns the value of the ``"shortName"``. If you still want to use the value of the ``"param"`` ecCodes key you need to use the ``{mars.param}`` pattern instead.
 
 
     .. code-block:: python
@@ -191,7 +191,7 @@ The ``split_output=True`` option of  :func:`new_grib_output` is not supported by
 :py:class:`GribOutput` is deprecated
 ++++++++++++++++++++++++++++++++++++++++++++
 
-Its functionality is replaced by the :ref:`targets <data-targets>` instead. For details see :ref:`migrating new_grib_output() <deprecated-new-grib-output>`.
+Its functionality is replaced by the :ref:`targets <targets>` instead. For details see :ref:`migrating new_grib_output() <deprecated-new-grib-output>`.
 
 
 .. _deprecated-new-grib-coder:
@@ -199,7 +199,7 @@ Its functionality is replaced by the :ref:`targets <data-targets>` instead. For 
 :func:`new_grib_coder` is deprecated
 ++++++++++++++++++++++++++++++++++++++++++++
 
-:func:`new_grib_coder` returns a new :py:class:`GribCoder` object. Its functionality is replaced by the :ref:`targets <data-targets>`.
+:func:`new_grib_coder` returns a new :py:class:`GribCoder` object. Its functionality is replaced by the :ref:`targets <targets>`.
 
 .. warning::
 

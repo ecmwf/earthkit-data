@@ -86,10 +86,10 @@ file
 
   Notebook examples:
 
-    - :ref:`/how-tos/file_target.ipynb`
-    - :ref:`/how-tos/grib_to_file_target.ipynb`
-    - :ref:`/how-tos/grib_to_file_pattern_target.ipynb`
-    - :ref:`/how-tos/grib_to_geotiff.ipynb`
+    - :ref:`/how-tos/target/file_target.ipynb`
+    - :ref:`/how-tos/target/grib_to_file_target.ipynb`
+    - :ref:`/how-tos/target/grib_to_file_pattern_target.ipynb`
+    - :ref:`/how-tos/target/grib_to_geotiff.ipynb`
 
 .. _targets-file-pattern:
 
@@ -189,14 +189,14 @@ zarr
   :param dict xarray_to_zarr_kwargs: the keyword arguments passed to the :py:func:`xarray.Dataset.to_zarr` function. As a bare minimum, the ``store`` keyword argument must be provided.
   :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
 
-  This target converts the data to an :ref:`xarray.Dataset <xarray-dataset>` and then writes it to a Zarr store using the :py:func:`xarray.Dataset.to_zarr` function. The conversion to an Xarray dataset is done by the :func:`to_xarray` function.
+  This target converts the data to an :py:class:`xarray.Dataset` and then writes it to a Zarr store using the :py:func:`xarray.Dataset.to_zarr` function. The conversion to an Xarray dataset is done by the :func:`to_xarray` function.
 
   Notebook examples:
 
     - :ref:`/how-tos/target/grib_to_zarr_target.ipynb`
 
 
-.. .. _data-targets-multio:
+.. .. _targets-multio:
 
 .. multio
 .. ------

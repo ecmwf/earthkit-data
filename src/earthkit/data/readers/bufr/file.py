@@ -41,7 +41,7 @@ BUFR_LS_KEYS = [
 
 class BUFRList(IndexFeatureListBase):
     r"""Represent a list of
-    :obj:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>`\ s.
+    :obj:`BUFRMessage <earthkit.data.readers.bufr.message.BUFRMessage>`\ s.
     """
 
     def __init__(self, *args, **kwargs):
@@ -181,15 +181,15 @@ class BUFRList(IndexFeatureListBase):
         ----------
         *args: tuple
             Positional arguments defining the metadata keys. Passed to
-            :obj:`BUFRMessage.metadata() <data.readers.bufr.bufr.BUFRMessage.metadata>`
+            :obj:`BUFRMessage.metadata() <earthkit.data.readers.bufr.message.BUFRMessage.metadata>`
         **kwargs: dict, optional
             Keyword arguments passed to
-            :obj:`BUFRMessage.metadata() <data.readers.bufr.bufr.BUFRMessage.metadata>`
+            :obj:`BUFRMessage.metadata() <earthkit.data.readers.bufr.message.BUFRMessage.metadata>`
 
         Returns
         -------
         list
-            List with one item per :obj:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage.metadata>`
+            List with one item per :obj:`BUFRMessage <earthkit.data.readers.bufr.message.BUFRMessage.metadata>`
 
         """
         result = []
@@ -203,7 +203,7 @@ class BUFRList(IndexFeatureListBase):
         Parameters
         ----------
         n: int, None
-            The number of :obj:`BUFRMEssage <data.readers.bufr.bufr.BUFRMessage>`\ s to be
+            The number of :obj:`BUFRMEssage <earthkit.data.readers.bufr.message.BUFRMessage>`\ s to be
             listed. ``None`` means all the messages, ``n > 0`` means messages from the front, while
             ``n < 0`` means messages from the back of the list.
         keys: list of str, dict, None
@@ -234,7 +234,7 @@ class BUFRList(IndexFeatureListBase):
         Returns
         -------
         Pandas DataFrame
-            DataFrame with one row per :obj:`BUFRMEssage <data.readers.bufr.bufr.BUFRMessage>`.
+            DataFrame with one row per :obj:`BUFRMEssage <earthkit.data.readers.bufr.message.BUFRMessage>`.
 
         Examples
         --------
@@ -267,7 +267,7 @@ class BUFRList(IndexFeatureListBase):
 
     def head(self, n=5, **kwargs):
         r"""Generate a list like summary of the first ``n``
-        :obj:`BUFRMEssage <data.readers.bufr.bufr.BUFRMessage>`\ s using a set of metadata keys.
+        :obj:`BUFRMEssage <earthkit.data.readers.bufr.message.BUFRMessage>`\ s using a set of metadata keys.
         Same as calling :obj:`ls` with ``n``.
 
         Parameters
@@ -301,7 +301,7 @@ class BUFRList(IndexFeatureListBase):
 
     def tail(self, n=5, **kwargs):
         r"""Generate a list like summary of the last ``n``
-        :obj:`BUFRMEssage <data.readers.bufr.bufr.BUFRMessage>`\ s using a set of metadata keys.
+        :obj:`BUFRMEssage <earthkit.data.readers.bufr.message.BUFRMessage>`\ s using a set of metadata keys.
         Same as calling :obj:`ls` with ``-n``.
 
         Parameters

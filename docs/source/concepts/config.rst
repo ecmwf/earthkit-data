@@ -20,7 +20,7 @@ See the following notebooks for examples:
 Accessing configuration options
 --------------------------------
 
-The earthkit-data configuration can be accessed using the python API:
+The earthkit-data configuration can be accessed using the Python API:
 
 .. literalinclude:: include/config-get.py
 

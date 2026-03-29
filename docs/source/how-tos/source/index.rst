@@ -26,4 +26,3 @@ Data sources
     polytope_feature.ipynb
     s3.ipynb
     wekeo.ipynb
-    gribjump.ipynb

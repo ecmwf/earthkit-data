@@ -9,6 +9,7 @@
 
 
 def concat(*args):
+    """Concatenate multiple data objects into a single one."""
     if len(args) == 0:
         raise ValueError("concat requires at least one argument")
 

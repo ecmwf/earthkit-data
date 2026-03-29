@@ -14,6 +14,21 @@ from earthkit.data.sources import Source
 
 
 def create_fieldlist(fields=None):
+    """Create a fieldlist object from the given fields.
+
+    Parameters
+    ----------
+    fields: iterable, :class:`~earthkit.data.core.field.Field`, None
+        Iterable of :class:`~earthkit.data.core.field.Field` objects. When it is None or empty,
+        an empty fieldlist is returned.
+
+    Returns
+    -------
+    :class:`~earthkit.data.core.fieldlist.FieldList`
+        A fieldlist object containing the given fields.
+
+
+    """
     from earthkit.data.indexing.empty import EmptyFieldList
     from earthkit.data.indexing.simple import SimpleFieldList
 
@@ -57,7 +72,7 @@ class FieldList(Source, Encodable):
     @abstractmethod
     def values(self):
         """array-like: Get all the fields' values as a 2D array. It is formed as the array of
-        :obj:`Field.values <data.core.field.Field.values>` per field.
+        :obj:`Field.values <earthkit.data.core.field.Field.values>` per field.
 
         See Also
         --------
@@ -83,12 +98,12 @@ class FieldList(Source, Encodable):
     def to_numpy(self, **kwargs):
         r"""Return all the fields' values as an array.
 
-        It is formed as the array of the :obj:`data.core.field.Field.to_array` values per field.
+        It is formed as the array of the :obj:`earthkit.data.core.field.Field.to_array` values per field.
 
         Parameters
         ----------
         **kwargs: dict, optional
-            Keyword arguments passed to :obj:`data.core.field.Field.to_array`
+            Keyword arguments passed to :obj:`earthkit.data.core.field.Field.to_array`
 
         Returns
         -------
@@ -97,7 +112,7 @@ class FieldList(Source, Encodable):
 
         See Also
         --------
-        :obj:`data.core.field.Field.to_array`
+        :obj:`earthkit.data.core.field.Field.to_array`
         values
         to_numpy
         """
@@ -107,12 +122,12 @@ class FieldList(Source, Encodable):
     def to_array(self, **kwargs):
         r"""Return all the fields' values as an array.
 
-        It is formed as the array of the :obj:`data.core.field.Field.to_array` values per field.
+        It is formed as the array of the :obj:`earthkit.data.core.field.Field.to_array` values per field.
 
         Parameters
         ----------
         **kwargs: dict, optional
-            Keyword arguments passed to :obj:`data.core.field.Field.to_array`
+            Keyword arguments passed to :obj:`earthkit.data.core.field.Field.to_array`
 
         Returns
         -------
@@ -121,7 +136,7 @@ class FieldList(Source, Encodable):
 
         See Also
         --------
-        :obj:`data.core.field.Field.to_array`
+        :obj:`earthkit.data.core.field.Field.to_array`
         values
         to_numpy
         """
@@ -311,15 +326,15 @@ class FieldList(Source, Encodable):
         ----------
         *args: tuple
             Positional arguments defining the metadata keys. Passed to
-            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+            :obj:`Field.metadata() <earthkit.data.core.field.Field.metadata>`
         **kwargs: dict, optional
             Keyword arguments passed to
-            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+            :obj:`Field.metadata() <earthkit.data.core.field.Field.metadata>`
 
         Returns
         -------
         list
-            List with one item per :obj:`GribField <data.readers.grib.codes.GribField>`
+            List with one item per :obj:`Field <earthkit.data.core.field.Field>`
 
         Examples
         --------
@@ -342,10 +357,10 @@ class FieldList(Source, Encodable):
         ----------
         *args: tuple
             Positional arguments defining the metadata keys and values. Passed to
-            :obj:`GribField.set_metadata() <data.readers.grib.codes.GribField.set_metadata>`
+            :obj:`Field.set_metadata() <earthkit.data.core.field.Field.set_metadata>`
         **kwargs: dict, optional
             Keyword arguments passed to
-            :obj:`GribField.set_metadata() <data.readers.grib.codes.GribField.set_metadata>`
+            :obj:`Field.set_metadata() <earthkit.data.core.field.Field.set_metadata>`
         """
         pass
 

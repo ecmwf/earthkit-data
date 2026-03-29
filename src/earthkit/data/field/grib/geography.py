@@ -92,7 +92,7 @@ class GribGeography(BaseGeography):
 
         Returns
         -------
-        :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
+        :obj:`BoundingBox <earthkit.data.utils.bbox.BoundingBox>`
         """
         from earthkit.data.utils.bbox import BoundingBox
 

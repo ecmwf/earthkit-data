@@ -282,7 +282,7 @@ class BaseGeography(SimpleFieldComponent):
     @mark_get_key
     @abstractmethod
     def bounding_box(self):
-        """:obj:`BoundingBox <data.utils.bbox.BoundingBox>`: Return the bounding box."""
+        """:obj:`BoundingBox <earthkit.data.utils.bbox.BoundingBox>`: Return the bounding box."""
         pass
 
     @mark_get_key

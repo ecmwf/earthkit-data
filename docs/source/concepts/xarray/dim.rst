@@ -3,7 +3,7 @@
 Dimensions
 ==================
 
-One of the most important aspect of the :ref:`Xarray engine <xr_engine>` is how it generates dimensions in the Xarray dataset with :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray`.
+One of the most important aspect of the :ref:`Xarray engine <xr_engine>` is how it generates dimensions in the Xarray dataset with :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray`.
 
 .. _xr_dim_roles:
 .. _xr_predefined_dims:
@@ -191,7 +191,7 @@ Extra dimensions are handled in the same way as predefined dimensions: if an ext
 
 For a detailed discussion and examples, see the following notebook:
 
-- :ref:`/how-tos/xarray_engine_extra_dims.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_extra_dims.ipynb`
 
 
 Remapping

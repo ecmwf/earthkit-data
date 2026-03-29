@@ -39,7 +39,7 @@ Fixes
 +++++++++++++++++
 
 - Fixed issue when the :ref:`data-sources-file-pattern` source did not return the right data object when the ``hive_partitioning`` option was set to ``False`` (:pr:`697`).
-- Fixed issue when disabling the ``add_earthkit_attrs`` option in :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray` caused a crash (:pr:`696`).
+- Fixed issue when disabling the ``add_earthkit_attrs`` option in :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray` caused a crash (:pr:`696`).
 
 
 Version 0.14.1

@@ -68,7 +68,7 @@ Breaking xarray engine changes
         * longitude                (longitude) float64 288B 0.0 10.0 ... 340.0 350.0
 
 
-  The old behaviour can still be invoked by using the newly added ``dim_name_from_role_name=False`` option. See: :py:meth:`~earthkit.data.readers.grib.index.GribFieldList.to_xarray`.
+  The old behaviour can still be invoked by using the newly added ``dim_name_from_role_name=False`` option. See: :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray`.
 
 
 - The ``step`` dimension role is now mapped to the ``step_timedelta`` metadata key, which is the ``datetime.timedelta`` representation of the ``"endStep"`` GRIB/metadata key. Previously, this role was mapped to the ``"step"`` key. This change was necessary for the following reasons:

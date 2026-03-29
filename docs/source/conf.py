@@ -74,7 +74,7 @@ autodoc_typehints = "none"
 
 # autoapi configuration
 autoapi_dirs = ["../../src/earthkit"]
-autoapi_ignore = ["*/_version.py", "sphinxext/*"]
+autoapi_ignore = ["*/_version.py", "*/sphinxext/*"]
 autoapi_options = [
     "members",
     "undoc-members",

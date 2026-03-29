@@ -138,15 +138,15 @@ class FeatureList(Source, Encodable):
         ----------
         *args: tuple
             Positional arguments defining the metadata keys. Passed to
-            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+            :obj:`Field.metadata() <earthkit.data.core.field.Field.metadata>`
         **kwargs: dict, optional
             Keyword arguments passed to
-            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+            :obj:`Field.metadata() <earthkit.data.core.field.Field.metadata>`
 
         Returns
         -------
         list
-            List with one item per :obj:`GribField <data.readers.grib.codes.GribField>`
+            List with one item per :obj:`Field <earthkit.data.core.field.Field>`
 
         Examples
         --------

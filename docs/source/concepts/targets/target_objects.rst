@@ -69,7 +69,6 @@ create_target()
 
 Create a new target :py:class:`Target` object.
 
-
 .. py:function:: create_target(name, *args, **kwargs)
 
   Create a new target :py:class:`Target` object.

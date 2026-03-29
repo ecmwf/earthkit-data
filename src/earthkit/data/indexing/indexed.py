@@ -17,9 +17,11 @@ from earthkit.data.core.index import Index, MaskIndex, MultiIndex
 from earthkit.data.core.order import build_remapping
 from earthkit.data.utils.compute import wrap_maths
 
+from .xarray import XarrayMixIn
+
 
 @wrap_maths
-class IndexFieldListBase(Index, FieldList):
+class IndexFieldListBase(XarrayMixIn, Index, FieldList):
     # @staticmethod
     # def from_fields(fields):
     #     r"""Create a :class:`SimpleFieldList`.
