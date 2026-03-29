@@ -1,9 +1,12 @@
 # Per-module member skip list for autosummary tables (used by clean_autodocs.py).
 # Keys are fully-qualified module names; values are lists of names to exclude.
 skip_members:
-  # earthkit.data.core.field:
-  #   - DATA
-  #   - METADATA
+  # Skip ArrayLike type alias from API docs
+  # (replaces the old autoapi-skip-member rule in skip_api_rules.py)
+  earthkit.data.data:
+    - ArrayLike
+  earthkit.data.data.grib:
+    - ArrayLike
 
 # Per-class method skip list for autodoc (applied at Sphinx build time).
 # Keys are fully-qualified class names; values are lists of method/attribute
