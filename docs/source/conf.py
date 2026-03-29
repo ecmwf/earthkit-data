@@ -31,9 +31,10 @@ else:
     source_branch = "main"
 
 
-sys.path.insert(0, os.path.abspath("../src"))
+sys.path.insert(0, os.path.abspath("../../src"))
 sys.path.insert(0, os.path.abspath("./"))
 sys.path.insert(0, os.path.abspath("../"))
+sys.path.insert(0, os.path.abspath("../../"))
 
 # -- Project information -----------------------------------------------------
 
@@ -72,7 +73,7 @@ extensions = [
 autodoc_typehints = "none"
 
 # autoapi configuration
-autoapi_dirs = ["../src/earthkit"]
+autoapi_dirs = ["../../src/earthkit"]
 autoapi_ignore = ["*/_version.py", "sphinxext/*"]
 autoapi_options = [
     "members",
