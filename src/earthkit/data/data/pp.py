@@ -40,7 +40,15 @@ class PPData(SourceData):
         :py:class:`earthkit.data.utils.summary.DataDescriber`
             A DataDescriber object containing a description of the PP data.
         """
-        pass
+        from earthkit.data.utils.summary import DataDescriber
+
+        return DataDescriber(title="PP file", path=self._reader.path, types=self.available_types)
+
+    def __repr__(self) -> str:
+        return f"PPData(path={self._reader.path})"
+
+    def _repr_html_(self) -> str:
+        return self.describe()._repr_html_()
 
     def to_fieldlist(self, **kwargs):
         """Convert into a FieldList.

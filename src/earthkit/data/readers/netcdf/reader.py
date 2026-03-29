@@ -39,7 +39,13 @@ class NetCDFReader(Source, NetCDFReaderBase):
         return self.to_xarray().to_pandas()
 
     def to_xarray(self, **kwargs):
-        return type(self).to_xarray_multi_from_paths([self.path], **kwargs)
+        return type(self).to_xarray_single_from_path(self.path, **kwargs)
+        # if isinstance(self.path, str):
+        #     return type(self).to_xarray_single_from_path(self.path, **kwargs)
+
+        #     return NetCDFReader.to_xarray_multi_from_paths([self.path], **kwargs)
+
+        # return type(self).to_xarray_multi_from_paths([self.path], **kwargs)
 
     @classmethod
     def to_xarray_multi_from_paths(cls, paths, **kwargs):
@@ -55,6 +61,26 @@ class NetCDFReader(Source, NetCDFReaderBase):
 
         return xr.open_mfdataset(
             paths,
+            **options,
+        )
+
+    @classmethod
+    def to_xarray_single_from_path(cls, path, **kwargs):
+        import xarray as xr
+
+        if not isinstance(path, str):
+            raise ValueError("path must be a string")
+
+        if "xarray_open_mfdataset_kwargs" in kwargs:
+            raise ValueError("xarray_open_mfdataset_kwargs is not supported for single file")
+
+        options = dict()
+        options.update(kwargs.get("xarray_open_dataset_kwargs", {}))
+        if not options:
+            options = dict(**kwargs)
+
+        return xr.open_dataset(
+            path,
             **options,
         )
 
@@ -96,7 +122,7 @@ class NetCDFUrlReader(NetCDFReader):
     def __init__(self, source, url):
         self._ori_source = source
         self.url = url
-        super().__init__(source, "")
+        super().__init__(source, url)
 
     def to_fieldlist(self, *args, **kwargs):
         """Convert into a field list."""

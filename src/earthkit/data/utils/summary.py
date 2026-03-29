@@ -444,11 +444,15 @@ def make_data_repr_html(title=None, path=None, types=None):
     from earthkit.data.utils.html import table_from_dict
     from earthkit.data.utils.humanize import bytes
 
-    t = f"<p><b>{title}</b></br>"
-    if path is not None:
-        t += f"<b>Path</b>: {path} <b>size</b>: {bytes(os.path.getsize(path))}</br>"
+    # t = f"<p><b>{title}</b></br>"
+    # if path is not None and path != "":
+    #     t += f"<b>Path</b>: {path}"
+    #     try:
+    #         t += f" <b>size</b>: {bytes(os.path.getsize(path))}"
+    #     except Exception:
+    #         t += "</br>"
 
-    t += f"<b>Available types</b>: {', '.join(types)}</p>"
+    # t += f"<b>Available types</b>: {', '.join(types)}</p>"
 
     d = dict()
     if path is not None:
