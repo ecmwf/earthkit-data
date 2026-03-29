@@ -83,11 +83,13 @@ extensions = [
 ]
 
 autodoc_inherit_docstrings = True  # allow class methods to inherit docstrings from parent classes, so that if a method doesn't have its own docstring, it will use the one from the nearest parent class that has it. This helps avoid duplication and ensures that inherited methods are documented even if they don't have their own docstrings.
+autodoc_member_order = "alphabetical"  # sort members alphabetically (this is the default, but set explicitly to match the old autoapi config)
 autodoc_default_options = {
     "members": True,            # include documented members of modules/classes/functions in the generated documentation
     "imported-members": False,  # don't include members imported from other modules, to avoid cluttering the docs with irrelevant items
-    "undoc-members": False,     # don't include members without docstrings, to encourage documenting all public API items
-    "show-inheritance": False,  # don't show the class inheritance hierarchy, to reduce visual clutter; can be re-enabled for specific classes using the :show-inheritance: option in the docstring if desired
+    "undoc-members": True,      # include members without docstrings, to ensure all public API items are visible
+    "show-inheritance": True,   # show the class inheritance hierarchy
+    "inherited-members": True,  # include members inherited from base classes
 }
 
 autosummary_generate = True  # enable autosummary to automatically generate summary tables for modules/classes/functions based on their docstrings, which provides a convenient overview of the API and helps users navigate the documentation more easily
