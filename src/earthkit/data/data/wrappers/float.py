@@ -18,7 +18,15 @@ class FloatData(ObjectWrapperData):
         return [self._NUMPY, self._ARRAY, "value"]
 
     def describe(self):
-        return f"Float data: {self._data}"
+        from earthkit.data.utils.summary import DataDescriber
+
+        return DataDescriber(title="Float value data", types=self.available_types)
+
+    def __repr__(self) -> str:
+        return "FloatData"
+
+    def _repr_html_(self):
+        return self.describe()._repr_html_()
 
     def to_numpy(self, copy=False, **kwargs):
         import numpy as np

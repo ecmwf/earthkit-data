@@ -20,7 +20,15 @@ class IntData(ObjectWrapperData):
         return [self._NUMPY, self._ARRAY, "value", "datetime", "datetime_list"]
 
     def describe(self):
-        return f"Integer data: {self._data}"
+        from earthkit.data.utils.summary import DataDescriber
+
+        return DataDescriber(title="Int value data", types=self.available_types)
+
+    def __repr__(self) -> str:
+        return "IntData"
+
+    def _repr_html_(self):
+        return self.describe()._repr_html_()
 
     def to_datetime(self):
         if self._data <= 0:
@@ -37,7 +45,7 @@ class IntData(ObjectWrapperData):
 
         return np.asarray(self._data)
 
-    def to_value(self):
+    def to_value(self) -> int:
         return self._data
 
 

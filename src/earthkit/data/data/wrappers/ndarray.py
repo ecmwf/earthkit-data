@@ -21,8 +21,16 @@ class NumpyNDArrayData(ObjectWrapperData):
     def available_types(self):
         return [self._NUMPY, self._ARRAY, self._XARRAY]
 
-    def describe():
-        pass
+    def describe(self):
+        from earthkit.data.utils.summary import DataDescriber
+
+        return DataDescriber(title="Numpy ndarray", types=self.available_types)
+
+    def __repr__(self) -> str:
+        return "NumpyNDArrayData"
+
+    def _repr_html_(self):
+        return self.describe()._repr_html_()
 
     def to_numpy(self, flatten=False, dtype=None, copy=True, index=None, **kwargs):
         """Return a numpy `ndarray` representation of the data.

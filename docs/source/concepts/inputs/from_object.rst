@@ -3,19 +3,17 @@
 from_object
 ===============
 
-.. warning::
-   This guide is currently under construction and may be incomplete or inaccurate.
+.. py:function:: from_object(obj, *args, **kwargs)
+
+  Return a :ref:`data object <data-object>` from the Python object ``obj``.
+
+  :param any obj: the input Python object to be converted into a earthkit data object
+  :param tuple *args: additional positional arguments
+  :param dict **kwargs: additional keyword arguments
 
 
-Getting data from a source
-----------------------------
+Examples:
 
-We can get data from a given source by using :func:`from_source`:
-
-.. py:function:: from_object(name, *args, **kwargs)
-
-  Return a :ref:`data object <data-object>` from the source specified by ``name`` .
-
-  :param str name: the source (see below)
-  :param tuple *args: specifies the data location and additional parameters to access the data
-  :param dict **kwargs: provides **additional functionalities** including caching, filtering, sorting and indexing
+    - :ref:`/how-tos/other/from_object.ipynb`
+    - :ref:`/how-tos/other/pandas.ipynb`
+    - :ref:`/how-tos/geojson/geojson_geopandas.ipynb`

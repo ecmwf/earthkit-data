@@ -20,8 +20,16 @@ class PandasSeriesData(ObjectWrapperData):
     def available_types(self):
         return [self._PANDAS, self._XARRAY, self._NUMPY, self._FEATURELIST]
 
-    def describe():
-        pass
+    def describe(self):
+        from earthkit.data.utils.summary import DataDescriber
+
+        return DataDescriber(title="Pandas Series data", types=self.available_types)
+
+    def __repr__(self) -> str:
+        return "PandasSeriesData"
+
+    def _repr_html_(self):
+        return self.describe()._repr_html_()
 
     def to_xarray(self, *args, **kwargs):
         return self._data.to_xarray(**kwargs)
@@ -54,8 +62,16 @@ class PandasSeriesData(ObjectWrapperData):
 class PandasDataFrameData(PandasSeriesData):
     _TYPE_NAME = "pandas.DataFrame"
 
-    def describe():
-        pass
+    def describe(self):
+        from earthkit.data.utils.summary import DataDescriber
+
+        return DataDescriber(title="Pandas DataFrame data", types=self.available_types)
+
+    def __repr__(self) -> str:
+        return "PandasDataFrameData"
+
+    def _repr_html_(self):
+        return self.describe()._repr_html_()
 
     def to_pandas(self, *args, **kwargs):
         """Return a pandas `dataframe` representation of the data.
@@ -74,8 +90,16 @@ class GeoPandasDataFrameData(ObjectWrapperData):
     def available_types(self):
         return [self._GEOPANDAS, self._PANDAS, self._XARRAY]
 
-    def describe():
-        pass
+    def describe(self):
+        from earthkit.data.utils.summary import DataDescriber
+
+        return DataDescriber(title="GeoPandas DataFrame data", types=self.available_types)
+
+    def __repr__(self) -> str:
+        return "GeoPandasDataFrameData"
+
+    def _repr_html_(self):
+        return self.describe()._repr_html_()
 
     def to_xarray(self, *args, **kwargs):
         return self._data.to_xarray(**kwargs)

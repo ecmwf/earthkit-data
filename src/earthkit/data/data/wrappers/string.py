@@ -41,8 +41,16 @@ class StrData(ObjectWrapperData):
     def available_types(self):
         return ["value", "datetime", "datetime_list", "bounding_box"]
 
-    def describe():
-        pass
+    def describe(self):
+        from earthkit.data.utils.summary import DataDescriber
+
+        return DataDescriber(title="String data", types=self.available_types)
+
+    def __repr__(self) -> str:
+        return "StrData"
+
+    def _repr_html_(self):
+        return self.describe()._repr_html_()
 
     def bounding_box(self):
         if "/" in self.data:

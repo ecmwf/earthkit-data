@@ -10,6 +10,8 @@
 import json
 import logging
 
+from earthkit.utils.decorators import thread_safe_cached_property
+
 from earthkit.data.field.component.component import normalise_set_kwargs
 from earthkit.data.field.component.geography import BaseGeography, create_geography_from_dict
 from earthkit.data.utils.grid import ECKIT_GRID_SUPPORT
@@ -27,20 +29,8 @@ def missing_is_none(x):
 class GribGeography(BaseGeography):
     # If this class is used, it means that eckit-geo does not support the grid
     # so we need to fallback to the legacy grid handling in ecCodes
-    def __init__(self, handle, grid_spec=None):
+    def __init__(self, handle):
         self.handle = handle
-        self._grid_spec = grid_spec
-        if isinstance(grid_spec, str) and grid_spec != "":
-            try:
-                self._grid_spec = json.loads(grid_spec)
-                # from earthkit.data.utils.grid import Grid
-
-                # _grid = Grid(self._grid_spec)
-            except Exception:
-                self._grid_spec = None
-
-        if not isinstance(self._grid_spec, dict):
-            self._grid_spec = None
 
     def latitudes(self, dtype=None):
         return self.handle.get_latitudes(dtype=dtype).reshape(self.shape())
@@ -141,11 +131,33 @@ class GribGeography(BaseGeography):
         return self.handle.get("md5GridSection", default=None)
 
     def grid(self):
-        r"""Return the grid information as a dictionary."""
+        r"""Return the Grid object.
+
+        This feature is not yet implemented in earthkit-data, and this method currently returns None.
+        """
         return None
 
     def grid_spec(self):
-        return self._grid_spec
+        if ECKIT_GRID_SUPPORT.has_ecc_grid_spec and ECKIT_GRID_SUPPORT.has_grid:
+            return self._get_grid_spec_from_handle
+        else:
+            return None
+
+    @thread_safe_cached_property
+    def _get_grid_spec_from_handle(self):
+        if ECKIT_GRID_SUPPORT.has_ecc_grid_spec and ECKIT_GRID_SUPPORT.has_grid:
+            # Try to get the gridspec from the handle
+            grid_spec = self.handle.get("gridSpec", default=None)
+            if isinstance(grid_spec, str) and grid_spec != "":
+                try:
+                    grid_spec = json.loads(grid_spec)
+                except Exception:
+                    grid_spec = None
+
+            if not isinstance(grid_spec, dict):
+                grid_spec = None
+
+        return grid_spec
 
     def area(self):
         north = self.handle.get("latitudeOfFirstGridPointInDegrees")
@@ -187,19 +199,7 @@ class GribGeographyBuilder:
             component = SpectralGeography(shape=shape)
         # Gridded data
         else:
-            if ECKIT_GRID_SUPPORT.has_ecc_grid_spec and ECKIT_GRID_SUPPORT.has_grid:
-                # Try to get the gridspec from the handle
-                grid_spec = handle.get("gridSpec", default=None)
-                component = GribGeography(handle, grid_spec=grid_spec)
-
-                # if grid_spec is not None and grid_spec != "":
-                #     component = GridsSpecBasedGeography(grid_spec)
-                # else:
-                #     # fallback to non-eckit based geo support in ecCodes
-                #     component = GribGeography(handle)
-            else:
-                component = GribGeography(handle)
-
+            component = GribGeography(handle)
         return GeographyFieldComponentHandler.from_component(component)
 
 

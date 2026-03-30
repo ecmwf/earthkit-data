@@ -330,6 +330,13 @@ def test_grib_projection_mercator(fl_type):
             [80.0, 80.0, 80.0, 80.0],
             [0.0, 10.0, 20.0, 30.0],
         ),
+        (
+            "shifted_ll_subarea.grib",
+            (11, 19),
+            [73.0, 73.0, 73.0, 73.0],
+            [-27.0, -23.0, -19.0, -15.0],
+        ),
+        ("shifted_ll_3x3_subarea.grib", (19, 29), [79.0, 79.0, 79.0, 79.0], [-25.0, -22.0, -19.0, -16.0]),
     ],
 )
 def test_grib_latlon_various_grids(fl_type, filename, expected_shape, expected_lat, expected_lon):
@@ -382,6 +389,7 @@ def test_grib_eckit_grid_object(fl_type, filename, shape, grid_spec, area, grid_
     [
         (earthkit_examples_file("test.grib"), [70.0, -20.0, 35.0, 40.0]),
         (earthkit_test_data_file("shifted_ll_subarea.grib"), [73, -27, 33, 45]),
+        (earthkit_test_data_file("shifted_ll_3x3_subarea.grib"), [79, -25, 25, 59]),
         (
             earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"),
             [89.877, 36.233, 84.815, 46.185],
