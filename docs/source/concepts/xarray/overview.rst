@@ -113,7 +113,7 @@ It is possible to directly write the Xarray dataset created with the earthkit en
 Using to_fieldlist()
 ++++++++++++++++++++
 
-We can also convert the Xarray dataset into a GRIB fieldlist by using :py:meth:`~data.xr_engine.engine.XarrayEarthkit.to_fieldlist` on the ``earthkit`` accessor of the Xarray object. Please note that this will generate a fieldlist entirely stored in memory. This method only works if the Xarray dataset was generated with the earthkit engine from GRIB data.\
+We can also convert the Xarray dataset into a GRIB fieldlist by using :py:meth:`~earthkit.data.xr_engine.engine.XarrayEarthkit.to_fieldlist` on the ``earthkit`` accessor of the Xarray object. Please note that this will generate a fieldlist entirely stored in memory. This method only works if the Xarray dataset was generated with the earthkit engine from GRIB data.\
 
 .. code-block:: python
 
@@ -141,7 +141,7 @@ For further details see the following notebook:
 Converting GRIB to NetCDF
 ----------------------------
 
-To convert GRIB data to NetCDF first we need to convert GRIB to Xarray with :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray` then generate NetCDF from it with :py:meth:`xarray.Dataset.to_netcdf`. We have 3 options to do this:
+To convert GRIB data to NetCDF first we need to convert GRIB to Xarray with :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray` then generate NetCDF from it with :py:func:`xarray.Dataset.to_netcdf`. We have 3 options to do this:
 
 Using the earthkit accessor
 ++++++++++++++++++++++++++++

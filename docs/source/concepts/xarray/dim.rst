@@ -15,74 +15,63 @@ Predefined dimensions and dimension roles
 By default, the following predefined dimensions are generated, in the following order:
 
 - ensemble forecast member dimension
-- temporal dimensions (controlled by ``time_dim_mode``)
-- vertical dimensions (controlled by ``level_dim_mode``)
+- temporal dimensions, controlled by ``time_dim_mode``  (see details :ref:`here <xr_time_dim_modes>`)
+- vertical dimensions, controlled by ``level_dim_mode`` (see details :ref:`here <xr_level_dim_modes>`)
 
-The predefined dimensions are based on the ``dim_roles``, which is a mapping between the "roles" and the metadata keys.
-The possible roles are as follows:
+The predefined dimensions are based on the ``dim_roles``, which is a mapping between the "roles" and the metadata keys. This mapping is defined for each :ref:`profile <xr_profile>` and can be customised by the user. The possible roles are as follows:
 
 .. list-table:: Default dimension roles
    :header-rows: 1
 
    * - Dimension role
      - Description
-     - Key (profile: :ref:`earthkit <xr_profile_earthkit>`)
-     - Key (profile: :ref:`mars <xr_profile_mars>`)
-     - Key (profile: :ref:`grib <xr_profile_grib>`)
-   * - ``"member"``
-     - metadata key interpreted as ensemble forecast members
-     - ``"ensemble.member"``
-     - ``"metadata.number"``
-     - ``"metadata.number"``
-   * - ``"date"``
-     - metadata key interpreted as date part of the ``"forecast_reference_time"``
-     - ``"date"``
-     - ``"date"``
-   * - ``"time"``
-     - metadata key interpreted as time part of the ``"forecast_reference_time"``
-     - ``"time"``
-     - ``"time"``
-   * - ``"step"``
-     - metadata key interpreted as forecast step
-     - ``"time.step"``
-     - ``"metadata.step_timedelta"``
-     - ``"metadata.step_timedelta"``
-   * - ``"forecast_reference_time"``
-     - if not specified or ``None`` or empty the forecast reference time is built using the ``"date"`` and ``"time"`` roles
-     - ``time.forecast_reference_time`` (built from ``date`` and ``time``)
-     - ``None``
-     - ``None``
-   * - ``"valid_time"``
-     - if not specified or ``None`` or empty the valid time is built using the ``"validityDate"`` and ``"validityTime"`` metadata keys
-     - ``"time.valid_datetime"``
-     - ``None``
-     - ``None``
-   * - ``"level"``
-     - metadata key interpreted as level
-     - ``"vertical.level"``
-     - ``"levelist"``
-     - ``"level"``
-   * - ``"level_type"``
-     - metadata key interpreted as level type
-     - ``"vertical.level_type"``
-     - ``"levtype"``
-     - ``"typeOfLevel"``
+     - Metadata key (in default profile: :ref:`earthkit <xr_profile_earthkit>`)
+   * - "member"
+     - Ensemble forecast member
+     - "ensemble.member"
+   * - "date"
+     - Date part of the ``"forecast_reference_time"``. This dimension is used when ``time_dim_mode="raw"``. When None, it is generated from the date part of ``forecast_reference_time``.
+     - None
+   * - "time"
+     - Time part of the ``"forecast_reference_time"``. This dimension is used when ``time_dim_mode="raw"``. When None, it is generated from the time part of ``forecast_reference_time``.
+     - None
+   * - "step"
+     - Forecast step
+     - "time.step"
+   * - "forecast_reference_time"
+     -  Forecast reference time (base datetime). Can be a single  metadata key, or a list/tuple of two metadata keys representing the "date" and "time" parts of the forecast reference time. Alternatively, it can be a dict with "date" and "time" keys specifying the corresponding metadata keys. Used when ``time_dim_mode="forecast"``.
+     - "time.forecast_reference_time"
+   * - "valid_time"
+     - Valid datetime. Used when ``time_dim_mode="valid_time"`` or ``add_valid_time_coord=True``.
+     - "time.valid_datetime"
+   * - "level"
+     - Level
+     - "vertical.level"
+   * - "level_type"
+     - Level type
+     - "vertical.level_type"
 
 By default, the dimension names are the same as the role names. To use the associated metadata keys instead use the ``dim_name_from_role_name=False`` option.
 
-.. note::
+.. .. note::
 
-    For GRIB data, ``"step_timedelta"`` is a generated metadata key (by earthkit-data), which is the representation of the value of the ``"endStep"`` key as a ``datetime.timedelta``.
+..     For GRIB data, ``"step_timedelta"`` is a generated metadata key (by earthkit-data), which is the representation of the value of the ``"endStep"`` key as a ``datetime.timedelta``.
 
 
-Dimension modes
-----------------------
+.. _xr_ensemble_member_dim:
 
-The ensemble forecast member dimension is a single dimension named ``"number"`` by default, unless ``dim_roles`` defines it differently or ``dim_name_from_role_name=False``.
+Ensemble member dimension
+----------------------------
 
-The case of temporal and vertical dimensions is more involved. Both type of dimensions can be generated in multiple ways, and can be represented
-by multiple individual dimensions in an Xarray dataset.
-The ``time_dim_mode`` and ``level_dim_mode`` options control what temporal and vertical dimensions are generated in the Xarray dataset,
+The ensemble member dimension is a single dimension named ``"member"`` by default, unless ``dim_roles`` defines it differently or ``dim_name_from_role_name=False``.
+
+.. _xr_time_dim_modes:
+
+Temporal dimension modes
+--------------------------------------
+
+The temporal dimensions can be generated in multiple ways, and can be represented by multiple individual dimensions in an Xarray dataset.
+The ``time_dim_mode`` option controls what temporal dimensions are generated in the Xarray dataset,
 while ``dim_roles`` (together with ``dim_name_from_role_name``) controls their names and the way their coordinates are formed.
 
 
@@ -90,44 +79,53 @@ while ``dim_roles`` (together with ``dim_name_from_role_name``) controls their n
    :header-rows: 1
 
    * - ``time_dim_mode``
-     - Dimensions
-   * - ``"forecast"`` (default)
-     - ``"forecast_reference_time"``, ``"step"``
-   * - ``"valid_time"``
-     - ``"valid_time"``
-   * - ``"raw"``
-     - ``"date"``, ``"time"``, ``"step"``
+     - Dimensions generated
+   * - "forecast" (default)
+     - "forecast_reference_time", "step"
+   * - "valid_time"
+     - "valid_time"
+   * - "raw"
+     - "date", "time", "step"
 
 
 The following examples demonstrate the temporal dimensions modes:
 
 - :ref:`/how-tos/xr_engine/xarray_engine_temporal.ipynb`
-
 - :ref:`/how-tos/xr_engine/xarray_engine_seasonal.ipynb`
+
+
+.. _xr_level_dim_modes:
+
+Vertical dimension modes
+--------------------------------------
+
+The vertical dimensions can be generated in multiple ways, and can be represented by multiple individual dimensions in an Xarray dataset.
+The ``level_dim_mode`` option controls what vertical dimensions are generated in the Xarray dataset,
+while ``dim_roles`` (together with ``dim_name_from_role_name``) controls their names and the way their coordinates are formed.
 
 
 .. list-table:: Vertical dimensions modes
    :header-rows: 1
 
    * - ``level_dim_mode``
-     - Dimensions
+     - Dimensions generated
      - Remarks
-   * - ``"level"`` (default)
-     - ``"level"``, ``"level_type"``
-     - The ``"level_type"`` dimension usually has size 1, so it is squeezed by default.
-   * - ``"level_per_type"``
-     - ``"<level_per_type>"``
+   * - "level" (default)
+     - "level", "level_type"
+     - The "level_type" dimension usually has size 1, so it is squeezed by default.
+   * - "level_per_type"
+     - "<level_per_type>"
      - Uses a template dimension that is materialised in the Xarray dataset
        under the name given by the value of the metadata key referenced by
-       ``dim_roles["level_type"]`` (for example ``"surface"``,
-       ``"meanSea"``, ``"isobaricInhPa"``, ``"hybrid"``).
-   * - ``"level_and_type"``
-     - ``"level_and_type"``
+       "dim_roles["level_type"]" (for example "surface",
+       "mean_sea", "pressure", "hybrid").
+   * - "level_and_type"
+     - "level_and_type"
      - Creates a single dimension whose coordinates are formed by
        concatenating the values of the metadata keys
-       ``dim_roles["level"]`` and ``dim_roles["level_type"]``
-       (for example ``"850isobaricInhPa"``, ``"137hybrid"``,
-       ``"0surface"``).
+       "dim_roles["level"]" and "dim_roles["level_type"]"
+       (for example "850pressure", "137hybrid",
+       "0surface").
 
 
 The following example demonstrates the vertical dimensions modes:
@@ -142,9 +140,7 @@ Squeezing/ensuring dimensions
 ----------------------------------
 
 By default, the dimensions are squeezed. This means that if a dimension has only one value, it is removed from the dataset.
-This can be controlled with the ``squeeze`` option.
-Alternatively, the ``ensure_dims`` option can be used to ensure that certain dimensions are always present in the dataset,
-even if they have only one value. This is useful when you want to keep the dimensions for consistency or for further processing.
+This can be controlled with the ``squeeze`` option. Alternatively, the ``ensure_dims`` option can be used to ensure that certain dimensions are always present in the dataset, even if they have only one value. This is useful when you want to keep the dimensions for consistency or for further processing.
 
 See the following notebook for examples of how this works:
 
@@ -160,8 +156,8 @@ Size-1 dimensions as variable attributes
 As an alternative to squeezing, a size-1 dimension can be converted into
 a variable attribute using the ``dims_as_attrs`` option. This is
 particularly useful when working with single-level variables defined on
-different vertical levels (for example, ``"heightAboveGround": 2`` or
-``"meanSea": 0``).
+different vertical levels (for example,
+``"mean_sea": 0``).
 
 Like ``squeeze=True``, this approach avoids issues caused by incompatible
 coordinates on size-1 dimensions. In addition, it preserves the

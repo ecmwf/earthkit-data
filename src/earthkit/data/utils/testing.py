@@ -103,7 +103,7 @@ def modules_installed(*modules):
     for module in modules:
         try:
             import_module(module)
-        except (ImportError, RuntimeError, SyntaxError):
+        except (ImportError, RuntimeError, SyntaxError, OSError):
             return False
     return True
 

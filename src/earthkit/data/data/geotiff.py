@@ -65,6 +65,7 @@ class GeoTIFFData(SourceData):
     def to_fieldlist(self):
         """Convert into a FieldList.
 
+        Returns
         -------
         :py:class:`earthkit.data.readers.geotiff.fieldlist.GeoTIFFFieldList`
             A FieldList containing the GeoTIFF data.
