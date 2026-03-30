@@ -57,7 +57,7 @@ def component_keys(cls):
     return cls
 
 
-def normalise_create_kwargs(cls, data, allowed_keys=None, allow_unused=False, remove_nones=True):
+def _normalise_create_kwargs(cls, data, allowed_keys=None, allow_unused=False, remove_nones=True):
     _kwargs = {}
     for k_in, v in data.items():
         k = cls._ALIASES.get(k_in, k_in)
@@ -74,7 +74,7 @@ def normalise_create_kwargs(cls, data, allowed_keys=None, allow_unused=False, re
     return _kwargs
 
 
-def normalise_set_kwargs(cls, *args, allowed_keys=None, remove_nones=True, **kwargs):
+def _normalise_set_kwargs(cls, *args, allowed_keys=None, remove_nones=True, **kwargs):
     kwargs = kwargs.copy()
 
     for a in args:
@@ -186,7 +186,7 @@ class FieldComponent(metaclass=ABCMeta):
     @abstractmethod
     def set(self, *args, **kwargs) -> "FieldComponent":
         """
-        Create a new FieldComponent instance with updated data.
+        Create a new instance with updated data.
 
         Parameters
         ----------
@@ -197,8 +197,8 @@ class FieldComponent(metaclass=ABCMeta):
 
         Returns
         -------
-        Spec
-            The created Spec instance.
+        FieldComponent
+            The created FieldComponent instance.
 
         Raises
         ------
@@ -252,10 +252,33 @@ class SimpleFieldComponent(FieldComponent):
         return default
 
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
+        """Return the value for the specified key.
+
+        Parameters
+        ----------
+        key : str
+            The key to retrieve.
+        default : Any, optional
+            The default value to return if the key is not found. Default is None.
+        astype : type, optional
+            The type to which the value should be cast. Default is None.
+        raise_on_missing : bool, optional
+            If True, raise a KeyError if the key is not found. Default is False.
+
+        Returns
+        -------
+        Any
+            The value for the specified key.
+
+        Raises
+        ------
+        KeyError
+            If ``raise_on_missing`` is True and the key is not found.
+        """
         return self._get_single(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
 
     @classmethod
-    def normalise_create_kwargs(cls, data, allowed_keys=None, remove_nones=False):
+    def _normalise_create_kwargs(cls, data, allowed_keys=None, remove_nones=False):
         _kwargs = {}
         for k_in, v in data.items():
             k = cls._ALIASES.get(k_in, k_in)
@@ -268,7 +291,7 @@ class SimpleFieldComponent(FieldComponent):
         return _kwargs
 
     @classmethod
-    def normalise_set_kwargs(cls, *args, allowed_keys=None, **kwargs):
+    def _normalise_set_kwargs(cls, *args, allowed_keys=None, **kwargs):
         kwargs = kwargs.copy()
 
         for a in args:

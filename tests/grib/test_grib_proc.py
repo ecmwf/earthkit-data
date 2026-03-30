@@ -26,7 +26,7 @@ def test_grib_proc_analysis():
     assert f.time.step() == datetime.timedelta(0)
     assert f.time.valid_datetime() == datetime.datetime(2016, 9, 25)
 
-    assert isinstance(f.proc.items, list)
+    assert isinstance(f.proc.items(), list)
     t = f.proc.time()
     assert t.value == datetime.timedelta(0)
     assert t.method == "instant"
@@ -47,7 +47,7 @@ def test_grib_proc_step_range_1():
     assert t.value == datetime.timedelta(hours=6)
     assert t.method == "max"
 
-    t = f.proc.items[0]
+    t = f.proc.items()[0]
     assert t.value == datetime.timedelta(hours=6)
     assert t.method == "max"
 

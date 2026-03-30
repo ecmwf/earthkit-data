@@ -95,7 +95,7 @@ class DataFieldComponentHandler(BaseDataFieldComponentHandler):
         """Create DataFieldComponentHandler from a dictionary."""
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
-        # d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
+        # d = _normalise_set_kwargs(cls, add_spec_keys=False, **d)
         if "values" in d:
             v = d["values"]
             return ArrayDataFieldComponentHandler(v)

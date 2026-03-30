@@ -15,3 +15,4 @@ Concepts
    xarray/index.rst
    plugins/index.rst
    misc/index.rst
+   field

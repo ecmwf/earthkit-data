@@ -111,46 +111,34 @@ _COMPONENT_MAKER = _ComponentMaker()
 class Field(Base):
     """A class to represent a field in Earthkit.
 
-    A field in Earthkit is a horizontal slice of the atmosphere/hydrosphere at
-    a given time.
+    A Field is a horizontal slice of the atmosphere/hydrosphere a given time.
 
     A Field object is composed of several components:
 
     - data: the data values of the field
-    - time: the time of the field
-    - parameter: the parameter of the field
-    - geography: the geography of the field
-    - vertical: the vertical level of the field
-    - ensemble: the ensemble specification of the field
-    - proc: the processing specification of the field
-    - labels: the labels of the field
+    - time: the temporal structure of the field (see
+      :py:class:`~earthkit.data.field.component.time.TimeBase`)
+    - parameter: the parameter of the field (see:
+      :py:class:`~earthkit.data.field.component.parameter.ParameterBase`)
+    - geography: the geography of the field (see:
+      :py:class:`~earthkit.data.field.component.geography.GeographyBase`)
+    - vertical: the vertical structure of the field (see:
+      :py:class:`~earthkit.data.field.component.vertical.VerticalBase`)
+    - ensemble: the ensemble component of the field (see:
+      :py:class:`~earthkit.data.field.component.ensemble.EnsembleBase`)
+    - proc: the processing component of the field (see:
+      :py:class:`~earthkit.data.field.component.proc.ProcBase`)
+    - labels: the labels of the field (see:
+      :py:class:`~earthkit.data.field.handler.labels.SimpleLabels`)
 
-    Field is not polymorphic, but its components are.
+    Field is not polymorphic, but its components are. The components are meant to be format
+    independent, but they can have format specific implementations. For example, the geography
+    component of a GRIB field can have a different implementation than the geography component of a
+    NetCDF field.
 
-    To create a new Field object use the factory methods such as :meth:`from_dict`
+    To create a new Field object use the factory methods: :meth:`from_dict`, :meth:`from_field`
     or :meth:`from_components`.
 
-    Parameters
-    ----------
-    data : DataFieldComponent
-        The data of the field.
-    time : TimeFieldComponent
-        The time of the field.
-    parameter : ParameterFieldComponent
-        The parameter of the field.
-    geography : GeographyFieldComponent
-        The geography of the field.
-    vertical : VerticalFieldComponent
-        The vertical level of the field.
-    ensemble : EnsembleFieldComponentHandler
-        The ensemble specification of the field.
-    proc : ProcFieldComponent
-        The processing specification of the field.
-    labels : SimpleLabels
-        The labels of the field.
-    **kwargs : dict
-        Other keyword arguments to be passed to the Field constructor.
-        These can include metadata, such as `ls_keys` for GRIB fields.
 
     """
 
@@ -177,6 +165,34 @@ class Field(Base):
         proc=None,
         labels=None,
     ):
+        """
+        Cretae a Field object.
+
+        Do not use this constructor directly, but use the factory methods such as :meth:`from_dict`
+
+        Parameters
+        ----------
+        data : DataFieldComponent
+            The data of the field.
+        time : TimeFieldComponent
+            The temporal structure of the field.
+        parameter : ParameterFieldComponent
+            The parameter of the field.
+        geography : GeographyFieldComponent
+            The geography of the field.
+        vertical : VerticalFieldComponent
+            The vertical structure of the field.
+        ensemble : EnsembleFieldComponentHandler
+            The ensemble component of the field.
+        proc : ProcFieldComponent
+            The processing component of the field.
+        labels : SimpleLabels
+            The labels of the field.
+        **kwargs : dict
+            Other keyword arguments to be passed to the Field constructor.
+            These can include metadata, such as `ls_keys` for GRIB fields.
+        """
+
         def _ensure(name, value):
             if value is None:
                 return _COMPONENT_MAKER.empty_object(name)
@@ -208,35 +224,35 @@ class Field(Base):
         proc=None,
         labels=None,
     ):
-        r"""Create a Field object from another Field object.
+        r"""Create a Field from another Field.
 
         Parameters
         ----------
         field : Field
             The field to copy from.
         data : DataFieldComponent, dict or None
-            The data of the field. When specified it is used instead of the data in
-            the ``field``.
-        time : Time, TimeFieldComponent, dict or None
-            The time of the field. When specified it is used instead of the time
-            component in the ``field``.
-        parameter : Parameter, ParameterFieldComponent, dict or None
-            The parameter of the field. When specified it is used instead of the
+            The new data of the field. When specified it is used instead of the data in
+            the ``field``
+        time : TimeBase, TimeFieldComponentHandler, dict or None
+            The new time of the field. When specified it is used instead of the time
+            component in the ``field``. See: :py:class:`~earthkit.data.field.component.time.TimeBase`.
+        parameter : ParameterBase, ParameterFieldComponentHandler, dict or None
+            The new parameter of the field. When specified it is used instead of the
             parameter component in the ``field``.
-        geography : Geography, GeographyFieldComponent, dict or None
-            The geography of the field. When specified it is used instead of the geography
+        geography : GeographyBase, GeographyFieldComponentHandler, dict or None
+            The new geography of the field. When specified it is used instead of the geography
             component in the ``field``.
-        vertical : Vertical, VerticalFieldComponent, dict or None
-            The vertical level of the field. When specified it is used instead of the
+        vertical : VerticalBase, VerticalFieldComponentHandler, dict or None
+            The new vertical level of the field. When specified it is used instead of the
             vertical component in the ``field``.
-        ensemble : Ensemble, EnsembleFieldComponent, dict or None
-            The ensemble specification of the field. When specified it is used instead of
+        ensemble : EnsembleBase, EnsembleFieldComponentHandler, dict or None
+            The new ensemble specification of the field. When specified it is used instead of
             the ensemble component in the ``field``.
-        proc :  Proc, ProcFieldComponent, dict or None
-            The processing specification of the field. When specified it is used instead of
+        proc : ProcBase, dict, ProcFieldComponentHandler or None
+            The new processing specification of the field. When specified it is used instead of
             the processing component in the ``field``.
         labels : SimpleLabels, dict or None
-            The labels of the field. When specified it is used instead of the labels
+            The new labels of the field. When specified it is used instead of the labels
             in the ``field``.
 
         Returns
@@ -574,7 +590,7 @@ class Field(Base):
         - :ref:`/how-tos/grib/grib_lat_lon_value_ll.ipynb`
 
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test6.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test6.grib").to_fieldlist()
         >>> d = ds[0].data()
         >>> d.shape
         (3, 7, 12)

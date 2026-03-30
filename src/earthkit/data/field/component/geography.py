@@ -7,9 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-
 from abc import abstractmethod
 from math import prod
+from typing import Optional
 
 import numpy as np
 
@@ -21,14 +21,14 @@ from earthkit.data.utils.projections import Projection
 from .component import SimpleFieldComponent, component_keys, mark_get_key
 
 
-def create_geography_from_array(
+def _create_geography_from_array(
     latitudes=None,
     longitudes=None,
     distinct_latitudes=None,
     distinct_longitudes=None,
     proj_str=None,
     shape_hint=None,
-):
+) -> "GeographyBase":
     lat = latitudes
     lon = longitudes
 
@@ -119,7 +119,7 @@ def create_geography_from_array(
             return LatLonGeography(lat, lon, proj_str=proj_str, shape=shape)
 
 
-def create_geography_from_dict(d, shape_hint=None):
+def _create_geography_from_dict(d, shape_hint=None) -> "GeographyBase":
     if not isinstance(d, dict):
         raise TypeError("data must be a dictionary")
 
@@ -141,7 +141,7 @@ def create_geography_from_dict(d, shape_hint=None):
         else:
             raise ValueError("Cannot create geography from 'grid' since eckit-geo grid support is not available")
 
-    return create_geography_from_array(
+    return _create_geography_from_array(
         latitudes=d.get("latitudes", None),
         longitudes=d.get("longitudes", None),
         distinct_latitudes=d.get("distinct_latitudes", None),
@@ -152,10 +152,76 @@ def create_geography_from_dict(d, shape_hint=None):
 
 
 @component_keys
-class BaseGeography(SimpleFieldComponent):
+class GeographyBase(SimpleFieldComponent):
+    """Geography component representing the geographical information of a field.
+
+    This class defines the interface for geography components, which can represent
+    different types of geographical information. Some of the methods may not be applicable to all geography
+    types (e.g. :meth:`distinct_latitudes`), and may return None.
+
+    The geographical information can be accessed by methods like :meth:`latitudes`,
+    :meth:`longitudes`, and :meth:`shape`. Each of these methods has an associated key
+    that can be used in the :meth:`get` method to retrieve the corresponding information. The list
+    of supported keys are as follows:
+
+    - "latitudes"
+    - "longitudes"
+    - "distinct_latitudes"
+    - "distinct_longitudes"
+    - "x"
+    - "y"
+    - "shape"
+    - "projection"
+    - "bounding_box"
+    - "unique_grid_id"
+    - "grid_spec"
+    - "grid_type"
+    - "grid"
+    - "area"
+
+    Depending on the type of geographical information available, some of these keys may not be supported
+    and will return None in the subclasses. For example, the "distinct_latitudes" key is only supported
+    for certain grid types, and will return None for other grid types.
+
+    Typically, this object is used as a component of a field, and can be accessed via the :attr:`geography`
+    attribute of a field. The keys above can also be accessed via the :meth:`get` method of the field,
+    using the "geography." prefix.
+
+    The following example demonstrates how to access the geographical information from a field using
+    various methods and keys:
+
+        >>> import earthkit.data as ekd
+        >>> field = ekd.from_source("sample", "test.grib").to_fieldlist()[0]
+        >>> field.geography.area()
+        (70, -20, 35, 40)
+        >>> field.geography.get("area")
+        (70, -20, 35, 40)
+        >>> field.get("geography.area")
+        (70, -20, 35, 40)
+
+    The geography component is immutable. The :meth:`set` method to create a new
+    instance with updated values. For example, the following code creates a new geography
+    component with an updated step:
+
+        >>> new_geography = field.geography.set(grid_spec= [10,10])
+        >>> new_geography.area()
+        (90.0, 0, -90.0, 360.0)
+
+    We can also call the Field's :meth:`set` method to create a new field with an updated time component.
+    This is typically done by also passing a new data array to match the new geography. For example,
+    the following code creates a new field with an updated geography component and data array:
+
+        >>> values = np.random.rand(19, 36)  # new values matching the new geography shape
+        >>> new_field = field.set({"geography.grid_spec": [10,10], "values": values})
+        >>> new_field.geography.area()
+        (90.0, 0, -90.0, 360.0)
+
+
+    """
+
     @mark_get_key
     @abstractmethod
-    def latitudes(self, dtype=None):
+    def latitudes(self, dtype=None) -> Optional[np.ndarray]:
         r"""Return the latitudes.
 
         Parameters
@@ -173,7 +239,7 @@ class BaseGeography(SimpleFieldComponent):
 
     @mark_get_key
     @abstractmethod
-    def longitudes(self, dtype=None):
+    def longitudes(self, dtype=None) -> Optional[np.ndarray]:
         r"""Return the longitudes.
 
         Parameters
@@ -191,7 +257,7 @@ class BaseGeography(SimpleFieldComponent):
 
     @mark_get_key
     @abstractmethod
-    def distinct_latitudes(self, dtype=None):
+    def distinct_latitudes(self, dtype=None) -> Optional[np.ndarray]:
         r"""Return the distinct latitudes.
 
         Parameters
@@ -209,7 +275,7 @@ class BaseGeography(SimpleFieldComponent):
 
     @mark_get_key
     @abstractmethod
-    def distinct_longitudes(self, dtype=None):
+    def distinct_longitudes(self, dtype=None) -> Optional[np.ndarray]:
         r"""Return the distinct longitudes.
 
         Parameters
@@ -227,7 +293,7 @@ class BaseGeography(SimpleFieldComponent):
 
     @mark_get_key
     @abstractmethod
-    def x(self, dtype=None):
+    def x(self, dtype=None) -> Optional[np.ndarray]:
         r"""Return the x coordinates in the original CRS.
 
         Parameters
@@ -245,7 +311,7 @@ class BaseGeography(SimpleFieldComponent):
 
     @mark_get_key
     @abstractmethod
-    def y(self, dtype=None):
+    def y(self, dtype=None) -> Optional[np.ndarray]:
         r"""Return the y coordinates in the original CRS.
 
         Parameters
@@ -275,14 +341,26 @@ class BaseGeography(SimpleFieldComponent):
 
     @mark_get_key
     @abstractmethod
-    def projection(self):
-        """Return the projection."""
+    def projection(self) -> Optional[Projection]:
+        """Return the projection.
+
+        Returns
+        -------
+        Projection, None
+            The projection or None if not available.
+        """
         pass
 
     @mark_get_key
     @abstractmethod
-    def bounding_box(self):
-        """:obj:`BoundingBox <earthkit.data.utils.bbox.BoundingBox>`: Return the bounding box."""
+    def bounding_box(self) -> Optional[BoundingBox]:
+        r"""Return the bounding box.
+
+        Returns
+        -------
+        BoundingBox, None
+            The bounding box or None if not available.
+        """
         pass
 
     @mark_get_key
@@ -299,8 +377,11 @@ class BaseGeography(SimpleFieldComponent):
 
     @mark_get_key
     @abstractmethod
-    def grid(self):
+    def grid(self) -> Optional[object]:
         """Return the `eckit.geo.Grid` object representing the grid geometry.
+
+        This is an experimental method and may not be available for
+        all geography types.
 
         Returns
         -------
@@ -345,15 +426,66 @@ class BaseGeography(SimpleFieldComponent):
         """
         pass
 
-    # @classmethod
-    # def from_dict(cls, data, shape_hint=None):
-    #     from ..dict.geography import create_geography
+    def set(self, *args, shape_hint=None, **kwargs) -> "GeographyBase":
+        """Return a new GeographyBase object with updated values.
 
-    #     spec = create_geography(data, shape_hint=shape_hint)
-    #     return spec
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments to update the geography. Positional arguments containing time data.
+            Only dictionaries are allowed.
 
-    def set(self, *args, shape_hint=None, **kwargs):
-        kwargs = self.normalise_set_kwargs(*args, **kwargs)
+        shape_hint: tuple, optional
+            A hint for the shape of the geography. This is typically used when the geography
+            is created from a dictionary that does not contain explicit shape information, and
+            the shape needs to be inferred from the data array shape.
+
+        **kwargs: dict
+            Keyword arguments to update the geography. The allowed keys are:
+
+        The allowed keys in the dictionaries and keyword arguments are:
+
+         - "grid_spec", str or dict
+         - "latitudes" and "longitudes", array-like
+
+        The following cases are supported for updating:
+
+        - the only key provided is "grid_spec", in which case the new geography
+          is created from the provided grid specification. In this case nothing
+          is taken from the existing geography, and no other keys should be
+          provided to avoid ambiguity. The "grid_spec" can be str or dict.
+
+        - the only keys provided are "latitudes" and "longitudes", in which case
+          the new geography is created from the provided latitude and longitude arrays.
+          In this case, the ``shape_hint`` is used to determine the shape of the new geography
+          if the provided latitudes and longitudes are 1D arrays. If the latitudes and
+          longitudes are already 2D arrays matching the ``shape_hint``, then the ``shape_hint``
+          is ignored. No other keys should be provided to avoid ambiguity.
+
+        Returns
+        -------
+        GeographyBase
+            The new GeographyBase object with updated values.
+
+        Raises
+        ------
+        ValueError
+            If the provided keys do not match any of the supported update cases, or if there is
+            ambiguity in the provided keys.
+
+
+        Example
+        -------
+        >>> new_geography = field.geography.set(grid_spec= [10,10])
+        >>> new_geography.area()
+        (90.0, 0, -90.0, 360.0)
+
+        >>> values = np.random.rand(19, 36)  # new values matching the new geography shape
+        >>> new_field = field.set({"geography.grid_spec": [10,10], "values": values})
+        >>> new_field.geography.area()
+        (90.0, 0, -90.0, 360.0)
+        """
+        kwargs = self._normalise_set_kwargs(*args, **kwargs)
         keys = set(kwargs.keys())
 
         if keys == {"grid_spec"}:
@@ -365,7 +497,7 @@ class BaseGeography(SimpleFieldComponent):
 
         raise ValueError(f"Invalid {keys=} for Geography specification")
 
-    def latlons(self, flatten=False, dtype=None):
+    def latlons(self, flatten=False, dtype=None) -> tuple:
         r"""Return the latitudes/longitudes of all the gridpoints in the field.
 
         Parameters
@@ -396,7 +528,7 @@ class BaseGeography(SimpleFieldComponent):
 
         return lat, lon
 
-    def xys(self, flatten=False, dtype=None):
+    def xys(self, flatten=False, dtype=None) -> tuple:
         r"""Return the x/y coordinates of all the points.
 
         Parameters
@@ -435,14 +567,41 @@ class BaseGeography(SimpleFieldComponent):
 
         raise ValueError("xys(): geographical coordinates in original CRS are not available")
 
-    def points(self, flatten=False, dtype=None):
+    def points(self, flatten=False, dtype=None) -> tuple:
+        r"""Return the x/y coordinates of all the points.
+
+        This is an alias for :meth:`xys` and is provided for convenience when the
+        geographical coordinates are desired as points rather than separate x and y arrays.
+
+        See Also
+        --------
+        xys
+        """
         return self.xys(flatten=flatten, dtype=dtype)
 
     @classmethod
-    def from_dict(cls, data, shape_hint=None):
-        return create_geography_from_dict(data, shape_hint=shape_hint)
+    def from_dict(cls, data, shape_hint=None) -> "GeographyBase":
+        """Create a Geography object from a dictionary.
 
-    def to_dict(self):
+        Parameters
+        ----------
+        data : dict
+            Dictionary containing geography data.
+        shape_hint: tuple, optional
+            A hint for the shape of the geography. This is typically used when the geography
+            is created from a dictionary that does not contain explicit shape information, and
+            the shape needs to be inferred from the data array shape.
+
+        Returns
+        -------
+        Geography
+            The created Geography instance.
+
+        """
+        return _create_geography_from_dict(data, shape_hint=shape_hint)
+
+    def to_dict(self) -> dict:
+        """Return a dictionary representation of the Geography."""
         r = dict()
         for k in ("grid_spec", "grid_type", "shape", "area"):
             try:
@@ -451,51 +610,51 @@ class BaseGeography(SimpleFieldComponent):
                 pass
         return r
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict:
         return super().__getstate__()
 
-    def __setstate__(self, state):
+    def __setstate__(self, state) -> None:
         super().__setstate__(state)
 
 
-class EmptyGeography(BaseGeography):
-    def __init__(self, shape=None):
+class EmptyGeography(GeographyBase):
+    def __init__(self, shape=None) -> None:
         self._shape = shape
 
-    def latitudes(self, dtype=None):
+    def latitudes(self, dtype=None) -> None:
         return None
 
-    def longitudes(self, dtype=None):
+    def longitudes(self, dtype=None) -> None:
         return None
 
-    def distinct_latitudes(self, dtype=None):
+    def distinct_latitudes(self, dtype=None) -> None:
         return None
 
-    def distinct_longitudes(self, dtype=None):
+    def distinct_longitudes(self, dtype=None) -> None:
         return None
 
-    def x(self, dtype=None):
+    def x(self, dtype=None) -> None:
         raise NotImplementedError("x is not implemented for this geography")
 
-    def y(self, dtype=None):
+    def y(self, dtype=None) -> None:
         raise NotImplementedError("y is not implemented for this geography")
 
-    def shape(self):
+    def shape(self) -> Optional[tuple]:
         return self._shape
 
-    def unique_grid_id(self):
+    def unique_grid_id(self) -> Optional[tuple]:
         return self.shape()
 
-    def projection(self):
+    def projection(self) -> None:
         return None
 
-    def bounding_box(self):
+    def bounding_box(self) -> None:
         return None
 
-    def grid(self):
+    def grid(self) -> None:
         return None
 
-    def grid_spec(self):
+    def grid_spec(self) -> None:
         return None
 
     def area(self) -> tuple:
@@ -505,7 +664,7 @@ class EmptyGeography(BaseGeography):
         return None
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d) -> "EmptyGeography":
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
         shape = d.get("shape", None)
@@ -513,10 +672,10 @@ class EmptyGeography(BaseGeography):
             raise ValueError("EmptyGeography can only be created from a dictionary with a single key 'shape'")
         return cls(shape=shape)
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict:
         return {"shape": self._shape}
 
-    def __setstate__(self, state):
+    def __setstate__(self, state) -> None:
         self._shape = state["shape"]
 
 
@@ -524,32 +683,32 @@ class SpectralGeography(EmptyGeography):
     pass
 
 
-class LatLonGeography(BaseGeography):
-    def __init__(self, latitudes, longitudes, proj_str=None, shape=None):
+class LatLonGeography(GeographyBase):
+    def __init__(self, latitudes, longitudes, proj_str=None, shape=None) -> None:
         self._lat = latitudes
         self._lon = longitudes
         self._proj_str = proj_str
         self._shape = shape
 
-    def latitudes(self, dtype=None):
+    def latitudes(self, dtype=None) -> np.ndarray:
         return np.asarray(self._lat, dtype=dtype).reshape(self._shape)
 
-    def longitudes(self, dtype=None):
+    def longitudes(self, dtype=None) -> np.ndarray:
         return np.asarray(self._lon, dtype=dtype).reshape(self._shape)
 
-    def distinct_latitudes(self, dtype=None):
+    def distinct_latitudes(self, dtype=None) -> None:
         return None
 
-    def distinct_longitudes(self, dtype=None):
+    def distinct_longitudes(self, dtype=None) -> None:
         return None
 
-    def x(self, dtype=None):
+    def x(self, dtype=None) -> None:
         raise NotImplementedError("x is not implemented for this geography")
 
-    def y(self, dtype=None):
+    def y(self, dtype=None) -> None:
         raise NotImplementedError("y is not implemented for this geography")
 
-    def shape(self):
+    def shape(self) -> tuple:
         if self._shape is not None:
             return self._shape
         return self.latitudes.shape
@@ -557,28 +716,28 @@ class LatLonGeography(BaseGeography):
     def unique_grid_id(self) -> str:
         return str(self.shape())
 
-    def grid(self):
+    def grid(self) -> None:
         return None
 
-    def _north(self):
+    def _north(self) -> float:
         return float(np.amax(self.latitudes()))
 
-    def _south(self):
+    def _south(self) -> float:
         return float(np.amin(self.latitudes()))
 
-    def _west(self):
+    def _west(self) -> float:
         return float(np.amin(self.longitudes()))
 
-    def _east(self):
+    def _east(self) -> float:
         return float(np.amax(self.longitudes()))
 
-    def projection(self):
+    def projection(self) -> Optional[Projection]:
         if self._proj_str:
             return Projection.from_proj_string(self._proj_str)
         return None
         # return Projection.from_proj_string(self.metadata.get("projTargetString", None))
 
-    def bounding_box(self):
+    def bounding_box(self) -> BoundingBox:
         return BoundingBox(
             north=self._north(),
             south=self._south(),
@@ -586,55 +745,55 @@ class LatLonGeography(BaseGeography):
             east=self._east(),
         )
 
-    def grid_spec(self):
+    def grid_spec(self) -> None:
         return None
 
     def area(self) -> tuple:
         return (self._north(), self._west(), self._south(), self._east())
 
-    def grid_type(self):
+    def grid_type(self) -> str:
         return "_unstructured"
 
     @classmethod
-    def from_dict(cls, data, shape_hint=None):
-        return create_geography_from_dict(data, shape_hint=shape_hint)
+    def from_dict(cls, data, shape_hint=None) -> "LatLonGeography":
+        return _create_geography_from_dict(data, shape_hint=shape_hint)
 
 
 class MeshedLatLonGeography(LatLonGeography):
-    def __init__(self, latitudes, longitudes, proj_str=None):
+    def __init__(self, latitudes, longitudes, proj_str=None) -> None:
         super().__init__(None, None, proj_str=proj_str)
         self._distinct_lat = latitudes
         self._distinct_lon = longitudes
 
-    def latitudes(self, dtype=None):
+    def latitudes(self, dtype=None) -> np.ndarray:
         lat = self.distinct_latitudes(dtype=dtype)
         n_lon = len(self.distinct_longitudes())
         v = np.repeat(lat[:, np.newaxis], n_lon, axis=1)
         return v
 
-    def longitudes(self, dtype=None):
+    def longitudes(self, dtype=None) -> np.ndarray:
         lon = self.distinct_longitudes(dtype=dtype)
         n_lat = len(self.distinct_latitudes())
         v = np.repeat(lon[np.newaxis, :], n_lat, axis=0)
         return v
 
-    def distinct_latitudes(self, dtype=None):
+    def distinct_latitudes(self, dtype=None) -> np.ndarray:
         return np.asarray(self._distinct_lat, dtype=dtype)
 
-    def distinct_longitudes(self, dtype=None):
+    def distinct_longitudes(self, dtype=None) -> np.ndarray:
         return np.asarray(self._distinct_lon, dtype=dtype)
 
-    def shape(self):
+    def shape(self) -> tuple:
         Nj = len(self.distinct_latitudes())
         Ni = len(self.distinct_longitudes())
         return (Nj, Ni)
 
-    def grid_type(self):
+    def grid_type(self) -> str:
         return "_distinct_ll"
 
 
-class GridsSpecBasedGeography(BaseGeography):
-    def __init__(self, grid_or_grid_spec):
+class GridsSpecBasedGeography(GeographyBase):
+    def __init__(self, grid_or_grid_spec) -> None:
         from eckit.geo import Grid
 
         if isinstance(grid_or_grid_spec, Grid):
@@ -644,7 +803,7 @@ class GridsSpecBasedGeography(BaseGeography):
             self._grid = Grid(grid_or_grid_spec)
             self._grid_spec_in = grid_or_grid_spec
 
-    def latitudes(self, dtype=None):
+    def latitudes(self, dtype=None) -> np.ndarray:
         r"""Return the latitudes of the field.
 
         Returns
@@ -662,7 +821,7 @@ class GridsSpecBasedGeography(BaseGeography):
 
         return v
 
-    def longitudes(self, dtype=None):
+    def longitudes(self, dtype=None) -> np.ndarray:
         r"""Return the longitudes of the field.
 
         Returns
@@ -680,13 +839,13 @@ class GridsSpecBasedGeography(BaseGeography):
 
         return v
 
-    def distinct_latitudes(self, dtype=None):
+    def distinct_latitudes(self, dtype=None) -> None:
         return None
 
-    def distinct_longitudes(self, dtype=None):
+    def distinct_longitudes(self, dtype=None) -> None:
         return None
 
-    def x(self, dtype=None):
+    def x(self, dtype=None) -> np.ndarray:
         r"""Return the x coordinates in the field's original CRS.
 
         Returns
@@ -695,7 +854,7 @@ class GridsSpecBasedGeography(BaseGeography):
         """
         return self.longitudes(dtype=dtype)
 
-    def y(self, dtype=None):
+    def y(self, dtype=None) -> np.ndarray:
         r"""Return the y coordinates in the field's original CRS.
 
         Returns
@@ -704,7 +863,7 @@ class GridsSpecBasedGeography(BaseGeography):
         """
         return self.latitudes(dtype=dtype)
 
-    def shape(self):
+    def shape(self) -> tuple:
         r"""Get the shape of the field.
 
         For structured grids the shape is a tuple in the form of (Nj, Ni) where:
@@ -720,13 +879,13 @@ class GridsSpecBasedGeography(BaseGeography):
         """
         return self._grid.shape
 
-    def unique_grid_id(self):
+    def unique_grid_id(self) -> str:
         return self._grid.uid
 
-    def projection(self):
+    def projection(self) -> Projection:
         return Projection.from_proj_string(proj_string=None)
 
-    def bounding_box(self):
+    def bounding_box(self) -> BoundingBox:
         bb = self._grid.bounding_box()
         return BoundingBox(
             north=bb[0],
@@ -735,7 +894,7 @@ class GridsSpecBasedGeography(BaseGeography):
             east=bb[3],
         )
 
-    def grid_spec(self):
+    def grid_spec(self) -> Optional[dict]:
         try:
             return self._grid.spec
         except Exception:
@@ -749,15 +908,15 @@ class GridsSpecBasedGeography(BaseGeography):
         bb = self._grid.bounding_box()
         return bb
 
-    def grid(self):
+    def grid(self) -> object:
         return self._grid
 
-    def grid_type(self):
+    def grid_type(self) -> str:
         return self._grid.type
 
     @classmethod
-    def from_dict(cls, data, shape_hint=None):
-        return create_geography_from_dict(data, shape_hint=shape_hint)
+    def from_dict(cls, data, shape_hint=None) -> "GridsSpecBasedGeography":
+        return _create_geography_from_dict(data, shape_hint=shape_hint)
 
     # @property
     # def rotation(self):

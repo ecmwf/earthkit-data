@@ -8,24 +8,87 @@
 #
 
 from enum import Enum
+from typing import TYPE_CHECKING, Union
 
 from earthkit.utils.units import Units
+
+if TYPE_CHECKING:
+    from earthkit.utils.units import Units
+
 
 POSITIVE_UP = "up"
 POSITIVE_DOWN = "down"
 
 
 class LevelType:
+    """Class representing a level type.
+
+    This object is used to represent the type of vertical coordinate of a
+    field. It contains metadata about the level type, such as its name,
+    abbreviation, standard name, long name, units, whether it represents a layer
+    or a single level, and the positive direction of the level type.
+
+    LevelType object are immutable and they are not supposed to be created directly by users.
+    Earthkit-data has a list of predefined level types. Additional level types are automatically registered
+    as they appear in the data.
+
+    LevelType objects are identified by their name. The predefined level types are:
+
+       - "pressure"
+       - "hybrid"
+       - "potential_temperature"
+       - "potential_vorticity"
+       - "height_above_mean_sea_level"
+       - "height_above_ground_level"
+       - "surface"
+       - "depth_below_ground_level"
+       - "general"
+       - "mean_sea"
+       - "snow"
+       - "unknown"
+       - "entire_atmosphere"
+       - "ocean_surface"
+       - "temperature"
+       - "depth_below_sea_layer"
+       - "mixed_layer_depth_by_density"
+       - "ice_layer_on_water"
+
+    """
+
     def __init__(
         self,
         name: str,
         abbreviation: str,
         standard_name: str,
         long_name: str,
-        units: str,
+        units: Union[str, Units],
         layer: bool,
         positive: str,
     ) -> None:
+        """Initialise the LevelType object.
+
+        This is not supposed to be called directly by users. Use
+        the `get_level_type` function instead.
+
+        Parameters
+        ----------
+        name : str
+            The name of the level type. The name must be one of the predefined level types.
+            If the name is not one of the predefined level types, it will be registered a
+            a new level type with the provided metadata using the `add_level_type` function.
+        abbreviation : str
+            The abbreviation of the level type.
+        standard_name : str
+            The CF standard name of the level type.
+        long_name : str
+            The CF long name of the level type.
+        units : Union[str, Units]
+            The units of the level type.
+        layer : bool
+            Whether the level type represents a layer or a single level.
+        positive : str
+            The positive direction of the level type. Can be either "up" or "down".
+        """
         self.name = name
         self.abbreviation = abbreviation
         self.standard_name = standard_name
@@ -36,14 +99,28 @@ class LevelType:
         self.cf = {
             "standard_name": self.standard_name,
             "long_name": self.long_name,
+            "units": str(self.units),
+            "positive": self.positive,
         }
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
+        """Check if this LevelType is equal to another LevelType or a string.
+
+        Two LevelType objects are considered equal if they are the same object or have
+        the same name. A LevelType object is considered equal to a string if its name
+        is equal to that string.
+        """
         if isinstance(other, LevelType):
             return self.name == other.name
         if isinstance(other, str):
             return self.name == other
         return False
+
+    def __repr__(self):
+        return self.name
+
+    def __hash__(self):
+        return hash(self.name)
 
 
 _defs = {
@@ -151,7 +228,7 @@ _defs = {
         "long_name": "mean sea level",
         "units": "",
         "layer": False,
-        "positive": POSITIVE_DOWN,
+        "positive": "",
     },
     "SNOW": {
         "name": "snow",
@@ -169,7 +246,7 @@ _defs = {
         "long_name": "unknown",
         "units": "",
         "layer": False,
-        "positive": POSITIVE_DOWN,
+        "positive": "",
     },
     "ENTIRE_ATMOSPHERE": {
         "name": "entire_atmosphere",
@@ -233,7 +310,7 @@ _LEVEL_TYPES = {t.value.name: t.value for t in LevelTypes}
 
 
 # TODO: make it thread safe
-def register_level_type(name: str, metadata: dict | None = None) -> LevelType:
+def _register_level_type(name: str, metadata: dict | None = None) -> LevelType:
     if name in _LEVEL_TYPES:
         raise ValueError(f"Level type {name} already exists")
 
@@ -264,7 +341,7 @@ def get_level_type(item: str, default=LevelTypes.UNKNOWN, metadata=None) -> Leve
         if item in _LEVEL_TYPES:
             return _LEVEL_TYPES[item]
         else:
-            return register_level_type(item, metadata)
+            return _register_level_type(item, metadata)
     elif item is None:
         return default.value
 

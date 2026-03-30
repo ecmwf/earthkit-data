@@ -10,12 +10,12 @@
 import math
 from typing import Any
 
-from earthkit.data.field.component.geography import BaseGeography
+from earthkit.data.field.component.geography import GeographyBase
 from earthkit.data.field.handler.geography import GeographyFieldComponentHandler
 from earthkit.data.utils.array import adjust_array
 
 
-class XArrayGeography(BaseGeography):
+class XArrayGeography(GeographyBase):
     def __init__(self, owner, selection):
         self.owner = owner
         self.selection = selection

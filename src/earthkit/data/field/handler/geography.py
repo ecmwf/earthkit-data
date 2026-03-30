@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.field.component.geography import BaseGeography, EmptyGeography, create_geography_from_dict
+from earthkit.data.field.component.geography import EmptyGeography, GeographyBase, _create_geography_from_dict
 
 from .core import SimpleFieldComponentHandler
 
@@ -15,8 +15,8 @@ from .core import SimpleFieldComponentHandler
 class GeographyFieldComponentHandler(SimpleFieldComponentHandler):
     """Geography component of a field."""
 
-    COMPONENT_CLS = BaseGeography
-    COMPONENT_MAKER = create_geography_from_dict
+    COMPONENT_CLS = GeographyBase
+    COMPONENT_MAKER = _create_geography_from_dict
     NAME = "geography"
 
     def get_grib_context(self, context) -> dict:

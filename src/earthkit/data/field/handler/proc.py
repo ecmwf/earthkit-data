@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.field.component.proc import BaseProc, EmptyProc
+from earthkit.data.field.component.proc import EmptyProc, ProcBase
 
 from .core import SimpleFieldComponentHandler
 
@@ -15,7 +15,7 @@ from .core import SimpleFieldComponentHandler
 class ProcFieldComponentHandler(SimpleFieldComponentHandler):
     """A specification of a vertical level or layer."""
 
-    COMPONENT_CLS = BaseProc
+    COMPONENT_CLS = ProcBase
     NAME = "proc"
 
     def get_grib_context(self, context) -> dict:

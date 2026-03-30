@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.field.component.parameter import BaseParameter, EmptyParameter, create_parameter
+from earthkit.data.field.component.parameter import EmptyParameter, ParameterBase, create_parameter
 
 from .core import SimpleFieldComponentHandler
 
@@ -15,7 +15,7 @@ from .core import SimpleFieldComponentHandler
 class ParameterFieldComponentHandler(SimpleFieldComponentHandler):
     """Parameter component of a field."""
 
-    COMPONENT_CLS = BaseParameter
+    COMPONENT_CLS = ParameterBase
     COMPONENT_MAKER = create_parameter
     NAME = "parameter"
 

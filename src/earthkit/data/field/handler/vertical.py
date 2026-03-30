@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.field.component.vertical import BaseVertical, EmptyVertical, create_vertical
+from earthkit.data.field.component.vertical import EmptyVertical, VerticalBase, create_vertical
 
 from .core import SimpleFieldComponentHandler
 
@@ -15,7 +15,7 @@ from .core import SimpleFieldComponentHandler
 class VerticalFieldComponentHandler(SimpleFieldComponentHandler):
     """Vertical component handler of a field."""
 
-    COMPONENT_CLS = BaseVertical
+    COMPONENT_CLS = VerticalBase
     COMPONENT_MAKER = create_vertical
     NAME = "vertical"
 

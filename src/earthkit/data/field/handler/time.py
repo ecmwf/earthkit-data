@@ -8,7 +8,7 @@
 #
 
 
-from earthkit.data.field.component.time import BaseTime, EmptyTime, create_time
+from earthkit.data.field.component.time import EmptyTime, TimeBase, create_time
 
 from .core import SimpleFieldComponentHandler
 
@@ -16,7 +16,7 @@ from .core import SimpleFieldComponentHandler
 class TimeFieldComponentHandler(SimpleFieldComponentHandler):
     """Time component of a field."""
 
-    COMPONENT_CLS = BaseTime
+    COMPONENT_CLS = TimeBase
     COMPONENT_MAKER = create_time
     NAME = "time"
 

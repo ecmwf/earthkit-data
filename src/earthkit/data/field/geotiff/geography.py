@@ -10,11 +10,11 @@
 
 import numpy as np
 
-from earthkit.data.field.component.geography import BaseGeography
+from earthkit.data.field.component.geography import GeographyBase
 from earthkit.data.utils.bbox import BoundingBox
 
 
-class GeoTIFFGeography(BaseGeography):
+class GeoTIFFGeography(GeographyBase):
     def __init__(self, ds):
         self._ds = ds
         self.x_dim = ds.rio.x_dim

@@ -12,8 +12,8 @@ import logging
 
 from earthkit.utils.decorators import thread_safe_cached_property
 
-from earthkit.data.field.component.component import normalise_set_kwargs
-from earthkit.data.field.component.geography import BaseGeography, create_geography_from_dict
+from earthkit.data.field.component.component import _normalise_set_kwargs
+from earthkit.data.field.component.geography import GeographyBase, _create_geography_from_dict
 from earthkit.data.utils.grid import ECKIT_GRID_SUPPORT
 
 from .collector import GribContextCollector
@@ -26,7 +26,7 @@ def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
-class GribGeography(BaseGeography):
+class GribGeography(GeographyBase):
     # If this class is used, it means that eckit-geo does not support the grid
     # so we need to fallback to the legacy grid handling in ecCodes
     def __init__(self, handle):
@@ -232,7 +232,7 @@ class GribGeographyHandler(GribFieldComponentHandler):
     COLLECTOR = COLLECTOR
 
     def set(self, *args, shape_hint=None, **kwargs):
-        kwargs = normalise_set_kwargs(self.component, *args, **kwargs)
+        kwargs = _normalise_set_kwargs(self.component, *args, **kwargs)
         keys = set(kwargs.keys())
 
         if keys == {"grid_spec"}:
@@ -244,4 +244,4 @@ class GribGeographyHandler(GribFieldComponentHandler):
                     )
                 )
 
-        return create_geography_from_dict(kwargs, shape_hint=shape_hint)
+        return _create_geography_from_dict(kwargs, shape_hint=shape_hint)

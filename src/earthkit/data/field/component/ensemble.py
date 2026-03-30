@@ -13,7 +13,56 @@ from .component import SimpleFieldComponent, component_keys, mark_alias, mark_ge
 
 
 @component_keys
-class BaseEnsemble(SimpleFieldComponent):
+class EnsembleBase(SimpleFieldComponent):
+    """Base class for the ensemble component of a field.
+
+    This class defines the interface for ensemble components, which can represent
+    different types of ensemble information.
+
+    The ensemble information can be accessed by methods like :meth:`member`. Each of these
+    methods has an associated key that can be used in the :meth:`get` method to retrieve the
+    corresponding information. The list of supported keys are as follows:
+
+    - "member"
+    - "realization" (alias of "member")
+    - "realisation" (alias of "member")
+
+    Typically, this object is used as a component of a field, and can be accessed via the :attr:`ensemble`
+    attribute of a field. The keys above can also be accessed via the :meth:`get` method of the field,
+    using the "ensemble." prefix.
+
+    The following example demonstrates how to access the ensemble information from a field using
+    various methods and keys:
+
+        >>> import earthkit.data as ekd
+        >>> field = = ekd.from_source("sample", "ens_cf_pf.grib").to_fieldlist()[2]
+        >>> field.ensemble.member()
+        '1'
+        >>> field.ensemble.get("member")
+        '1'
+        >>> field.get("ensemble.member")
+        '1'
+
+    The ensemble component is immutable. The :meth:`set` method to create a new
+    instance with updated values. For example, the following code creates a new ensemble
+    component with an updated member:
+
+        >>> new_ensemble = field.ensemble.set(member="2")
+        >>> new_ensemble.member()
+        '2'
+
+    We can also call the Field's :meth:`set` method to create a new field with an updated ensemble component:
+
+        >>> new_field = field.set({"ensemble.member": "2"})
+        >>> new_field.ensemble.member()
+        '2'
+
+    Parameters
+    ----------
+    member : str, int, optional
+        The ensemble member, by default None.
+    """
+
     @mark_get_key
     @abstractmethod
     def member(self) -> str:
@@ -31,8 +80,8 @@ class BaseEnsemble(SimpleFieldComponent):
         pass
 
 
-def create_ensemble(d: dict) -> "BaseEnsemble":
-    """Create a BaseEnsemble object from a dictionary.
+def create_ensemble(d: dict) -> "EnsembleBase":
+    """Create a EnsembleBase object from a dictionary.
 
     Parameters
     ----------
@@ -41,32 +90,44 @@ def create_ensemble(d: dict) -> "BaseEnsemble":
 
     Returns
     -------
-    BaseEnsemble
-        The created BaseEnsemble instance.
+    EnsembleBase
+        The created EnsembleBase instance.
     """
     if not isinstance(d, dict):
         raise TypeError(f"Cannot create Ensemble from {type(d)}, expected dict")
 
     cls = Ensemble
-    d1 = cls.normalise_create_kwargs(d, allowed_keys=("member",))
+    d1 = cls._normalise_create_kwargs(d, allowed_keys=("member",))
     return cls(**d1)
 
 
-class EmptyEnsemble(BaseEnsemble):
-    def member(self) -> str:
-        """Return the ensemble member."""
+class EmptyEnsemble(EnsembleBase):
+    """Empty ensemble component, representing the absence of ensemble information."""
+
+    def member(self) -> None:
+        """Return the ensemble member.
+
+        An EmptyEnsemble does not contain any ensemble information, and this method returns None.
+        """
         return None
 
     @classmethod
     def from_dict(cls, d: dict):
+        """Create an EmptyEnsemble object from a dictionary."""
         if d:
             return cls()
         return cls()
 
     def to_dict(self):
+        """Return a dictionary representation of the EmptyEnsemble."""
         return {"member": None}
 
     def set(self, *args, **kwargs):
+        """Create a new instance with updated data.
+
+        An EmptyEnsemble object cannot be updated, and this method raises a
+        ValueError.
+        """
         raise ValueError("Cannot set values on EmptyEnsemble")
 
     def __getstate__(self):
@@ -76,7 +137,17 @@ class EmptyEnsemble(BaseEnsemble):
         self.__init__()
 
 
-class Ensemble(BaseEnsemble):
+class Ensemble(EnsembleBase):
+    """Ensemble component representing ensemble information.
+
+    Parameters
+    ----------
+    member : str, int, optional
+        The ensemble member, by default None. Internally stored as a string,
+        so if an integer is provided, it will be converted to a string.
+        None is treated as "0".
+    """
+
     def __init__(self, member=None) -> None:
         if member is None:
             self._member = "0"
@@ -86,7 +157,6 @@ class Ensemble(BaseEnsemble):
             self._member = member
 
     def member(self) -> str:
-        """Return the ensemble member."""
         return self._member
 
     @classmethod
@@ -98,6 +168,10 @@ class Ensemble(BaseEnsemble):
         d : dict
             Dictionary containing parameter data.
 
+            The dictionary can contain the following keys:
+
+            - "member": The ensemble member.
+
         Returns
         -------
         Ensemble
@@ -106,10 +180,26 @@ class Ensemble(BaseEnsemble):
         return create_ensemble(d)
 
     def to_dict(self):
+        """Return a dictionary representation of the Ensemble."""
         return {"member": self._member}
 
     def set(self, *args, **kwargs):
-        d = self.normalise_set_kwargs(*args, allowed_keys=("member",), **kwargs)
+        """Create a new instance with updated data.
+
+        Parameters
+        ----------
+        args : tuple
+            Positional arguments containing time data. Only dictionaries are allowed.
+        kwargs : dict
+            Keyword arguments containing time data.
+
+
+        The following keys can be provided to update the ensemble information:
+
+            - "member": The ensemble member.
+
+        """
+        d = self._normalise_set_kwargs(*args, allowed_keys=("member",), **kwargs)
 
         if d:
             return self.from_dict(d)

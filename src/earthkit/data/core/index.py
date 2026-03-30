@@ -237,7 +237,7 @@ class Index(Source, Encodable):
         pass
 
     def sel(self, *args, remapping=None, **kwargs):
-        """Uses metadata values to select a subset of the elements from a fieldlist-like object.
+        """Uses metadata values to select a subset of the elements from a fieldlist object.
 
         Parameters
         ----------
@@ -271,63 +271,63 @@ class Index(Source, Encodable):
 
         - single value::
 
-            ds.sel(param="t")
+            ds.sel({"parameter.variable": "t"})
 
         - list of values::
 
-            ds.sel(param=["u", "v"])
+            ds.sel({"parameter.variable": ["u", "v"]})
 
         - **slice** of values (defines a **closed interval**, so treated as inclusive of both the start
         and stop values, unlike normal Python indexing)::
 
             # filter levels between 300 and 500 inclusively
-            ds.sel(level=slice(300, 500))
+            ds.sel({"vertical.level": slice(300, 500)})
 
         Examples
         --------
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/how-tos/tuv_pl.grib")
-        >>> len(ds)
+        >>> fl = earthkit.data.from_source("sample", "tuv_pl.grib").to_fieldlist()
+        >>> len(fl)
         18
 
-        Selecting by a single key ("param"):
+        Selecting by a single key ("parameter.variable") with a single value:
 
-        >>> subset = ds.sel(param="t")
-        >>> for f in subset:
+        >>> fl1 = fl.sel({"parameter.variable": "t"})
+        >>> for f in fl1:
         ...     print(f)
         ...
-        GribField(t,1000,20180801,1200,0,0)
-        GribField(t,850,20180801,1200,0,0)
-        GribField(t,700,20180801,1200,0,0)
-        GribField(t,500,20180801,1200,0,0)
-        GribField(t,400,20180801,1200,0,0)
-        GribField(t,300,20180801,1200,0,0)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 700, pressure, 0, regular_ll)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 500, pressure, 0, regular_ll)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 400, pressure, 0, regular_ll)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 300, pressure, 0, regular_ll)
 
-        Selecting by multiple keys ("param", "level") with a list and slice of values:
+        Selecting by multiple keys ("parameter.variable", "vertical.level") with a list and slice of values:
 
-        >>> subset = ds.sel(param=["u", "v"], level=slice(400, 700))
-        >>> for f in subset:
+        >>> fl1 = fl.sel({"parameter.variable": ["u", "v"], "vertical.level": slice(400, 700)})
+        >>> for f in fl1:
         ...     print(f)
         ...
-        GribField(u,700,20180801,1200,0,0)
-        GribField(v,700,20180801,1200,0,0)
-        GribField(u,500,20180801,1200,0,0)
-        GribField(v,500,20180801,1200,0,0)
-        GribField(u,400,20180801,1200,0,0)
-        GribField(v,400,20180801, 1200,0,0)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 700, pressure, 0, regular_ll)
+        Field(v, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 700, pressure, 0, regular_ll)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 500, pressure, 0, regular_ll)
+        Field(v, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 500, pressure, 0, regular_ll)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 400, pressure, 0, regular_ll)
+        Field(v, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 400, pressure, 0, regular_ll)
 
         Using ``remapping`` to specify the selection by a key created from two other keys
-        (we created key "param_level" from "param" and "levelist"):
+        (we created key "param_level" from "parameter.variable" and "vertical.level"):
 
-        >>> subset = ds.sel(
-        ...     param_level=["t850", "u1000"],
-        ...     remapping={"param_level": "{param}{levelist}"},
+        >>> fl1 = fl.sel(
+        ...    {"param_level": ["t850", "u1000"],
+        ...    "remapping": {"param_level": "{parameter.variable}{vertical.level}"}})
         ... )
-        >>> for f in subset:
+        >>> for f in fl1:
         ...     print(f)
         ...
-        GribField(u,1000,20180801,1200,0,0)
-        GribField(t,850,20180801,1200,0,0)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
         """
         kwargs, remapping_kwarg = normalise_selection(*args, **kwargs)
         if not kwargs:
@@ -350,7 +350,7 @@ class Index(Source, Encodable):
         return self.new_mask_index(self, indices)
 
     def order_by(self, *args, remapping=None, patch=None, **kwargs):
-        """Change the order of the elements in a fieldlist-like object.
+        """Change the order of the elements in a fieldlist object.
 
         Parameters
         ----------
@@ -381,68 +381,68 @@ class Index(Source, Encodable):
         Ordering by a single metadata key ("param"). The default ordering direction
         is ``ascending``:
 
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test6.grib")
-        >>> for f in ds.order_by("param"):
+        >>> import earthkit.data as ekd
+        >>> ds = ekd.from_source("sample", "test6.grib").to_fieldlist()
+        >>> for f in ds.order_by("parameter.variable"):
         ...     print(f)
         ...
-        GribField(t,850,20180801,1200,0,0)
-        GribField(t,1000,20180801,1200,0,0)
-        GribField(u,850,20180801,1200,0,0)s
-        GribField(u,1000,20180801,1200,0,0)
-        GribField(v,850,20180801,1200,0,0)
-        GribField(v,1000,20180801,1200,0,0)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
+        Field(v, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(v, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
 
-        Ordering by multiple keys (first by "level" then by "param"):
+        Ordering by multiple keys (first by "vertical.level" then by "parameter.variable"):
 
-        >>> for f in ds.order_by(["level", "param"]):
+        >>> for f in ds.order_by(["vertical.level", "parameter.variable"]):
         ...     print(f)
         ...
-        GribField(t,850,20180801,1200,0,0)
-        GribField(u,850,20180801,1200,0,0)
-        GribField(v,850,20180801,1200,0,0)
-        GribField(t,1000,20180801,1200,0,0)
-        GribField(u,1000,20180801,1200,0,0)
-        GribField(v,1000,20180801,1200,0,0)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
+        Field(v, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(v, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
 
         Specifying the ordering direction:
 
-        >>> for f in ds.order_by(param="ascending", level="descending"):
+        >>> for f in ds.order_by(**{"parameter.variable": "ascending", "vertical.level": "descending"}):
         ...     print(f)
         ...
-        GribField(t,1000,20180801,1200,0,0)
-        GribField(t,850,20180801,1200,0,0)
-        GribField(u,1000,20180801,1200,0,0)
-        GribField(u,850,20180801,1200,0,0)
-        GribField(v,1000,20180801,1200,0,0)
-        GribField(v,850,20180801,1200,0,0)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
+        Field(v, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(v, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
 
-        Using the list of all the values of a key ("param") to define the order:
+        Using the list of all the values of a key ("parameter.variable") to define the order:
 
-        >>> for f in ds.order_by(param=["u", "t", "v"]):
+        >>> for f in ds.order_by(**{"parameter.variable": ["u", "t", "v"]}):
         ...     print(f)
         ...
-        GribField(u,1000,20180801,1200,0,0)
-        GribField(u,850,20180801,1200,0,0)
-        GribField(t,1000,20180801,1200,0,0)
-        GribField(t,850,20180801,1200,0,0)
-        GribField(v,1000,20180801,1200,0,0)
-        GribField(v,850,20180801,1200,0,0)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
+        Field(v, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(v, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
 
         Using ``remapping`` to specify the order by a key created from two other keys
         (we created key "param_level" from "param" and "levelist"):
 
         >>> ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
-        >>> remapping = {"param_level": "{param}{levelist}"}
+        >>> remapping = {"param_level": "{parameter.variable}{vertical.level}"}
         >>> for f in ds.order_by(param_level=ordering, remapping=remapping):
         ...     print(f)
         ...
-        GribField(t,850,20180801,1200,0,0)
-        GribField(t,1000,20180801,1200,0,0)
-        GribField(u,1000,20180801,1200,0,0)
-        GribField(v,850,20180801,1200,0,0)
-        GribField(v,1000,20180801,1200,0,0)
-        GribField(u,850,20180801,1200,0,0)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
+        Field(t, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(v, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
+        Field(v, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 1000, pressure, 0, regular_ll)
+        Field(u, 2018-08-01 12:00:00, 2018-08-01 12:00:00, 0:00:00, 850, pressure, 0, regular_ll)
         """
         kwargs = normalise_order_by(*args, **kwargs)
 

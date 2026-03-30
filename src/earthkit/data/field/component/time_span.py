@@ -12,18 +12,8 @@ from enum import Enum
 
 
 class TimeMethod:
-    def __init__(
-        self,
-        name: str,
-        standard_name: str,
-        long_name: str,
-    ) -> None:
+    def __init__(self, name: str) -> None:
         self.name = name
-        self.standard_name = standard_name
-        self.long_name = long_name
-
-    # def __eq__(self, other):
-    #     return self.name == other.name
 
     def __eq__(self, other):
         if isinstance(other, TimeMethod):
@@ -32,23 +22,22 @@ class TimeMethod:
             return self.name == other
         return False
 
+    def __repr__(self):
+        return self.name
+
 
 _defs = {
-    "ACCUMULATED": {"name": "accum", "standard_name": "air_pressure", "long_name": "pressure"},
+    "ACCUMULATED": {
+        "name": "accum",
+    },
     "AVERAGE": {
         "name": "avg",
-        "standard_name": "air_pressure",
-        "long_name": "pressure",
     },
     "INSTANT": {
         "name": "instant",
-        "standard_name": "air_pressure",
-        "long_name": "pressure",
     },
     "MAX": {
         "name": "max",
-        "standard_name": "air_pressure",
-        "long_name": "pressure",
     },
 }
 
@@ -70,91 +59,4 @@ def get_time_method(item: str, default=TimeMethods.INSTANT) -> TimeMethod:
     elif item is None:
         return default.value
 
-    raise ValueError(f"Unsupported level type: {item}")
-
-
-# class TimeSpanMethodItem:
-#     def __init__(
-#         self,
-#         name: str,
-#         standard_name: str,
-#         long_name: str,
-#     ) -> None:
-#         self.name = name
-#         self.standard_name = standard_name
-#         self.long_name = long_name
-
-#     def __eq__(self, other):
-#         return self.name == other.name
-
-
-# _defs = {
-#     "accum": {"name": "accum", "standard_name": "air_pressure", "long_name": "pressure"},
-#     "avg": {
-#         "name": "avg",
-#         "standard_name": "air_pressure",
-#         "long_name": "pressure",
-#     },
-#     "instant": {
-#         "name": "instant",
-#         "standard_name": "air_pressure",
-#         "long_name": "pressure",
-#     },
-#     "max": {
-#         "name": "max",
-#         "standard_name": "air_pressure",
-#         "long_name": "pressure",
-#     },
-# }
-
-
-# class TimeSpanMethod(Enum):
-#     ACCUMULATED = TimeSpanMethodItem(**_defs["accum"])
-#     AVERAGE = TimeSpanMethodItem(**_defs["avg"])
-#     INSTANT = TimeSpanMethodItem(**_defs["instant"])
-#     MAX = TimeSpanMethodItem(**_defs["max"])
-
-
-# class TimeSpan:
-#     def __init__(self, value=datetime.timedelta(), method=TimeSpanMethod.INSTANT):
-#         try:
-#             self._value = to_timedelta(value)
-#         except Exception as e:
-#             raise ValueError(f"Invalid time span value: {value}") from e
-
-#         self._method = method
-#         if not isinstance(self._method, TimeSpanMethod):
-#             raise ValueError(f"Invalid time span method: {method}")
-#         self._check()
-
-#     @property
-#     def value(self):
-#         return self._value
-
-#     @property
-#     def method(self):
-#         return self._method
-
-#     def __repr__(self):
-#         return f"TimeSpan({self._value}, {self._method.value.name})"
-
-#     @staticmethod
-#     def build(data):
-#         if isinstance(data, TimeSpan):
-#             return data
-#         else:
-#             return TimeSpan(value=data)
-
-#     def _check(self):
-#         if self._value != ZERO_TIMEDELTA and self._method == TimeSpanMethod.INSTANT:
-#             raise ValueError("A non-zero time_span cannot be of type instant")
-
-#         if self._value == ZERO_TIMEDELTA and self._method != TimeSpanMethod.INSTANT:
-#             raise ValueError("A zero time_span must be of type instant")
-
-#     def __eq__(self, data):
-#         value = TimeSpan.build(data)
-#         return self._value == value._value and self._method == value._method
-
-#     def __hash__(self):
-#         return hash((self._value, self._method))
+    raise ValueError(f"Unsupported time method type: {item}")

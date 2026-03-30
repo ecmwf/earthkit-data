@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.field.component.ensemble import BaseEnsemble, EmptyEnsemble, create_ensemble
+from earthkit.data.field.component.ensemble import EmptyEnsemble, EnsembleBase, create_ensemble
 
 from .core import SimpleFieldComponentHandler
 
@@ -15,7 +15,7 @@ from .core import SimpleFieldComponentHandler
 class EnsembleFieldComponentHandler(SimpleFieldComponentHandler):
     """Ensemble component handler of a field."""
 
-    COMPONENT_CLS = BaseEnsemble
+    COMPONENT_CLS = EnsembleBase
     COMPONENT_MAKER = create_ensemble
     NAME = "ensemble"
 

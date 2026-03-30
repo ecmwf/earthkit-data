@@ -33,34 +33,20 @@ These functions/objects can be imported directly from the top level package and 
      - A config object that can be used to set global configuration options for earthkit-data. See: :ref:`config` for more details.
 
 
-.. Top level API classes
-.. -------------------------
+Top level API classes
+-------------------------
 
-.. .. list-table:: Top level API classes
-..    :header-rows: 1
-..    :widths: 30 70
+.. list-table:: Top level API classes
+   :header-rows: 1
+   :widths: 30 70
 
-..    * - Class
-..      - Description
-..    * - :py:class:`~earthkit.data.core.field.Field`
-..      - A horizontal slice of the atmosphere/hydrosphere at a given time.
-..    * - :py:class:`~earthkit.data.core.fieldlist.FieldList`
-..      - A collection of fields.
+   * - Class
+     - Description
+   * - :py:class:`~earthkit.data.core.field.Field`
+     - A horizontal slice of the atmosphere/hydrosphere at a given time.
+   * - :py:class:`~earthkit.data.core.fieldlist.FieldList`
+     - A collection of fields.
 
-
-.. Top level objects
-.. -------------------------
-
-.. .. list-table:: Top level objects
-..    :header-rows: 1
-..    :widths: 30 70
-
-..    * - Object
-..      - Description
-..    * - :py:class:`cache <earthkit.data.core.caching.CACHE>`
-..      - A cache object that can be used to cache data in on disk. See: :ref:`caching` for more details.
-..    * - :py:class:`config <earthkit.data.core.config.CONFIG>`
-..      - A config object that can be used to set global configuration options for earthkit-data. See: :ref:`configuration` for more details.
 
 
 The full API reference guide

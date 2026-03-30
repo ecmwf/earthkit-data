@@ -62,14 +62,24 @@ def test_vertical_component_type():
     assert t.abbreviation == "pl"
     assert t.units == "hPa"
     assert t.positive == "down"
-    assert t.cf == {"standard_name": "air_pressure", "long_name": "pressure"}
+    assert t.cf == {
+        "standard_name": "air_pressure",
+        "long_name": "pressure",
+        "units": "hectopascal",
+        "positive": "down",
+    }
 
     assert r.level() == 1000
     assert r.level_type() == "pressure"
     assert r.abbreviation() == "pl"
     assert r.units() == "hPa"
     assert r.positive() == "down"
-    assert r.cf() == {"standard_name": "air_pressure", "long_name": "pressure"}
+    assert r.cf() == {
+        "standard_name": "air_pressure",
+        "long_name": "pressure",
+        "units": "hectopascal",
+        "positive": "down",
+    }
 
     p_type = get_level_type("pressure")
     assert p_type == t
