@@ -7,7 +7,7 @@ Frequently asked questions
 How to save results from a retrieval into a file?
 --------------------------------------------------------------
 
-You need to use the :func:`save` method on the resulting object. For example, this is how to
+You need to use the :func:`to_target` method on the resulting object. For example, this is how to
 save the results of a :ref:`MARS retrieval <data-sources-mars>` into a file:
 
 .. code-block:: python
@@ -36,7 +36,7 @@ a GRIB fieldlist object. See :ref:`xr_engine` for details.
 How to call to_xarray() with arguments for NetCDF data?
 ---------------------------------------------------------
 
-When calling :func:`to_xarray` for NetCDF data it calls ``xarray.open_mfdataset`` internally. You can pass arguments to this xarray function by using the ``xarray_open_mfdataset_kwargs`` option. For example:
+When calling :func:`to_xarray` for NetCDF data it calls :py:func:`xarray.open_mfdataset` internally. You can pass arguments to this xarray function by using the ``xarray_open_mfdataset_kwargs`` option. For example:
 
 
 .. code-block:: python
@@ -55,7 +55,7 @@ When calling :func:`to_xarray` for NetCDF data it calls ``xarray.open_mfdataset`
         "region": "europe",
     }
 
-    ds = ekd.from_source("cds", "satellite-fire-burned-area", req)
-    r = ds.to_xarray(
+    d = ekd.from_source("cds", "satellite-fire-burned-area", req)
+    r = d.to_xarray(
         xarray_open_mfdataset_kwargs=dict(decode_cf=False, decode_times=False)
     )

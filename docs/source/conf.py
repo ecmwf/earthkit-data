@@ -129,7 +129,8 @@ html_js_files = [
     "custom.js",
 ]
 
-html_favicon = "https://raw.githubusercontent.com/ecmwf/logos/refs/heads/main/logos/earthkit/earthkit-logo-only.svg"
+html_favicon = "./_static/earthkit-data-notext.svg"
+
 
 d_value = (
     "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53"

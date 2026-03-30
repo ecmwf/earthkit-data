@@ -26,7 +26,7 @@ features of your input data, such as data dimensionality, axes, coordinate
 reference systems and bounding boxes.
 
 
-.. grid:: 1
+.. grid::  1 1 2 2
    :gutter: 2
 
    .. grid-item-card:: Installation and Getting Started
@@ -37,8 +37,13 @@ reference systems and bounding boxes.
 
       New to earthkit-data? Start here with installation and a quick overview.
 
-.. grid:: 1 1 2 2
-   :gutter: 2
+   .. grid-item-card:: Frequently Asked Questions
+      :img-top: _static/message-question.svg
+      :link: getting-started
+      :link-type: doc
+      :class-card: sd-shadow-sm
+
+      The most common questions, answered.
 
    .. grid-item-card:: Tutorials
       :img-top: _static/book.svg
@@ -72,6 +77,11 @@ reference systems and bounding boxes.
 
       Detailed documentation of all functions and classes.
 
+**Support**
+
+Have a feature request or found a bug? Feel free to open an
+`issue <https://github.com/ecmwf/earthkit-data/issues/new/choose>`_.
+
 
 .. toctree::
    :caption: User guide
@@ -79,10 +89,12 @@ reference systems and bounding boxes.
    :hidden:
 
    getting-started
+   faq
    tutorials/index
    how-tos/index
    concepts/index
    api-reference
+   faqs
 
 .. toctree::
    :caption: Developer guide
