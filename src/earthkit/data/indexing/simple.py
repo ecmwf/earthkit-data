@@ -43,37 +43,6 @@ class SimpleFieldListBase(IndexFieldListBase):
         # print("SimpleFieldList Setstate")
         self._fields = state.pop("_fields")
 
-    def to_pandas(self, *args, **kwargs):
-        # TODO make it generic
-        if len(self) > 0:
-            if self[0]._default_encoder() == "grib":
-                from earthkit.data.readers.grib.pandas import PandasMixIn
-
-                class _C(PandasMixIn, SimpleFieldList):
-                    pass
-
-                return _C(self._fields).to_pandas(*args, **kwargs)
-        else:
-            import pandas as pd
-
-            return pd.DataFrame()
-
-    # def to_xarray(self, *args, **kwargs):
-    #     # TODO make it generic
-    #     if len(self) > 0:
-    #         encoder = self[0]._default_encoder()
-    #         if encoder == "grib" or encoder is None:
-    #             from earthkit.data.readers.grib.xarray import XarrayMixIn
-
-    #             class _C(XarrayMixIn, SimpleFieldList):
-    #                 pass
-
-    #             return _C(self._fields).to_xarray(*args, **kwargs)
-    #     else:
-    #         import xarray as xr
-
-    #         return xr.Dataset()
-
     def _default_encoder(self):
         if len(self) > 0:
             return self[0]._default_encoder()

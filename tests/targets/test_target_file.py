@@ -288,11 +288,46 @@ def test_target_file_grib_to_netcdf_1():
 
 
 def test_target_file_grib_to_netcdf_2():
+    d = from_source("file", earthkit_examples_file("test.grib"))
+    ds = d.to_fieldlist()
+    # vals_ref = ds.values[:, :4]
+
+    with temp_file() as path:
+        d.to_target("file", path, encoder="netcdf")
+
+        ds1 = from_source("file", path).to_fieldlist()
+        assert len(ds1) == len(ds)
+        assert ds1.get("parameter.variable") == ["2t", "msl"]
+
+        ds2 = ds1.to_xarray()
+        assert "values" not in ds2.sizes
+
+
+def test_target_file_grib_to_netcdf_3():
     ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     # vals_ref = ds.values[:, :4]
 
     with temp_file() as path:
         ds.to_target("file", path, encoder="netcdf", earthkit_to_xarray_kwargs={"flatten_values": True})
+
+        ds1 = from_source("file", path).to_fieldlist()
+        ds2 = ds1.to_xarray()
+
+        for name in ["2t", "msl"]:
+            assert name in ds2.data_vars
+
+        for name in ["latitude", "longitude"]:
+            assert name in ds2.coords
+
+        assert "values" in ds2.sizes
+
+
+def test_target_file_grib_to_netcdf_4():
+    d = from_source("file", earthkit_examples_file("test.grib"))
+    # vals_ref = ds.values[:, :4]
+
+    with temp_file() as path:
+        d.to_target("file", path, encoder="netcdf", earthkit_to_xarray_kwargs={"flatten_values": True})
 
         ds1 = from_source("file", path).to_fieldlist()
         ds2 = ds1.to_xarray()

@@ -17,29 +17,12 @@ from earthkit.data.core.index import Index, MaskIndex, MultiIndex
 from earthkit.data.core.order import build_remapping
 from earthkit.data.utils.compute import wrap_maths
 
+from .pandas import PandasMixIn
 from .xarray import XarrayMixIn
 
 
 @wrap_maths
-class IndexFieldListBase(XarrayMixIn, Index, FieldList):
-    # @staticmethod
-    # def from_fields(fields):
-    #     r"""Create a :class:`SimpleFieldList`.
-
-    #     Parameters
-    #     ----------
-    #     fields: iterable
-    #         Iterable of :obj:`Field` objects.
-
-    #     Returns
-    #     -------
-    #     :class:`SimpleFieldList`
-
-    #     """
-    #     from earthkit.data.indexing.simple import SimpleFieldList
-
-    #     return SimpleFieldList.from_fields(fields)
-
+class IndexFieldListBase(XarrayMixIn, PandasMixIn, Index, FieldList):
     @property
     def values(self):
         return self._as_array("values")
@@ -299,54 +282,11 @@ class IndexFieldListBase(XarrayMixIn, Index, FieldList):
 
         return FieldCube(self, *args, **kwargs)
 
-    # def _encode(self, encoder, **kwargs):
-    #     """Double dispatch to the encoder"""
-    #     return encoder._encode_fieldlist(self, **kwargs)
-
-    # def _normalise_sel_input(self, **kwargs):
-    #     from .field import Field
-
-    #     return Field._normalise_sel_input(**kwargs)
-
     @staticmethod
     def _normalise_key_values(**kwargs):
         from ..core.field import Field
 
         return Field._normalise_key_values(**kwargs)
-
-    # def unique_values(self, *coords, remapping=None, patch=None, progress_bar=False):
-    #     """Given a list of metadata attributes, such as date, param, levels,
-    #     returns the list of unique values for each attributes
-    #     """
-    #     from collections import defaultdict
-
-    #     from earthkit.data.core.order import build_remapping
-
-    #     assert len(coords)
-    #     assert all(isinstance(k, str) for k in coords), coords
-
-    #     remapping = build_remapping(remapping, patch)
-    #     iterable = self
-
-    #     if progress_bar:
-    #         from earthkit.data.utils.progbar import progress_bar
-
-    #         if progress_bar:
-    #             iterable = progress_bar(
-    #                 iterable=self,
-    #                 desc=f"Finding coords in dataset for {coords}",
-    #             )
-
-    #     vals = defaultdict(dict)
-    #     for f in iterable:
-    #         get = remapping(f.get)
-    #         for k in coords:
-    #             v = get(k, default=None)
-    #             vals[k][v] = True
-
-    #     vals = {k: tuple(values.keys()) for k, values in vals.items()}
-
-    #     return vals
 
     def _unary_op(self, oper):
         from earthkit.data.utils.compute import get_method

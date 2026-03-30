@@ -10,13 +10,13 @@ Xarray engine: overview
 
 Earthkit-data comes with its own Xarray engine called "earthkit" to convert :py:class:`~earthkit.data.core.fieldlist.FieldList` objects to Xarray.
 
-Creating Xarray from GRIB
---------------------------
+Creating Xarray from FieldList
+--------------------------------
 
 Using to_xarray()
 ++++++++++++++++++
 
-We can convert :ref:`grib` data into an Xarray dataset by using :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray` on a GRIB fieldlist object.
+We can convert a FieldList into an Xarray dataset by using :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray`.
 
 .. code-block:: python
 
@@ -40,7 +40,7 @@ We can convert :ref:`grib` data into an Xarray dataset by using :py:meth:`~earth
 
 .. note::
 
-    By default, :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray` uses the "earthkit" engine to generate Xarray. The previously used :xref:`cfgrib` engine is still available and can be invoked with the ``engine="cfgrib"`` option.
+    By default, :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray` uses the "earthkit" engine to generate Xarray. The previously used :xref:`cfgrib` engine is still available and can be invoked with the ``engine="cfgrib"`` option, it obviously only works with GRIB data. No other engines are supported at the moment.
 
 
 Using open_dataset()
@@ -86,7 +86,7 @@ Converting Xarray to GRIB
 
     This is an experimental feature and it is not yet fully supported.
 
-By default, ``add_earthkit_attrs=True`` in :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray` and some special earthkit attributes are added to the dataset. This is needed for the Xarray to GRIB conversion. For this reason, if the Xarray is modified we must ensure the variable attributes are copied to the new Xarray dataset. By default, variable attributes are not kept in Xarray computations so we need to set the global Xarray ``keep_attrs`` option to enable it.See the examples below for details.
+By default, ``add_earthkit_attrs=True`` in :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray` and some special earthkit attributes are added to the dataset. This is needed for the Xarray to GRIB conversion. For this reason, if the Xarray is modified we must ensure the variable attributes are copied to the new Xarray dataset. By default, variable attributes are not kept in Xarray computations so we need to set the global Xarray ``keep_attrs`` option to enable it. See the examples below for details.
 
 Using to_target
 ++++++++++++++++
@@ -113,7 +113,7 @@ It is possible to directly write the Xarray dataset created with the earthkit en
 Using to_fieldlist()
 ++++++++++++++++++++
 
-We can also convert the Xarray dataset into a GRIB fieldlist by using :py:meth:`~data.xr_engine.engine.XarrayEarthkit.to_fieldlist` on the ``earthkit`` accessor of the Xarray object. Please note that this will generate a fieldlist entirely stored in memory.
+We can also convert the Xarray dataset into a GRIB fieldlist by using :py:meth:`~data.xr_engine.engine.XarrayEarthkit.to_fieldlist` on the ``earthkit`` accessor of the Xarray object. Please note that this will generate a fieldlist entirely stored in memory. This method only works if the Xarray dataset was generated with the earthkit engine from GRIB data.\
 
 .. code-block:: python
 
@@ -156,10 +156,11 @@ By default, the earthkit Xarray engine attaches some special attributes to the g
     ds_xr = ds_fl.to_xarray()
     ds_xr.earthkit.to_netcdf("_from_grib.nc")
 
+
 Using the ``add_earthkit_attrs=False`` option
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Alternatively, we can use the ``add_earthkit_attrs=False`` option in :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray`.  With this the earthkit attributes are not added to the generated dataset and it is safe to call :py:meth:`to_netcdf <xarray.Dataset.to_netcdf>` directly on it.
+Alternatively, we can use the ``add_earthkit_attrs=False`` option in :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray`.  With this the earthkit attributes are not added to the generated dataset and it is safe to call :py:func:`to_netcdf xarray.Dataset.to_netcdf` directly on it.
 
 .. code-block:: python
 

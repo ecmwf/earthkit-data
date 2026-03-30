@@ -22,8 +22,6 @@ class GeoTIFFFieldList(SimpleFieldListBase, GeoTIFFReaderBase):
     def __init__(self, path, **kwargs):
         GeoTIFFReaderBase.__init__(self, self, path)
         self._ds = self._rioxarray_read()
-        # Shared geography instance for all fields/bands
-        # self._geo = GeoTIFFGeography(self._ds)
 
     def _rioxarray_read(self, **kwargs):
         try:
@@ -37,14 +35,14 @@ class GeoTIFFFieldList(SimpleFieldListBase, GeoTIFFReaderBase):
 
         return rioxarray.open_rasterio(self.path, **options)
 
-    def to_xarray(self, **kwargs):
-        return self._rioxarray_read(**kwargs)
+    # def to_xarray(self, **kwargs):
+    #     return self._rioxarray_read(**kwargs)
 
-    def to_pandas(self):
-        import pandas as pd
+    # def to_pandas(self):
+    #     import pandas as pd
 
-        series = [field.to_pandas() for field in self]
-        return pd.concat(series, keys=[s.name for s in series])
+    #     series = [field.to_pandas() for field in self]
+    #     return pd.concat(series, keys=[s.name for s in series])
 
     @thread_safe_cached_property
     def _fields(self):
