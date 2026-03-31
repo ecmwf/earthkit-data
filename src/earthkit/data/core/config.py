@@ -220,12 +220,12 @@ CONFIG_AND_HELP = {
         getter="_as_int",
         validator=IntervalValidator(Interval(8, 4096)),
     ),
-    "grib-field-policy": _(
-        "persistent",
-        """GRIB field management policy for fieldlists with data on disk.  {validator}
-        See :doc:`/guide/misc/grib_memory` for more information.""",
-        validator=ListValidator(["persistent", "temporary"]),
-    ),
+    # "grib-field-policy": _(
+    #     "persistent",
+    #     """GRIB field management policy for fieldlists with data on disk.  {validator}
+    #     See :doc:`/guide/misc/grib_memory` for more information.""",
+    #     validator=ListValidator(["persistent", "temporary"]),
+    # ),
     "grib-handle-policy": _(
         "cache",
         """GRIB handle management policy for fieldlists with data on disk.  {validator}
@@ -329,12 +329,13 @@ class Config:
 
     @forward
     def get(self, name: str, default=NONE):
-        """[summary].
+        """Get the value of a configuration option.
 
         Parameters
         ----------
             name: str
-                [description]
+                The name of the configuration option.
+
             default: [type]
                 [description]. Defaults to NONE.
 
@@ -367,12 +368,13 @@ class Config:
 
     @forward
     def set(self, *args, **kwargs):
-        """[summary].
+        """Set the value of a configuration option.
 
         Parameters
         ----------
             name: str
-                [description]
+                The name of the configuration option.
+
             value: [type]
                 [description]
         """
@@ -390,7 +392,7 @@ class Config:
         self._changed()
 
     def _set(self, name: str, *args, **kwargs):
-        """[summary].
+        """Set the value of a configuration option.
 
         Parameters
         ----------

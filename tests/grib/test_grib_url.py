@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_remote_examples_file
+from earthkit.data.utils.testing import earthkit_remote_examples_file
 
 
 # TODO: the disabled tests require a fix in multiurl
@@ -35,11 +35,11 @@ from earthkit.data.testing import earthkit_remote_examples_file
     ],
 )
 def test_grib_single_url_parts(parts, expected_meta):
-    ds = from_source("url", earthkit_remote_examples_file("test6.grib"), parts=parts)
+    ds = from_source("url", earthkit_remote_examples_file("test6.grib"), parts=parts).to_fieldlist()
 
     assert len(ds) == len(expected_meta)
     if len(ds) > 0:
-        assert ds.metadata(("param", "level")) == expected_meta
+        assert ds.get(("parameter.variable", "vertical.level")) == expected_meta
 
 
 @pytest.mark.parametrize(
@@ -51,13 +51,13 @@ def test_grib_single_url_parts(parts, expected_meta):
     ],
 )
 def test_grib_single_url_parts_1(parts, expected_meta):
-    ds = from_source("url", [earthkit_remote_examples_file("test6.grib"), parts])
+    ds = from_source("url", [earthkit_remote_examples_file("test6.grib"), parts]).to_fieldlist()
 
     assert len(ds) == len(expected_meta)
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -98,13 +98,13 @@ def test_grib_multi_url_parts(parts1, parts2, expected_meta):
             [earthkit_remote_examples_file("test6.grib"), parts1],
             [earthkit_remote_examples_file("test.grib"), parts2],
         ],
-    )
+    ).to_fieldlist()
 
     assert len(ds) == len(expected_meta)
-    assert ds.metadata(("param", "level")) == expected_meta
+    assert ds.get(("parameter.variable", "vertical.level")) == expected_meta
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

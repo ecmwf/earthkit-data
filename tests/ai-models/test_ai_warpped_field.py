@@ -14,7 +14,7 @@ import logging
 import numpy as np
 
 from earthkit.data import SimpleFieldList, from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 LOG = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ class NewMetadataField(WrappedField):
 
 def test_ai_models_wrapped_field_grib():
 
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     np_ref = ds.to_numpy()
     vals_ref = ds.values
 

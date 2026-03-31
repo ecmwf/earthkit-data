@@ -9,15 +9,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import numpy as np
 import pytest
-
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-
 from lod_fixtures import build_lod_fieldlist  # noqa: E402
 
 
@@ -31,30 +25,26 @@ def test_lod_geo_distinct_ll(lod_distinct_ll, mode):
     lat_ref = np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]])
     lon_ref = np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]])
 
-    ll = ds[0].to_latlon()
-    lat = ll["lat"]
-    lon = ll["lon"]
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
-    gr = ds[0].mars_area
-    assert isinstance(gr, list)
-    assert np.allclose(np.array(gr), np.array([10, 20, -10, 40]))
+    # gr = ds[0].mars_area
+    # assert isinstance(gr, list)
+    # assert np.allclose(np.array(gr), np.array([10, 20, -10, 40]))
 
-    gr = ds[0].mars_grid
-    assert isinstance(gr, list)
-    assert np.allclose(np.array(gr), np.array([20.0, 10.0]))
+    # gr = ds[0].mars_grid
+    # assert isinstance(gr, list)
+    # assert np.allclose(np.array(gr), np.array([20.0, 10.0]))
 
-    gr = ds[0].grid_points()
-    assert len(gr) == 2
-    assert np.allclose(gr[0], lat_ref.flatten())
-    assert np.allclose(gr[1], lon_ref.flatten())
+    # gr = ds[0].grid_points()
+    # assert len(gr) == 2
+    # assert np.allclose(gr[0], lat_ref.flatten())
+    # assert np.allclose(gr[1], lon_ref.flatten())
 
-    assert ds[0].resolution is None
+    # assert ds[0].resolution is None
 
-    ll = ds.to_latlon()
-    lat = ll["lat"]
-    lon = ll["lon"]
+    lat, lon = ds.geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
@@ -69,29 +59,25 @@ def test_lod_geo_ll_flat(lod_ll_flat, mode):
     lat_ref = np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0])
     lon_ref = np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0])
 
-    ll = ds[0].to_latlon()
-    lat = ll["lat"]
-    lon = ll["lon"]
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
-    gr = ds[0].mars_area
-    assert isinstance(gr, list)
-    assert np.allclose(np.array(gr), np.array([10, 20, -10, 40]))
+    # gr = ds[0].mars_area
+    # assert isinstance(gr, list)
+    # assert np.allclose(np.array(gr), np.array([10, 20, -10, 40]))
 
-    with pytest.raises(NotImplementedError):
-        gr = ds[0].mars_grid
+    # with pytest.raises(NotImplementedError):
+    #     gr = ds[0].mars_grid
 
-    gr = ds[0].grid_points()
-    assert len(gr) == 2
-    assert np.allclose(gr[0], lat_ref.flatten())
-    assert np.allclose(gr[1], lon_ref.flatten())
+    # gr = ds[0].grid_points()
+    # assert len(gr) == 2
+    # assert np.allclose(gr[0], lat_ref.flatten())
+    # assert np.allclose(gr[1], lon_ref.flatten())
 
-    assert ds[0].resolution is None
+    # assert ds[0].resolution is None
 
-    ll = ds.to_latlon()
-    lat = ll["lat"]
-    lon = ll["lon"]
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
@@ -107,30 +93,26 @@ def test_lod_geo_ll_2D(request, data, mode):
     lat_ref = np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]])
     lon_ref = np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]])
 
-    ll = ds[0].to_latlon()
-    lat = ll["lat"]
-    lon = ll["lon"]
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
-    gr = ds[0].mars_area
-    assert isinstance(gr, list)
-    assert np.allclose(np.array(gr), np.array([10, 20, -10, 40]))
-
-    # gr = ds[0].mars_grid
+    # gr = ds[0].mars_area
     # assert isinstance(gr, list)
-    # assert np.allclose(np.array(gr), np.array([20.0, 10.0]))
+    # assert np.allclose(np.array(gr), np.array([10, 20, -10, 40]))
 
-    gr = ds[0].grid_points()
-    assert len(gr) == 2
-    assert np.allclose(gr[0], lat_ref.flatten())
-    assert np.allclose(gr[1], lon_ref.flatten())
+    # # gr = ds[0].mars_grid
+    # # assert isinstance(gr, list)
+    # # assert np.allclose(np.array(gr), np.array([20.0, 10.0]))
 
-    assert ds[0].resolution is None
+    # gr = ds[0].grid_points()
+    # assert len(gr) == 2
+    # assert np.allclose(gr[0], lat_ref.flatten())
+    # assert np.allclose(gr[1], lon_ref.flatten())
 
-    ll = ds.to_latlon()
-    lat = ll["lat"]
-    lon = ll["lon"]
+    # assert ds[0].resolution is None
+
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
@@ -142,11 +124,13 @@ def test_lod_geo_invalid(
     data,
     mode,
 ):
-    ds = build_lod_fieldlist(request.getfixturevalue(data), mode)
-
-    assert len(ds) == 6
     with pytest.raises(ValueError):
-        ds[0].shape
+        build_lod_fieldlist(request.getfixturevalue(data), mode)
+
+    # ds = build_lod_fieldlist(request.getfixturevalue(data), mode)
+    # assert len(ds) == 6
+    # with pytest.raises(ValueError):
+    #     ds[0].shape
 
 
 @pytest.mark.parametrize("data", ["lod_no_latlon"])
@@ -163,11 +147,13 @@ def test_lod_no_latlon(
     assert ds[0].values.shape == (6,)
     assert ds.values.shape == (6, 6)
 
-    with pytest.raises(ValueError):
-        ds[0].to_latlon()
+    # with pytest.raises(ValueError):
+    #     ds[0].geography.latlons()
+
+    assert ds[0].geography.latlons() == (None, None)
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

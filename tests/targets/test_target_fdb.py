@@ -19,7 +19,7 @@ from earthkit.data.core.temporary import temp_directory
 from earthkit.data.encoders.grib import GribEncoder
 from earthkit.data.targets import to_target
 from earthkit.data.targets.fdb import FDBTarget
-from earthkit.data.testing import NO_FDB, earthkit_examples_file, earthkit_test_data_file
+from earthkit.data.utils.testing import NO_FDB, earthkit_examples_file, earthkit_test_data_file
 
 TEST_GRIB_REQUEST = {
     "class": "od",
@@ -59,7 +59,7 @@ def make_fdb_config(path):
 )
 @pytest.mark.parametrize("direct_call", [True, False])
 def test_target_fdb_grib_core(kwargs, direct_call):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     vals_ref = ds.values[:, :4]
 
     with temp_directory() as tmpdir:
@@ -79,7 +79,7 @@ def test_target_fdb_grib_core(kwargs, direct_call):
 
         # target.flush()
 
-        ds1 = from_source("fdb", TEST_GRIB_REQUEST, config=config, stream=False)
+        ds1 = from_source("fdb", TEST_GRIB_REQUEST, config=config, stream=False).to_fieldlist()
         assert len(ds) == len(ds1)
         assert ds1.metadata("shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
@@ -88,7 +88,7 @@ def test_target_fdb_grib_core(kwargs, direct_call):
 @pytest.mark.skipif(NO_FDB, reason="No access to FDB")
 @pytest.mark.parametrize("per_field", [True, False])
 def test_target_fdb_grib_direct_api(per_field):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     vals_ref = ds.values[:, :4]
 
     with temp_directory() as tmpdir:
@@ -103,7 +103,7 @@ def test_target_fdb_grib_direct_api(per_field):
 
         target.flush()
 
-        ds1 = from_source("fdb", TEST_GRIB_REQUEST, config=config, stream=False)
+        ds1 = from_source("fdb", TEST_GRIB_REQUEST, config=config, stream=False).to_fieldlist()
         assert len(ds) == len(ds1)
         assert ds1.metadata("shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)

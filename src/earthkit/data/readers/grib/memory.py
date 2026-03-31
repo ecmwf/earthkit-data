@@ -11,9 +11,8 @@ import logging
 
 import eccodes
 
-from earthkit.data.indexing.fieldlist import ClonedFieldCore, SimpleFieldList
+from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.readers import Reader
-from earthkit.data.readers.grib.codes import GribCodesHandle, GribField
 
 LOG = logging.getLogger(__name__)
 
@@ -52,7 +51,12 @@ class GribMemoryReader(Reader):
 
     def _message_from_handle(self, handle):
         if handle is not None:
-            return GribFieldInMemory(GribCodesHandle(handle, None, None), use_metadata_cache=self._use_metadata_cache)
+            from earthkit.data.field.grib.create import create_grib_field
+
+            from .handle import MemoryGribHandle
+
+            handle = MemoryGribHandle.from_raw_handle(handle)
+            return create_grib_field(handle, cache=self._use_metadata_cache)
 
     def batched(self, n):
         from earthkit.data.utils.batch import batched
@@ -65,7 +69,7 @@ class GribMemoryReader(Reader):
         return group_by(self, *args, create=self.to_fieldlist, sort=False)
 
     def to_fieldlist(self, fields):
-        return GribFieldListInMemory.from_fields(fields)
+        return SimpleFieldList.from_fields(fields)
 
 
 class GribFileMemoryReader(GribMemoryReader):
@@ -77,14 +81,15 @@ class GribFileMemoryReader(GribMemoryReader):
         self.fp.close()
 
     def _next_handle(self):
-        return eccodes.codes_new_from_file(self.fp, eccodes.CODES_PRODUCT_GRIB)
+        from .handle import GribCodesHandle
+
+        return GribCodesHandle._raw_handle_from_file(self.fp)
 
 
 class GribMessageMemoryReader(GribMemoryReader):
     def __init__(self, buf, **kwargs):
         super().__init__(**kwargs)
         self.buf = buf
-        self._index = 0
 
     def __del__(self):
         self.buf = None
@@ -93,26 +98,24 @@ class GribMessageMemoryReader(GribMemoryReader):
         if self.buf is None:
             return None
 
-        handle = eccodes.codes_new_from_message(self.buf[self._index :])
+        from .handle import GribCodesHandle
 
-        # TODO: allow handling padding between messages
-        try:
-            handle_length = eccodes.codes_get(handle, "totalLength")
-        except Exception:
-            return None
+        handle = GribCodesHandle._raw_handle_from_message(self.buf)
 
-        self._index += handle_length
-        if self._index >= len(self.buf):
-            self.buf = None
+        self.buf = None
         return handle
 
 
 class GribStreamReader(GribMemoryReader):
-    """Wrapper around eccodes.Streamreader. The problem is that when iterating via
+    """Wrapper around eccodes.Streamreader.
+
+    The problem is that when iterating via
     the StreamReader it returns an eccodes.GRIBMessage that releases the handle when deleted.
     However, the handle has to be managed by earthkit-data so we access it directly
-    using _next_handle.
+    using _next_handle
     """
+
+    _format = "grib"
 
     def __init__(self, stream, **kwargs):
         super().__init__(**kwargs)
@@ -138,57 +141,13 @@ class GribStreamReader(GribMemoryReader):
     def mutate_source(self):
         return self
 
+    def to_data_object(self):
+        from earthkit.data.data.stream import StreamFieldListData
 
-class GribFieldInMemory(GribField):
-    """Represents a GRIB message in memory."""
+        return StreamFieldListData(self)
 
-    def __init__(self, handle, use_metadata_cache=False):
-        super().__init__(None, None, None, use_metadata_cache=use_metadata_cache)
-        self._handle = handle
-
-    @GribField.handle.getter
-    def handle(self):
-        return self._handle
-
-    @GribField.handle.getter
-    def offset(self):
-        return None
-
-    # @cached_property
-    # def _metadata(self):
-    #     return GribFieldMetadata(self)
-
-    @staticmethod
-    def to_fieldlist(fields):
-        return GribFieldListInMemory.from_fields(fields)
-
-    @staticmethod
-    def from_buffer(buf):
-        handle = eccodes.codes_new_from_message(buf)
-        return GribFieldInMemory(GribCodesHandle(handle, None, None), use_metadata_cache=get_use_grib_metadata_cache())
-
-    def _release(self):
-        self._handle = None
-
-    def clone(self, **kwargs):
-        return ClonedGribFieldInMemory(self, **kwargs)
-
-    def __getstate__(self):
-        return {"message": self.message()}
-
-    def __setstate__(self, state):
-        self.__init__(GribCodesHandle.from_message(state["message"]))
-
-
-class ClonedGribFieldInMemory(ClonedFieldCore, GribFieldInMemory):
-    def __init__(self, field, **kwargs):
-        ClonedFieldCore.__init__(self, field, **kwargs)
-        self._handle = field._handle
-        GribFieldInMemory.__init__(
-            self,
-            field._handle,
-            use_metadata_cache=field._use_metadata_cache,
-        )
+    def _encode_default(self, encoder, *args, **kwargs):
+        return encoder._encode_fieldlist(self.to_xarray(), *args, **kwargs)
 
 
 class GribFieldListInMemory(SimpleFieldList):
@@ -210,21 +169,21 @@ class GribFieldListInMemory(SimpleFieldList):
     def _load(self):
         # TODO: make it thread safe
         if not self._loaded:
-            self.fields = [f for f in self._reader]
+            self._fields = [f for f in self._reader]
             self._loaded = True
             self._reader = None
 
     def mutate_source(self):
         return self
 
-    @classmethod
-    def merge(cls, readers):
-        assert all(isinstance(s, GribFieldListInMemory) for s in readers), readers
-        assert len(readers) > 1
+    # @classmethod
+    # def merge(cls, readers):
+    #     assert all(isinstance(s, GribFieldListInMemory) for s in readers), readers
+    #     assert len(readers) > 1
 
-        from itertools import chain
+    #     from itertools import chain
 
-        return GribFieldListInMemory.from_fields(list(chain(*[f for f in readers])))
+    #     return GribFieldListInMemory.from_fields(list(chain(*[f for f in readers])))
 
     def __getstate__(self):
         self._load()
@@ -232,7 +191,8 @@ class GribFieldListInMemory(SimpleFieldList):
         return r
 
     def __setstate__(self, state):
-        fields = [GribFieldInMemory.from_buffer(m) for m in state["messages"]]
+        # fields = [GribFieldInMemory.from_buffer(m) for m in state["messages"]]
+        fields = []
         self.__init__(None, None)
         self.fields = fields
         self._loaded = True

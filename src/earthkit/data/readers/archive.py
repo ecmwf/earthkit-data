@@ -79,3 +79,6 @@ class ArchiveReader(Reader):
             extension=".d",
             replace=self.path,
         )
+
+    def _encode_default(self, encoder, **kwargs):
+        return None

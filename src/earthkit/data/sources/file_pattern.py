@@ -10,7 +10,8 @@
 from typing import Any as TypingAny
 from typing import Dict, Optional, Tuple, Union
 
-from earthkit.data.sources import Source, from_source
+from earthkit.data import concat
+from earthkit.data.sources import Source, from_source_internal
 from earthkit.data.sources.empty import EmptySource
 from earthkit.data.sources.file import File
 from earthkit.data.sources.multi import MultiSource
@@ -21,15 +22,15 @@ class HiveFilePattern(Source):
     def __init__(self, pattern: str, params: Dict[str, TypingAny], **kwargs: TypingAny) -> None:
         self.scanner = HivePattern(pattern, params)
 
-    def sel(
+    def to_fieldlist(
         self,
         *args: Tuple[Dict[str, TypingAny]],
         _hive_diag: Optional[TypingAny] = None,
         **kwargs: TypingAny,
     ) -> Union[EmptySource, MultiSource]:
-        from earthkit.data.core.index import normalize_selection
+        from earthkit.data.core.index import normalise_selection
 
-        kwargs = normalize_selection(*args, **kwargs)
+        kwargs, _ = normalise_selection(*args, **kwargs)
 
         rest = {k: v for k, v in kwargs.items() if k not in self.scanner.params}
         for k in rest:
@@ -38,8 +39,8 @@ class HiveFilePattern(Source):
         if rest:
             out = EmptySource()
             for f in self.scanner.scan(**kwargs):
-                ds = from_source("file", f)
-                out += ds.sel(**rest)
+                ds = from_source_internal("file", f).to_fieldlist()
+                out = concat(out, ds.sel(**rest))
                 if _hive_diag:
                     _hive_diag.file(1)
                     _hive_diag.sel(1)
@@ -57,7 +58,13 @@ class HiveFilePattern(Source):
             while src is not prev:
                 prev = src
                 src = src.mutate()
-            return src
+
+            return src.to_fieldlist()
+
+    def to_data_object(self):
+        from earthkit.data.data.hive import HiveFilePatternData
+
+        return HiveFilePatternData(self)
 
 
 class FilePattern(MultiSource):

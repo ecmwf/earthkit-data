@@ -9,7 +9,8 @@
 
 import logging
 import os
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 from functools import lru_cache
 from importlib import import_module
 
@@ -20,8 +21,8 @@ class Target(metaclass=ABCMeta):
     """
     Represent a target.
 
-    Parameters
-    ----------
+    Parameters:
+    -----------
     encoder: str, Encoder, None
         The encoder to use to encode the data. Can be overridden in the the :obj:`write` method.
         When a string is passed, the encoder is looked up in the available encoders. When None,
@@ -35,6 +36,8 @@ class Target(metaclass=ABCMeta):
     The :class:`Target` is used to write data to a specific location. The target can be
     a file, a database, a remote server, etc.
     """
+
+    _name = None
 
     def __init__(self, encoder=None, template=None, metadata=None, **kwargs):
         self._encoder = encoder
@@ -54,8 +57,8 @@ class Target(metaclass=ABCMeta):
         """
         Write data to the target using the given encoder.
 
-        Parameters
-        ----------
+        Parameters:
+        -----------
         data: obj, None
             The data object to write. If None, the encoder will use all the other arguments
             to generate the data to write.
@@ -73,8 +76,8 @@ class Target(metaclass=ABCMeta):
         **kwargs: dict
             Other keyword arguments passed to the encoder.
 
-        Raises
-        ------
+        Raises:
+        -------
         ValueError: If the target is already closed.
         """
         pass
@@ -87,8 +90,8 @@ class Target(metaclass=ABCMeta):
         It must also call :obj:`_mark_closed`. The target will not be able
         to write anymore.
 
-        Raises
-        ------
+        Raises:
+        -------
         ValueError: If the target is already closed.
         """
         pass
@@ -99,8 +102,8 @@ class Target(metaclass=ABCMeta):
 
         Some targets may require to flush the data to the underlying storage.
 
-        Raises
-        ------
+        Raises:
+        -------
         ValueError: If the target is already closed.
         """
         pass
@@ -138,9 +141,9 @@ class SimpleTarget(Target):
         self._raise_if_closed()
 
         if data is not None:
-            if hasattr(data, "sources"):
-                for d in data.sources:
-                    self.write(d, **kwargs)
+            # if hasattr(data, "sources"):
+            #     for d in data.sources:
+            #         self.write(d, **kwargs)
 
             self._write(data, **kwargs)
         else:
@@ -150,8 +153,8 @@ class SimpleTarget(Target):
     def _write(self, data, **kwargs):
         """Write generic data to the target.
 
-        Parameters
-        ----------
+        Parameters:
+        -----------
         data:
             Data to write to the target.
         """
@@ -170,12 +173,16 @@ class SimpleTarget(Target):
         if encoder is None:
             encoder = self._encoder
 
+        # no_encoder_kwargs = (
+        #     (not encoder or isinstance(encoder, str)) and not template and not kwargs and not self._metadata
+        # )
+
         encoder = make_encoder(data, encoder, suffix=suffix, metadata=self._metadata)
 
         if template is None:
             template = self._template
 
-        return encoder.encode(data, template=template, **kwargs)
+        return encoder.encode(data, target=self, template=template, **kwargs)
 
     def __enter__(self):
         return self
@@ -250,12 +257,11 @@ def to_target(target, *args, **kwargs):
 
     This is a top level function that writes data to a target.
 
-    Parameters
-    ----------
+    Parameters:
+    -----------
     target: str
         The target to write to. Must be a string.
     """
-    # data = kwargs.pop("data", None)
 
     with create_target(target, *args, **kwargs) as t:
         for k in [*target_kwargs(type(t)), *target_kwargs(Target)]:

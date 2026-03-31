@@ -17,135 +17,119 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import (
-    WRITE_TO_FILE_METHODS,
-    earthkit_examples_file,
-    make_tgz,
-    make_zip,
-    preserve_cwd,
-    write_to_file,
-)
+from earthkit.data.utils.testing import earthkit_examples_file, make_tgz, make_zip, preserve_cwd
 
 LOG = logging.getLogger(__name__)
 
 
 def test_file_source_grib():
-    from earthkit.data.readers.grib.file import GRIBReader
+    s = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
-    s = from_source("file", earthkit_examples_file("test.grib"))
-
-    assert isinstance(s, GRIBReader), s
     assert len(s) == 2
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_file_source_grib_save(write_method):
-    ds = from_source("file", os.path.abspath(earthkit_examples_file("test.grib")))
+def test_file_source_grib_save():
+    ds = from_source("file", os.path.abspath(earthkit_examples_file("test.grib"))).to_fieldlist()
     with temp_directory() as tmpdir:
         # Check file save to assigned filename
         f_tmp = os.path.join(tmpdir, "test2.grib")
-        write_to_file(write_method, f_tmp, ds)
+        ds.to_target("file", f_tmp)
         assert os.path.isfile(f_tmp)
         # Check file can be saved in current dir with detected filename:
         with preserve_cwd():
             os.chdir(tmpdir)
-            write_to_file(write_method, f_tmp, ds)
-            ds.save()
+            ds.to_target("file")
             assert os.path.isfile("test.grib")
 
 
-@pytest.mark.parametrize("write_method", ["save", "target"])
-def test_file_source_grib_no_overwrite(write_method):
-    ds = from_source("file", os.path.abspath(earthkit_examples_file("test.grib")))
+def test_file_source_grib_no_overwrite():
+    ds = from_source("file", os.path.abspath(earthkit_examples_file("test.grib"))).to_fieldlist()
     with temp_directory() as tmpdir:
         with preserve_cwd():
             os.chdir(tmpdir)
             # Save the file locally
-            write_to_file(write_method, "test.grib", ds)
+            ds.to_target("file", "test.grib")
             # Open the local file
-            ds1 = from_source("file", "test.grib")
+            ds1 = from_source("file", "test.grib").to_fieldlist()
             with pytest.warns(
                 UserWarning,
                 match="Earthkit refusing to overwrite",
             ):
-                write_to_file(write_method, "test.grib", ds1)
+                ds1.to_target("file", "test.grib")
             with pytest.warns(
                 UserWarning,
                 match="Earthkit refusing to overwrite",
             ):
-                ds1.save()
+                ds1.to_target("file")
 
 
 def test_file_source_netcdf():
-    s = from_source("file", earthkit_examples_file("test.nc"))
+    s = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
     assert len(s) == 2
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_file_source_netcdf_save(write_method):
-    ds = from_source("file", os.path.abspath(earthkit_examples_file("test.nc")))
+def test_file_source_netcdf_save():
+    ds = from_source("file", os.path.abspath(earthkit_examples_file("test.nc"))).to_fieldlist()
     with temp_directory() as tmpdir:
         # Check file save to assigned filename
         f_tmp = os.path.join(tmpdir, "test2.nc")
-        write_to_file(write_method, f_tmp, ds)
+        ds.to_target("file", f_tmp)
         assert os.path.isfile(f_tmp)
         # Check file can be saved in current dir with detected filename:
         with preserve_cwd():
             os.chdir(tmpdir)
-            ds.save()
+            ds.to_target("file")
             assert os.path.isfile("test.nc")
 
 
-@pytest.mark.parametrize("write_method", ["save", "target"])
-def test_file_source_netcdf_no_overwrite(write_method):
-    ds = from_source("file", os.path.abspath(earthkit_examples_file("test.nc")))
+def test_file_source_netcdf_no_overwrite():
+    ds = from_source("file", os.path.abspath(earthkit_examples_file("test.nc"))).to_fieldlist()
     with temp_directory() as tmpdir:
         with preserve_cwd():
             os.chdir(tmpdir)
             # Save the file locally
-            write_to_file(write_method, "test.nc", ds)
+            ds.to_target("file", "test.nc")
             # Open the local file
-            ds1 = from_source("file", "test.nc")
+            ds1 = from_source("file", "test.nc").to_fieldlist()
             with pytest.warns(
                 UserWarning,
                 match="Earthkit refusing to overwrite",
             ):
-                write_to_file(write_method, "test.nc", ds1)
+                ds1.to_target("file", "test.nc")
             with pytest.warns(
                 UserWarning,
                 match="Earthkit refusing to overwrite",
             ):
-                ds1.save()
+                ds1.to_target("file")
 
 
 def test_file_source_odb():
     s = from_source("file", earthkit_examples_file("test.odb"))
-    assert s.path == earthkit_examples_file("test.odb")
+    assert s._TYPE_NAME == "ODB"
+    assert s._reader.path == earthkit_examples_file("test.odb")
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_file_glob(write_method):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+def test_file_glob():
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     with temp_directory() as tmpdir:
-        write_to_file(write_method, os.path.join(tmpdir, "a.grib"), ds)
-        write_to_file(write_method, os.path.join(tmpdir, "b.grib"), ds)
+        ds.to_target("file", os.path.join(tmpdir, "a.grib"))
+        ds.to_target("file", os.path.join(tmpdir, "b.grib"))
 
-        ds = from_source("file", os.path.join(tmpdir, "*.grib"))
+        ds = from_source("file", os.path.join(tmpdir, "*.grib")).to_fieldlist()
         assert len(ds) == 4, len(ds)
 
-        ds = from_source("file", tmpdir)
+        ds = from_source("file", tmpdir).to_fieldlist()
         assert len(ds) == 4, len(ds)
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_file_single_directory(write_method):
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
+def test_file_single_directory():
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
     with temp_directory() as tmpdir:
-        write_to_file(write_method, os.path.join(tmpdir, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir, "b.grib"))
 
-        ds = from_source("file", tmpdir)
+        ds = from_source("file", tmpdir).to_fieldlist()
         assert len(ds) == 6, len(ds)
 
         ref = [
@@ -159,20 +143,19 @@ def test_file_single_directory(write_method):
         assert ds.metadata(("param", "level")) == ref
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_file_multi_directory(write_method):
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
-    s3 = from_source("file", earthkit_examples_file("test6.grib"))
+def test_file_multi_directory_1():
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
+    s3 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
     with temp_directory() as tmpdir1:
-        write_to_file(write_method, os.path.join(tmpdir1, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir1, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir1, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
 
         with temp_directory() as tmpdir2:
-            write_to_file(write_method, os.path.join(tmpdir2, "a.grib"), s1)
-            write_to_file(write_method, os.path.join(tmpdir2, "b.grib"), s3)
+            s1.to_target("file", os.path.join(tmpdir2, "a.grib"))
+            s3.to_target("file", os.path.join(tmpdir2, "b.grib"))
 
-            ds = from_source("file", [tmpdir1, tmpdir2])
+            ds = from_source("file", [tmpdir1, tmpdir2]).to_fieldlist()
             assert len(ds) == 14, len(ds)
 
             ref = [
@@ -196,15 +179,14 @@ def test_file_multi_directory(write_method):
 
 
 @pytest.mark.parametrize("filter_kwarg", [(lambda x: "b.grib" in x), ("*b.grib")])
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_file_single_directory_filter(filter_kwarg, write_method):
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
+def test_file_single_directory_filter(filter_kwarg):
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
     with temp_directory() as tmpdir:
-        write_to_file(write_method, os.path.join(tmpdir, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir, "b.grib"))
 
-        ds = from_source("file", tmpdir, filter=filter_kwarg)
+        ds = from_source("file", tmpdir, filter=filter_kwarg).to_fieldlist()
         assert len(ds) == 4, len(ds)
 
         ref = [
@@ -217,20 +199,19 @@ def test_file_single_directory_filter(filter_kwarg, write_method):
 
 
 @pytest.mark.parametrize("filter_kwarg", [(lambda x: "b.grib" in x), ("*b.grib")])
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_file_multi_directory_filter(filter_kwarg, write_method):
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
-    s3 = from_source("file", earthkit_examples_file("test6.grib"))
+def test_file_multi_directory_filter(filter_kwarg):
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
+    s3 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
     with temp_directory() as tmpdir1:
-        write_to_file(write_method, os.path.join(tmpdir1, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir1, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir1, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
 
         with temp_directory() as tmpdir2:
-            write_to_file(write_method, os.path.join(tmpdir2, "a.grib"), s1)
-            write_to_file(write_method, os.path.join(tmpdir2, "b.grib"), s3)
+            s1.to_target("file", os.path.join(tmpdir2, "a.grib"))
+            s3.to_target("file", os.path.join(tmpdir2, "b.grib"))
 
-            ds = from_source("file", [tmpdir1, tmpdir2], filter=filter_kwarg)
+            ds = from_source("file", [tmpdir1, tmpdir2], filter=filter_kwarg).to_fieldlist()
             assert len(ds) == 10, len(ds)
 
             ref = [
@@ -249,23 +230,22 @@ def test_file_multi_directory_filter(filter_kwarg, write_method):
             assert ds.metadata(("param", "level")) == ref
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_file_multi_directory_with_tar(write_method):
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
-    s3 = from_source("file", earthkit_examples_file("test6.grib"))
+def test_file_multi_directory_with_tar():
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
+    s3 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
     with temp_directory() as tmpdir1:
-        write_to_file(write_method, os.path.join(tmpdir1, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir1, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir1, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
 
         with temp_directory() as tmpdir2:
-            write_to_file(write_method, os.path.join(tmpdir2, "a.grib"), s1)
-            write_to_file(write_method, os.path.join(tmpdir2, "b.grib"), s3)
+            s1.to_target("file", os.path.join(tmpdir2, "a.grib"))
+            s3.to_target("file", os.path.join(tmpdir2, "b.grib"))
 
             paths = [os.path.join(tmpdir2, f) for f in ["a.grib", "b.grib"]]
             make_tgz(tmpdir2, "test.tar.gz", paths)
 
-            ds = from_source("file", [tmpdir1, tmpdir2])
+            ds = from_source("file", [tmpdir1, tmpdir2]).to_fieldlist()
             assert len(ds) == 22, len(ds)
 
             ref = [
@@ -293,7 +273,7 @@ def test_file_multi_directory_with_tar(write_method):
                 ("v", 850),
             ]
 
-            assert ds.metadata(("param", "level")) == ref
+            assert ds.get(("parameter.variable", "vertical.level")) == ref
 
 
 def test_file_grib_tar_with_single_file():
@@ -303,7 +283,7 @@ def test_file_grib_tar_with_single_file():
         make_tgz(tmpdir, "test.tar.gz", [path])
         t_path = os.path.join(tmpdir, "test.tar.gz")
 
-        ds = from_source("file", t_path)
+        ds = from_source("file", t_path).to_fieldlist()
         assert len(ds) == 2, len(ds)
         assert os.path.basename(ds.path) == "a.grib"
 
@@ -315,7 +295,7 @@ def test_file_grib_zip_with_single_file():
         make_zip(tmpdir, "test.zip", [path])
         t_path = os.path.join(tmpdir, "test.zip")
 
-        ds = from_source("file", t_path)
+        ds = from_source("file", t_path).to_fieldlist()
         assert len(ds) == 2, len(ds)
         assert os.path.basename(ds.path) == "a.grib"
 
@@ -327,7 +307,7 @@ def test_file_netcdf_tar_with_single_file():
         make_tgz(tmpdir, "test.tar.gz", [path])
         t_path = os.path.join(tmpdir, "test.tar.gz")
 
-        ds = from_source("file", t_path)
+        ds = from_source("file", t_path).to_fieldlist()
         assert len(ds) == 2, len(ds)
         assert os.path.basename(ds.path) == "a.nc"
 
@@ -339,7 +319,7 @@ def test_file_netcdf_zip_with_single_file_1():
         make_zip(tmpdir, "test.zip", [path])
         ar_path = os.path.join(tmpdir, "test.zip")
 
-        ds = from_source("file", ar_path)
+        ds = from_source("file", ar_path).to_fieldlist()
         assert len(ds) == 2, len(ds)
         assert os.path.basename(ds.path) == "a.nc"
 
@@ -359,13 +339,13 @@ def test_file_netcdf_zip_with_single_file_2():
         make_zip(tmpdir, "test.zip", [path])
         z_path = os.path.join(tmpdir, "test.zip")
 
-        ds = from_source("file", z_path)
+        ds = from_source("file", z_path).to_fieldlist()
 
         # print(f"{ds=}")
         assert os.path.basename(ds.path) == "a.nc"
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

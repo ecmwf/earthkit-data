@@ -15,7 +15,7 @@ import pytest
 
 from earthkit.data import config, from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import NO_MARS, NO_MARS_API, NO_MARS_DIRECT, WRITE_TO_FILE_METHODS, write_to_file
+from earthkit.data.utils.testing import NO_MARS, NO_MARS_API, NO_MARS_DIRECT
 
 YESTERDAY = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y%m%d")
 
@@ -52,7 +52,7 @@ def test_mars_grib_1_prompt(prompt):
         grid=[2, 2],
         prompt=prompt,
         date="2023-05-10",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -68,11 +68,11 @@ def test_mars_grib_split_on():
         grid=[2, 2],
         date="2023-05-10",
         split_on="param",
-    )
+    ).to_fieldlist()
     assert len(ds) == 2
-    assert ds.metadata("param") == ["2t", "msl"]
+    assert ds.get("parameter.variable") == ["2t", "msl"]
     assert not hasattr(ds, "path")
-    assert len(ds._indexes) == 2
+    assert ds[0]._get_grib().handle.path != ds[1]._get_grib().handle.path
 
 
 @pytest.mark.long_test
@@ -85,9 +85,9 @@ def test_mars_grib_multi(_args, req, _kwargs):
         *_args,
         request=req,
         **_kwargs,
-    )
+    ).to_fieldlist()
     assert len(ds) == 2
-    assert ds.metadata("param") == ["2t", "msl"]
+    assert ds.get("parameter.variable") == ["2t", "msl"]
 
 
 @pytest.mark.long_test
@@ -100,12 +100,15 @@ def test_mars_grib_parallel():
         ds = from_source(
             "mars",
             request=req,
-        )
+        ).to_fieldlist()
         assert len(ds) == 4
-        assert ds.metadata("param") == ["t"] * 4
-        assert ds.metadata("levelist") == [925, 850, 700, 500]
+        assert ds.get("parameter.variable") == ["t"] * 4
+        assert ds.get("vertical.level") == [925, 850, 700, 500]
         assert not hasattr(ds, "path")
-        assert len(ds._indexes) == 4
+        paths = set()
+        for f in ds:
+            paths.add(f._get_grib().handle.path)
+        assert len(paths) == len(ds)
 
 
 @pytest.mark.long_test
@@ -120,7 +123,7 @@ def test_mars_grib_expect_any_1():
         area=[50, -50, 20, 50],
         grid=[2, 2],
         date="1054-05-10",
-    )
+    ).to_fieldlist()
 
     assert len(ds) == 0
 
@@ -153,7 +156,7 @@ def test_mars_grib_log_1():
         area=[50, -50, 20, 50],
         grid=[2, 2],
         date="2023-05-10",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -170,7 +173,7 @@ def test_mars_grib_log_2():
         area=[50, -50, 20, 50],
         grid=[2, 2],
         date="2023-05-10",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -193,7 +196,7 @@ def test_mars_grib_log_3():
         area=[50, -50, 20, 50],
         grid=[2, 2],
         date="2023-05-10",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -212,7 +215,7 @@ def test_mars_grib_log_4():
                 area=[50, -50, 20, 50],
                 grid=[2, 2],
                 date="2023-05-10",
-            )
+            ).to_fieldlist()
             assert len(s) == 2
 
         t = ""
@@ -224,25 +227,24 @@ def test_mars_grib_log_4():
 
 @pytest.mark.long_test
 @pytest.mark.download
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_mars_grib_save(write_method):
+def test_mars_grib_save():
     ds = from_source(
         "mars",
         param="2t",
         levtype="sfc",
         grid=[30, 30],
         date=-1,
-    )
+    ).to_fieldlist()
     assert len(ds) == 1
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds)
+        ds.to_target("file", tmp)
 
-        ds1 = from_source("file", tmp)
+        ds1 = from_source("file", tmp).to_fieldlist()
         assert len(ds1) == 1
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

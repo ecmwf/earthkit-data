@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import NO_HDA
+from earthkit.data.utils.testing import NO_HDA
 
 CDS_TIMEOUT = pytest.CDS_TIMEOUT
 
@@ -34,7 +34,7 @@ def test_wekeo_grib_1_prompt(prompt):
         prompt=prompt,
         data_format="grib",
         download_format="zip",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -54,7 +54,7 @@ def test_wekeo_grib_2():
         data_format="grib",
         download_format="zip",
         split_on="variable",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -73,7 +73,7 @@ def test_wekeo_grib_3():
         time=["13:00"],
         data_format="grib",
         download_format="zip",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
@@ -92,11 +92,11 @@ def test_wekeo_netcdf():
         time=["13:00"],
         data_format="netcdf",
         download_format="zip",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

@@ -7,7 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.readers.pp import IrisReader
+from earthkit.data.readers.pp.pp import IrisReader
+
 from earthkit.data.sources import Source
 
 

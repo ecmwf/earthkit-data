@@ -15,7 +15,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from earthkit.utils.array import array_namespace as eku_array_namespace
 
-from earthkit.data.core.index import Selection, normalize_selection
+from earthkit.data.core.index import Selection, normalise_selection
 
 LOG = logging.getLogger(__name__)
 
@@ -173,7 +173,7 @@ class TensorCore(metaclass=ABCMeta):
         return self._subset(indexes)
 
     def sel(self, *args, remapping=None, **kwargs):
-        kwargs = normalize_selection(*args, **kwargs)
+        kwargs = normalise_selection(*args, **kwargs)
 
         r = {}
         for k, v in kwargs.items():
@@ -199,7 +199,7 @@ class TensorCore(metaclass=ABCMeta):
     def isel(self, *args, remapping=None, **kwargs):
         # print("isel", args, kwargs)
         # print("isel", self.coords)
-        kwargs = normalize_selection(*args, **kwargs)
+        kwargs = normalise_selection(*args, **kwargs)
 
         indexes = []
         for k, v in self.user_coords.items():
@@ -233,7 +233,8 @@ class TensorCore(metaclass=ABCMeta):
                     if not isinstance(v, (list, tuple, np.ndarray)):
                         v = (v,)
                     r[k] = v
-                elif isinstance(idx, list):
+                else:
+                    # idx must be an iterable (list, numpy array, etc.)
                     r[k] = tuple([self._user_coords[k][i] for i in idx])
             else:
                 r[k] = self._user_coords[k]
@@ -299,7 +300,7 @@ class FieldListTensor(TensorCore):
 
         if check_if_tensor_is_full:
             # consistency check
-            from earthkit.data.utils.xarray.check import CubeChecker
+            from earthkit.data.xr_engine.check import CubeChecker
 
             checker = CubeChecker(self)
             checker.check(details=True)
@@ -351,7 +352,18 @@ class FieldListTensor(TensorCore):
             if user_dims_and_coords:
                 user_coords = CubeCoords(user_dims_and_coords)
             else:
-                user_coords = CubeCoords(ds.unique_values(*names, remapping=remapping, progress_bar=progress_bar))
+                user_coords = CubeCoords(
+                    # ds.unique_values(*names, remapping=remapping, progress_bar=progress_bar)
+                    ds.unique(
+                        *names,
+                        sort=False,
+                        drop_none=True,
+                        squeeze=False,
+                        cache=False,
+                        remapping=remapping,
+                        progress_bar=progress_bar,
+                    )
+                )
                 for k, v in user_coords.items():
                     user_coords[k] = tuple(sorted(v))
         else:
@@ -361,14 +373,14 @@ class FieldListTensor(TensorCore):
         if field_dims_and_coords is not None:
             field_dims, field_coords = field_dims_and_coords
         else:
-            from earthkit.data.utils.xarray.grid import TensorGrid
+            from earthkit.data.xr_engine.grid import TensorGrid
 
             field_dims, field_coords, _ = TensorGrid.build(source[0], flatten_values)
 
         if not allow_holes:
             return cls(source, user_coords, field_coords, field_dims, flatten_values)
         else:
-            user_coords_to_fl_idx = source._user_coords_to_fl_idx(names, remapping=remapping)
+            user_coords_to_fl_idx = source._get_user_coords_to_fl_idx(names, remapping=remapping)
             return FieldListSparseTensor(
                 source, user_coords, field_coords, field_dims, flatten_values, user_coords_to_fl_idx
             )
@@ -386,7 +398,7 @@ class FieldListTensor(TensorCore):
 
     def _prepare_tensor_data(self, source_to_array_func, index=None):
         if index is not None:
-            if all(i == slice(None, None, None) for i in index):
+            if all(isinstance(i, slice) and i == slice(None, None, None) for i in index):
                 index = None
 
         if index is None:
@@ -405,12 +417,17 @@ class FieldListTensor(TensorCore):
                 # where `coord` is an item (not a 1-element list),
                 # * `self.user_shape` does not lose the dimension `dim`, even if `dim` is one of user dims
                 # * `field_shape` does lose the dimension `dim` if `dim` is a field dimension
-                current_field_shape = tuple(
-                    len(range(n)[_slice])
-                    for n, _slice in zip(self.field_shape, index)
-                    if not isinstance(_slice, int)
-                    # `_slice` can be either an `int` or a `slice`; if `int`, ignore it!
-                )
+                current_field_shape = []
+                for n, _idx in zip(self.field_shape, index):
+                    _sizes = np.arange(n)[_idx].shape
+                    if len(_sizes) == 0:
+                        # _idx is a scalar indexer, and thus we ignore it
+                        continue
+                    # _idx is a slice, an array of int's or a boolean mask
+                    # get the size of the selection made by the indexer _idx
+                    (_size,) = _sizes
+                    current_field_shape.append(_size)
+                current_field_shape = tuple(current_field_shape)
 
         return arr, current_field_shape
 
@@ -443,9 +460,16 @@ class FieldListTensor(TensorCore):
         return indexes[len(self._user_shape) :]
 
     def is_full_field(self, indexes):
-        assert len(indexes) == len(self._field_shape)
-        for i, s in enumerate(indexes):
-            if not (s is None or s == slice(None, None, None) or s == slice(0, self._field_shape[i], 1)):
+        def is_full_indexer(index, size):
+            if index is None:
+                return True
+            if isinstance(index, slice):
+                return index.indices(size) == (0, size, 1)
+            full_indexer = np.arange(size)
+            return np.array_equal(full_indexer[index], full_indexer)
+
+        for index, size in zip(indexes, self._field_shape, strict=True):
+            if not is_full_indexer(index, size):
                 return False
         return True
 
@@ -459,7 +483,7 @@ class FieldListTensor(TensorCore):
         user_indexes = []
 
         for s, c in zip(indexes, self._user_shape):
-            lst = np.array(list(range(c)))[s].tolist()
+            lst = np.arange(c)[s].tolist()
             if not isinstance(lst, list):
                 lst = [lst]
             user_coords.append(lst)
@@ -483,8 +507,9 @@ class FieldListTensor(TensorCore):
 
     def make_valid_datetime(self, dims_map, dtype="datetime64[ns]"):
         # TODO: make it more general
+        # PW: TODO: make it more general - it could allow to use it when allow_holes=True
 
-        for k in ["valid_datetime", "valid_time"]:
+        for k in ["valid_time", "time.valid_datetime", "metadata.valid_time", "metadata.valid_datetime"]:
             if k in self.user_coords:
                 import datetime
 
@@ -493,10 +518,24 @@ class FieldListTensor(TensorCore):
         # in the tensor the dims.coords are GRIB keys
         # dims_map is a mapping from dim names to GRIB keys
         DIM_ROLES = {
-            "forecast_reference_time": ("forecast_reference_time", "base_datetime"),
-            "step": ("step_timedelta", "step", "ensStep", "stepRange"),
-            "date": ("date", "dataDate"),
-            "time": ("time", "dataTime"),
+            "forecast_reference_time": (
+                "forecast_reference_time",
+                "time.forecast_reference_time",
+                "time.base_datetime",
+                "metadata.base_datetime",
+                "metadata.indexing_datetime",
+                "metadata.indexing_time",
+            ),
+            "step": (
+                "step",
+                "time.step",
+                "metadata.step_timedelta",
+                "metadata.step",
+                "metadata.endStep",
+                "metadata.stepRange",
+            ),
+            "date": ("date", "metadata.dataDate"),
+            "time": ("time", "metadata.dataTime"),
         }
 
         # map dim roles to keys available in the tensor
@@ -540,10 +579,7 @@ class FieldListTensor(TensorCore):
                     other_coords = {k: next(iter(self.user_coords[k])) for k in other_dims if k in self.user_coords}
 
                     vals = np.array(
-                        [
-                            datetime.datetime.fromisoformat(x)
-                            for x in self.source.sel(**other_coords).metadata("valid_datetime")
-                        ],
+                        [x for x in self.source.sel(**other_coords).get("time.valid_datetime")],
                         dtype=dtype,
                     )
 
@@ -555,7 +591,7 @@ class FieldListTensor(TensorCore):
                     import numpy as np
 
                     vals = np.array(
-                        [datetime.datetime.fromisoformat(x) for x in self.source.metadata("valid_datetime")],
+                        [x for x in self.source.get("time.valid_datetime")],
                         dtype=dtype,
                     )
 
@@ -649,7 +685,7 @@ class FieldListSparseTensor(FieldListTensor):
         user_indexes = []
 
         for s, c in zip(indexes, self._user_shape):
-            lst = np.array(list(range(c)))[s].tolist()
+            lst = np.arange(c)[s].tolist()
             if not isinstance(lst, list):
                 lst = [lst]
             user_icoords.append(lst)

@@ -12,27 +12,27 @@
 import numpy as np
 import pytest
 
-from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file, earthkit_test_data_file
+from earthkit.data import concat, from_source
+from earthkit.data.utils.testing import earthkit_examples_file, earthkit_test_data_file
 
 
 def test_grib_cube_core():
-    ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-    c = ds.cube("param", "level")
+    ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
+    c = ds.to_cube("parameter.variable", "vertical.level")
 
     assert c.user_shape == (3, 6)
     assert c.field_shape == (7, 12)
     assert c.extended_user_shape == (3, 6, 7, 12)
     assert c.count() == 18
     assert c.user_coords == {
-        "param": ("t", "u", "v"),
-        "level": (300, 400, 500, 700, 850, 1000),
+        "parameter.variable": ("t", "u", "v"),
+        "vertical.level": (300, 400, 500, 700, 850, 1000),
     }
 
     # this slice is a field
     r = c[0, 0]
     assert r.shape == (7, 12)
-    assert r.metadata(["param", "level"]) == ["t", 300]
+    assert r.get(["parameter.variable", "vertical.level"]) == ["t", 300]
     assert r.to_numpy().shape == (7, 12)
     assert np.isclose(r.to_numpy()[0, 0], 226.6531524658203)
 
@@ -41,7 +41,7 @@ def test_grib_cube_core():
     assert r.user_shape == (1, 2)
     assert r.field_shape == (7, 12)
     assert r.extended_user_shape == (1, 2, 7, 12)
-    assert r.user_coords == {"param": ("t",), "level": (300, 400)}
+    assert r.user_coords == {"parameter.variable": ("t",), "vertical.level": (300, 400)}
     assert r.count() == 2
     assert r.to_numpy().shape == (1, 2, 7, 12)
     assert np.isclose(r.to_numpy()[0, 0, 0, 0], 226.6531524658203)
@@ -49,14 +49,14 @@ def test_grib_cube_core():
     ref_meta = (["t", 300], ["t", 400])
 
     for i in range(len(ref_meta)):
-        assert r[0, i].metadata(["param", "level"]) == ref_meta[i], f"{i=} ref_meta={ref_meta[i]}"
+        assert r[0, i].get(["parameter.variable", "vertical.level"]) == ref_meta[i], f"{i=} ref_meta={ref_meta[i]}"
 
     # this slice is a cube
     r = c[1:3, 0:2]
     assert r.user_shape == (2, 2)
     assert r.field_shape == (7, 12)
     assert r.extended_user_shape == (2, 2, 7, 12)
-    assert r.user_coords == {"param": ("u", "v"), "level": (300, 400)}
+    assert r.user_coords == {"parameter.variable": ("u", "v"), "vertical.level": (300, 400)}
     assert r.count() == 4
     assert r.to_numpy().shape == (2, 2, 7, 12)
     assert np.isclose(r.to_numpy()[0, 0, 0, 0], 10.455490112304688)
@@ -65,7 +65,9 @@ def test_grib_cube_core():
     cnt = 0
     for par in range(2):
         for level in range(2):
-            assert r[par, level].metadata(["param", "level"]) == ref_meta[cnt], f"{cnt=} ref_meta={ref_meta[cnt]}"
+            assert r[par, level].get(["parameter.variable", "vertical.level"]) == ref_meta[cnt], (
+                f"{cnt=} ref_meta={ref_meta[cnt]}"
+            )
             cnt += 1
 
     # this slice is a cube
@@ -73,7 +75,7 @@ def test_grib_cube_core():
     assert r.user_shape == (1, 6)
     assert r.field_shape == (7, 12)
     assert r.extended_user_shape == (1, 6, 7, 12)
-    assert r.user_coords == {"param": ("u",), "level": (300, 400, 500, 700, 850, 1000)}
+    assert r.user_coords == {"parameter.variable": ("u",), "vertical.level": (300, 400, 500, 700, 850, 1000)}
     assert r.count() == 6
     assert r.to_numpy().shape == (1, 6, 7, 12)
     assert np.isclose(r.to_numpy()[0, 0, 0, 0], 10.455490112304688)
@@ -83,13 +85,15 @@ def test_grib_cube_core():
     cnt = 0
     for par in range(1):
         for level in range(6):
-            assert r[par, level].metadata(["param", "level"]) == ref_meta[cnt], f"{cnt=} ref_meta={ref_meta[cnt]}"
+            assert r[par, level].get(["parameter.variable", "vertical.level"]) == ref_meta[cnt], (
+                f"{cnt=} ref_meta={ref_meta[cnt]}"
+            )
             cnt += 1
 
 
 def test_grib_cubelet():
-    ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-    c = ds.cube("param", "level")
+    ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
+    c = ds.to_cube("parameter.variable", "vertical.level")
 
     reading_chunks = None
     assert c.count(reading_chunks) == 18
@@ -129,15 +133,15 @@ def test_grib_cubelet():
 
 
 def test_grib_cube_non_hypercube():
-    ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-    ds += from_source("file", earthkit_test_data_file("ml_data.grib"))[:2]
+    ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
+    ds = concat(ds, from_source("file", earthkit_test_data_file("ml_data.grib")).to_fieldlist()[:2])
     assert len(ds) == 18 + 2
 
     with pytest.raises(ValueError):
-        ds.cube("param", "level")
+        ds.to_cube("parameter.variable", "vertical.level")
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

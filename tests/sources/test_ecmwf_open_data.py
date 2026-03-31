@@ -14,7 +14,7 @@ import datetime
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import NO_EOD
+from earthkit.data.utils.testing import NO_EOD
 
 YESTERDAY = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y%m%d")
 
@@ -39,7 +39,7 @@ def test_eod_single_1():
         "ecmwf-open-data",
         param=["2t", "msl"],
         levtype="sfc",
-    )
+    ).to_fieldlist()
     assert len(ds) == 2
     assert ds.metadata("param") == ["2t", "msl"]
 
@@ -63,7 +63,7 @@ def test_eod_single_2(_args, req, _kwargs):
         *_args,
         request=req,
         **_kwargs,
-    )
+    ).to_fieldlist()
     assert len(ds) == 1
     assert ds[0].metadata(["param", "level"]) == ["t", 500]
 
@@ -78,7 +78,7 @@ def test_eod_multi_1(_args, req, _kwargs):
         *_args,
         request=req,
         **_kwargs,
-    )
+    ).to_fieldlist()
     assert len(ds) == 2
     assert ds.metadata("param") == ["t", "r"]
 
@@ -94,12 +94,12 @@ def test_eod_model(model):
         param="t",
         date=YESTERDAY,
         levelist=500,
-    )
+    ).to_fieldlist()
     assert len(ds) == 1
     assert ds[0].metadata(["param", "level"]) == ["t", 500]
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

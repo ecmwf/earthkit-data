@@ -13,18 +13,16 @@ import pytest
 
 from earthkit.data import config, from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 @pytest.mark.parametrize(
-    "file_path,expected_type,expected_len",
+    "file_path,expected_len",
     [
-        ("test.grib", "grib", 2),
-        ("temp_10.bufr", "bufr", 10),
-        ("test.odb", "odb", None),
+        ("test.grib", 2),
     ],
 )
-def test_reader_padding_bytes(file_path, expected_type, expected_len):
+def test_reader_padding_bytes_grib(file_path, expected_len):
     path = earthkit_examples_file(file_path)
     tmp = temp_file()
 
@@ -37,10 +35,8 @@ def test_reader_padding_bytes(file_path, expected_type, expected_len):
         f_tmp.write(f.read())
 
     ds = from_source("file", tmp.path)
-    if hasattr(ds, "_reader"):
-        assert expected_type in str(type(ds._reader)).lower()
-    else:
-        assert expected_type in str(type(ds)).lower()
+    assert ds._TYPE_NAME == "GRIB"
+    ds = ds.to_fieldlist()
     if expected_len is not None:
         assert len(ds) == expected_len
 
@@ -52,20 +48,93 @@ def test_reader_padding_bytes(file_path, expected_type, expected_len):
         f_tmp.write(f.read())
 
     ds = from_source("file", tmp.path)
-    assert "file.File" in str(type(ds))
-    assert "unknown" in str(type(ds._reader)).lower()
+    assert ds._TYPE_NAME == "Unknown"
 
     with config.temporary("reader-type-check-bytes", 100):
         ds = from_source("file", tmp.path)
-        if hasattr(ds, "_reader"):
-            assert expected_type in str(type(ds._reader)).lower()
-        else:
-            assert expected_type in str(type(ds)).lower()
+        assert ds._TYPE_NAME == "GRIB"
+        ds = ds.to_fieldlist()
         if expected_len is not None:
             assert len(ds) == expected_len
 
 
-if __name__ == "__main__":
-    from earthkit.data.testing import main
+@pytest.mark.parametrize(
+    "file_path,expected_len",
+    [
+        ("temp_10.bufr", 10),
+    ],
+)
+def test_reader_padding_bytes_bufr(file_path, expected_len):
+    path = earthkit_examples_file(file_path)
+    tmp = temp_file()
 
-    main()
+    # note: "reader-type-check-bytes" is 64 by default
+
+    # prepend padding
+    with open(tmp.path, "wb") as f_tmp, open(path, "rb") as f:
+        b = bytes([0 for _ in range(20)])
+        f_tmp.write(b)
+        f_tmp.write(f.read())
+
+    ds = from_source("file", tmp.path)
+    assert ds._TYPE_NAME == "BUFR"
+    ds = ds.to_featurelist()
+    if expected_len is not None:
+        assert len(ds) == expected_len
+
+    # prepend padding
+    tmp = temp_file()
+    with open(tmp.path, "wb") as f_tmp, open(path, "rb") as f:
+        b = bytes([0 for _ in range(80)])
+        f_tmp.write(b)
+        f_tmp.write(f.read())
+
+    ds = from_source("file", tmp.path)
+    assert ds._TYPE_NAME == "Unknown"
+
+    with config.temporary("reader-type-check-bytes", 100):
+        ds = from_source("file", tmp.path)
+        assert ds._TYPE_NAME == "BUFR"
+        ds = ds.to_featurelist()
+        if expected_len is not None:
+            assert len(ds) == expected_len
+
+
+@pytest.mark.parametrize(
+    "file_path,expected_len",
+    [
+        ("test.odb", None),
+    ],
+)
+def test_reader_padding_bytes_odb(file_path, expected_len):
+    path = earthkit_examples_file(file_path)
+    tmp = temp_file()
+
+    # note: "reader-type-check-bytes" is 64 by default
+
+    # prepend padding
+    with open(tmp.path, "wb") as f_tmp, open(path, "rb") as f:
+        b = bytes([0 for _ in range(20)])
+        f_tmp.write(b)
+        f_tmp.write(f.read())
+
+    ds = from_source("file", tmp.path)
+    assert ds._TYPE_NAME == "ODB"
+    if expected_len is not None:
+        assert len(ds.to_pandas()) == expected_len
+
+    # prepend padding
+    tmp = temp_file()
+    with open(tmp.path, "wb") as f_tmp, open(path, "rb") as f:
+        b = bytes([0 for _ in range(80)])
+        f_tmp.write(b)
+        f_tmp.write(f.read())
+
+    ds = from_source("file", tmp.path)
+    assert ds._TYPE_NAME == "Unknown"
+
+    with config.temporary("reader-type-check-bytes", 100):
+        ds = from_source("file", tmp.path)
+        assert ds._TYPE_NAME == "ODB"
+        if expected_len is not None:
+            assert len(ds.to_pandas()) == expected_len

@@ -12,7 +12,7 @@
 
 import numpy as np
 import pytest
-from forcings_fixtures import load_forcings_fs
+from forcings_fixtures import load_forcings_fs  # noqa: E402
 
 
 @pytest.mark.parametrize("input_data", ["grib", "latlon"])
@@ -31,10 +31,10 @@ def test_forcings_single_index(input_data, index):
     r = ds[index]
 
     ref_md = md[index]
-    assert r.metadata(["valid_datetime", "param"]) == ref_md
+    assert r.get(["time.valid_datetime", "parameter.variable"]) == ref_md
 
     v = r.values
-    assert v.shape == (209,)
+    assert v.shape == (104,)
 
     # check the original fieldlist
     assert len(ds) == num
@@ -60,10 +60,10 @@ def test_forcings_slice(input_data, indexes):
     ref_md = md[indexes]
     ref_num = len(ref_md)
     assert len(r) == ref_num
-    assert r.metadata(["valid_datetime", "param"]) == ref_md
+    assert r.get(["time.valid_datetime", "parameter.variable"]) == ref_md
 
     v = r.values
-    assert v.shape == (ref_num, 209)
+    assert v.shape == (ref_num, 104)
 
     # check the original fieldlist
     assert len(ds) == num
@@ -86,14 +86,14 @@ def test_forcings_array_indexing(input_data, indexes1, indexes2):
     ref_md = [md[i] for i in indexes1]
     ref_num = len(ref_md)
     assert len(r) == ref_num
-    assert r.metadata(["valid_datetime", "param"]) == ref_md
+    assert r.get(["time.valid_datetime", "parameter.variable"]) == ref_md
 
     # subsetting the first subset
     r1 = r[indexes2]
     ref_md = [ref_md[i] for i in indexes2]
     ref_num = len(ref_md)
     assert len(r1) == ref_num
-    assert r1.metadata(["valid_datetime", "param"]) == ref_md
+    assert r1.get(["time.valid_datetime", "parameter.variable"]) == ref_md
 
 
 @pytest.mark.parametrize("input_data", ["grib", "latlon"])
@@ -118,14 +118,14 @@ def test_forcings_fieldlist_iterator(input_data):
     # sn = ds.metadata(["valid_datetime", "param"])
     sn = md
     assert len(sn) == len(ds)
-    iter_sn = [f.metadata(["valid_datetime", "param"]) for f in ds]
+    iter_sn = [f.get(["time.valid_datetime", "parameter.variable"]) for f in ds]
     assert iter_sn == sn
     # repeated iteration
-    iter_sn = [f.metadata(["valid_datetime", "param"]) for f in ds]
+    iter_sn = [f.get(["time.valid_datetime", "parameter.variable"]) for f in ds]
     assert iter_sn == sn
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

@@ -16,13 +16,11 @@ import pytest
 
 from earthkit.data import config, from_source
 from earthkit.data.core.temporary import temp_directory, temp_file
-from earthkit.data.testing import (
-    WRITE_TO_FILE_METHODS,
+from earthkit.data.utils.testing import (
     earthkit_examples_file,
     earthkit_remote_examples_file,
     earthkit_remote_test_data_file,
     network_off,
-    write_to_file,
 )
 
 
@@ -32,7 +30,7 @@ from earthkit.data.testing import (
 )
 def test_url_file_source():
     filename = os.path.abspath(earthkit_examples_file("test.nc"))
-    s = from_source("url", f"file://{filename}")
+    s = from_source("url", f"file://{filename}").to_fieldlist()
     assert len(s) == 2
 
 
@@ -49,7 +47,7 @@ def test_url_source_check_out_of_date():
         from_source(
             "url",
             earthkit_remote_examples_file("test.grib"),
-        )
+        ).to_fieldlist()
 
     with temp_directory() as tmpdir:
         with config.temporary():
@@ -79,7 +77,7 @@ def test_url_source_tar():
     ds = from_source(
         "url",
         earthkit_remote_examples_file("test_gribs.tar"),
-    )
+    ).to_fieldlist()
     assert len(ds) == 6
 
 
@@ -87,13 +85,13 @@ def test_parts_url():
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("temp.bufr"),
-    )
+    ).to_featurelist()
 
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("temp.bufr"),
         parts=((0, 4),),
-    )
+    ).to_featurelist()
 
     assert os.path.getsize(ds.path) == 4
 
@@ -104,7 +102,7 @@ def test_parts_url():
         "url",
         earthkit_remote_test_data_file("temp.bufr"),
         parts=((0, 10), (50, 10), (60, 10)),
-    )
+    ).to_featurelist()
 
     print(ds.path)
 
@@ -121,7 +119,7 @@ def test_parts_as_arg_url_1():
             earthkit_remote_test_data_file("temp.bufr"),
             [(0, 4)],
         ],
-    )
+    ).to_featurelist()
 
     assert os.path.getsize(ds.path) == 4
 
@@ -136,7 +134,7 @@ def test_parts_as_arg_url_2():
             earthkit_remote_test_data_file("temp.bufr"),
             None,
         ],
-    )
+    ).to_featurelist()
 
     assert os.path.getsize(ds.path) > 4
 
@@ -153,7 +151,7 @@ def test_multi_url_parts_as_arg_invalid_1():
                 [(0, 4)],
             ],
             parts=[(0, 5)],
-        )
+        ).to_featurelist()
 
 
 def test_multi_url_parts_invalid():
@@ -181,27 +179,28 @@ def test_url_part_file_source():
         f"file://{filename}",
         parts=[
             (0, 4),
-            (522, 4),
-            (526, 4),
-            (1048, 4),
+            (312, 4),
+            (360, 4),
+            (672, 4),
         ],
     )
 
-    assert os.path.getsize(ds.path) == 16
+    path = ds._source.path
+    assert os.path.getsize(path) == 16
 
-    with open(ds.path, "rb") as f:
+    with open(path, "rb") as f:
         assert f.read() == b"GRIB7777GRIB7777"
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_url_netcdf_source_save(write_method):
+@pytest.mark.download
+def test_url_netcdf_source_save():
     ds = from_source(
         "url",
         earthkit_remote_examples_file("test.nc"),
     )
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds)
+        ds.to_target("file", tmp)
         assert os.path.exists(tmp)
         ds_saved = from_source("file", tmp)
         assert len(ds_saved) == 2
@@ -210,7 +209,7 @@ def test_url_netcdf_source_save(write_method):
 if __name__ == "__main__":
     import logging
 
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     logging.basicConfig(level=logging.DEBUG)
     main(__file__)

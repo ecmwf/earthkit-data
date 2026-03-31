@@ -9,8 +9,6 @@
 
 import logging
 
-import deprecation
-
 from earthkit.data.readers import memory_reader
 
 from . import Source
@@ -52,16 +50,6 @@ class MemoryBaseSource(Source):
 
     def to_fieldlist(self, *args, **kwargs):
         return self._reader.to_fieldlist(*args, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def save(self, path, **kwargs):
-        return self.to_target("file", path, **kwargs)
-        # return self._reader.save(path, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def write(self, f, **kwargs):
-        return self.to_target("file", f, **kwargs)
-        # return self._reader.write(f, **kwargs)
 
     def to_target(self, *args, **kwargs):
         return self._reader.to_target(*args, **kwargs)
@@ -118,6 +106,11 @@ class MemorySource(MemoryBaseSource):
             self._reader_ = memory_reader(self, self._buf)
             self._buf = None
         return self._reader_
+
+    def to_data_object(self):
+        from earthkit.data.data import SourceData
+
+        return SourceData(self)
 
 
 source = MemorySource

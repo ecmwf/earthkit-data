@@ -16,7 +16,7 @@ import pytest
 from earthkit.data import cache, config, from_source
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import earthkit_examples_file, earthkit_remote_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file, earthkit_remote_examples_file
 
 
 def check_cache_files(dir_path, managed=True):
@@ -143,13 +143,13 @@ def test_url_source_no_cache():
         ds = from_source(
             "url",
             earthkit_remote_examples_file("test.grib"),
-        )
+        ).to_fieldlist()
         assert len(ds) == 2
 
 
 def test_grib_no_cache():
     with config.temporary("cache-policy", "off"):
-        ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+        ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
         assert len(ds) == 18
 
         f = ds[3]
@@ -160,7 +160,7 @@ def test_grib_no_cache():
 def test_grib_offset_index_cache(index_cache):
     s = {"cache-policy": "temporary", "use-message-position-index-cache": index_cache}
     with config.temporary(s):
-        ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+        ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
         assert len(ds) == 18
 
         f = ds[3]
@@ -209,13 +209,13 @@ def test_cache_zip_file_overwritten_1():
         with zipfile.ZipFile(zip_path, "w") as zip_object:
             zip_object.write(grb1_path)
 
-        ds = from_source("file", zip_path)
+        ds = from_source("file", zip_path).to_fieldlist()
         assert len(ds) == 2
         ds_path = ds.path
 
         # second pass - same zip file, the grib should be read
         #  from the cache
-        ds1 = from_source("file", zip_path)
+        ds1 = from_source("file", zip_path).to_fieldlist()
         assert len(ds1) == 2
         assert ds1.path == ds_path
 
@@ -223,7 +223,7 @@ def test_cache_zip_file_overwritten_1():
         with zipfile.ZipFile(zip_path, "w") as zip_object:
             zip_object.write(grb2_path)
 
-        ds2 = from_source("file", zip_path)
+        ds2 = from_source("file", zip_path).to_fieldlist()
         assert len(ds2) == 6
         assert ds2.path != ds_path
 
@@ -243,7 +243,7 @@ def test_cache_zip_file_changed_modtime():
         with zipfile.ZipFile(zip_path, "w") as zip_object:
             zip_object.write(grb1_path)
 
-        ds = from_source("file", zip_path)
+        ds = from_source("file", zip_path).to_fieldlist()
         assert len(ds) == 2
         ds_path = ds.path
 
@@ -251,7 +251,7 @@ def test_cache_zip_file_changed_modtime():
         st = os.stat(zip_path)
         m_time = (st.st_atime_ns + 10, st.st_mtime_ns + 10)
         os.utime(zip_path, ns=m_time)
-        ds2 = from_source("file", zip_path)
+        ds2 = from_source("file", zip_path).to_fieldlist()
         assert len(ds2) == 2
         assert ds2.path != ds_path
 
@@ -280,8 +280,8 @@ def test_cache_management(policy):
                 r.append(from_source("dummy-source", "zeros", size=data_size, n=n))
 
             for ds in r:
-                assert os.path.exists(ds.path)
-                assert os.path.dirname(ds.path) == cache.directory()
+                assert os.path.exists(ds._source.path)
+                assert os.path.dirname(ds._source.path) == cache.directory()
 
             # check cache contents
             num, size = cache.summary_dump_database()
@@ -332,36 +332,36 @@ def test_cache_force():
 
     data_size = 10 * 1024
     ds = from_source("dummy-source", "zeros", size=data_size, n=0)
-    st = os.stat(ds.path)
+    st = os.stat(ds._source.path)
     m_time_ref = st.st_mtime_ns
 
     ds1 = from_source("dummy-source", "zeros", size=data_size, n=0)
-    assert ds1.path == ds.path
-    st = os.stat(ds1.path)
+    assert ds1._source.path == ds._source.path
+    st = os.stat(ds1._source.path)
     m_time = st.st_mtime_ns
     assert m_time == m_time_ref
 
     ds2 = from_source("dummy-source", "zeros", force=_force_false, size=data_size, n=0)
-    assert ds2.path == ds.path
-    st = os.stat(ds2.path)
+    assert ds2._source.path == ds._source.path
+    st = os.stat(ds2._source.path)
     m_time = st.st_mtime_ns
     assert m_time == m_time_ref
 
     ds3 = from_source("dummy-source", "zeros", force=_force_true, size=data_size, n=0)
-    assert ds3.path == ds.path
-    st = os.stat(ds3.path)
+    assert ds3._source.path == ds._source.path
+    st = os.stat(ds3._source.path)
     m_time = st.st_mtime_ns
     assert m_time != m_time_ref
     m_time_ref = m_time
 
     ds4 = from_source("dummy-source", "zeros", size=data_size, n=0)
-    assert ds4.path == ds.path
-    st = os.stat(ds4.path)
+    assert ds4._source.path == ds._source.path
+    st = os.stat(ds4._source.path)
     m_time = st.st_mtime_ns
     assert m_time == m_time_ref
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

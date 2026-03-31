@@ -24,7 +24,7 @@ class Remapping(dict):
                 v = re.split(r"\{([^}]*)\}", v)
             self.lists[k] = v
 
-    def __call__(self, func, joiner=None):
+    def __call__(self, func):
         if not self:
             return func
 
@@ -44,10 +44,7 @@ class Remapping(dict):
             def patch(patch, value):
                 return patch(value)
 
-        if joiner is None:
-            joiner = CustomJoiner()
-        else:
-            joiner = joiner(func)
+        joiner = CustomJoiner()
 
         def wrapped(name, **kwargs):
             return self.substitute(name, joiner, **kwargs)
@@ -82,6 +79,12 @@ class Remapping(dict):
                 return lst
         return []
 
+    def exec(self, func, key, **kwargs):
+        if key not in self.lists:
+            return func(key, **kwargs)
+        else:
+            return self.substitute(key, func, **kwargs)
+
     def as_dict(self):
         return dict(self)
 
@@ -113,16 +116,13 @@ class Patch(dict):
         # For JSON, we simply forward to the remapping
         super().__init__(proc.as_dict())
 
-    def __call__(self, func, joiner=None):
-        next = self.proc(func, joiner=joiner)
+    def __call__(self, func):
+        next = self.proc(func)
 
         def wrapped(name, **kwargs):
             result = next(name, **kwargs)
             if name == self.name:
-                if joiner is not None:
-                    result = joiner.patch(self.patch, result)
-                else:
-                    result = self.patch(result)
+                result = self.patch(result)
             return result
 
         return wrapped
@@ -131,19 +131,22 @@ class Patch(dict):
     def as_dict(self):
         return dict(self)
 
-    def components(self, name):
-        return self.proc.components(name)
+    # def components(self, name):
+    #     return self.proc.components(name)
 
 
-def build_remapping(mapping, patches=None):
+def build_remapping(mapping, patch=None, forced_build=True):
+    if not forced_build and mapping is None and patch is None:
+        return None
+
     result = _build_remapping(mapping)
-    if patches:
-        for k, v in patches.items():
+    if patch:
+        for k, v in patch.items():
             result = Patch(result, k, v)
     return result
 
 
-def normalize_order_by(*args, **kwargs):
+def normalise_order_by(*args, **kwargs):
     _kwargs = {}
     for a in args:
         if a is None:
@@ -156,7 +159,7 @@ def normalize_order_by(*args, **kwargs):
             continue
         if isinstance(a, (list, tuple)):
             if not all(isinstance(k, str) for k in a):
-                _kwargs.update(normalize_order_by(*a))
+                _kwargs.update(normalise_order_by(*a))
             else:
                 for k in a:
                     _kwargs[k] = "ascending"

@@ -1,7 +1,7 @@
 name: earthkit-data
 channels:
 - conda-forge
-- nodefaults
+- nodefault
 dependencies:
 - eccodes=>2.35.0
 - python-eccodes>=1.7.0
@@ -52,6 +52,7 @@ dependencies:
 - sphinx-autoapi
 - sphinx_rtd_theme
 - sphinxcontrib-apidoc
+- sphinx-design
 - sphinx-issues
 - sphinx-tabs
 - sphinx-copybutton

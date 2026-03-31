@@ -11,11 +11,11 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file, earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_examples_file, earthkit_remote_test_data_file
 
 
 def test_bufr_ls_invalid_num():
-    f = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    f = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
     with pytest.raises(ValueError):
         f.ls(n=0)
 
@@ -24,7 +24,7 @@ def test_bufr_ls_invalid_num():
 
 
 def test_bufr_ls_num():
-    f = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    f = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
 
     # default keys
 
@@ -32,18 +32,18 @@ def test_bufr_ls_num():
     df = f.ls(n=2)
     ref = {
         "edition": {0: 3, 1: 3},
-        "type": {0: 2, 1: 2},
-        "subtype": {0: 101, 1: 101},
-        "c": {0: 98, 1: 98},
-        "mv": {0: 13, 1: 13},
-        "lv": {0: 1, 1: 1},
-        "subsets": {0: 1, 1: 1},
-        "compr": {0: 0, 1: 0},
+        "dataCategory": {0: 2, 1: 2},
+        "dataSubCategory": {0: 101, 1: 101},
+        "bufrHeaderCentre": {0: 98, 1: 98},
+        "masterTablesVersionNumber": {0: 13, 1: 13},
+        "localTablesVersionNumber": {0: 1, 1: 1},
+        "numberOfSubsets": {0: 1, 1: 1},
+        "compressedData": {0: 0, 1: 0},
         "typicalDate": {0: "20081208", 1: "20081208"},
         "typicalTime": {0: "120000", 1: "120000"},
         "ident": {0: "02836", 1: "01400"},
-        "lat": {0: 67.37, 1: 56.9},
-        "lon": {0: 26.63, 1: 3.35},
+        "localLatitude": {0: 67.37, 1: 56.9},
+        "localLongitude": {0: 26.63, 1: 3.35},
     }
 
     assert ref == df.to_dict()
@@ -52,18 +52,18 @@ def test_bufr_ls_num():
     df = f.ls(-2)
     ref = {
         "edition": {0: 3, 1: 3},
-        "type": {0: 2, 1: 2},
-        "subtype": {0: 101, 1: 101},
-        "c": {0: 98, 1: 98},
-        "mv": {0: 13, 1: 13},
-        "lv": {0: 1, 1: 1},
-        "subsets": {0: 1, 1: 1},
-        "compr": {0: 0, 1: 0},
+        "dataCategory": {0: 2, 1: 2},
+        "dataSubCategory": {0: 101, 1: 101},
+        "bufrHeaderCentre": {0: 98, 1: 98},
+        "masterTablesVersionNumber": {0: 13, 1: 13},
+        "localTablesVersionNumber": {0: 1, 1: 1},
+        "numberOfSubsets": {0: 1, 1: 1},
+        "compressedData": {0: 0, 1: 0},
         "typicalDate": {0: "20081208", 1: "20081208"},
         "typicalTime": {0: "120000", 1: "120000"},
         "ident": {0: "11035", 1: "02963"},
-        "lat": {0: 48.25, 1: 60.82},
-        "lon": {0: 16.37, 1: 23.5},
+        "localLatitude": {0: 48.25, 1: 60.82},
+        "localLongitude": {0: 16.37, 1: 23.5},
     }
 
     assert ref == df.to_dict()
@@ -73,24 +73,24 @@ def test_bufr_ls_num():
 
 
 def test_bufr_head_num():
-    f = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    f = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
 
     # default keys
     df = f.head(n=2)
     ref = {
         "edition": {0: 3, 1: 3},
-        "type": {0: 2, 1: 2},
-        "subtype": {0: 101, 1: 101},
-        "c": {0: 98, 1: 98},
-        "mv": {0: 13, 1: 13},
-        "lv": {0: 1, 1: 1},
-        "subsets": {0: 1, 1: 1},
-        "compr": {0: 0, 1: 0},
+        "dataCategory": {0: 2, 1: 2},
+        "dataSubCategory": {0: 101, 1: 101},
+        "bufrHeaderCentre": {0: 98, 1: 98},
+        "masterTablesVersionNumber": {0: 13, 1: 13},
+        "localTablesVersionNumber": {0: 1, 1: 1},
+        "numberOfSubsets": {0: 1, 1: 1},
+        "compressedData": {0: 0, 1: 0},
         "typicalDate": {0: "20081208", 1: "20081208"},
         "typicalTime": {0: "120000", 1: "120000"},
         "ident": {0: "02836", 1: "01400"},
-        "lat": {0: 67.37, 1: 56.9},
-        "lon": {0: 26.63, 1: 3.35},
+        "localLatitude": {0: 67.37, 1: 56.9},
+        "localLongitude": {0: 26.63, 1: 3.35},
     }
 
     assert ref == df.to_dict()
@@ -100,24 +100,24 @@ def test_bufr_head_num():
 
 
 def test_bufr_tail_num():
-    f = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    f = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
 
     # default keys
     df = f.tail(n=2)
     ref = {
         "edition": {0: 3, 1: 3},
-        "type": {0: 2, 1: 2},
-        "subtype": {0: 101, 1: 101},
-        "c": {0: 98, 1: 98},
-        "mv": {0: 13, 1: 13},
-        "lv": {0: 1, 1: 1},
-        "subsets": {0: 1, 1: 1},
-        "compr": {0: 0, 1: 0},
+        "dataCategory": {0: 2, 1: 2},
+        "dataSubCategory": {0: 101, 1: 101},
+        "bufrHeaderCentre": {0: 98, 1: 98},
+        "masterTablesVersionNumber": {0: 13, 1: 13},
+        "localTablesVersionNumber": {0: 1, 1: 1},
+        "numberOfSubsets": {0: 1, 1: 1},
+        "compressedData": {0: 0, 1: 0},
         "typicalDate": {0: "20081208", 1: "20081208"},
         "typicalTime": {0: "120000", 1: "120000"},
         "ident": {0: "11035", 1: "02963"},
-        "lat": {0: 48.25, 1: 60.82},
-        "lon": {0: 16.37, 1: 23.5},
+        "localLatitude": {0: 48.25, 1: 60.82},
+        "localLongitude": {0: 16.37, 1: 23.5},
     }
 
     assert ref == df.to_dict()
@@ -126,24 +126,24 @@ def test_bufr_tail_num():
     assert ref == df.to_dict()
 
 
-def test_bufr_dump():
-    ds = from_source("file", earthkit_examples_file("temp_10.bufr"))
-    r = ds[0].dump()
+def test_bufr_describe():
+    ds = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
+    r = ds[0].describe()
     assert isinstance(r, dict)
     assert "header" in r
     assert "data" in r
 
 
 @pytest.mark.parametrize("_kwargs,expected_val", [({"subset": 1}, 1), ({}, 1), ({"subset": 2}, 2)])
-def test_bufr_dump_uncompressed(_kwargs, expected_val):
+def test_bufr_describe_uncompressed(_kwargs, expected_val):
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("synop_multi_subset_uncompressed.bufr"),
-    )
+    ).to_featurelist()
     n = ds[0].subset_count()
     assert n == 12
 
-    r = ds[0].dump(**_kwargs)
+    r = ds[0].describe(**_kwargs)
     assert isinstance(r, dict)
     assert "header" in r
     assert "data" in r
@@ -151,16 +151,16 @@ def test_bufr_dump_uncompressed(_kwargs, expected_val):
 
 
 @pytest.mark.parametrize("_kwargs", [{"subset": 0}, {"subset": None}])
-def test_bufr_dump_uncompressed_full(_kwargs):
+def test_bufr_describe_uncompressed_full(_kwargs):
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("synop_multi_subset_uncompressed.bufr"),
-    )
+    ).to_featurelist()
 
     n = ds[0].subset_count()
     assert n == 12
 
-    r = ds[0].dump(**_kwargs)
+    r = ds[0].describe(**_kwargs)
     assert isinstance(r, dict)
     assert "header" in r
     assert "data" in r
@@ -179,15 +179,15 @@ def test_bufr_dump_uncompressed_full(_kwargs):
         ({"subset": 2}, "1 (51 items)"),
     ],
 )
-def test_bufr_dump_compressed(_kwargs, expected_val):
+def test_bufr_describe_compressed(_kwargs, expected_val):
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("ens_multi_subset_compressed.bufr"),
-    )
+    ).to_featurelist()
     n = ds[0].subset_count()
     assert n == 51
 
-    r = ds[0].dump(**_kwargs)
+    r = ds[0].describe(**_kwargs)
     assert isinstance(r, dict)
     assert "header" in r
     assert "data" in r
@@ -195,6 +195,6 @@ def test_bufr_dump_compressed(_kwargs, expected_val):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

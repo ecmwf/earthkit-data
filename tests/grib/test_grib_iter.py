@@ -12,17 +12,17 @@
 
 import pytest
 from grib_fixtures import (
-    FL_ARRAYS,
-    load_grib_data,
+    FL_ARRAYS,  # noqa: E402
+    load_grib_data,  # noqa: E402
 )
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
-@pytest.mark.parametrize("group", ["param"])
-def test_grib_group_by(fl_type, group):
+@pytest.mark.parametrize("group", ["parameter.variable"])
+def test_grib_iter_group_by(fl_type, group):
     ds, array_namespace = load_grib_data("test6.grib", fl_type)
 
     ref = [
@@ -33,7 +33,7 @@ def test_grib_group_by(fl_type, group):
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 2
-        assert f.metadata(("param", "level")) == ref[i]
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i]
         afl = f.to_fieldlist(array_namespace=array_namespace)
         assert afl is not f
         assert len(afl) == 2
@@ -43,8 +43,8 @@ def test_grib_group_by(fl_type, group):
 
 
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
-@pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
-def test_grib_multi_group_by(fl_type, group):
+@pytest.mark.parametrize("group", ["vertical.level", ["vertical.level", "gridType"]])
+def test_grib_iter_multi_group_by(fl_type, group):
     ds, _ = load_grib_data(["test4.grib", "test6.grib"], fl_type)
 
     ref = [
@@ -54,7 +54,7 @@ def test_grib_multi_group_by(fl_type, group):
     ]
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
-        assert f.metadata(("param", "level")) == ref[i]
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i]
         cnt += len(f)
 
     assert cnt == len(ds)
@@ -68,13 +68,13 @@ def test_grib_multi_group_by(fl_type, group):
         ({"n": 4}, [["t", "u", "v", "t"], ["u", "v"]]),
     ],
 )
-def test_grib_batched(_kwargs, expected_meta):
-    ds = from_source("file", earthkit_examples_file("test6.grib"))
+def test_grib_iter_batched(_kwargs, expected_meta):
+    ds = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
 
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get("parameter.variable") == expected_meta[i]
         cnt += len(f)
 
     assert cnt == len(ds)
@@ -89,23 +89,23 @@ def test_grib_batched(_kwargs, expected_meta):
         ({"n": 4}, [["2t", "msl", "t", "z"], ["t", "z"]]),
     ],
 )
-def test_grib_multi_batched(_kwargs, expected_meta):
+def test_grib_iter_multi_batched(_kwargs, expected_meta):
     ds = from_source(
         "file",
         [earthkit_examples_file("test.grib"), earthkit_examples_file("test4.grib")],
-    )
+    ).to_fieldlist()
 
     cnt = 0
     n = _kwargs["n"]
     for i, f in enumerate(ds.batched(n)):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get("param") == expected_meta[i]
         cnt += len(f)
 
     assert cnt == len(ds)
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

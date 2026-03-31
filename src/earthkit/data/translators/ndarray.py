@@ -8,7 +8,7 @@
 
 import numpy as np
 
-from earthkit.data.translators import Translator
+from . import Translator
 
 
 class NumpyNDArrayTranslator(Translator):
@@ -16,8 +16,13 @@ class NumpyNDArrayTranslator(Translator):
     convenience methods.
     """
 
+    _name = "numpy.ndarray"
+
     def __init__(self, data, *args, **kwargs):
-        self.data = data.to_numpy(*args, **kwargs)
+        super().__init__(data.to_numpy(*args, **kwargs))
+
+    def __call__(self):
+        return self._data
 
 
 def translator(data, cls, *args, **kwargs):

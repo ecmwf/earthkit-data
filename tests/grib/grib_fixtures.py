@@ -11,12 +11,12 @@
 
 
 from earthkit.data import from_source
-from earthkit.data.testing import ARRAY_BACKENDS, ArrayBackend, earthkit_examples_file, earthkit_test_data_file
+from earthkit.data.utils.testing import ARRAY_BACKENDS, ArrayBackend, earthkit_examples_file, earthkit_test_data_file
 
 
 def load_array_fieldlist(path, array_namespace=None, device=None, dtype=None, **kwargs):
     ds = from_source("file", path, **kwargs)
-    return ds.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
+    return ds.to_fieldlist().to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
     # return FieldList.from_array(
     #     ds.values, [m.override(generatingProcessIdentifier=120) for m in ds.metadata()]
     # )
@@ -35,14 +35,14 @@ def load_grib_data(filename, fl_type, folder="example", **kwargs):
 
     if fl_type == "file":
         backend = ArrayBackend("numpy")
-        return from_source("file", path, **kwargs), backend
+        return from_source("file", path, **kwargs).to_fieldlist(), backend
     elif fl_type == "array":
         backend = ArrayBackend("numpy")
         return load_array_fieldlist(path, array_namespace=backend.array_namespace, **kwargs), backend
     elif fl_type == "memory":
         assert len(path) == 1
         with open(path[0], "rb") as f:
-            ds = from_source("stream", f, read_all=True, **kwargs)
+            ds = from_source("stream", f, **kwargs).to_fieldlist(read_all=True)
             len(ds)  # force reading
             return ds, ArrayBackend("numpy")
     elif isinstance(fl_type, str):
