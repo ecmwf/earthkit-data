@@ -19,6 +19,7 @@ How-to guides
     pp/index.rst
     dict/index.rst
     other/index.rst
+    field/index.rst
     xr_engine/index.rst
     target/index.rst
     misc/index.rst

@@ -137,14 +137,14 @@ class VerticalBase(SimpleFieldComponent):
 
     @mark_get_key
     @abstractmethod
-    def level_type(self) -> LevelType:
+    def level_type(self) -> str:
         """
         Return the level type.
 
         Returns
         -------
-        LevelType
-             The level type is returned as a :py:class:`LevelType` object.
+        str
+            The level type is returned as a string.
         """
         pass
 
@@ -159,7 +159,7 @@ def create_vertical(d: dict) -> "Vertical":
 
     Returns
     -------
-    Vertica
+    Vertical
         The created Vertical instance.
     """
     if not isinstance(d, dict):
@@ -218,12 +218,12 @@ class EmptyVertical(VerticalBase):
         """
         return None
 
-    def level_type(self) -> LevelType:
+    def level_type(self) -> str:
         """Return the level type.
 
         Returns an UnknownLevelType, indicating the absence of vertical information.
         """
-        return self._type
+        return self._type.name
 
     @classmethod
     def from_dict(cls, d: dict) -> "VerticalBase":
@@ -310,7 +310,7 @@ class Vertical(VerticalBase):
     def positive(self) -> Optional[str]:
         return self._type.positive
 
-    def level_type(self) -> LevelType:
+    def level_type(self) -> str:
         return self._type.name
 
     def __print__(self) -> str:

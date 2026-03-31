@@ -7,7 +7,7 @@ Migration to version 1.0
 .. toctree::
     :maxdepth: 1
 
-    deprecations_1
+    migration_1.0.0
 
 Deprecated features
 +++++++++++++++++++++
@@ -23,6 +23,7 @@ Version updates
 .. toctree::
     :maxdepth: 1
 
+    version_1.0.0rc_updates
     version_0.19_updates
     version_0.18_updates
     version_0.17_updates

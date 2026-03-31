@@ -3,9 +3,6 @@
 Targets
 ===============
 
-.. warning::
-   This guide is currently under construction and may be incomplete or inaccurate.
-
 
 A **target** can represent a file, a database, a remote server etc. Data is written/added to a target by using a suitable :ref:`encoder <encoders>`.
 
@@ -44,7 +41,7 @@ There are different ways to write/add data to a given target:
     import earthkit.data as ekd
 
     # read GRIB data into a fieldlist
-    ds = ekd.from_source("file", "docs/how-tos/test.grib")
+    ds = ekd.from_source("file", "docs/how-tos/test.grib").to_fieldlist()
 
     # write the fieldlist to a file in different ways
 

@@ -75,7 +75,7 @@ file
       import earthkit.data as ekd
 
       # read GRIB data into a fieldlist.
-      ds = ekd.from_source("sample", "test.grib")
+      ds = ekd.from_source("sample", "test.grib").to_fieldlist()
 
       # write first field
       ds[0].to_target("file", "_my_res_1.grib")
@@ -120,7 +120,7 @@ file-pattern
 
       # read GRIB data into a fieldlist.
       # Contains 2 fields: msl and 2t
-      ds = ekd.from_source("sample", "test.grib")
+      ds = ekd.from_source("sample", "test.grib").to_fieldlist()
 
       # this code results in 2 files: _my_res_msl.grib and _my_res_2t.grib
       ds.to_target("file-pattern", "_my_res_{shortName}.grib")
@@ -159,7 +159,7 @@ fdb
 
       import earthkit.data as ekd
 
-      ds = ekd.from_source("sample", "tuv_pl.grib")
+      ds = ekd.from_source("sample", "tuv_pl.grib").to_fieldlist()
 
       # config contains the FDB configuration
 

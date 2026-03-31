@@ -1,11 +1,16 @@
 .. _data-sources:
 
+Data sources
+++++++++++++++++++++++++++++++
+
+Getting data from a source
+----------------------------
+
+We can get data from a given source by using :func:`from_source`.
+
+
 from_source
 ===============
-
-.. warning::
-   This guide is currently under construction and may be incomplete or inaccurate.
-
 
 .. py:function:: from_source(name, *args, **kwargs)
 

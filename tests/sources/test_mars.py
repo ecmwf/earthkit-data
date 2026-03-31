@@ -240,7 +240,7 @@ def test_mars_grib_save():
     with temp_file() as tmp:
         ds.to_target("file", tmp)
 
-        ds1 = from_source("file", tmp)
+        ds1 = from_source("file", tmp).to_fieldlist()
         assert len(ds1) == 1
 
 

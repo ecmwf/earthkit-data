@@ -31,7 +31,7 @@ This example writes a FieldList to a target.
     import earthkit.data as ekd
 
     # read GRIB data into a fieldlist
-    ds = ekd.from_source("file", "docs/how-tos/test.grib")
+    ds = ekd.from_source("file", "docs/how-tos/test.grib").to_fieldlist()
 
     # writing in a loop field by field
     t = ekd.create_target("file", "_my_res.grib")
@@ -56,7 +56,7 @@ Target objects can also be used a context manager. When used as a context manage
     import earthkit.data as ekd
 
     # read GRIB data into a fieldlist
-    ds = ekd.from_source("file", "docs/how-tos/test.grib")
+    ds = ekd.from_source("file", "docs/how-tos/test.grib").to_fieldlist()
 
     with ekd.create_target("file", "_my_res.grib") as t:
         for f in ds:

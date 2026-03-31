@@ -1,6 +1,7 @@
+.. _migration_1.0.0:
+
 Migration guide for 1.0.0
 ============================
-
 
 from_source
 ----------------
@@ -8,7 +9,7 @@ from_source
 The returned object
 +++++++++++++++++++++++
 
-The return type of the :func:`from_source` function was changed and now it returns a :py:class:`Data` object. This object provides some basic information about the data but its primary goal is to convert it to a given representation for further work. The actual data loading is deferred as much as possible, until the data is converted into a given type.
+The return type of the :func:`from_source` function was changed and now it returns a :ref:`data object <data-object>` object. This object provides some basic information about the data but its primary goal is to convert it to a given representation for further work. The actual data loading is deferred as much as possible, until the data is converted into a given type.
 
 For example, when we read GRIB data with :func:`from_source`, it returns a data object that can be converted to a fieldlist with :meth:`to_fieldlist`. Previously, :func:`from_source` returned a fieldlist directly. E.g.:
 
@@ -50,7 +51,6 @@ Then we can call any of the corresponding ``to_*`` methods to convert the data t
     ds = data.to_xarray()
 
 
-
 Examples:
 
  -  :ref:`/how-tos/source/data.ipynb`
@@ -84,7 +84,6 @@ New way:
 See more details in :ref:`streams_read_all`.
 
 
-
 Concatenation
 ---------------
 
@@ -102,15 +101,15 @@ Please note that ``+`` operator is used an arithmetic operator for Fields and Fi
 Field
 -----------
 
-The Field is now not polymorphic but is made up of polymorphic components using format independent metadata. So far the following components are implemented:
+The :py:class:`~earthkit.data.core.field.Field` is now not polymorphic but is made up of polymorphic components using format independent metadata. So far the following components are implemented:
 
-- parameter
-- time
-- vertical
-- geography
-- ensemble
-- proc
-- labels
+- parameter (see: :py:class:`~earthkit.data.field.component.parameter.ParameterBase`)
+- time (see: :py:class:`~earthkit.data.field.component.time.TimeBase`)
+- vertical (see: :py:class:`~earthkit.data.field.component.vertical.VerticalBase`)
+- geography (see: :py:class:`~earthkit.data.field.component.geography.GeographyBase`)
+- ensemble (see: :py:class:`~earthkit.data.field.component.ensemble.EnsembleBase`)
+- proc (see: :py:class:`~earthkit.data.field.component.proc.ProcBase`)
+- labels (see: :py:class:`~earthkit.data.field.handler.labels.SimpleLabels`)
 
 Each component has its own set of metadata keys and methods. There are two ways to access the related values from the components:
 
@@ -122,7 +121,7 @@ Each component has its own set of metadata keys and methods. There are two ways 
     # use the key method on the component
     f.time.base_datetime()
 
-Raw metadata keys are still available but they are only accessible either by using the "metadata." prefix in :func:`get` or through the :func:`metadata` method. E.g. if the Field was created from a GRIB message, we can access the "shortName" key from the raw metadata like this:
+Raw metadata keys are still available but they are only accessible either by using the "metadata." prefix in :func:`get` or through the :func:`metadata` method. E.g. if the :py:class:`~earthkit.data.core.field.Field` was created from a GRIB message, we can access the "shortName" key from the raw metadata like this:
 
 .. code-block:: python
 
@@ -131,10 +130,23 @@ Raw metadata keys are still available but they are only accessible either by usi
     f.metadata("metadata.shortName")
 
 
+Field arithmetic
+++++++++++++++++++++++++
+
+Added :py:class:`~earthkit.data.core.field.Field` arithmetic. The basic maths operators can now be used to perform arithmetic operations on fields. The operations are performed on the data arrays of the fields, and the resulting field has the same metadata as the left operand and will be entirely stored in memory. For example:
+
+.. code-block:: python
+
+    f3 = f1 + f2
+    f4 = f1 - f2
+    f5 = f1 * f2
+    f6 = f1 / f2
+
+
 Notebook examples
 ++++++++++++++++++++++++
 
-- :ref:`/how-tos/field/field.ipynb`
+- :ref:`/how-tos/field/overview.ipynb`
 
 
 Changes in the Field API
@@ -238,8 +250,24 @@ The Field API has been redesigned and many methods have been removed or changed.
 Fieldlist
 -----------
 
-The Field API has been redesigned and many methods have been removed or changed. The following table gives an overview of the changes in the Field API:
+FieldList arithmetic
+++++++++++++++++++++++++
 
+Added :py:class:`~earthkit.data.fieldlist.FieldList` arithmetic. The basic maths operators can now be used to perform arithmetic operations on fieldlists. The operations are performed on the data arrays of the fieldlists, and the resulting fieldlist has the same metadata as the left operand and will be entirely stored in memory. For example:
+
+.. code-block:: python
+
+    fl3 = fl1 + fl2
+    fl4 = fl1 - fl2
+    fl5 = fl1 * fl2
+    fl6 = fl1 / fl2
+
+
+
+Changes in the FieldList API
+++++++++++++++++++++++++++++++
+
+The following table gives an overview of the changes in the Fieldlist API:
 
 .. list-table::
    :header-rows: 1
@@ -268,7 +296,7 @@ The Field API has been redesigned and many methods have been removed or changed.
      - Use: :func:`fl.geography.bounding_box`
    * - datetime()
      - N/A
-     -
+     - Use :func:`fl.time.base_datetime` and :func:`fl.time.valid_datetime` instead.
    * - metadata()
      - metadata()
      - Has limited scope now. Can only access keys in the raw metadata belonging to the object the field was created from. E.g. for GRIB this works:
@@ -286,3 +314,13 @@ The Field API has been redesigned and many methods have been removed or changed.
    * - write()
      - N/A
      - Use: :func:`f.to_target`
+
+
+Xarray engine
+------------------
+
+The Xarray engine has been refactored and many of the internal classes and methods have been changed. The following table gives an overview of the changes in the Xarray engine:
+
+- a new default profile :ref:`earthkit <xr_profile_earthkit>` has been added which is used when no profile is specified. This profile is designed to work with the new format independent metadata keys from :py:class:`~earthkit.data.core.field.Field` to generate the Xarray dataset.
+- the old  :ref:`mars <xr_profile_mars>` and :ref:`grib <xr_profile_grib>` profiles were kept but they are now using some of the new format independent metadata keys to generate the Xarray dataset.
+- the "number" ``dim_role`` was renamed to "member" in line with the new format independent metadata keys. See: :ref:`xr_dim` for more details.

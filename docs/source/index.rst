@@ -1,6 +1,11 @@
 Earthkit-data's documentation
 ======================================================
 
+.. important::
+
+    This software is in **release candidate** stage. It is not yet considered stable and may still undergo significant changes before the final 1.0 release. We welcome feedback and contributions as we approach that milestone.
+
+    Please see the :ref:`migration_1.0.0` guide for details on the changes in this release candidate and how to update your code to be compatible with 1.0.0.
 
 **earthkit-data** is a format-agnostic Python interface for geospatial data with a focus on meteorology and
 climate science. It is the data handling component of :xref:`earthkit`.
@@ -31,7 +36,7 @@ climate science. It is the data handling component of :xref:`earthkit`.
 
    .. grid-item-card:: Frequently Asked Questions
       :img-top: _static/message-question.svg
-      :link: getting-started
+      :link: faq
       :link-type: doc
       :class-card: sd-shadow-sm
 
@@ -86,7 +91,7 @@ Have a feature request or found a bug? Feel free to open an
    how-tos/index
    concepts/index
    api-reference
-   faqs
+   faq
 
 .. toctree::
    :caption: Developer guide
