@@ -6,7 +6,7 @@ authors = [
   {name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int"}
 ]
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: Apache Software License",
   "Operating System :: OS Independent",
@@ -101,7 +101,7 @@ optional-dependencies.wekeo = ["hda>=2.22"]
 optional-dependencies.zarr = ["zarr>=3"]
 urls.Documentation = "https://earthkit-data.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-data/"
-urls.Issues = "https://github.com/ecmwf/earthkit-data.issues"
+urls.Issues = "https://github.com/ecmwf/earthkit-data/issues"
 urls.Repository = "https://github.com/ecmwf/earthkit-data/"
 
 [tool.coverage.run]

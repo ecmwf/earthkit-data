@@ -1,32 +1,24 @@
 Earthkit-data's documentation
 ======================================================
 
-|Static Badge| |image1| |License: Apache 2.0| |Latest
-Release|
-
-.. |Static Badge| image:: https://github.com/ecmwf/codex/raw/refs/heads/main/ESEE/foundation_badge.svg
-   :target: https://github.com/ecmwf/codex/raw/refs/heads/main/ESEE
-.. |image1| image:: https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity/incubating_badge.svg
-   :target: https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity
-.. |License: Apache 2.0| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
-   :target: https://opensource.org/licenses/apache-2-0
-.. |Latest Release| image:: https://img.shields.io/github/v/release/ecmwf/earthkit-data?color=blue&label=Release&style=flat-square
-   :target: https://github.com/ecmwf/earthkit-data/releases
-
 
 **earthkit-data** is a format-agnostic Python interface for geospatial data with a focus on meteorology and
 climate science. It is the data handling component of :xref:`earthkit`.
 
-**earthkit-data** makes it simple to read, inspect and slice data from a wide range of
-geospatial input types (GRIB, NetCDF and more) and transform them into
-familiar scientific Python objects (including numpy arrays, pandas dataframes, Xarray datasets).
 
-**earthkit-data** provides additional convenient methods for quickly inspecting certain
-features of your input data, such as data dimensionality, axes, coordinate
-reference systems and bounding boxes.
+.. grid:: 1
+   :gutter: 2
+
+   .. grid-item-card:: Why earthkit-data?
+      :img-top:  _static/earthkit-data-grey.svg
+      :link: why
+      :link-type: doc
+      :class-card: sd-shadow-sm
+
+      The motivation and key features of earthkit-data.
 
 
-.. grid::  1 1 2 2
+.. grid:: 1 1 2 2
    :gutter: 2
 
    .. grid-item-card:: Installation and Getting Started
