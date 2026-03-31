@@ -1,10 +1,10 @@
 dim_roles:
   member: metadata.number
+  forecast_reference_time: time.forecast_reference_time
+  step: time.step
+  valid_time: time.valid_datetime
   date: metadata.date
   time: metadata.time
-  step: time.step
-  forecast_reference_time: time.forecast_reference_time
-  valid_time: time.valid_time
   level: metadata.level
   level_type: metadata.typeOfLevel
 variable_key: metadata.param
