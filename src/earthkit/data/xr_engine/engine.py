@@ -157,17 +157,15 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             The possible roles are as follows:
 
             - "member": metadata key interpreted as ensemble forecast members
-            - "date": metadata key interpreted as base date. Used when ``time_dim_mode`` is "raw". When None,
-               it is generated from the date part of ``forecast_reference_time``.
-            - "time": metadata key interpreted as base  time. Used when ``time_dim_mode`` is "raw". When None,
-               it is generated from the time part of ``forecast_reference_time``.
-            - "step": metadata key interpreted as forecast step
             - "forecast_reference_time": metadata key interpreted as forecast reference time. Can be a single
                metadata key, or a list/tuple of two metadata keys representing the date and time parts of the
                forecast reference time. Alternatively, it can be a dict with "date" and "time" keys specifying
                the corresponding metadata keys. Used when ``time_dim_mode`` is "forecast".
+            - "step": metadata key interpreted as forecast step
             - "valid_time": metadata key interpreted as valid time. Used when ``time_dim_mode`` is
                "valid_time" or ``add_valid_time_coord`` is True.
+            - "date": metadata key interpreted as base date. Used when ``time_dim_mode`` is "raw".
+            - "time": metadata key interpreted as base  time. Used when ``time_dim_mode`` is "raw".
             - "level": metadata key interpreted as level
             - "level_type": metadata key interpreted as level type
 
@@ -177,11 +175,11 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
                 {
                     "member": "ensemble.member",
+                    "forecast_reference_time": "time.forecast_reference_time",
+                    "step": "time.step",
+                    "valid_time": "time.valid_datetime",
                     "date": "time.base_date",
                     "time": "time.base_time",
-                    "step": "time.step",
-                    "forecast_reference_time": "time.forecast_reference_time",
-                    "valid_time": "time.valid_datetime",
                     "level": "vertical.level",
                     "level_type": "vertical.level_type",
                 }
