@@ -9,7 +9,7 @@
 
 import logging
 
-from . import EncodedData, Encoder
+from . import EncodedData, Encoder, FilePathEncodedData
 
 LOG = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class NetCDFEncodedData(EncodedData):
         else:
             self.ds.to_netcdf(file)
 
-    def metadata(self, key):
+    def get(self, key, default=None):
         raise NotImplementedError
 
 
@@ -48,15 +48,32 @@ class NetCDFEncoder(Encoder):
     def encode(
         self,
         data=None,
+        target=None,
         **kwargs,
     ):
         if data is not None:
-            from earthkit.data.wrappers import get_wrapper
+            from earthkit.data.data import Data
+            from earthkit.data.data.wrappers import from_object
 
-            data = get_wrapper(data, fieldlist=False)
-            return data._encode(self, **kwargs)
+            path_allowed = target is not None and target._name == "file"
+            hints = {"path_allowed": path_allowed}
+
+            data = from_object(data)
+            if hasattr(data, "_encode"):
+                return data._encode(self, hints=hints, target=target, **kwargs)
+            elif isinstance(data, Data):
+                return self._call_encode(data, target=target, **kwargs)
+
         else:
             raise ValueError("No data to encode")
+
+    def _call_encode(self, data, *, target=None, **kwargs):
+        types = data.available_types
+        for t in types:
+            if t == self._XARRAY:
+                return self._encode_xarray(data.to_xarray(), target=target, **kwargs)
+            elif t == self._FIELDLIST:
+                return self._encode_fieldlist(data.to_fieldlist(), target=target, **kwargs)
 
     def _encode(
         self,
@@ -69,12 +86,13 @@ class NetCDFEncoder(Encoder):
         template=None,
         # return_bytes=False,
         missing_value=9999,
+        target=None,
         **kwargs,
     ):
         _kwargs = kwargs.copy()
         if data is not None:
             # TODO: find better way to check if the earthkit engine is used
-            if hasattr(data, "to_xarray_earthkit"):
+            if hasattr(data, "_default_encoder") and data._default_encoder() != "netcdf":
                 earthkit_to_xarray_kwargs = _kwargs.pop("earthkit_to_xarray_kwargs", {})
                 earthkit_to_xarray_kwargs["add_earthkit_attrs"] = False
                 _kwargs = earthkit_to_xarray_kwargs
@@ -83,14 +101,30 @@ class NetCDFEncoder(Encoder):
 
         return NetCDFEncodedData(data.to_xarray(**_kwargs))
 
-    def _encode_field(self, field, **kwargs):
-        return self._encode(field, **kwargs)
+    def _encode_field(self, field, *, target=None, **kwargs):
+        return self._encode(field, target=target, **kwargs)
 
-    def _encode_fieldlist(self, data, **kwargs):
-        return self._encode(data, **kwargs)
+    def _encode_fieldlist(self, data, *, target=None, **kwargs):
+        return self._encode(data, target=target, **kwargs)
 
-    def _encode_xarray(self, data, **kwargs):
+    def _encode_xarray(self, data, *, target=None, **kwargs):
         return NetCDFEncodedData(data)
+
+    def _encode_featurelist(self, data, *, target=None, **kwargs):
+        raise NotImplementedError
+
+    def _encode_path(self, path_info=None, *, target=None, **kwargs):
+        # Write file as is if target is file and path is provided.
+        if (
+            path_info is not None
+            and path_info.path is not None
+            and path_info.default_encoder == "betcdf"
+            and target is not None
+            and target._name == "file"
+        ):
+            return FilePathEncodedData(path_info.path, binary=path_info.binary)
+        else:
+            return None
 
 
 encoder = NetCDFEncoder

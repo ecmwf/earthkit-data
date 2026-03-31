@@ -6,41 +6,49 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-from earthkit.data.translators import Translator
+from . import Translator
 
 
-class XArrayDataArrayTranslator(Translator):
+class XArrayTranslator(Translator):
+    """Translator class for xarray `DataArray` and `Dataset`."""
+
+    def __init__(self, data, *args, **kwargs):
+        super().__init__(data.to_xarray(*args, **kwargs))
+
+
+class XArrayDataArrayTranslator(XArrayTranslator):
     """Wrapper around an xarray `DataArray`, offering polymorphism and
     convenience methods.
     """
 
-    def __init__(self, data, *args, **kwargs):
-        self.data = data.to_xarray(*args, **kwargs)
+    _name = "xarray.DataArray"
 
     def __call__(self):
         """Data-Array requested, if Dataset return the first data variable in dataset."""
         import xarray as xr
 
-        if isinstance(self.data, xr.Dataset):
-            first_data_var = list(self.data.data_vars)[0]
-            return self.data[first_data_var]
+        if isinstance(self._data, xr.Dataset):
+            first_data_var = list(self._data.data_vars)[0]
+            return self._data[first_data_var]
 
-        return self.data
+        return self._data
 
 
-class XArrayDatasetTranslator(XArrayDataArrayTranslator):
+class XArrayDatasetTranslator(XArrayTranslator):
     """Wrapper around an xarray `DataSet`, offering polymorphism and convenience
     methods.
     """
+
+    _name = "xarray.Dataset"
 
     def __call__(self):
         """Dataset requested, if DataArray convert to Dataset."""
         import xarray as xr
 
-        if isinstance(self.data, xr.DataArray):
-            return self.data.to_dataset()
+        if isinstance(self._data, xr.DataArray):
+            return self._data.to_dataset()
 
-        return self.data
+        return self._data
 
 
 def translator(data, cls, *args, **kwargs):

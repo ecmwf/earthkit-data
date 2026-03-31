@@ -17,13 +17,7 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory, temp_file
 from earthkit.data.sources.stream import StreamFieldList
-from earthkit.data.testing import (
-    WRITE_TO_FILE_METHODS,
-    earthkit_examples_file,
-    earthkit_remote_test_data_file,
-    make_tgz,
-    write_to_file,
-)
+from earthkit.data.utils.testing import earthkit_examples_file, earthkit_remote_test_data_file, make_tgz
 
 
 def repeat_list_items(items, count):
@@ -35,7 +29,7 @@ def test_grib_file_stream_iter():
         "file",
         earthkit_examples_file("test6.grib"),
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -51,7 +45,7 @@ def test_grib_file_stream_iter():
     ]
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == ref[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
         cnt += 1
 
     assert cnt == len(ref)
@@ -73,7 +67,7 @@ def test_grib_file_stream_batched(_kwargs, expected_meta):
         "file",
         earthkit_examples_file("test6.grib"),
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -82,7 +76,7 @@ def test_grib_file_stream_batched(_kwargs, expected_meta):
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get("parameter.variable") == expected_meta[i]
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -91,9 +85,9 @@ def test_grib_file_stream_batched(_kwargs, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
+@pytest.mark.parametrize("group", ["vertical.level", ["vertical.level", "metadata.gridType"]])
 def test_grib_file_stream_group_by(group):
-    ds = from_source("file", earthkit_examples_file("test6.grib"), stream=True)
+    ds = from_source("file", earthkit_examples_file("test6.grib"), stream=True).to_fieldlist()
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -106,7 +100,7 @@ def test_grib_file_stream_group_by(group):
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 3
-        assert f.metadata(("param", "level")) == ref[i]
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i]
         assert f.to_fieldlist(array_namespace="numpy") is not f
         cnt += 1
 
@@ -121,8 +115,7 @@ def test_grib_file_stream_in_memory():
         "file",
         earthkit_examples_file("test6.grib"),
         stream=True,
-        read_all=True,
-    )
+    ).to_fieldlist(read_all=True)
 
     assert len(ds) == 6
 
@@ -130,11 +123,11 @@ def test_grib_file_stream_in_memory():
     ref = ["t", "u", "v", "t", "u", "v"]
 
     # iteration
-    val = [f.metadata(("param")) for f in ds]
+    val = [f.get(("parameter.variable")) for f in ds]
     assert val == ref, "iteration"
 
     # metadata
-    val = ds.metadata("param")
+    val = ds.get("parameter.variable")
     assert val == ref, "method"
 
     # data
@@ -153,18 +146,16 @@ def test_grib_file_stream_in_memory():
     assert np.allclose(vals, ref)
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_when_loaded_from_file_stream(write_method):
+def test_grib_save_when_loaded_from_file_stream():
     ds = from_source(
         "file",
         earthkit_examples_file("test6.grib"),
         stream=True,
-        read_all=True,
-    )
+    ).to_fieldlist(read_all=True)
     assert len(ds) == 6
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds)
-        ds_saved = from_source("file", tmp)
+        ds.to_target("file", tmp)
+        ds_saved = from_source("file", tmp).to_fieldlist()
         assert len(ds) == len(ds_saved)
 
 
@@ -183,7 +174,7 @@ def test_grib_file_stream_multi_file_iter():
             earthkit_examples_file("test4.grib"),
         ],
         stream=True,
-    )
+    ).to_fieldlist()
 
     assert isinstance(ds, StreamFieldList)
     assert len(ds._source.sources) == 2
@@ -202,7 +193,7 @@ def test_grib_file_stream_multi_file_iter():
     ]
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == ref[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
         cnt += 1
 
     assert cnt == len(ref)
@@ -228,7 +219,7 @@ def test_grib_file_stream_multi_file_batched(_kwargs, expected_meta):
             earthkit_examples_file("test4.grib"),
         ],
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -237,7 +228,7 @@ def test_grib_file_stream_multi_file_batched(_kwargs, expected_meta):
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get("parameter.variable") == expected_meta[i]
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -254,8 +245,7 @@ def test_grib_file_stream_multi_file_memory():
             earthkit_examples_file("test4.grib"),
         ],
         stream=True,
-        read_all=True,
-    )
+    ).to_fieldlist(read_all=True)
 
     assert len(ds) == 6
 
@@ -268,11 +258,11 @@ def test_grib_file_stream_multi_file_memory():
         ("z", 850),
     ]
     # iteration
-    val = [f.metadata(("param", "level")) for f in ds]
+    val = [f.get(("parameter.variable", "vertical.level")) for f in ds]
     assert val == md_ref, "iteration"
 
     # metadata
-    val = ds.metadata(("param", "level"))
+    val = ds.get(("parameter.variable", "vertical.level"))
     assert val == md_ref, "method"
 
     # data
@@ -280,10 +270,10 @@ def test_grib_file_stream_multi_file_memory():
         ds.to_numpy().shape
 
     # first part
-    expected_shape = (2, 11, 19)
+    expected_shape = (2, 8, 13)
     assert ds[0:2].to_numpy().shape == expected_shape
 
-    ref = np.array([262.78027344, 101947.8125])
+    ref = np.array([270.52026367, 101562.0])
 
     vals = ds[0:2].to_numpy()[:, 0, 0]
     assert np.allclose(vals, ref)
@@ -300,17 +290,17 @@ def test_grib_file_stream_multi_file_memory():
     # slicing
     r = ds[0:3]
     assert len(r) == 3
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == md_ref[0:3]
 
     r = ds[-2:]
     assert len(r) == 2
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == md_ref[-2:]
 
-    r = ds.sel(param="t")
+    r = ds.sel({"parameter.variable": "t"})
     assert len(r) == 2
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == [
         ("t", 500),
         ("t", 850),
@@ -335,7 +325,7 @@ def test_grib_file_stream_single_file_parts_core(path, parts, expected_meta, rem
         ds0 = from_source(
             "url",
             earthkit_remote_test_data_file(path),
-        )
+        ).to_fieldlist()
         path = ds0.path
 
     ds = from_source(
@@ -343,7 +333,7 @@ def test_grib_file_stream_single_file_parts_core(path, parts, expected_meta, rem
         earthkit_examples_file(path),
         parts=parts,
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -351,7 +341,7 @@ def test_grib_file_stream_single_file_parts_core(path, parts, expected_meta, rem
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -375,7 +365,7 @@ def test_grib_file_stream_single_file_parts_as_arg_valid(parts, expected_meta):
         "file",
         [earthkit_examples_file("test6.grib"), parts],
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -383,7 +373,7 @@ def test_grib_file_stream_single_file_parts_as_arg_valid(parts, expected_meta):
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -412,7 +402,7 @@ def test_grib_file_stream_single_file_parts_as_arg_invalid():
         ),
         (
             None,
-            [(0, 526)],
+            [(0, 360)],
             [
                 ("t", 1000),
                 ("u", 1000),
@@ -425,12 +415,12 @@ def test_grib_file_stream_single_file_parts_as_arg_invalid():
         ),
         (
             [(240, 150)],
-            [(0, 526)],
+            [(0, 360)],
             [("u", 1000), ("2t", 0)],
         ),
         (
             [(240, 150), (720, 150)],
-            [(0, 526)],
+            [(0, 360)],
             [("u", 1000), ("t", 850), ("2t", 0)],
         ),
     ],
@@ -443,7 +433,7 @@ def test_grib_file_stream_multi_file_parts(parts1, parts2, expected_meta):
             [earthkit_examples_file("test.grib"), parts2],
         ],
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -451,7 +441,7 @@ def test_grib_file_stream_multi_file_parts(parts1, parts2, expected_meta):
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -460,15 +450,14 @@ def test_grib_file_stream_multi_file_parts(parts1, parts2, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_file_stream_glob(write_method):
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
+def test_grib_file_stream_glob():
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
     with temp_directory() as tmpdir:
-        write_to_file(write_method, os.path.join(tmpdir, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir, "b.grib"))
 
-        ds = from_source("file", os.path.join(tmpdir, "*a.grib"), stream=True)
+        ds = from_source("file", os.path.join(tmpdir, "*a.grib"), stream=True).to_fieldlist()
 
         # no fieldlist methods are available
         with pytest.raises((TypeError, NotImplementedError)):
@@ -480,7 +469,7 @@ def test_grib_file_stream_glob(write_method):
         ]
         cnt = 0
         for i, f in enumerate(ds):
-            assert f.metadata(("param", "level")) == ref[i], i
+            assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
             cnt += 1
 
         assert cnt == len(ref)
@@ -489,15 +478,14 @@ def test_grib_file_stream_glob(write_method):
         assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_file_stream_single_directory(write_method):
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
+def test_grib_file_stream_single_directory():
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
     with temp_directory() as tmpdir:
-        write_to_file(write_method, os.path.join(tmpdir, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir, "b.grib"))
 
-        ds = from_source("file", tmpdir, stream=True)
+        ds = from_source("file", tmpdir, stream=True).to_fieldlist()
 
         # no fieldlist methods are available
         with pytest.raises((TypeError, NotImplementedError)):
@@ -513,7 +501,7 @@ def test_grib_file_stream_single_directory(write_method):
         ]
         cnt = 0
         for i, f in enumerate(ds):
-            assert f.metadata(("param", "level")) == ref[i], i
+            assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
             cnt += 1
 
         assert cnt == len(ref)
@@ -522,20 +510,18 @@ def test_grib_file_stream_single_directory(write_method):
         assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_file_stream_multi_directory(write_method):
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
-    s3 = from_source("file", earthkit_examples_file("test6.grib"))
+def test_grib_file_stream_multi_directory():
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
+    s3 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
     with temp_directory() as tmpdir1:
-        write_to_file(write_method, os.path.join(tmpdir1, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir1, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir1, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
 
         with temp_directory() as tmpdir2:
-            write_to_file(write_method, os.path.join(tmpdir2, "a.grib"), s1)
-            write_to_file(write_method, os.path.join(tmpdir2, "b.grib"), s3)
-
-            ds = from_source("file", [tmpdir1, tmpdir2], stream=True)
+            s1.to_target("file", os.path.join(tmpdir2, "a.grib"))
+            s3.to_target("file", os.path.join(tmpdir2, "b.grib"))
+            ds = from_source("file", [tmpdir1, tmpdir2], stream=True).to_fieldlist()
 
             ref = [
                 ("2t", 0),
@@ -556,7 +542,7 @@ def test_grib_file_stream_multi_directory(write_method):
 
             cnt = 0
             for i, f in enumerate(ds):
-                assert f.metadata(("param", "level")) == ref[i], i
+                assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
                 cnt += 1
 
             assert cnt == len(ref)
@@ -566,15 +552,14 @@ def test_grib_file_stream_multi_directory(write_method):
 
 
 @pytest.mark.parametrize("filter_kwarg", [(lambda x: "b.grib" in x), ("*b.grib")])
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_file_stream_single_directory_filter(filter_kwarg, write_method):
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
+def test_grib_file_stream_single_directory_filter(filter_kwarg):
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
     with temp_directory() as tmpdir:
-        write_to_file(write_method, os.path.join(tmpdir, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir, "b.grib"))
 
-        ds = from_source("file", tmpdir, filter=filter_kwarg, stream=True)
+        ds = from_source("file", tmpdir, filter=filter_kwarg, stream=True).to_fieldlist()
 
         ref = [
             ("t", 500),
@@ -585,7 +570,7 @@ def test_grib_file_stream_single_directory_filter(filter_kwarg, write_method):
 
         cnt = 0
         for i, f in enumerate(ds):
-            assert f.metadata(("param", "level")) == ref[i], i
+            assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
             cnt += 1
 
         assert cnt == len(ref)
@@ -595,20 +580,19 @@ def test_grib_file_stream_single_directory_filter(filter_kwarg, write_method):
 
 
 @pytest.mark.parametrize("filter_kwarg", [(lambda x: "b.grib" in x), ("*b.grib")])
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_file_stream_multi_directory_filter(filter_kwarg, write_method):
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
-    s3 = from_source("file", earthkit_examples_file("test6.grib"))
+def test_grib_file_stream_multi_directory_filter(filter_kwarg):
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
+    s3 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
     with temp_directory() as tmpdir1:
-        write_to_file(write_method, os.path.join(tmpdir1, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir1, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir1, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
 
         with temp_directory() as tmpdir2:
-            write_to_file(write_method, os.path.join(tmpdir2, "a.grib"), s1)
-            write_to_file(write_method, os.path.join(tmpdir2, "b.grib"), s3)
+            s1.to_target("file", os.path.join(tmpdir2, "a.grib"))
+            s3.to_target("file", os.path.join(tmpdir2, "b.grib"))
 
-            ds = from_source("file", [tmpdir1, tmpdir2], filter=filter_kwarg, stream=True)
+            ds = from_source("file", [tmpdir1, tmpdir2], filter=filter_kwarg, stream=True).to_fieldlist()
 
             ref = [
                 ("t", 500),
@@ -625,7 +609,7 @@ def test_grib_file_stream_multi_directory_filter(filter_kwarg, write_method):
 
             cnt = 0
             for i, f in enumerate(ds):
-                assert f.metadata(("param", "level")) == ref[i], i
+                assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
                 cnt += 1
 
             assert cnt == len(ref)
@@ -634,23 +618,22 @@ def test_grib_file_stream_multi_directory_filter(filter_kwarg, write_method):
             assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_file_stream_multi_directory_with_tar(write_method):
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
-    s3 = from_source("file", earthkit_examples_file("test6.grib"))
+def test_grib_file_stream_multi_directory_with_tar():
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
+    s3 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
     with temp_directory() as tmpdir1:
-        write_to_file(write_method, os.path.join(tmpdir1, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir1, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir1, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
 
         with temp_directory() as tmpdir2:
-            write_to_file(write_method, os.path.join(tmpdir2, "a.grib"), s1)
-            write_to_file(write_method, os.path.join(tmpdir2, "b.grib"), s3)
+            s1.to_target("file", os.path.join(tmpdir2, "a.grib"))
+            s3.to_target("file", os.path.join(tmpdir2, "b.grib"))
 
             paths = [os.path.join(tmpdir2, f) for f in ["a.grib", "b.grib"]]
             make_tgz(tmpdir2, "test.tar.gz", paths)
 
-            ds = from_source("file", [tmpdir1, tmpdir2], stream=True)
+            ds = from_source("file", [tmpdir1, tmpdir2], stream=True).to_fieldlist()
 
             ref = [
                 ("2t", 0),
@@ -679,7 +662,7 @@ def test_grib_file_stream_multi_directory_with_tar(write_method):
 
             cnt = 0
             for i, f in enumerate(ds):
-                assert f.metadata(("param", "level")) == ref[i], i
+                assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
                 cnt += 1
 
             assert cnt == len(ref)
@@ -689,6 +672,6 @@ def test_grib_file_stream_multi_directory_with_tar(write_method):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

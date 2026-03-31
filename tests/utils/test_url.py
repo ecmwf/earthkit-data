@@ -264,6 +264,6 @@ def test_url_spec_sorted(urls, _kwargs, expected_url, expected_parts, expected_i
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

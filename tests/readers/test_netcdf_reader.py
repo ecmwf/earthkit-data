@@ -16,17 +16,9 @@ import tempfile
 import numpy as np
 import pytest
 
-from earthkit.data import from_source
+from earthkit.data import Field, from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.readers.netcdf.field import NetCDFField
-from earthkit.data.testing import (
-    IN_GITHUB,
-    NO_CDS,
-    WRITE_TO_FILE_METHODS,
-    earthkit_examples_file,
-    earthkit_test_data_file,
-    write_to_file,
-)
+from earthkit.data.utils.testing import IN_GITHUB, NO_CDS, earthkit_examples_file, earthkit_test_data_file
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -38,13 +30,13 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
 
 @pytest.mark.no_eccodes
 def test_netcdf_reader():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+    ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
     # assert str(ds).startswith("NetCDFReader"), r
     assert len(ds) == 2
-    assert isinstance(ds[0], NetCDFField)
-    assert isinstance(ds[1], NetCDFField)
-    for f in from_source("file", earthkit_examples_file("test.nc")):
-        assert isinstance(f, NetCDFField)
+    assert isinstance(ds[0], Field)
+    assert isinstance(ds[1], Field)
+    for f in from_source("file", earthkit_examples_file("test.nc")).to_fieldlist():
+        assert isinstance(f, Field)
 
 
 @pytest.mark.parametrize("attribute", ["coordinates", "bounds", "grid_mapping"])
@@ -57,9 +49,12 @@ def test_dummy_netcdf_reader_2(attribute):
     )
     ds = s.to_xarray()
     assert "lat" in ds.dims
-    assert len(s) == 1
+
+    fl = s.to_fieldlist()
+    assert len(fl) == 1
     # s.to_datetime_list()
-    s.bounding_box()
+    bb = fl.geography.bounding_box()
+    assert bb.as_tuple() == (1, 0, 0, 1)
 
 
 def test_dummy_netcdf():
@@ -137,36 +132,26 @@ def test_netcdf_multi_sources():
     path = earthkit_test_data_file("era5_2t_1.nc")
     s1 = from_source("file", path)
     s1.to_xarray()
-    assert s1.path == path
+    assert s1._source.path == path
 
     path = earthkit_test_data_file("era5_2t_2.nc")
     s2 = from_source("file", path)
     s2.to_xarray()
-    assert s2.path == path
+    assert s2._source.path == path
 
-    s3 = from_source("multi", s1, s2)
+    s3 = from_source("multi", s1, s2).to_fieldlist()
     for s in s3:
         print(s)
 
     assert len(s3) == 2
-    assert s3[0].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 1, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 1, 12, 0),
-    }
-    assert s3[1].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 2, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 2, 12, 0),
-    }
-    assert s3.datetime() == {
-        "base_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-        "valid_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-    }
+
+    assert s3[0].get("time.base_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert s3[0].get("time.valid_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert s3[0].get("time.step") == datetime.timedelta(0)
+    assert s3[1].get("time.base_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert s3[1].get("time.valid_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert s3[1].get("time.step") == datetime.timedelta(0)
+
     s3.to_xarray()
 
 
@@ -178,27 +163,16 @@ def test_netcdf_multi_files():
             earthkit_test_data_file("era5_2t_1.nc"),
             earthkit_test_data_file("era5_2t_2.nc"),
         ],
-    )
+    ).to_fieldlist()
 
     assert len(ds) == 2
-    assert ds[0].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 1, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 1, 12, 0),
-    }
-    assert ds[1].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 2, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 2, 12, 0),
-    }
-    assert ds.datetime() == {
-        "base_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-        "valid_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-    }
+
+    assert ds[0].get("time.base_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert ds[0].get("time.valid_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert ds[0].get("time.step") == datetime.timedelta(0)
+    assert ds[1].get("time.base_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert ds[1].get("time.valid_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert ds[1].get("time.step") == datetime.timedelta(0)
 
     ds.to_xarray()
 
@@ -222,7 +196,7 @@ def test_get_fields_missing_standard_name_attr_in_coord_array():
     with tempfile.TemporaryDirectory() as tmp_dir:
         fpath = os.path.join(tmp_dir, "tmp.nc")
         ds.to_netcdf(fpath)
-        fs = from_source("file", earthkit_test_data_file(fpath))
+        fs = from_source("file", earthkit_test_data_file(fpath)).to_fieldlist()
         assert len(fs) == 2
 
 
@@ -250,11 +224,11 @@ def test_get_fields_missing_standard_name_attr_in_coord_array():
 
 
 @pytest.mark.no_eccodes
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_netcdf_non_fieldlist(write_method):
+def test_netcdf_non_fieldlist():
     ds = from_source("file", earthkit_test_data_file("hovexp_vert_area.nc"))
-    with pytest.raises(TypeError):
-        len(ds)
+
+    fl = ds.to_fieldlist()
+    assert len(fl) == 0
 
     import xarray as xr
 
@@ -265,23 +239,24 @@ def test_netcdf_non_fieldlist(write_method):
     assert ds.to_numpy().shape == (1, 6, 5)
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds)
+        from earthkit.data import to_target
+
+        to_target("file", tmp, data=ds)
+        # ds.to_target("file", tmp)
         assert os.path.exists(tmp)
         ds_saved = from_source("file", tmp)
         assert ds_saved.to_xarray().identical(res)
 
 
+# NOTE: XarrayFieldlist is not lazy now, and it is implemented in a completely
+# different way, so this test is not relevant anymore.
 @pytest.mark.no_eccodes
 def test_netcdf_lazy_fieldlist_scan():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
-    # assert ds._reader._fields is None
-    assert ds._fields is None
+    ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
     assert len(ds) == 2
-    # assert len(ds._reader._fields) == 2
-    assert len(ds._fields) == 2
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

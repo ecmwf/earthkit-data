@@ -9,7 +9,9 @@
 
 import logging
 
-from . import EncodedData, Encoder
+from earthkit.data import from_object
+
+from . import EncodedData, Encoder, FilePathEncodedData
 
 LOG = logging.getLogger(__name__)
 
@@ -35,7 +37,7 @@ class GeoTIFFEncodedData(EncodedData):
         options.update(kwargs)
         self.ds.rio.to_raster(dst, **options)
 
-    def metadata(self, key):
+    def get(self, key, default=None):
         raise NotImplementedError
 
 
@@ -43,33 +45,52 @@ class GeoTIFFEncoder(Encoder):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def encode(self, data, **kwargs):
+    def encode(self, data, target=None, **kwargs):
         if data is None:
             raise ValueError("No data to encode")
 
-        from ..wrappers import get_wrapper
+        path_allowed = target is not None and target._name == "file"
+        hints = {"path_allowed": path_allowed}
 
-        data = get_wrapper(data)
-        return data._encode(self, **kwargs)
+        from earthkit.data.data.wrappers import from_object
 
-    def _encode(self, data, **kwargs):
-        ds = data.to_xarray()
+        data = from_object(data)
+        return data._encode(self, hints=hints, target=target, **kwargs)
+
+    def _encode(self, data, *, target=None, **kwargs):
+        return self._encode_xarray(data, target=target, **kwargs)
+
+    def _encode_field(self, field, *, target=None, **kwargs):
+        return self._encode(field, target=target, **kwargs)
+
+    def _encode_fieldlist(self, fieldlist, *, target=None, **kwargs):
+        return self._encode(fieldlist, target=target, **kwargs)
+
+    def _encode_xarray(self, data, *, target=None, **kwargs):
+        ds = from_object(data).to_xarray()
         if ds.rio.crs is None:
-            crs = data.projection().to_cartopy_crs()
+            crs = data.geography.projection().to_cartopy_crs()
             ds.rio.write_crs(crs, inplace=True)
         for var in ds.data_vars:
             if "_earthkit" in ds[var].attrs:
                 del ds[var].attrs["_earthkit"]
         return GeoTIFFEncodedData(ds)
 
-    def _encode_field(self, field, **kwargs):
-        return self._encode(field, **kwargs)
-
-    def _encode_fieldlist(self, fieldlist, **kwargs):
-        return self._encode(fieldlist, **kwargs)
-
-    def _encode_xarray(self, data, **kwargs):
+    def _encode_featurelist(self, data, *, target=None, **kwargs):
         raise NotImplementedError
+
+    def _encode_path(self, path_info=None, *, target=None, **kwargs):
+        # Write file as is if target is file and path is provided.
+        if (
+            path_info is not None
+            and path_info.path is not None
+            and path_info.default_encoder == "geotiff"
+            and target is not None
+            and target._name == "file"
+        ):
+            return FilePathEncodedData(path_info.path, binary=path_info.binary)
+        else:
+            return None
 
 
 encoder = GeoTIFFEncoder

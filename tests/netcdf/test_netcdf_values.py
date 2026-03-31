@@ -12,7 +12,7 @@
 import numpy as np
 import pytest
 
-from earthkit.data.testing import earthkit_examples_file, load_nc_or_xr_source
+from earthkit.data.utils.testing import earthkit_examples_file, load_nc_or_xr_source
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -31,31 +31,31 @@ def test_netcdf_values_surf(mode):
     # whole file
     v = f.values
     assert isinstance(v, np.ndarray)
-    assert v.shape == (2, 209)
+    assert v.shape == (2, 104)
     v0 = v[0].flatten()
     check_array(
         v0,
-        (209,),
-        first=262.78027,
-        last=309.62207,
-        meanv=283.98642,
+        (104,),
+        first=270.52048192,
+        last=306.06616211,
+        meanv=284.1922312822462,
         eps=eps,
     )
 
     v1 = v[1].flatten()
     check_array(
         v1,
-        (209,),
-        first=101947.81,
-        last=100941.875,
-        meanv=101201.305,
+        (104,),
+        first=101562.00840702,
+        last=101228.9557122,
+        meanv=101207.90061842374,
         eps=eps,
     )
 
     # field
     v0_f = f[0].values
     assert isinstance(v0_f, np.ndarray)
-    assert v0_f.shape == (209,)
+    assert v0_f.shape == (104,)
     assert np.allclose(v0_f, v0, eps)
 
 
@@ -97,32 +97,32 @@ def test_netcdf_to_numpy_surf(mode):
     eps = 1e-5
     v = f.to_numpy()
     assert isinstance(v, np.ndarray)
-    assert v.shape == (2, 11, 19)
+    assert v.shape == (2, 8, 13)
 
     v0 = v[0].flatten()
     check_array(
         v0,
-        (209,),
-        first=262.78027,
-        last=309.62207,
-        meanv=283.98642,
+        (104,),
+        first=270.52048192,
+        last=306.06616211,
+        meanv=284.1922312822462,
         eps=eps,
     )
 
     v1 = v[1].flatten()
     check_array(
         v1,
-        (209,),
-        first=101947.81,
-        last=100941.875,
-        meanv=101201.305,
+        (104,),
+        first=101562.00840702,
+        last=101228.9557122,
+        meanv=101207.90061842374,
         eps=eps,
     )
 
     # field
     v0_f = f[0].to_numpy()
     assert isinstance(v0_f, np.ndarray)
-    assert v0_f.shape == (11, 19)
+    assert v0_f.shape == (8, 13)
     assert np.allclose(v0_f.flatten(), v0, eps)
 
 
@@ -130,12 +130,12 @@ def test_netcdf_to_numpy_surf(mode):
 @pytest.mark.parametrize(
     "first,options, expected_shape",
     [
-        (False, {}, (2, 11, 19)),
-        (False, {"flatten": True}, (2, 209)),
-        (False, {"flatten": False}, (2, 11, 19)),
-        (True, {}, (11, 19)),
-        (True, {"flatten": True}, (209,)),
-        (True, {"flatten": False}, (11, 19)),
+        (False, {}, (2, 8, 13)),
+        (False, {"flatten": True}, (2, 104)),
+        (False, {"flatten": False}, (2, 8, 13)),
+        (True, {}, (8, 13)),
+        (True, {"flatten": True}, (104,)),
+        (True, {"flatten": False}, (8, 13)),
     ],
 )
 def test_netcdf_to_numpy_surf_shape(mode, first, options, expected_shape):
@@ -227,6 +227,6 @@ def test_netcdf_to_numpy_upper_dtype(mode, dtype):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

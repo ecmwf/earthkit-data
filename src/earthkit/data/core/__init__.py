@@ -6,173 +6,67 @@
 # nor does it submit to any jurisdiction.
 #
 
-import logging
+from abc import ABCMeta
 from abc import abstractmethod
-from collections import defaultdict
-
-LOG = logging.getLogger(__name__)
-
-PRIVATE_ATTRIBUTES = {"observer": lambda: None}
 
 
-class MetaBase(type):
-    def __call__(cls, *args, **kwargs):
-        obj = cls.__new__(cls, *args, **kwargs)
-        args, kwargs = cls.patch(obj, *args, **kwargs)
-        obj.__init__(*args, **kwargs)
-        return obj
+class Base(metaclass=ABCMeta):
+    """Base class for all objects in earthkit.data."""
 
-    def patch(cls, obj, *args, **kwargs):
-        private_attributes = {}
-        private_attributes.update(PRIVATE_ATTRIBUTES)
-        private_attributes.update(kwargs.pop("_PRIVATE_ATTRIBUTES", {}))
-
-        for k, v in private_attributes.items():
-            setattr(obj, k, kwargs.pop(k, v))
-
-        return args, kwargs
+    pass
 
 
-class Base(metaclass=MetaBase):
-    # Convertors
-    def to_numpy(self, **kwargs):
-        """Convert into a numpy array."""
-        self._not_implemented()
+class Encodable(Base):
+    """Base class for all objects that can be encoded using an encoder."""
 
     @abstractmethod
-    def to_xarray(self, **kwargs):
-        """Convert into an xarray dataset."""
-        self._not_implemented()
+    def to_target(self, target, *args, **kwargs):
+        pass
 
     @abstractmethod
-    def to_pandas(self, **kwargs):
-        """Convert into a pandas dataframe."""
-        self._not_implemented()
+    def _default_encoder(self):
+        pass
 
-    # Change class
+    @abstractmethod
+    def _encode(self, encoder, *, hints=None, **kwargs):
+        """Double dispatch to the encoder"""
+        pass
+
+
+class Loader(Base):
+    """Base class for all objects that can be loaded using a loader."""
+
+    @abstractmethod
+    def cache_file(self, *args, **kwargs):
+        pass
+
     def mutate(self):
+        # Give a chance to `directory` or `zip` to change the reader
+        # Give a chance to `multi` to change source
         return self
 
-    @classmethod
-    def merge(cls, *args, **kwargs):
-        """Merge the object with other ones."""
+    def mutate_source(self):
+        # The source may ask if it needs to mutate
         return None
 
-    @abstractmethod
-    def metadata(self, *args, **kwargs):
-        """Return metadata."""
-        self._not_implemented()
+    def ignore(self):
+        """Indicates to ignore this source in concatenation/merging.
 
-    # I/O
-    @abstractmethod
-    def to_target(self, *args, **kwargs):
-        """Write data into the specified target."""
-        self._not_implemented()
-
-    @abstractmethod
-    def datetime(self):
-        """Return datetime."""
-        self._not_implemented()
-
-    @abstractmethod
-    def bounding_box(self):
-        """Return the bounding box."""
-        self._not_implemented()
-
-    @abstractmethod
-    def sel(self, *args, **kwargs):
-        """Filter the object based on metadata."""
-        self._not_implemented()
-
-    @abstractmethod
-    def isel(self, *args, **kwargs):
-        self._not_implemented()
-
-    @abstractmethod
-    def order_by(self, *args, **kwargs):
-        """Reorder the elements of the object."""
-        self._not_implemented()
-
-    def unique_values(self, *coords, remapping=None, patches=None, progress_bar=False):
-        """Given a list of metadata attributes, such as date, param, levels,
-        returns the list of unique values for each attributes.
+        Returns
+        -------
+        bool
         """
-        from earthkit.data.core.order import build_remapping
+        # Used by multi-source
+        return False
 
-        assert len(coords)
-        assert all(isinstance(k, str) for k in coords), coords
+    @abstractmethod
+    def to_data_object(self):
+        pass
 
-        remapping = build_remapping(remapping, patches)
-        iterable = self
+    # def to_target(self, target, *args, **kwargs):
+    #     from earthkit.data.targets import to_target
 
-        if progress_bar:
-            from earthkit.data.utils.progbar import progress_bar
+    #     to_target(target, *args, data=self, **kwargs)
 
-            if progress_bar:
-                iterable = progress_bar(
-                    iterable=self,
-                    desc=f"Finding coords in dataset for {coords}",
-                )
-
-        vals = defaultdict(dict)
-        for f in iterable:
-            metadata = remapping(f.metadata)
-            for k in coords:
-                v = metadata(k, default=None)
-                vals[k][v] = True
-
-        vals = {k: tuple(values.keys()) for k, values in vals.items()}
-
-        return vals
-
-    def _user_coords_to_fl_idx(self, keys, remapping=None):
-        # this method could be implemented in the class XArrayInputFieldList, but then FieldList.to_tensor wouldn't work
-        if isinstance(keys, str):
-            keys = [keys]
-        if remapping is None:
-            # some subclasses (e.g. XArrayInputFieldList) has remapping as a member
-            remapping = getattr(self, "remapping", None)
-
-        user_coords_to_fl_idx = {}
-        for i, f in enumerate(self):
-            metadata = f._attributes(keys, remapping=remapping)  # , joiner=joiner)
-            user_coords = tuple(metadata[k] for k in keys)
-            assert user_coords not in user_coords_to_fl_idx, (
-                f"Multiple fields in {self} with {dict(zip(keys, user_coords))}: "
-                f"#{user_coords_to_fl_idx[user_coords]} and #{i}"
-            )
-            user_coords_to_fl_idx[user_coords] = i
-
-        return user_coords_to_fl_idx
-
-    # @abstractmethod
-    # def to_points(self, *args, **kwargs):
-    #     self._not_implemented()
-
-    # @abstractmethod
-    # def to_latlon(self, *args, **kwargs):
-    #     self._not_implemented()
-
-    def __add__(self, other):
-        self._not_implemented()
-
-    #
-    def _not_implemented(self):
-        import inspect
-
-        func = inspect.stack()[1][3]
-        module = self.__class__.__module__
-        name = self.__class__.__name__
-
-        extra = ""
-        if hasattr(self, "path"):
-            extra = f" on {self.path}"
-        raise NotImplementedError(f"{module}.{name}.{func}(){extra}")
-
-    def batched(self, *args):
-        """Return iterator for batches of data."""
-        self._not_implemented()
-
-    def group_by(self, *args):
-        """Return iterator for batches of data grouped by metadata keys."""
-        self._not_implemented()
+    # def _encode(self, encoder, **kwargs):
+    #     return encoder._encode(self, **kwargs)

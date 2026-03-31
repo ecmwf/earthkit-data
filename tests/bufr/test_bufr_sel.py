@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 @pytest.mark.parametrize(
@@ -41,7 +41,7 @@ from earthkit.data.testing import earthkit_examples_file
     ],
 )
 def test_bufr_sel_single_file_1(params, expected_meta, metadata_keys):
-    f = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    f = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
 
     g = f.sel(**params)
     assert len(g) == len(expected_meta)
@@ -55,7 +55,7 @@ def test_bufr_sel_single_file_1(params, expected_meta, metadata_keys):
 
 
 def test_bufr_sel_single_file_as_dict():
-    f = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    f = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
     g = f.sel({"dataCategory": 2, "ident": ["01400", "11747"], "dataSubCategory": 101})
     assert len(g) == 2
     assert g.metadata(["dataCategory", "ident", "dataSubCategory"]) == [
@@ -65,9 +65,9 @@ def test_bufr_sel_single_file_as_dict():
 
 
 def test_bufr_sel_multi_file():
-    f1 = from_source("file", earthkit_examples_file("temp_10.bufr"))
-    f2 = from_source("file", earthkit_examples_file("synop_10.bufr"))
-    f = from_source("multi", [f1, f2])
+    f1 = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
+    f2 = from_source("file", earthkit_examples_file("synop_10.bufr")).to_featurelist()
+    f = from_source("multi", [f1, f2]).to_featurelist()
 
     # single resulting message
     g = f.sel(dataCategory=0, ident="68267")
@@ -76,6 +76,6 @@ def test_bufr_sel_multi_file():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

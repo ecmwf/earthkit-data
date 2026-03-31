@@ -209,15 +209,19 @@ instance/
 
 # Sphinx documentation
 docs/_build/
-docs/examples/*.tar
-docs/examples/*.zip
-docs/examples/_*
-docs/examples/earthkit_use_cases/*.grib
-docs/examples/_fdb
-docs/experimental/_*
-docs/experimental/*.grib*
-docs/experimental/*.pp*
-docs/experimental/*.png*
+docs/source/how-tos/*.tar
+docs/source/how-tos/*.zip
+docs/source/how-tos/_*
+docs/source/how-tos/earthkit_use_cases/*.grib
+docs/source/how-tos/*/_*
+docs/source/experimental/_*
+docs/source/experimental/*.grib*
+docs/source/experimental/*.pp*
+docs/source/experimental/*.png*
+docs/source/experimental/*.nc*
+docs/source/experimental/*.geojson*
+
+autodocs/
 
 # PyBuilder
 .pybuilder/

@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any as TypingAny
 from typing import Dict, List, Optional, Tuple, Union
 
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.utils.decorators import thread_safe_cached_property
 
 from .dates import to_datetime, to_timedelta
 

@@ -27,7 +27,7 @@ class ZarrEncodedData(EncodedData):
     def to_xarray(self):
         return self.ds
 
-    def metadata(self, key):
+    def get(self, key, default=None):
         raise NotImplementedError
 
 
@@ -41,10 +41,9 @@ class ZarrEncoder(Encoder):
         **kwargs,
     ):
         if data is not None:
-            from earthkit.data.wrappers import get_wrapper
+            from earthkit.data.data.wrappers import from_object
 
-            # data = get_wrapper(data, fieldlist=False)
-            data = get_wrapper(data)
+            data = from_object(data)
 
             if hasattr(data, "_encode"):
                 return data._encode(self, **kwargs)
@@ -64,14 +63,15 @@ class ZarrEncoder(Encoder):
         template=None,
         # return_bytes=False,
         missing_value=9999,
+        target=None,
         **kwargs,
     ):
         return ZarrEncodedData(data.to_xarray(add_earthkit_attrs=False))
 
-    def _encode_field(self, field, **kwargs):
+    def _encode_field(self, field, *, target=None, **kwargs):
         raise NotImplementedError("ZarrEncoder does not support encoding individual fields.")
 
-    def _encode_fieldlist(self, data, **kwargs):
+    def _encode_fieldlist(self, data, *, target=None, **kwargs):
         earthkit_to_xarray_kwargs = kwargs.pop("earthkit_to_xarray_kwargs", {})
         # earthkit_to_xarray_kwargs.update(kwargs)
         earthkit_to_xarray_kwargs["add_earthkit_attrs"] = False
@@ -80,8 +80,14 @@ class ZarrEncoder(Encoder):
         ds = data.to_xarray(**kwargs)
         return ZarrEncodedData(ds)
 
-    def _encode_xarray(self, data, **kwargs):
+    def _encode_xarray(self, data, *, target=None, **kwargs):
         raise NotImplementedError
+
+    def _encode_featurelist(self, data, *, target=None, **kwargs):
+        raise NotImplementedError
+
+    def _encode_path(self, path_info, *, target=None, **kwargs):
+        raise
 
 
 encoder = ZarrEncoder

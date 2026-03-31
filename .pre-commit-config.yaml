@@ -18,7 +18,7 @@ repos:
   rev: v0.15.4
   hooks:
   - id: ruff-check
-    exclude: '(dev/.*|.*_)\.py$'
+    exclude: '(dev/.*|.*_)\.py$|docs/source/experimental/.*\.ipynb$|polytope_feature\.ipynb$|field_overview\.ipynb$'
     args:
     - --fix
     - --exit-non-zero-on-fix

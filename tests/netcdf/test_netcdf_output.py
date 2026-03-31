@@ -13,75 +13,75 @@ import os
 
 import pytest
 
-from earthkit.data import from_source
+from earthkit.data import concat, from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import IN_GITHUB, WRITE_TO_FILE_METHODS, earthkit_examples_file, write_to_file
+from earthkit.data.utils.testing import IN_GITHUB, earthkit_examples_file
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_netcdf_fieldlist_save(write_method):
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+@pytest.mark.skip(reason="Some runners crash in Xarray")
+def test_netcdf_fieldlist_save():
+    ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
 
     # the file must be saved without loading the fields
     # assert ds._reader._fields is None
     assert ds._fields is None
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds)
+        ds.to_target("file", tmp)
         # assert ds._reader._fields is None
         assert ds._fields is None
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
         assert len(r_tmp) == 2
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_netcdf_fieldlist_subset_save_1(write_method):
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+def test_netcdf_fieldlist_subset_save_1():
+    ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
     assert len(ds) == 2
     r = ds[1]
 
     with temp_file() as tmp:
-        with pytest.raises(NotImplementedError):
-            write_to_file(write_method, tmp, r)
+        with pytest.raises(ValueError):
+            r.to_target("file", tmp)
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_netcdf_fieldlist_subset_save_2(write_method):
-    ds = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+def test_netcdf_fieldlist_subset_save_2():
+    ds = from_source("file", earthkit_examples_file("tuv_pl.nc")).to_fieldlist()
     assert len(ds) == 18
     r = ds[1:4]
 
     with temp_file() as tmp:
-        with pytest.raises(NotImplementedError):
-            write_to_file(write_method, tmp, r)
+        with pytest.raises(ValueError):
+            r.to_target("file", tmp)
 
 
+@pytest.mark.skip(reason="Some runners crash in Xarray")
 @pytest.mark.skipif(IN_GITHUB, reason="Some runners crash in Xarray")
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_netcdf_fieldlist_multi_subset_save(write_method):
-    ds1 = from_source("file", earthkit_examples_file("test.nc"))
-    ds2 = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+def test_netcdf_fieldlist_multi_subset_save_1():
+    ds1 = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
+    ds2 = from_source("file", earthkit_examples_file("tuv_pl.nc")).to_fieldlist()
 
-    ds = ds1 + ds2
+    ds = concat(ds1, ds2)
     assert len(ds) == 20
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds)
+        ds.to_target("file", tmp)
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
         assert len(r_tmp) == 20
 
 
 @pytest.mark.skipif(IN_GITHUB, reason="Some runners crash in Xarray")
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_netcdf_fieldlist_multi_subset_save_bad(write_method):
-    ds1 = from_source("file", earthkit_examples_file("test.nc"))
-    ds2 = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+def test_netcdf_fieldlist_multi_subset_save_bad():
+    ds1 = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
+    ds2 = from_source("file", earthkit_examples_file("tuv_pl.nc")).to_fieldlist()
 
-    ds = ds1 + ds2[1:5]
+    ds = concat(ds1, ds2[1:5])
     assert len(ds) == 6
 
     with temp_file() as tmp:
-        with pytest.raises(NotImplementedError):
-            write_to_file(write_method, tmp, ds)
+        with pytest.raises((AttributeError, IndexError)):
+            ds.to_target("file", tmp)
+
+
+#

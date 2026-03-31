@@ -15,11 +15,10 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.sources.stream import StreamFieldList
-from earthkit.data.testing import (
-    WRITE_TO_FILE_METHODS,
+from earthkit.data.utils.testing import (
     earthkit_remote_examples_file,
     earthkit_remote_file,
-    write_to_file,
+    earthkit_remote_test_data_file,
 )
 
 
@@ -32,7 +31,7 @@ def test_grib_url_stream_iter():
         "url",
         earthkit_remote_examples_file("test6.grib"),
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -48,7 +47,7 @@ def test_grib_url_stream_iter():
     ]
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == ref[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
         cnt += 1
 
     assert cnt == len(ref)
@@ -70,7 +69,7 @@ def test_grib_url_stream_batched(_kwargs, expected_meta):
         "url",
         earthkit_remote_examples_file("test6.grib"),
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -79,7 +78,7 @@ def test_grib_url_stream_batched(_kwargs, expected_meta):
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get("parameter.variable") == expected_meta[i]
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -88,9 +87,9 @@ def test_grib_url_stream_batched(_kwargs, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
+@pytest.mark.parametrize("group", ["vertical.level", ["vertical.level", "metadata.gridType"]])
 def test_grib_url_stream_group_by(group):
-    ds = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True)
+    ds = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True).to_fieldlist()
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -103,7 +102,7 @@ def test_grib_url_stream_group_by(group):
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 3
-        assert f.metadata(("param", "level")) == ref[i]
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i]
         assert f.to_fieldlist(array_namespace="numpy") is not f
         cnt += 1
 
@@ -118,8 +117,7 @@ def test_grib_url_stream_in_memory():
         "url",
         earthkit_remote_examples_file("test6.grib"),
         stream=True,
-        read_all=True,
-    )
+    ).to_fieldlist(read_all=True)
 
     assert len(ds) == 6
 
@@ -127,11 +125,11 @@ def test_grib_url_stream_in_memory():
     ref = ["t", "u", "v", "t", "u", "v"]
 
     # iteration
-    val = [f.metadata(("param")) for f in ds]
+    val = [f.get(("parameter.variable")) for f in ds]
     assert val == ref, "iteration"
 
     # metadata
-    val = ds.metadata("param")
+    val = ds.get("parameter.variable")
     assert val == ref, "method"
 
     # data
@@ -150,18 +148,16 @@ def test_grib_url_stream_in_memory():
     assert np.allclose(vals, ref)
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_when_loaded_from_url_stream(write_method):
+def test_grib_save_when_loaded_from_url_stream():
     ds = from_source(
         "url",
         earthkit_remote_examples_file("test6.grib"),
         stream=True,
-        read_all=True,
-    )
+    ).to_fieldlist(read_all=True)
     assert len(ds) == 6
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds)
-        ds_saved = from_source("file", tmp)
+        ds.to_target("file", tmp)
+        ds_saved = from_source("file", tmp).to_fieldlist()
         assert len(ds) == len(ds_saved)
 
 
@@ -180,7 +176,7 @@ def test_grib_url_stream_multi_urls_iter():
             earthkit_remote_examples_file("test4.grib"),
         ],
         stream=True,
-    )
+    ).to_fieldlist()
 
     assert isinstance(ds, StreamFieldList)
     assert len(ds._source.sources) == 2
@@ -199,7 +195,7 @@ def test_grib_url_stream_multi_urls_iter():
     ]
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == ref[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
         cnt += 1
 
     assert cnt == len(ref)
@@ -225,7 +221,7 @@ def test_grib_url_stream_multi_urls_batched(_kwargs, expected_meta):
             earthkit_remote_examples_file("test4.grib"),
         ],
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -234,7 +230,7 @@ def test_grib_url_stream_multi_urls_batched(_kwargs, expected_meta):
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get("parameter.variable") == expected_meta[i]
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -247,12 +243,11 @@ def test_grib_url_stream_multi_urls_memory():
     ds = from_source(
         "url",
         [
-            earthkit_remote_examples_file("test.grib"),
+            earthkit_remote_test_data_file("test.grib"),
             earthkit_remote_examples_file("test4.grib"),
         ],
         stream=True,
-        read_all=True,
-    )
+    ).to_fieldlist(read_all=True)
 
     assert len(ds) == 6
 
@@ -265,11 +260,11 @@ def test_grib_url_stream_multi_urls_memory():
         ("z", 850),
     ]
     # iteration
-    val = [f.metadata(("param", "level")) for f in ds]
+    val = [f.get(("parameter.variable", "vertical.level")) for f in ds]
     assert val == md_ref, "iteration"
 
     # metadata
-    val = ds.metadata(("param", "level"))
+    val = ds.get(("parameter.variable", "vertical.level"))
     assert val == md_ref, "method"
 
     # data
@@ -277,10 +272,10 @@ def test_grib_url_stream_multi_urls_memory():
         ds.to_numpy().shape
 
     # first part
-    expected_shape = (2, 11, 19)
+    expected_shape = (2, 8, 13)
     assert ds[0:2].to_numpy().shape == expected_shape
 
-    ref = np.array([262.78027344, 101947.8125])
+    ref = np.array([270.52026367, 101562.0])
 
     vals = ds[0:2].to_numpy()[:, 0, 0]
     assert np.allclose(vals, ref)
@@ -297,17 +292,17 @@ def test_grib_url_stream_multi_urls_memory():
     # slicing
     r = ds[0:3]
     assert len(r) == 3
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == md_ref[0:3]
 
     r = ds[-2:]
     assert len(r) == 2
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == md_ref[-2:]
 
-    r = ds.sel(param="t")
+    r = ds.sel({"parameter.variable": "t"})
     assert len(r) == 2
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == [
         ("t", 500),
         ("t", 850),
@@ -336,7 +331,7 @@ def test_grib_url_stream_single_url_parts_core(path, parts, expected_meta):
         earthkit_remote_file(path),
         parts=parts,
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -344,7 +339,7 @@ def test_grib_url_stream_single_url_parts_core(path, parts, expected_meta):
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -368,7 +363,7 @@ def test_grib_url_stream_single_url_parts_as_arg_valid(parts, expected_meta):
         "url",
         [earthkit_remote_examples_file("test6.grib"), parts],
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -376,7 +371,7 @@ def test_grib_url_stream_single_url_parts_as_arg_valid(parts, expected_meta):
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -392,7 +387,7 @@ def test_grib_url_stream_single_url_parts_as_arg_invalid():
             [earthkit_remote_examples_file("test6.grib"), [(0, 150)]],
             parts=[(0, 160)],
             stream=True,
-        )
+        ).to_fieldlist()
 
 
 @pytest.mark.parametrize(
@@ -436,7 +431,7 @@ def test_grib_url_stream_multi_urls_parts(parts1, parts2, expected_meta):
             [earthkit_remote_examples_file("test.grib"), parts2],
         ],
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -444,7 +439,7 @@ def test_grib_url_stream_multi_urls_parts(parts1, parts2, expected_meta):
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -454,6 +449,6 @@ def test_grib_url_stream_multi_urls_parts(parts1, parts2, expected_meta):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

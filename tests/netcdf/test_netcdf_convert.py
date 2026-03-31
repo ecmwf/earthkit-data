@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
 @pytest.mark.long_test
@@ -36,7 +36,7 @@ def test_netcdf_to_xarray_args():
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("20220401-C3S-L3S_FIRE-BA-OLCI-AREA_3-fv1.1.nc"),
-    )
+    ).to_fieldlist()
 
     r = ds.to_xarray(xarray_open_mfdataset_kwargs=dict(decode_cf=False, decode_times=False))
     assert r["JD"].dtype == "int16"
@@ -56,7 +56,7 @@ def test_netcdf_to_xarray_args():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     # test_datetime()
     main(__file__)

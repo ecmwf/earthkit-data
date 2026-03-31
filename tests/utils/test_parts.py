@@ -265,6 +265,6 @@ def test_file_parts_sorted(paths, parts, expected_paths, expected_parts, same):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

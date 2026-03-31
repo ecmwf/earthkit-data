@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import NO_HDA
+from earthkit.data.utils.testing import NO_HDA
 
 REQ_1 = {
     "dataset_id": "EO:CLMS:DAT:CLMS_GLOBAL_BA_300M_V3_MONTHLY_NETCDF",
@@ -37,7 +37,7 @@ def test_wekeo_download_single_1(prompt):
         "EO:CLMS:DAT:CLMS_GLOBAL_BA_300M_V3_MONTHLY_NETCDF",
         prompt=prompt,
         request=REQ_1,
-    )
+    ).to_fieldlist()
     assert len(ds) == 1
 
 
@@ -62,7 +62,7 @@ def test_wekeo_download_single_2(_args, req, _kwargs):
         prompt=False,
         request=req,
         **_kwargs,
-    )
+    ).to_fieldlist()
     assert len(ds) == 1
 
 
@@ -78,11 +78,11 @@ def test_wekeo_download_multi(_args, req, _kwargs):
         request=req,
         prompt=False,
         **_kwargs,
-    )
+    ).to_fieldlist()
     assert len(ds) == 2
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

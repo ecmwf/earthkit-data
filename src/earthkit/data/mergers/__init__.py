@@ -93,6 +93,11 @@ class Merger:
 
 
 class DefaultMerger(Merger):
+    def to_fieldlist(self, **kwargs):
+        fs = [s.to_fieldlist() for s in self.sources]
+        merged = merge_by_class(fs)
+        return merged
+
     def to_pandas(self, **kwargs):
         from .pandas import merge
 

@@ -14,49 +14,44 @@ import os
 
 import numpy as np
 import pytest
-from array_fl_fixtures import load_array_fl
+from array_fl_fixtures import load_array_fl  # noqa: E402
 
-from earthkit.data import from_source
-from earthkit.data.core.fieldlist import FieldList
+from earthkit.data import FieldList, create_target, from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import (
+from earthkit.data.utils.testing import (
     ARRAY_BACKENDS,
-    WRITE_TO_FILE_METHODS,
     check_array_type,
     earthkit_examples_file,
     earthkit_test_data_file,
-    write_to_file,
 )
 
 LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_array_fl_grib_write_to_path(array_backend, write_method):
+def test_array_fl_grib_write_to_path(array_backend):
 
     array_namespace, device, dtype = array_backend
 
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     ds = ds.to_fieldlist(
         array_namespace=array_namespace,
         device=device,
         dtype=dtype,
     )
 
-    assert ds[0].metadata("shortName") == "2t"
+    assert ds[0].get("parameter.variable") == "2t"
+    assert ds[0].get("metadata.shortName") == "2t"
     assert len(ds) == 2
     v1 = ds[0].values + 1
     check_array_type(v1, array_namespace)
 
-    md = ds[0].metadata()
-    md1 = md.override(shortName="msl")
-    r = FieldList.from_array(v1, md1)
+    r = ds[0].set({"values": v1, "parameter.variable": "msl"})
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, r)
+        r.to_target("file", tmp)
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
         r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
         v_tmp = r_tmp[0].values
         assert array_namespace.allclose(v1, v_tmp)
@@ -64,16 +59,15 @@ def test_array_fl_grib_write_to_path(array_backend, write_method):
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("_kwargs", [{}, {"check_nans": True}])
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_array_fl_grib_write_missing(array_backend, _kwargs, write_method):
+def test_array_fl_grib_write_missing(array_backend, _kwargs):
 
     array_namespace, device, dtype = array_backend
     xp = array_namespace
 
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     ds = ds.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
 
-    assert ds[0].metadata("shortName") == "2t"
+    assert ds[0].get("metadata.shortName") == "2t"
 
     v = ds[0].values
     v1 = v + 1
@@ -83,17 +77,19 @@ def test_array_fl_grib_write_missing(array_backend, _kwargs, write_method):
     assert xp.isnan(v1[0])
     assert not xp.isnan(v1[1])
 
-    md = ds[0].metadata()
-    md1 = md.override(shortName="msl")
-    r = FieldList.from_array(v1, md1)
+    # md = ds[0].metadata()
+    # md1 = md.override(shortName="msl")
+    # r = FieldList.from_array(v1, md1)
+    r = ds[0].set({"values": v1, "parameter.variable": "msl"})
+    r = FieldList.from_fields([r])
 
     assert xp.isnan(r[0].values[0])
     assert not xp.isnan(r[0].values[1])
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, r, **_kwargs)
+        r.to_target("file", tmp, **_kwargs)
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
         v_tmp = r_tmp[0].values
         assert np.isnan(v_tmp[0])
         r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
@@ -102,11 +98,10 @@ def test_array_fl_grib_write_missing(array_backend, _kwargs, write_method):
         assert not xp.isnan(v_tmp[1])
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_array_fl_grib_write_check_nans_bad(write_method):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+def test_array_fl_grib_write_check_nans_bad():
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
-    assert ds[0].metadata("shortName") == "2t"
+    assert ds[0].get("metadata.shortName") == "2t"
 
     v = ds[0].values
     v1 = v + 1
@@ -116,9 +111,11 @@ def test_array_fl_grib_write_check_nans_bad(write_method):
     assert np.isnan(v1[0])
     assert not np.isnan(v1[1])
 
-    md = ds[0].metadata()
-    md1 = md.override(shortName="msl")
-    r = FieldList.from_numpy(v1, md1)
+    # md = ds[0].metadata()
+    # md1 = md.override(shortName="msl")
+    # r = FieldList.from_numpy(v1, md1)
+    r = ds[0].set({"values": v1, "parameter.variable": "msl"})
+    r = FieldList.from_fields([r])
 
     assert np.isnan(r[0].values[0])
     assert not np.isnan(r[0].values[1])
@@ -127,67 +124,65 @@ def test_array_fl_grib_write_check_nans_bad(write_method):
         from eccodes import EncodingError
 
         with pytest.raises(EncodingError):
-            write_to_file(write_method, tmp, r, check_nans=False)
+            r.to_target("file", tmp, check_nans=False)
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_array_fl_grib_write_append(write_method):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+def test_array_fl_grib_write_append():
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
-    assert ds[0].metadata("shortName") == "2t"
+    assert ds[0].get("metadata.shortName") == "2t"
 
     v = ds[0].values
     v1 = v + 1
     v2 = v + 2
 
-    md = ds[0].metadata()
-    md1 = md.override(shortName="msl")
-    md2 = md.override(shortName="2d")
+    r1 = ds[0].set({"values": v1, "parameter.variable": "msl"})
+    r1 = FieldList.from_fields([r1])
 
-    r1 = FieldList.from_numpy(v1, md1)
-    r2 = FieldList.from_numpy(v2, md2)
+    r2 = ds[0].set({"values": v2, "parameter.variable": "2d"})
+    r2 = FieldList.from_fields([r2])
 
     # save to disk
     tmp = temp_file()
-    write_to_file(write_method, tmp.path, r1)
+    r1.to_target("file", tmp.path)
     assert os.path.exists(tmp.path)
-    r_tmp = from_source("file", tmp.path)
+    r_tmp = from_source("file", tmp.path).to_fieldlist()
     assert len(r_tmp) == 1
-    assert r_tmp.metadata("shortName") == ["msl"]
+    assert r_tmp.get("metadata.shortName") == ["msl"]
     r_tmp = None
 
     # append
-    write_to_file(write_method, tmp.path, r2, append=True)
+    r2.to_target("file", tmp.path, append=True)
     assert os.path.exists(tmp.path)
-    r_tmp = from_source("file", tmp.path)
+    r_tmp = from_source("file", tmp.path).to_fieldlist()
     assert len(r_tmp) == 2
-    assert r_tmp.metadata("shortName") == ["msl", "2d"]
+    assert r_tmp.get("metadata.shortName") == ["msl", "2d"]
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_array_fl_grib_write_generating_proc_id(write_method):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+def test_array_fl_grib_write_generating_proc_id():
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
-    assert ds[0].metadata("shortName") == "2t"
+    assert ds[0].get("metadata.shortName") == "2t"
 
     v = ds[0].values
     v1 = v + 1
     v2 = v + 2
 
-    md = ds[0].metadata()
-    md1 = md.override(shortName="msl", generatingProcessIdentifier=255)
-    md2 = md.override(shortName="2d")
-
-    r1 = FieldList.from_numpy([v1, v2], [md1, md2])
+    f1 = ds[0].set({"values": v1, "parameter.variable": "msl"})
+    f2 = ds[0].set({"values": v2, "parameter.variable": "2d"})
+    r1 = FieldList.from_fields([f1, f2])
 
     # save to disk
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, r1)
+        with create_target("file", tmp) as t:
+            t.write(r1[0], metadata={"generatingProcessIdentifier": 255})
+            t.write(r1[1])
+
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
         assert len(r_tmp) == 2
-        assert r_tmp.metadata("shortName") == ["msl", "2d"]
-        assert r_tmp.metadata("generatingProcessIdentifier") == [
+        assert r_tmp.get("metadata.shortName") == ["msl", "2d"]
+        assert r_tmp.get("metadata.generatingProcessIdentifier") == [
             255,
             150,
         ]
@@ -199,47 +194,43 @@ def test_array_fl_grib_write_generating_proc_id(write_method):
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "_kwargs,expected_value",
-    [({}, None), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, None)],
+    [({}, 16), ({"bitsPerValue": 12}, 12)],
 )
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_array_fl_grib_write_bits_per_value(array_backend, _kwargs, expected_value, write_method):
+def test_array_fl_grib_write_bits_per_value(array_backend, _kwargs, expected_value):
     ds, _ = load_array_fl(1, array_backend)
 
-    if expected_value is None:
-        expected_value = ds[0].metadata("bitsPerValue")
-
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds, **_kwargs)
-        ds1 = from_source("file", tmp)
-        assert ds1.metadata("bitsPerValue") == [expected_value] * len(ds)
+        ds.to_target("file", tmp, **_kwargs)
+        ds1 = from_source("file", tmp).to_fieldlist()
+        assert ds1.get("metadata.bitsPerValue") == [expected_value] * len(ds)
 
 
 @pytest.mark.parametrize(
     "filename,shape",
     [
-        (earthkit_examples_file("test.grib"), (11, 19)),
+        (earthkit_examples_file("test.grib"), (8, 13)),
         (earthkit_test_data_file("O32_global.grib1"), (5248,)),
         (earthkit_test_data_file("O32_global.grib2"), (5248,)),
     ],
 )
 def test_array_fl_grib_single_write_to_path(filename, shape):
-    ds = from_source("file", filename)
+    ds = from_source("file", filename).to_fieldlist()
 
     assert len(ds) >= 1
     v1 = ds[0].values + 1
 
-    md = ds[0].metadata()
-    md1 = md.override(shortName="msl")
-    r = FieldList.from_array(v1, md1)
+    r = ds[0].set({"values": v1, "parameter.variable": "msl"})
+    r = FieldList.from_fields([r])
+
     assert r[0].shape == shape
 
     with temp_file() as tmp:
-        r.save(tmp)
+        r.to_target("file", tmp)
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
         # r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace)
         assert r_tmp[0].shape == shape
-        assert r_tmp[0].metadata("shortName") == "msl"
+        assert r_tmp[0].get("metadata.shortName") == "msl"
         v_tmp = r_tmp[0].values
         assert np.allclose(v1, v_tmp)
 
@@ -247,31 +238,32 @@ def test_array_fl_grib_single_write_to_path(filename, shape):
 @pytest.mark.parametrize(
     "filename,shape",
     [
-        (earthkit_examples_file("test.grib"), (11, 19)),
+        (earthkit_examples_file("test.grib"), (8, 13)),
         (earthkit_test_data_file("O32_global.grib1"), (5248,)),
         (earthkit_test_data_file("O32_global.grib2"), (5248,)),
     ],
 )
 @pytest.mark.parametrize(
     "_kwargs,expected_value",
-    [({}, None), ({"bits_per_value": 8}, 8), ({"bits_per_value": None}, None)],
+    [({}, 16), ({"bitsPerValue": 8}, 8)],
 )
 def test_array_fl_grib_single_write_bits_per_value(filename, shape, _kwargs, expected_value):
-    ds0 = from_source("file", filename)
+    ds0 = from_source("file", filename).to_fieldlist()
 
-    ds = ds0.from_fields([ds0[0].copy()])
+    # ds = ds0.from_fields([ds0[0].copy()])
+    ds = ds0.to_fieldlist()
     assert ds[0].shape == shape
 
-    if expected_value is None:
-        expected_value = ds[0].metadata("bitsPerValue")
+    # if expected_value is None:
+    #     expected_value = ds[0].get("metadata.bitsPerValue")
 
     with temp_file() as tmp:
-        ds.save(tmp, **_kwargs)
-        ds1 = from_source("file", tmp)
-        assert ds1.metadata("bitsPerValue") == [expected_value] * len(ds)
+        ds.to_target("file", tmp, **_kwargs)
+        ds1 = from_source("file", tmp).to_fieldlist()
+        assert ds1.get("metadata.bitsPerValue") == [expected_value] * len(ds)
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

@@ -17,7 +17,7 @@ from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.encoders.grib import GribEncoder
 from earthkit.data.targets import to_target
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 @pytest.mark.parametrize(
@@ -30,10 +30,10 @@ from earthkit.data.testing import earthkit_examples_file
 )
 @pytest.mark.parametrize("direct_call", [True, False])
 def test_target_file_pattern_grib_core(kwargs, direct_call):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     with temp_directory() as tmp:
-        path = os.path.join(tmp, "{shortName}.grib")
+        path = os.path.join(tmp, "{metadata.shortName}.grib")
 
         if direct_call:
             to_target("file-pattern", path, data=ds, **kwargs)
@@ -43,24 +43,27 @@ def test_target_file_pattern_grib_core(kwargs, direct_call):
         for name in ("msl", "2t"):
             path = os.path.join(tmp, f"{name}.grib")
             assert os.path.exists(path)
-            ds1 = from_source("file", path)
+            ds1 = from_source("file", path).to_fieldlist()
             assert len(ds1) == 1
-            assert ds1.metadata("shortName") == [name]
+            assert ds1.get("metadata.shortName") == [name]
 
 
 @pytest.mark.parametrize(
     "pattern,expected_value",
     [
-        ("{shortName}", {"t": 2, "u": 2, "v": 2}),
-        ("{param}", {"t": 2, "u": 2, "v": 2}),
-        ("{mars.param}", {"130.128": 2, "131.128": 2, "132.128": 2}),
-        ("{shortName}_{level}", {"t_1000": 1, "t_850": 1, "u_1000": 1, "u_850": 1, "v_1000": 1, "v_850": 1}),
-        ("{date}_{time}_{step}", {"20180801_1200_0": 6}),
-        ("{date}_{time}_{step:03}", {"20180801_1200_000": 6}),
+        ("{metadata.shortName}", {"t": 2, "u": 2, "v": 2}),
+        ("{parameter.variable}", {"t": 2, "u": 2, "v": 2}),
+        ("{metadata.mars.param}", {"130.128": 2, "131.128": 2, "132.128": 2}),
+        (
+            "{metadata.shortName}_{metadata.level}",
+            {"t_1000": 1, "t_850": 1, "u_1000": 1, "u_850": 1, "v_1000": 1, "v_850": 1},
+        ),
+        ("{metadata.date}_{metadata.time}_{metadata.step}", {"20180801_1200_0": 6}),
+        ("{metadata.date}_{metadata.time}_{metadata.step:03}", {"20180801_1200_000": 6}),
     ],
 )
 def test_target_file_pattern_grib_keys(pattern, expected_value):
-    ds = from_source("file", earthkit_examples_file("test6.grib"))
+    ds = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
 
     with temp_directory() as tmp:
         path = os.path.join(tmp, f"{pattern}.grib")
@@ -74,27 +77,27 @@ def test_target_file_pattern_grib_keys(pattern, expected_value):
         for k, count in expected_value.items():
             path = os.path.join(tmp, f"{k}.grib")
             assert os.path.exists(path)
-            assert len(from_source("file", path)) == count
+            assert len(from_source("file", path).to_fieldlist()) == count
 
 
 def test_target_file_pattern_grib_metadata():
-    ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+    ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
 
     with temp_directory() as tmp:
         # setting GRIB keys for the output
         ds.to_target(
             "file-pattern",
-            os.path.join(tmp, "{shortName}_{level}.grib"),
-            metadata={"date": 20250108},
+            os.path.join(tmp, "{metadata.shortName}_{metadata.level}.grib"),
+            metadata={"metadata.date": 20250108},
             bitsPerValue=8,
         )
 
         for p in ["t", "u", "v"]:
             path = os.path.join(tmp, f"{p}_850.grib")
             assert os.path.exists(path)
-            ds1 = from_source("file", path)
+            ds1 = from_source("file", path).to_fieldlist()
             assert len(ds1) == 1
-            assert ds1.metadata("shortName") == [p]
-            assert ds1.metadata("level") == [850]
-            assert ds1.metadata("date") == [20250108]
-            assert ds1.metadata("bitsPerValue") == [8]
+            assert ds1.get("metadata.shortName") == [p]
+            assert ds1.get("metadata.level") == [850]
+            assert ds1.get("metadata.date") == [20250108]
+            assert ds1.get("metadata.bitsPerValue") == [8]

@@ -12,15 +12,12 @@ import glob
 import logging
 import os
 
-import deprecation
-
-from earthkit.data import from_source
+from earthkit.data.core import Encodable
 from earthkit.data.core.caching import CACHE
-from earthkit.data.decorators import detect_out_filename
 from earthkit.data.readers import reader
 from earthkit.data.utils.parts import PathAndParts
 
-from . import Source
+from . import Source, from_source_internal
 
 LOG = logging.getLogger(__name__)
 
@@ -30,15 +27,16 @@ class FileSourcePathAndParts(PathAndParts):
     sequence = False
 
 
-class FileSourceMeta(type(Source), type(os.PathLike)):
-    def patch(cls, obj, *args, **kwargs):
-        if "reader" in kwargs:
-            setattr(obj, "reader", kwargs.pop("reader"))
+# class FileSourceMeta(type(Source), type(os.PathLike)):
+#     def patch(cls, obj, *args, **kwargs):
+#         if "reader" in kwargs:
+#             setattr(obj, "reader", kwargs.pop("reader"))
 
-        return super().patch(obj, *args, **kwargs)
+#         return super().patch(obj, *args, **kwargs)
 
 
-class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
+# class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
+class FileSource(Source, Encodable, os.PathLike):
     _reader_ = None
     content_type = None
 
@@ -68,23 +66,15 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
             if len(self.path) == 1:
                 self.path = self.path[0]
             else:
-                return from_source(
+                return from_source_internal(
                     "multi",
                     [
-                        from_source("file", p, parts=part, filter=self.filter, **self._kwargs)
+                        from_source_internal("file", p, parts=part, filter=self.filter, **self._kwargs)
                         for p, part in zip(self.path, self.parts)
                     ],
                     filter=self.filter,
                     merger=self.merger,
                 )
-
-        # here we must have a file or a directory
-        if self._kwargs.get("indexing", False):
-            from earthkit.data.sources.file_indexed import FileIndexedSource
-
-            kw = dict(self._kwargs)
-            kw.pop("indexing", None)
-            return FileIndexedSource(self.path, filter=filter, merger=self.merger, **kw)
 
         # Give a chance to directories and zip files
         # to return a multi-source
@@ -116,57 +106,49 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
             )
         return self._reader_
 
-    def __iter__(self):
-        return iter(self._reader)
+    # def __iter__(self):
+    #     return iter(self._reader)
 
-    def __len__(self):
-        return len(self._reader)
+    # def __len__(self):
+    #     return len(self._reader)
 
-    def __getitem__(self, n):
-        return self._reader[n]
+    # def __getitem__(self, n):
+    #     return self._reader[n]
 
-    def sel(self, *args, **kwargs):
-        return self._reader.sel(*args, **kwargs)
+    # def sel(self, *args, **kwargs):
+    #     return self._reader.sel(*args, **kwargs)
 
-    def isel(self, *args, **kwargs):
-        return self._reader.isel(*args, **kwargs)
+    # def isel(self, *args, **kwargs):
+    #     return self._reader.isel(*args, **kwargs)
 
-    def order_by(self, *args, **kwargs):
-        return self._reader.order_by(*args, **kwargs)
+    # def order_by(self, *args, **kwargs):
+    #     return self._reader.order_by(*args, **kwargs)
 
-    def to_xarray(self, **kwargs):
-        return self._reader.to_xarray(**kwargs)
+    # def to_xarray(self, **kwargs):
+    #     return self._reader.to_xarray(**kwargs)
 
-    def to_pandas(self, **kwargs):
-        LOG.debug("Calling reader.to_pandas %s", self)
-        return self._reader.to_pandas(**kwargs)
+    # def to_pandas(self, **kwargs):
+    #     LOG.debug("Calling reader.to_pandas %s", self)
+    #     return self._reader.to_pandas(**kwargs)
 
-    def to_numpy(self, **kwargs):
-        return self._reader.to_numpy(**kwargs)
+    # def to_numpy(self, **kwargs):
+    #     return self._reader.to_numpy(**kwargs)
 
-    @property
-    def values(self):
-        return self._reader.values
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    @detect_out_filename
-    def save(self, path, **kwargs):
-        return self.to_target("file", path, **kwargs)
-        # return self._reader.save(path, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def write(self, f, **kwargs):
-        return self.to_target("file", f, **kwargs)
-        # return self._reader.write(f, **kwargs)
+    # @property
+    # def values(self):
+    #     return self._reader.values
 
     def to_target(self, *args, **kwargs):
         self._reader.to_target(*args, **kwargs)
 
-    def scaled(self, *args, **kwargs):
-        return self._reader.scaled(*args, **kwargs)
+    # def scaled(self, *args, **kwargs):
+    #     return self._reader.scaled(*args, **kwargs)
 
-    def _attributes(self, names):
-        return self._reader._attributes(names)
+    # def _attributes(self, names):
+    #     return self._reader._attributes(names)
+
+    def to_data_object(self):
+        return self._reader.to_data_object()
 
     def __repr__(self):
         path = getattr(self, "path", None)
@@ -184,39 +166,39 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     def __fspath__(self):
         return self.path
 
-    def metadata(self, *args, **kwargs):
-        return self._reader.metadata(*args, **kwargs)
+    # def metadata(self, *args, **kwargs):
+    #     return self._reader.metadata(*args, **kwargs)
 
-    def indices(self, *args, **kwargs):
-        return self._reader.indices(*args, **kwargs)
+    # def indices(self, *args, **kwargs):
+    #     return self._reader.indices(*args, **kwargs)
 
-    def index(self, *args, **kwargs):
-        return self._reader.index(*args, **kwargs)
+    # def index(self, *args, **kwargs):
+    #     return self._reader.index(*args, **kwargs)
 
-    def head(self, n=5, **kwargs):
-        if n <= 0:
-            raise ValueError("head: n must be > 0")
-        return self.ls(n=n, **kwargs)
+    # def head(self, n=5, **kwargs):
+    #     if n <= 0:
+    #         raise ValueError("head: n must be > 0")
+    #     return self.ls(n=n, **kwargs)
 
-    def tail(self, n=5, **kwargs):
-        if n <= 0:
-            raise ValueError("n must be > 0")
-        return self.ls(n=-n, **kwargs)
+    # def tail(self, n=5, **kwargs):
+    #     if n <= 0:
+    #         raise ValueError("n must be > 0")
+    #     return self.ls(n=-n, **kwargs)
 
-    def ls(self, *args, **kwargs):
-        return self._reader.ls(*args, **kwargs)
+    # def ls(self, *args, **kwargs):
+    #     return self._reader.ls(*args, **kwargs)
 
-    def describe(self, *args, **kwargs):
-        return self._reader.describe(*args, **kwargs)
+    # def describe(self, *args, **kwargs):
+    #     return self._reader.describe(*args, **kwargs)
 
-    def datetime(self, **kwargs):
-        return self._reader.datetime(**kwargs)
+    # def datetime(self, **kwargs):
+    #     return self._reader.datetime(**kwargs)
 
-    def bounding_box(self):
-        return self._reader.bounding_box()
+    # def bounding_box(self):
+    #     return self._reader.bounding_box()
 
-    def statistics(self, **kwargs):
-        return self._reader.statistics(**kwargs)
+    # def statistics(self, **kwargs):
+    #     return self._reader.statistics(**kwargs)
 
     @property
     def path(self):
@@ -230,11 +212,20 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     def parts(self):
         return self._path_and_parts.parts
 
-    def batched(self, *args):
-        return self._reader.batched(*args)
+    # def batched(self, *args):
+    #     return self._reader.batched(*args)
 
-    def group_by(self, *args):
-        return self._reader.group_by(*args)
+    # def group_by(self, *args):
+    #     return self._reader.group_by(*args)
+
+    def _default_encoder(self):
+        return self._reader._default_encoder()
+
+    def _encode_default(self, encoder, *args, **kwargs):
+        return self._reader._encode_default(encoder, *args, **kwargs)
+
+    def _encode(self, encoder, *args, **kwargs):
+        return self._reader._encode(encoder, *args, **kwargs)
 
 
 class IndexedFileSource(FileSource):
@@ -253,10 +244,10 @@ class StreamFileSource(FileSource):
             if len(self.path) == 1:
                 self.path = self.path[0]
             else:
-                return from_source(
+                return from_source_internal(
                     "multi",
                     [
-                        from_source("file", p, parts=part, filter=self.filter, stream=True, **self._kwargs)
+                        from_source_internal("file", p, parts=part, filter=self.filter, stream=True, **self._kwargs)
                         for p, part in zip(self.path, self.parts)
                     ],
                     filter=self.filter,
