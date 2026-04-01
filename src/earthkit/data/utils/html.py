@@ -89,7 +89,7 @@ def tab(items, details=None, selected=None):
     t = f"""<div class="eh-description">{details}</div>""" if details else ""
     t += """
 <div>
-<section class="eh-section>
+<section class="eh-section">
 <div class="eh-tabs-container">
 <div class="eh-tabs-block">
 <div class="eh-tabs">
