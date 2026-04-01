@@ -9,7 +9,7 @@ Install **earthkit-data** with python3 (>= 3.10) and ``pip`` as follows:
 
 .. code-block:: bash
 
-    python3 -m pip install earthkit-data==1.0.0rc0
+    python3 -m pip install earthkit-data>=1.0.0rc0
 
 Please note that this is a **minimal** installation supporting only GRIB and NetCDF data and cannot access remote services other than URLs. If you want to use more data types or remote services you need to install the optional Python packages. For more details see :ref:`install`.
 
