@@ -67,15 +67,16 @@ class XarrayMixIn:
                 will update the corresponding profile value if it is a dict otherwise it will overwrite it. See:
                 :ref:`xr_profile` for more information.
             * variable_key: str, None
-                Metadata key to specify the dataset variables. It cannot be
-                defined as a dimension. Default is "param" (in earthkit-data this is the same as "shortName").
+                The metadata key which will be used to name the Xarray Dataset variables.
+                Default is "parameter.variable" (which in the case of GRIB data is the same as
+                "metadata.shortName" and "metadata.param").
+                The same key cannot be used to define any dimension.
                 Only enabled when ``mono_variable`` is False or None.
             * drop_variables: str, or iterable of str, None
                 A variable or list of variables to drop from the dataset. Default is None. Only used when
                 ``variable_key`` is enabled.
             * rename_variables: dict, None
-                Mapping to rename variables. Default is None. Only used  when
-                ``variable_key`` is enabled.
+                Mapping to rename variables. Default is None. Only used when ``variable_key`` is enabled.
             * mono_variable: bool, str, None
                 If True or str, the dataset will contain a single variable called "data" (or the value
                 of the ``mono_variable`` kwarg when it is a str). If False, the dataset will contain
@@ -89,37 +90,39 @@ class XarrayMixIn:
 
                 .. code-block:: python
 
-                    # use key "expver" as a dimension
-                    extra_dims = "expver"
-                    # use keys "expver" and "steam" as a dimension
-                    extra_dims = ["expver", "stream"]
-                    # define dimensions "expver", mars_stream" and "mars_type" from
-                    # metadata keys "expver", "stream" and "type"
+                    # use GRIB key "expver" as a dimension
+                    extra_dims = "metadata.expver"
+                    # use keys "metadata.expver" and "metadata.steam" as a dimension
+                    extra_dims = ["metadata.expver", "metadata.stream"]
+                    # define dimensions "expver", "mars_stream" and "mars_type" from
+                    # GRIB keys "expver", "stream" and "type"
                     extra_dims = [
-                        "expver",
-                        {"mars_stream": "stream"},
-                        ("mars_type", "type"),
+                        "metadata.expver",
+                        {"mars_stream": "metadata.stream"},
+                        ("mars_type", "metadata.type"),
                     ]
                     extra_dims = [
                         {
-                            "expver": "expver",
-                            "mars_stream": "stream",
-                            "mars_type": "type",
+                            "expver": "metadata.expver",
+                            "mars_stream": "metadata.stream",
+                            "mars_type": "metadata.type",
                         }
                     ]
 
-            * drop_dims:  str, or iterable of str, None
+            * drop_dims: str, or iterable of str, None
                 Single or multiple dimensions to be ignored. Default is None.
                 Default is None.
             * ensure_dims: str, or iterable of str, None
                 Every item may be one of the following:
-                - **A dimension name**
+
+                - **Dimension name**:
                   A dimension that must always be preserved in the output, even when
                   ``squeeze=True`` and its size is 1, or when it appears in ``dims_as_attrs``.
-                - **A metadata key**
+                - **Metadata key**:
                   A key whose value defines an additional, non-squeezable dimension.
                   When a metadata key is listed here, it does *not* need to be repeated
                   in ``extra_dims``.
+
                 Default is None.
             * fixed_dims: str, or iterable of str, None
                 Define all the dimensions to be generated. When used no other dimensions will be created.
@@ -129,19 +132,19 @@ class XarrayMixIn:
 
                 .. code-block:: python
 
-                    # use key "step" as a dimension
-                    fixed_dims = "step"
-                    # use keys "step" and "levelist" as a dimension
-                    extra_dims = ["step", "levelist"]
+                    # use key "time.step" as a dimension
+                    fixed_dims = "time.step"
+                    # use keys "time.step" and "vertical.level" as a dimension
+                    extra_dims = ["time.step", "vertical.level"]
                     # define dimensions "step", level" and "level_type" from
-                    # metadata keys "step", "levelist" and "levtype"
+                    # metadata keys "metadata.step", "metadata.levelist" and "metadata.levtype"
                     extra_dims = [
-                        "step",
-                        {"level": "levelist"},
-                        ("level_type", "levtype"),
+                        "metadata.step",
+                        {"level": "metadata.levelist"},
+                        ("level_type", "metadata.levtype"),
                     ]
                     extra_dims = [
-                        {"step": "step", "level": "levelist", "level_type": "levtype"}
+                        {"step": "metadata.step", "level": "metadata.levelist", "level_type": "metadata.levtype"}
                     ]
 
             * dim_roles: dict, None
@@ -165,7 +168,7 @@ class XarrayMixIn:
                 - "valid_time": metadata key interpreted as valid time. Used when ``time_dim_mode`` is "valid_time" or
                   ``add_valid_time_coord`` is True.
                 - "date": metadata key interpreted as base date. Used only when ``time_dim_mode`` is "raw".
-                - "time": metadata key interpreted as base  time. Used only when ``time_dim_mode`` is "raw".
+                - "time": metadata key interpreted as base time. Used only when ``time_dim_mode`` is "raw".
                 - "level": metadata key interpreted as level
                 - "level_type": metadata key interpreted as level type
 
@@ -191,7 +194,7 @@ class XarrayMixIn:
                 If True, the dimension names are formed from the role names. Otherwise, the
                 dimension names are formed from the metadata keys specified in ``dim_roles``.
                 Its default value (None) expands to True unless the ``profile`` overwrites it.
-                Only used when no ``fixed_dims`` are specified. *New in version 0.15.0*.
+                Only used when no ``fixed_dims`` are specified. **New in version 0.15.0**.
             * rename_dims: dict, None
                 Mapping to rename dimensions. Default is None.
             * dims_as_attrs: str, or iterable of str, None
@@ -207,28 +210,29 @@ class XarrayMixIn:
 
                 - "forecast": adds two dimensions:
 
-                  - "forecast_reference_time": built from the "date" and "time" roles
+                  - "forecast_reference_time": built from the "forecast_reference_time" role
                     (see ``dim_roles``) as np.datetime64 values
                   - "step": built from the "step" role. When ``decode_times=True`` the values are
                     np.timedelta64
-                - "valid_time": adds a dimension called "valid_time" as described by the "valid_time"
+                - "valid_time": adds a dimension called "valid_time" built from the "valid_time"
                   role (see ``dim_roles``). Will contain np.datetime64 values.
                 - "raw": the "date", "time" and "step" roles are turned into 3 separate dimensions
             * level_dim_mode: str, None
                 Controls how predefined vertical dimensions are constructed.
                 The default is ``"level"``.
                 Valid values are:
-                - ``"level"``
+
+                - ``"level"``:
                   Creates two separate dimensions, ``"level"`` and ``"level_type"``,
                   as defined by the corresponding roles in ``dim_roles``.
-                - ``"level_per_type"``
+                - ``"level_per_type"``:
                   Uses a template dimension ``"<level_per_type>"`` that is expanded
                   into one or more vertical dimensions.
                   The dimension name is taken from the metadata key with the role
-                  ``"level_type"`` (e.g. ``"isobaricInhPa"``), and the coordinate
+                  ``"level_type"`` (e.g. ``"pressure"``), and the coordinate
                   values come from the metadata key with the role ``"level"``
                   (e.g. ``[500, 700, 850, 1000]``).
-                - ``"level_and_type"``
+                - ``"level_and_type"``:
                   Produces a single combined dimension, ``"level_and_type"``,
                   in which the level value and the level type are merged.
             * squeeze: bool, None
@@ -240,15 +244,16 @@ class XarrayMixIn:
                 dataset. Only makes effect when ``time_dim_mode`` is not "valid_time". Its default
                 value (None) expands to False unless the ``profile`` overwrites it.
             * decode_times: bool, None
-                If True, decode date and datetime coordinates into datetime64 values. If False, leave
-                coordinates representing date-like GRIB keys (e.g. "date", "validityDate") encoded as
-                native int values. The default value (None) expands to True unless the ``profile``
-                overwrites it.
+                If True, decode date and datetime coordinates into ``datetime64`` values.
+                If False, leave the coordinates in their native type
+                (e.g. ``int`` if the coordinates come from the GRIB key like "date" or "validityDate").
+                The default value (None) expands to True unless the ``profile`` overwrites it.
             * decode_timedelta: bool, None
-                If True, decode coordinates representing time-like or duration-like GRIB keys
-                (e.g. "time", "validityTime", "step") into timedelta64 values. If False, leave time-like
-                coordinates encoded as native int values, while duration-like coordinates will be encoded
-                as int with the units attached to the coordinate as the "units" attribute.
+                If True, decode time-like or duration-like coordinates into ``timedelta64`` values.
+                If False, leave the coordinates in their native type (e.g. ``int`` if the coordinates come
+                from the GRIB key like "time", "validityTime", "step"); additionally, the duration-like
+                coordinates (e.g. derived from the GRIB key like "step", "endStep", etc.)
+                will have the attribute "units" appropriately set (to "minutes", "hours", etc.).
                 If None (default), assume the same value of ``decode_times`` unless the ``profile``
                 overwrites it.
             * add_geo_coords: bool, None
@@ -304,7 +309,7 @@ class XarrayMixIn:
             * rename_attrs: dict, None
                 A dictionary of attribute to rename. Default is None.
             * fill_metadata: dict, None
-                Define fill_metadata values to metadata keys. Default is None.
+                Define fill values to metadata keys. Default is None.
             * remapping: dict, None
                 Define new metadata keys for indexing. Any key provided in ``remapping`` may be referenced
                 when specifying options such as ``variable_key``, ``extra_dims``, ``ensure_dims``, and others.
@@ -341,9 +346,9 @@ class XarrayMixIn:
                 expanded to "numpy". **Deprecated since version 0.19.0**. Please use
                 ``array_namespace`` instead. In versions before 0.19.0 an :obj:`ArrayBackend` was also
                 accepted here, which is no longer the case.
-            * array_namespace: str, array namespace,None
+            * array_namespace: str, array namespace, None
                 The array namespace to use for array operations. The default value (None) is
-                expanded to "numpy". ** New in version 0.19.0**.
+                expanded to "numpy". **New in version 0.19.0**.
             * direct_backend: bool, None
                 If True, the backend is used directly bypassing :py:meth:`xarray.open_dataset`
                 and ignoring all non-backend related kwargs. If False, the data is read via
@@ -373,14 +378,18 @@ class XarrayMixIn:
         The default values of ``xarray_open_dataset_kwargs`` or ``**kwargs`` passed
         to :py:func:`xarray.open_dataset` are as follows:
 
-            - when ``engine="earthkit"``::
+        - when ``engine="earthkit"``::
 
-               {"cache": True, "chunks": None, "engine": "earthkit"}
+           {"cache": True, "chunks": None, "engine": "earthkit"}
 
-            - when ``engine="cfgrib"``::
+        - when ``engine="cfgrib"``::
 
-                {"backend_kwargs": {"errors": "raise", "ignore_keys": [], "squeeze": False,},
-                "cache": True, "chunks": None, "engine": "cfgrib"}
+            {
+                "backend_kwargs": {"errors": "raise", "ignore_keys": [], "squeeze": False},
+                "cache": True,
+                "chunks": None,
+                "engine": "cfgrib"
+            }
 
         Please note that settings ``errors="raise"`` and ``engine`` are always enforced
         and cannot be changed.
@@ -389,7 +398,7 @@ class XarrayMixIn:
         Examples
         --------
         >>> import earthkit.data
-        >>> fs = earthkit.data.from_source("file", "test6.grib")
+        >>> fs = earthkit.data.from_source("sample", "pl.grib")
         >>> ds = fs.to_xarray(time_dim_mode="forecast")
         >>> # also possible to use the xarray_open_dataset_kwargs
         >>> ds = fs.to_xarray(
