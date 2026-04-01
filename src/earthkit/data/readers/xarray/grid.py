@@ -144,7 +144,7 @@ class MeshedGrid(LatLonGrid):
             )
 
         else:
-            raise NotImplementedError(f"MeshedGrid.grid_points: unrecognized variable_dims {self.variable_dims}")
+            raise NotImplementedError(f"MeshedGrid.grid_points: unrecognised variable_dims {self.variable_dims}")
 
         return lat.flatten(), lon.flatten()
 
@@ -236,7 +236,7 @@ class MeshedXYGrid(RawXYGrid):
             )
 
         else:
-            raise NotImplementedError(f"MeshedGrid.grid_points: unrecognized variable_dims {self.variable_dims}")
+            raise NotImplementedError(f"MeshedGrid.grid_points: unrecognised variable_dims {self.variable_dims}")
 
         return x.flatten(), y.flatten()
 

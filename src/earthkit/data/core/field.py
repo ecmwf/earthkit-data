@@ -166,7 +166,7 @@ class Field(Base):
         labels=None,
     ):
         """
-        Cretae a Field object.
+        Create a Field object.
 
         Do not use this constructor directly, but use the factory methods such as :meth:`from_dict`
 

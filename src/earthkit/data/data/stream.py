@@ -20,7 +20,7 @@ class StreamFeatureListData(SourceData):
 
     - either by providing iteration through the stream of features once, which is more
       efficient for larger datasets and allows for processing data in chunks without consuming
-      large amounts of memory. This is the default behavior when calling :py:func:`to_featurelist`
+      large amounts of memory. This is the default behaviour when calling :py:func:`to_featurelist`
       without any arguments, or with ``read_all=False``.
     - or by reading all features into memory, which may be suitable for smaller datasets or
       when random access is needed. This can be achieved by calling :py:func:`to_featurelist`
@@ -110,7 +110,7 @@ class StreamFieldListData(SourceData):
 
     - either by providing iteration through the stream of fields once, which is more
       efficient for larger datasets and allows for processing data in chunks without consuming
-      large amounts of memory. This is the default behavior when calling :py:func:`to_fieldlist`
+      large amounts of memory. This is the default behaviour when calling :py:func:`to_fieldlist`
       without any arguments, or with ``read_all=False``.
     - or by reading all fields into memory, which may be suitable for smaller datasets or
       when random access is needed. This can be achieved by calling :py:func:`to_fieldlist`

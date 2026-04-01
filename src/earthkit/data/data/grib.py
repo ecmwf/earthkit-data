@@ -161,7 +161,7 @@ class GribData(SourceData):
     def to_array(self, *args, **kwargs) -> ArrayLike:
         """Convert into an array of a given array-like type.
 
-        It is done by fist converting the GRIB data into a fieldlist and calling the fieldlist's
+        It is done by first converting the GRIB data into a fieldlist and calling the fieldlist's
         :py:func:`to_array <earthkit.data.core.fieldlist.FieldList.to_array>` method.
 
         Parameters

@@ -716,7 +716,7 @@ class HivePattern:
 
         pattern = pattern._subpattern(self.fixed_single_params)
 
-        # analyze path structure and turn each file path part into a
+        # analyse path structure and turn each file path part into a
         # pattern
         path = Path(pattern)
         self.root = ""

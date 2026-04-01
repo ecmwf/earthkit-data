@@ -137,7 +137,7 @@ def patch_analysis_lead_to_valid_time(
     """Convert analysis time and lead time coordinates to valid time.
 
     This function creates a new valid time coordinate by adding the analysis time
-    and lead time coordinates, then stacks and reorganizes the dataset to use
+    and lead time coordinates, then stacks and reorganises the dataset to use
     valid time as the primary time dimension.
 
     Parameters
@@ -148,7 +148,7 @@ def patch_analysis_lead_to_valid_time(
         Dictionary mapping required keys to coordinate names in the dataset:
 
         - 'analysis_time_coordinate' : str
-            Name of the analysis/initialization time coordinate.
+            Name of the analysis/initialisation time coordinate.
         - 'lead_time_coordinate' : str
             Name of the forecast lead time coordinate.
         - 'valid_time_coordinate' : str
