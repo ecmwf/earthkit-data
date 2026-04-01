@@ -20,4 +20,4 @@ A :py:class:`~earthkit.data.core.fieldlist.FieldList` is a collection of :py:cla
 How-tos:
 
     - :ref:`/how-tos/field/field_overview.ipynb`
-    - :ref:`/how-tos/grib/grib_overview.ipynb``
+    - :ref:`/how-tos/grib/grib_overview.ipynb`

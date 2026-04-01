@@ -109,7 +109,7 @@ It is possible to directly write the Xarray dataset created with the earthkit en
 Using to_fieldlist()
 ++++++++++++++++++++
 
-We can also convert the Xarray dataset into a GRIB fieldlist by using :py:meth:`~earthkit.data.xr_engine.engine.XarrayEarthkit.to_fieldlist` on the ``earthkit`` accessor of the Xarray object. Please note that this will generate a fieldlist entirely stored in memory. This method only works if the Xarray dataset was generated with the earthkit engine from GRIB data.\
+We can also convert the Xarray dataset into a GRIB fieldlist by using :py:meth:`~earthkit.data.xr_engine.engine.XarrayEarthkit.to_fieldlist` on the ``earthkit`` accessor of the Xarray object. Please note that this will generate a fieldlist entirely stored in memory. This method only works if the Xarray dataset was generated with the earthkit engine from GRIB data.
 
 .. code-block:: python
 

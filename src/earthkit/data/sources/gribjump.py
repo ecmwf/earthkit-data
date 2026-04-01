@@ -237,8 +237,8 @@ class ExtractionRequestCollection(UserList):
             mask = None
 
         if indices is not None:
-            # We do the same small optimization for indices. Optimally, we
-            # would do similar optimizations in pygribjump and remove this.
+            # We do the same small optimisation for indices. Optimally, we
+            # would do similar optimisations in pygribjump and remove this.
             ranges = [(i, i + 1) for i in indices]
             indices = None
 
@@ -251,7 +251,7 @@ class FieldExtractList(SimpleFieldListBase):
 
     .. warning::
         This implementation is **not thread-safe**. Concurrent access from multiple threads
-        may result in race conditions during lazy loading. Use appropriate synchronization
+        may result in race conditions during lazy loading. Use appropriate synchronisation
         if accessing from multiple threads.
 
     .. note::

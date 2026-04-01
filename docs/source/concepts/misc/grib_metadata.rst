@@ -1,4 +1,4 @@
-.. _grib-metadata-cache
+.. _grib-metadata-cache:
 
 GRIB field metadata caching
 //////////////////////////////
