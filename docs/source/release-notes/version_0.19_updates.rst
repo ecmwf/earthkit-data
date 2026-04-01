@@ -2,6 +2,18 @@
 Version 0.19 Updates
 /////////////////////////
 
+
+Version 0.19.3
+===============
+
+Dependencies
++++++++++++++++
+
+- Removed earthkit-meteo dependency (:pr:`893`)
+- Limited the version of earthkit-geo and earthkit-utils to be less than 0.99 to avoid compatibility issues with the upcoming major releases of these packages
+- Limited the version of pyfdb to be less than 1.0 to avoid compatibility issues with the upcoming major release of pyfdb (:pr:`940`).
+
+
 Version 0.19.2
 ===============
 
