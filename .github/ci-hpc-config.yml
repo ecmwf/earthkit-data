@@ -21,7 +21,7 @@ build:
   - ECCODES_DEFINITION_PATH=$ECCODES_DIR/share/eccodes/definitions
   - GITHUB_WORKFLOW=anything
   parallel: 64
-  requirements: tests/downstream-ci-requirements.txt
+  toml_opt_dep_sections: all,test,ci
   pytest_cmd: |
     python -m pytest -vv -m 'not notebook and not no_cache_init' --cov=. --cov-report=xml
     python -m pytest -v -m 'notebook'
