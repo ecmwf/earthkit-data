@@ -11,14 +11,18 @@ First, clone the repository locally. You can use the following command:
 
    git clone --branch develop git@github.com:ecmwf/earthkit-data.git
 
-
-Next, enter your git repository and run the following commands:
+Then, create a new environment and activate it:
 
 .. code-block:: shell
 
-    make conda-env-update
+    conda create -n earthkit-data python=3.12
     conda activate earthkit-data
-    make setup
-    pip install -e .
 
-This will create a new conda environment called "earthkit-data" with all the dependencies installed into it. This setup enables the `pre-commit`_ hooks, performing a series of quality control checks on every commit. If any of these checks fails the commit will be rejected.
+Lastly, enter your git repository and run the following commands:
+
+.. code-block:: shell
+
+    pip install -e .[dev]
+    pre-commit install
+
+This setup enables the `pre-commit`_ hooks, performing a series of quality control checks on every commit. If any of these checks fails the commit will be rejected.
