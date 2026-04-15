@@ -11,18 +11,16 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 from earthkit.data.core import Encodable
 
-
 if TYPE_CHECKING:
-    import xarray  # type: ignore[import]
-    from earthkit.data.core.fieldlist import FieldList  # type: ignore[import]
-    import pandas  # type: ignore[import]
     import numpy  # type: ignore[import]
+    import pandas  # type: ignore[import]
+    import xarray  # type: ignore[import]
+
+    from earthkit.data.core.fieldlist import FieldList  # type: ignore[import]
 
 ArrayLike: TypeAlias = Any
 
@@ -59,7 +57,8 @@ class Data(Encodable):
         Returns
         -------
         bool
-            True if this data object represents a stream, False otherwise."""
+            True if this data object represents a stream, False otherwise.
+        """
         pass
 
     @abstractmethod
@@ -133,7 +132,8 @@ class Data(Encodable):
 
 class SimpleData(Data):
     """A simple implementation of the Data interface that provides default implementations
-    for some methods."""
+    for some methods.
+    """
 
     def is_stream(self) -> bool:
         """Return False as this data object is not a stream."""

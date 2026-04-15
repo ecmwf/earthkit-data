@@ -9,8 +9,7 @@
 
 import logging
 import os
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from functools import lru_cache
 from importlib import import_module
 
@@ -21,8 +20,8 @@ class Target(metaclass=ABCMeta):
     """
     Represent a target.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     encoder: str, Encoder, None
         The encoder to use to encode the data. Can be overridden in the the :obj:`write` method.
         When a string is passed, the encoder is looked up in the available encoders. When None,
@@ -57,8 +56,8 @@ class Target(metaclass=ABCMeta):
         """
         Write data to the target using the given encoder.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         data: obj, None
             The data object to write. If None, the encoder will use all the other arguments
             to generate the data to write.
@@ -76,8 +75,8 @@ class Target(metaclass=ABCMeta):
         **kwargs: dict
             Other keyword arguments passed to the encoder.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         pass
@@ -90,8 +89,8 @@ class Target(metaclass=ABCMeta):
         It must also call :obj:`_mark_closed`. The target will not be able
         to write anymore.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         pass
@@ -102,8 +101,8 @@ class Target(metaclass=ABCMeta):
 
         Some targets may require to flush the data to the underlying storage.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         pass
@@ -153,8 +152,8 @@ class SimpleTarget(Target):
     def _write(self, data, **kwargs):
         """Write generic data to the target.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         data:
             Data to write to the target.
         """
@@ -257,12 +256,11 @@ def to_target(target, *args, **kwargs):
 
     This is a top level function that writes data to a target.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     target: str
         The target to write to. Must be a string.
     """
-
     with create_target(target, *args, **kwargs) as t:
         for k in [*target_kwargs(type(t)), *target_kwargs(Target)]:
             kwargs.pop(k, None)

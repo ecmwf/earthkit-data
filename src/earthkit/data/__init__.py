@@ -24,18 +24,13 @@ from .arguments.transformers import ALL
 from .core.caching import CACHE as cache
 from .core.config import CONFIG as config
 from .core.field import Field
-from .core.fieldlist import FieldList
-from .core.fieldlist import create_fieldlist
+from .core.fieldlist import FieldList, create_fieldlist
 from .encoders import create_encoder
 from .indexing.simple import SimpleFieldList
-from .sources import Source
-from .sources import from_source
-from .sources import from_source_lazily
-from .targets import create_target
-from .targets import to_target
+from .sources import Source, from_source, from_source_lazily
+from .targets import create_target, to_target
 from .utils.concat import concat
-from .utils.examples import download_example_file
-from .utils.examples import remote_example_file
+from .utils.examples import download_example_file, remote_example_file
 
 settings = config
 
