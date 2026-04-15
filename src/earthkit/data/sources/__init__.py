@@ -12,7 +12,6 @@ import re
 import weakref
 from importlib import import_module
 
-from earthkit.data.core import Encodable as Encodable
 from earthkit.data.core import Loader
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.plugins import find_plugin
