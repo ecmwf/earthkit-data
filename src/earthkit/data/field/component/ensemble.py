@@ -144,13 +144,12 @@ class Ensemble(EnsembleBase):
     ----------
     member : str, int, optional
         The ensemble member, by default None. Internally stored as a string,
-        so if an integer is provided, it will be converted to a string.
-        None is treated as "0".
+        valid non-string values will be converted to a string.
     """
 
     def __init__(self, member=None) -> None:
         if member is None:
-            self._member = "0"
+            self._member = None
         elif isinstance(member, int):
             self._member = str(member)
         else:

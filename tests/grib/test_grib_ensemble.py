@@ -26,3 +26,14 @@ def test_grib_ensemble_1(fl_type):
     assert f.ensemble.member() == "1"
     assert f.ensemble.realization() == "1"
     assert f.ensemble.realisation() == "1"
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+# @pytest.mark.parametrize("fl_type", ["file"])
+def test_grib_ensemble_2(fl_type):
+    ds, _ = load_grib_data("test.grib", fl_type)
+    f = ds[0]
+
+    assert f.ensemble.member() is None
+    assert f.ensemble.realization() is None
+    assert f.ensemble.realisation() is None

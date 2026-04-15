@@ -204,24 +204,26 @@ class Encoder(metaclass=ABCMeta):
     def _encode_featurelist(self, featurelist, *, target=None, **kwargs) -> EncodedData:
         """Subclass implementation of the encoding logic for a FeatureList.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         featurelist: :obj:`FeatureList`
             The FeatureList to encode
 
-        Double dispatch method that called from ``featurelist`` to encode itself."""
+        Double dispatch method that called from ``featurelist`` to encode itself.
+        """
         pass
 
     @abstractmethod
     def _encode_path(self, path_info, *, target=None, **kwargs) -> EncodedData:
         """Subclass implementation of the encoding logic for a path.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         path_info: :obj:`PathInfo`
             The PathInfo to encode
 
-        Double dispatch method that called from ``featurelist`` to encode itself."""
+        Double dispatch method that called from ``featurelist`` to encode itself.
+        """
         pass
 
 

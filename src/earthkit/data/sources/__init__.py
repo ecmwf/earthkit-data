@@ -13,7 +13,7 @@ import weakref
 from abc import abstractmethod
 from importlib import import_module
 
-from earthkit.data.core import Encodable
+from earthkit.data.core import Encodable as Encodable
 from earthkit.data.core import Loader
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.plugins import find_plugin
@@ -66,8 +66,6 @@ class Source(Loader):
 
     def to_data_object(self):
         """Convert this source into a data object, if possible."""
-        from earthkit.data.data.source import DefaultSourceData
-
         return DefaultSourceData(self)
 
 
