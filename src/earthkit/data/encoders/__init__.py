@@ -137,7 +137,9 @@ class Encoder(metaclass=ABCMeta):
         missing_value: number
             The value to use for missing values.
         target: Target, None
-            The target to write to. Can be used by the encoder to determine how to encode the data. When None, the encoder will determine the target from the data to write (if possible) or from the :class:`Encoder` properties.
+            The target to write to. Can be used by the encoder to determine how to encode the data.
+            When None, the encoder will determine the target from the data to write (if possible)
+            or from the :class:`Encoder` properties.
         **kwargs: dict
             Additional keyword arguments.
 
@@ -204,24 +206,26 @@ class Encoder(metaclass=ABCMeta):
     def _encode_featurelist(self, featurelist, *, target=None, **kwargs) -> EncodedData:
         """Subclass implementation of the encoding logic for a FeatureList.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         featurelist: :obj:`FeatureList`
             The FeatureList to encode
 
-        Double dispatch method that called from ``featurelist`` to encode itself."""
+        Double dispatch method that called from ``featurelist`` to encode itself.
+        """
         pass
 
     @abstractmethod
     def _encode_path(self, path_info, *, target=None, **kwargs) -> EncodedData:
         """Subclass implementation of the encoding logic for a path.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         path_info: :obj:`PathInfo`
             The PathInfo to encode
 
-        Double dispatch method that called from ``featurelist`` to encode itself."""
+        Double dispatch method that called from ``featurelist`` to encode itself.
+        """
         pass
 
 

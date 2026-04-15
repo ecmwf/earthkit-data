@@ -13,10 +13,10 @@ import weakref
 from abc import abstractmethod
 from importlib import import_module
 
-from earthkit.data.core import Encodable
-from earthkit.data.core import Loader
+from earthkit.data.core import Encodable, Loader
 from earthkit.data.core.config import CONFIG
-from earthkit.data.decorators import detect_out_filename, locked
+from earthkit.data.decorators import detect_out_filename as detect_out_filename
+from earthkit.data.decorators import locked
 
 LOG = logging.getLogger(__name__)
 

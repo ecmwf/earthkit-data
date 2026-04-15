@@ -6,8 +6,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 
 class Base(metaclass=ABCMeta):
@@ -29,7 +28,7 @@ class Encodable(Base):
 
     @abstractmethod
     def _encode(self, encoder, *, hints=None, **kwargs):
-        """Double dispatch to the encoder"""
+        """Double dispatch to the encoder."""
         pass
 
 
