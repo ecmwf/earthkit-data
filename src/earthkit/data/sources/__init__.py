@@ -22,6 +22,8 @@ from earthkit.data.data.source import DefaultSourceData
 
 
 class Source(Loader):
+    """Base class for all sources."""
+
     name = None
     source_filename = None
 
@@ -29,7 +31,7 @@ class Source(Loader):
         self._kwargs = kwargs
         self._parent = None
 
-    def cache_file(self, create, args, **kwargs):
+    def _cache_file(self, create, args, **kwargs):
         owner = self.name
         if owner is None:
             owner = re.sub(r"(?!^)([A-Z]+)", r"-\1", self.__class__.__name__).lower()
@@ -38,6 +40,7 @@ class Source(Loader):
 
     @property
     def parent(self):
+        """The parent source, if any."""
         if self._parent is None:
             return None
         return self._parent()
@@ -62,6 +65,7 @@ class Source(Loader):
     #     return None
 
     def to_data_object(self):
+        """Convert this source into a data object, if possible."""
         from earthkit.data.data.source import DefaultSourceData
 
         return DefaultSourceData(self)

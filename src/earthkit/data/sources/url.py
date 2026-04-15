@@ -325,7 +325,7 @@ class Url(UrlBase):
             self.downloader.download(target)
             return self.downloader.cache_data()
 
-        self.path = self.cache_file(
+        self.path = self._cache_file(
             download,
             dict(url=self.url, parts=self.url_parts),
             extension=extension,

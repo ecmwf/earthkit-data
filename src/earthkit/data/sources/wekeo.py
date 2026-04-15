@@ -124,7 +124,7 @@ class WekeoRetriever(FileSource):
         def retrieve(target, args):
             self.client(self.prompt).retrieve(args[0], args[1], target)
 
-        return self.cache_file(
+        return self._cache_file(
             retrieve,
             (dataset, request),
             extension=EXTENSIONS.get(request.get("format"), ".cache"),

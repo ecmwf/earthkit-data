@@ -98,7 +98,7 @@ class FDBFileSource(FileSource):
             with open(target, "wb") as o, self.fdb.retrieve(request) as i:
                 shutil.copyfileobj(i, o)
 
-        return self.cache_file(
+        return self._cache_file(
             retrieve,
             request,
         )

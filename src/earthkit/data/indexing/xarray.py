@@ -408,7 +408,7 @@ class XarrayMixIn:
         ... )
 
         """
-        engines = {"earthkit": self.to_xarray_earthkit, "cfgrib": self.to_xarray_cfgrib}
+        engines = {"earthkit": self._to_xarray_earthkit, "cfgrib": self._to_xarray_cfgrib}
         if engine not in engines:
             raise ValueError(f"Unsupported engine: {engine}. Please use one of {list(engines.keys())}")
 
@@ -431,7 +431,7 @@ class XarrayMixIn:
 
         return engines[engine](user_xarray_open_dataset_kwargs)
 
-    def to_xarray_earthkit(self, user_kwargs):
+    def _to_xarray_earthkit(self, user_kwargs):
         xarray_open_dataset_kwargs = {}
 
         for key in ["backend_kwargs"]:
@@ -472,7 +472,7 @@ class XarrayMixIn:
 
         return from_earthkit(self, backend_kwargs=backend_kwargs, other_kwargs=other_kwargs)
 
-    def to_xarray_cfgrib(self, user_kwargs):
+    def _to_xarray_cfgrib(self, user_kwargs):
         from earthkit.data.readers.grib.xarray import to_xarray_cfgrib
 
         return to_xarray_cfgrib(self, user_kwargs)

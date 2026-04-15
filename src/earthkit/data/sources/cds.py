@@ -108,7 +108,7 @@ class CdsRetriever(FileSource):
             self.source_filename = cds_result.location.split("/")[-1]
             cds_result.download(target=target)
 
-        return_object = self.cache_file(
+        return_object = self._cache_file(
             retrieve,
             (dataset, request),
             extension=EXTENSIONS.get(request.get("format"), ".cache"),
