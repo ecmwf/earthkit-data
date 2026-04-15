@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     import xarray  # type: ignore[import]
 
     from earthkit.data.core.fieldlist import FieldList  # type: ignore[import]
+    from earthkit.data.featurelist.featurelist import FeatureList  # type: ignore[import]
 
 ArrayLike: TypeAlias = Any
 
