@@ -10,7 +10,6 @@
 import os
 import re
 import weakref
-from abc import abstractmethod
 from importlib import import_module
 
 from earthkit.data.core import Encodable as Encodable

@@ -106,7 +106,7 @@ class Data(Encodable):
 
     @abstractmethod
     def to_pandas(self, *args, **kwargs) -> "pandas.DataFrame":
-        """Convert into a pandas dataframe"""
+        """Convert into a pandas dataframe."""
         pass
 
     @abstractmethod

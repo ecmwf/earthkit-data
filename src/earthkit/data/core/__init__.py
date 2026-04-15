@@ -28,7 +28,7 @@ class Encodable(Base):
 
     @abstractmethod
     def _encode(self, encoder, *, hints=None, **kwargs):
-        """Double dispatch to the encoder"""
+        """Double dispatch to the encoder."""
         pass
 
 

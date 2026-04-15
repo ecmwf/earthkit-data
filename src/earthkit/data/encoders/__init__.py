@@ -137,7 +137,9 @@ class Encoder(metaclass=ABCMeta):
         missing_value: number
             The value to use for missing values.
         target: Target, None
-            The target to write to. Can be used by the encoder to determine how to encode the data. When None, the encoder will determine the target from the data to write (if possible) or from the :class:`Encoder` properties.
+            The target to write to. Can be used by the encoder to determine how to encode the data.
+            When None, the encoder will determine the target from the data to write (if possible)
+            or from the :class:`Encoder` properties.
         **kwargs: dict
             Additional keyword arguments.
 
