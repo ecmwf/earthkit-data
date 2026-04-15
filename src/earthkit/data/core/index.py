@@ -350,7 +350,7 @@ class Index(Source, Encodable):
         return self.new_mask_index(self, indices)
 
     def order_by(self, *args, remapping=None, patch=None, **kwargs):
-        """Change the order of the elements in a fieldlist object.
+        """Change the order of the elements in a fieldlist.
 
         Parameters
         ----------

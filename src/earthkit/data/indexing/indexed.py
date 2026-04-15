@@ -21,8 +21,343 @@ from .pandas import PandasMixIn
 from .xarray import XarrayMixIn
 
 
+class IndexForFieldList(Index):
+    """Provide fieldlist specific documentation for the Index interface.
+
+    This is the same class as :py:class:`~earthkit.data.core.index.Index`, but with
+    the docstrings of some of the methods overridden to provide fieldlist
+    specific documentation.
+
+    """
+
+    def unique(
+        self,
+        *args,
+        sort=False,
+        drop_none=True,
+        squeeze=False,
+        unwrap_single=False,
+        remapping=None,
+        patch=None,
+        cache=True,
+        progress_bar=False,
+    ) -> dict | tuple:
+        """Return the unique values for a given set of metadata keys.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments specifying the metadata keys to collect unique values for.
+        sort: bool, optional
+            Whether to sort the collected unique values. Default is False.
+        drop_none: bool, optional
+            Whether to drop None values from the collected unique values. Default is True.
+        squeeze: bool, optional
+            When True only returns the metadata keys that have more than one values. Default is False.
+        unwrap_single: bool, optional
+            When True and only one metadata key is specified, the unique values are returned as a tuple instead
+            of a dict. Default is False.
+        remapping: dict, optional
+            A dictionary for remapping keys or values during collection. Default is None.
+        patch: dict, optional
+            A dictionary for patching key values during collection. Default is None.
+        cache: bool, optional
+            Whether to use an a cache attached to the fieldlist for previously collected unique values.
+            Default is True.
+        progress_bar: bool, optional
+            Whether to display a progress bar during collection. Default is False.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the unique values for the specified metadata keys.
+
+        """
+        return super().unique(
+            *args,
+            sort=sort,
+            drop_none=drop_none,
+            squeeze=squeeze,
+            unwrap_single=unwrap_single,
+            remapping=remapping,
+            patch=patch,
+            cache=cache,
+            progress_bar=progress_bar,
+        )
+
+    def sel(self, *args, remapping=None, **kwargs) -> "FieldList":
+        """Select the fields matching the given metadata conditions.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments specifying the filter conditions as a dict.
+            Both single or multiple keys are allowed to use. When multiple filter conditions
+            are specified, they are combined with a logical AND operator. Each metadata key in
+            the filter conditions can specify the following type of filter values:
+
+            - single value::
+
+                fl.sel({parameter.variable: "t"})
+
+            - list of values::
+
+                fl.sel({parameter.variable: ["u", "v"]})
+
+            - slice of values (defines a closed interval, so treated as inclusive of both the start
+            and stop values, unlike normal Python indexing). The following example filters the fields
+            with "vertical.level" between 300 and 500 inclusively::
+
+                fl.sel({vertical.level: slice(300, 500)})
+
+            Date and time related keys from the "time" field component are automatically normalised
+            for comparison. This is also applied to the following keys from the raw
+            metadata: "metadata.base_datetime", "metadata.valid_datetime" and "metadata.step_timedelta".
+
+            For example, when filtering by "time.valid_datetime" the following calls are equivalent:
+
+            >>> fl.sel({ "time.valid_datetime": "2018-08-01T12:00:00"})
+            >>> fl.sel({ "time.valid_datetime": "2018080112"})
+            >>> fl.sel({ "time.valid_datetime": 2018080112})
+            >>> fl.sel({ "time.valid_datetime": datetime(2018, 8, 1, 12, 0) })
+
+            Similarly, when filtering by "time.step" the following calls are equivalent (values are assumed
+            to be in hours when the unit is not specified):
+
+            >>> fl.sel({ "time.step": "6h"})
+            >>> fl.sel({ "time.step": 6})
+            >>> fl.sel({ "time.step": "360m"})
+            >>> fl.sel({ "time.step": timedelta(hours=6)})
+
+        remapping: dict
+            Define new metadata keys from existing ones to use in ``*args`` and ``**kwargs``.
+            E.g. to define a new key "param_level" as the concatenated value of
+            the "parameter.variable" and "vertical.level" keys use::
+
+            >>> remapping={"param_level": "{parameter.variable}{vertical.level}"}
+
+            See below for a more elaborate example.
+
+        **kwargs: dict, optional
+            Other keyword arguments specifying the filter conditions.
+
+        Returns
+        -------
+        MaskFieldlist, FieldList
+            Returns a MaskFieldList with the reordered fields. It provides a view to the data in the
+            original object, so no data is copied. When called without any arguments it returns the
+            original fieldlist.
+
+
+        Examples
+        --------
+        How-to examples:
+
+        - :ref:`/how-tos/grib/grib_selection.ipynb`
+
+        More examples:
+
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "tuv_pl.grib").to_fieldlist()
+        >>> len(fl)
+        18
+
+        Selecting by a single key ("parameter.variable") with a single value:
+
+        >>> fl1 = fl.sel({parameter.variable: "t"})
+        >>> for f in fl1:
+        ...     print(f)
+        ...
+        Field(t,1000,20180801,1200,0,0)
+        Field(t,850,20180801,1200,0,0)
+        Field(t,700,20180801,1200,0,0)
+        Field(t,500,20180801,1200,0,0)
+        Field(t,400,20180801,1200,0,0)
+        Field(t,300,20180801,1200,0,0)
+
+        Selecting by multiple keys ("parameter.variable", "vertical.level") with a list and slice of values:
+
+        >>> fl1 = fl.sel(
+        ...     {parameter.variable: ["u", "v"], vertical.level: slice(400, 700)}
+        ... )
+        >>> for f in fl1:
+        ...     print(f)
+        ...
+        Field(u,700,20180801,1200,0,0)
+        Field(v,700,20180801,1200,0,0)
+        Field(u,500,20180801,1200,0,0)
+        Field(v,500,20180801,1200,0,0)
+        Field(u,400,20180801,1200,0,0)
+        Field(v,400,20180801, 1200,0,0)
+
+        Using ``remapping`` to specify the selection by a key created from two other keys
+        (we created key "param_level" from "parameter.variable" and "vertical.level"):
+
+        >>> fl1 = fl.sel(
+        ...     param_level=["t850", "u1000"],
+        ...     remapping={"param_level": "{parameter.variable}{vertical.level}"},
+        ... )
+        >>> for f in fl1:
+        ...     print(f)
+        ...
+        Field(u,1000,20180801,1200,0,0)
+        Field(t,850,20180801,1200,0,0)
+        """
+        return super().sel(*args, remapping=remapping, **kwargs)
+
+    def order_by(self, *args, remapping=None, patch=None, **kwargs):
+        """Change the order of the fields in a fieldlist.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments specifying the metadata keys to perform the ordering on. Each argument can be
+            a single key (str) or multiple keys as a list/tuple of str or a dictionary.
+            Any metadata keys that :meth:`earthkit.data.core.field.Field.get` accepts can be
+            used here. The order of the keys defines the priority of the ordering. When a dictionary is used it
+            must specify the ordering direction or the order of the values for each key. The ordering direction
+            can be either "ascending" or "descending" (the default is "ascending"). The order of values for
+            a key is defined by a list of values for that key, which must include all the available values
+            for that key in the fieldlist. See the examples below for more details.
+        remapping: dict
+            Define new metadata keys from existing ones to use in ``*args`` and
+            ``**kwargs``. E.g. to define a new
+            key "param_level" as the concatenated value of the "parameter.variable"
+            and "vertical.level" keys use::
+
+                remapping={"param_level": "{parameter.variable}{vertical.level}"}
+
+            See below for a more elaborate example.
+
+        **kwargs: dict, optional
+            Other keyword arguments specifying the metadata keys to perform the ordering on. Used in
+            the same way as a dictionary in ``*args``.
+
+
+        Returns
+        -------
+        MaskFieldList, FieldList
+            Returns a MaskFieldList with the reordered fields. It provides a view to the data in the
+            original object, so no data is copied. When called without any arguments it returns the
+            original fieldlist.
+
+        Examples
+        --------
+        How-to examples:
+
+        - :ref:`/how-tos/grib/grib_order_by.ipynb`
+
+
+        Ordering by a single metadata key ("parameter.variable"). The default ordering direction
+        is ``ascending``:
+
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "test6.grib").to_fieldlist()
+        >>> for f in fl.order_by("parameter.variable"):
+        ...     print(f)
+        ...
+        Field(t,850,20180801,1200,0,0)
+        Field(t,1000,20180801,1200,0,0)
+        Field(u,850,20180801,1200,0,0)
+        Field(u,1000,20180801,1200,0,0)
+        Field(v,850,20180801,1200,0,0)
+        Field(v,1000,20180801,1200,0,0)
+
+        Ordering by multiple keys (first by "vertical.level" then by "parameter.variable"). The default ordering
+        direction is ``ascending`` for both keys:
+
+        >>> for f in fl.order_by(["vertical.level", "parameter.variable"]):
+        ...     print(f)
+        ...
+        Field(t,850,20180801,1200,0,0)
+        Field(u,850,20180801,1200,0,0)
+        Field(v,850,20180801,1200,0,0)
+        Field(t,1000,20180801,1200,0,0)
+        Field(u,1000,20180801,1200,0,0)
+        Field(v,1000,20180801,1200,0,0)
+
+        Specifying the ordering direction:
+
+        >>> for f in fl.order_by(
+        ...     {"parameter.variable": "ascending", "vertical.level": "descending"}
+        ... ):
+        ...     print(f)
+        Field(t,1000,20180801,1200,0,0)
+        Field(t,850,20180801,1200,0,0)
+        Field(u,1000,20180801,1200,0,0)
+        Field(u,850,20180801,1200,0,0)
+        Field(v,1000,20180801,1200,0,0)
+        Field(v,850,20180801,1200,0,0)
+
+        Using the list of all the values of a key ("parameter.variable") to define the order:
+
+        >>> for f in fl.order_by({"parameter.variable": ["u", "t", "v"]}):
+        ...     print(f)
+        Field(u,1000,20180801,1200,0,0)
+        Field(u,850,20180801,1200,0,0)
+        Field(t,1000,20180801,1200,0,0)
+        Field(t,850,20180801,1200,0,0)
+        Field(v,1000,20180801,1200,0,0)
+        Field(v,850,20180801,1200,0,0)
+
+        Using ``remapping`` to specify the order by a key created from two other keys
+        (we created key "param_level" from "parameter.variable" and "vertical.level"):
+
+        >>> ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
+        >>> remapping = {"param_level": "{parameter.variable}{vertical.level}"}
+        >>> for f in fl.order_by({"param_level": ordering}, remapping=remapping):
+        ...     print(f)
+        Field(t,850,20180801,1200,0,0)
+        Field(t,1000,20180801,1200,0,0)
+        Field(u,1000,20180801,1200,0,0)
+        Field(v,850,20180801,1200,0,0)
+        Field(v,1000,20180801,1200,0,0)
+        Field(u,850,20180801,1200,0,0)
+        """
+        return super().order_by(*args, remapping=remapping, patch=patch, **kwargs)
+
+    def batched(self, n):
+        """Iterate through the fieldlist in batches of ``n`` fields.
+
+        Parameters
+        ----------
+        n: int
+            Batch size.
+
+        Returns
+        -------
+        object
+            Returns an iterator yielding batches of ``n`` fields. Each batch is a new fieldlist
+            containing a view to the data in the original object, so no data is copied. The last
+            batch may contain fewer than ``n`` fields.
+        """
+        return super().batched(n)
+
+    def group_by(self, *keys, sort=True):
+        """Iterate through the fieldlist in groups defined by metadata keys.
+
+        Parameters
+        ----------
+        *keys: tuple
+            Positional arguments specifying the metadata keys to group by.
+            Keys can be a single or multiple str, or a list or tuple of str.
+
+        sort: bool, optional
+            If ``True`` (default), the fieldlist is sorted by the metadata ``keys`` before grouping.
+
+        Returns
+        -------
+        object
+            Returns an iterator yielding batches of fields grouped by the metadata ``keys``. Each
+            batch is a new fieldlist containing a view to the data in the original object, so no data
+            is copied. It generates a new group every time the value of the ``keys`` change.
+
+        """
+        return super().group_by(*keys, sort=sort)
+
+
 @wrap_maths
-class IndexFieldListBase(XarrayMixIn, PandasMixIn, Index, FieldList):
+class IndexFieldListBase(XarrayMixIn, PandasMixIn, IndexForFieldList, FieldList):
     @property
     def values(self):
         return self._as_array("values")
@@ -220,19 +555,6 @@ class IndexFieldListBase(XarrayMixIn, PandasMixIn, Index, FieldList):
                 )
                 yield r
 
-            # if component is not None:
-            #     for i in pos_range:
-            #         f = self[i]
-            #         v = {}
-            #         for ns_val in f._dump_component(component, prefix_keys=True, filter=filter).values():
-            #             v.update(ns_val)
-            #         if keys:
-            #             v.update(f._get_fast(keys, default=default, astype=astype, output=dict))
-            #         yield (v)
-            # else:
-            #     for i in pos_range:
-            #         yield (self[i]._get_fast(keys, default=default, astype=astype, output=dict))
-
         if keys == "default":
             keys = self._default_ls_keys()
 
@@ -267,9 +589,9 @@ class IndexFieldListBase(XarrayMixIn, PandasMixIn, Index, FieldList):
 
         return format_describe(_proc(), *args, **kwargs)
 
-    def to_fieldlist(self, array_namespace=None, device=None, **kwargs):
+    def to_fieldlist(self, array_namespace=None, device=None, flatten=False, dtype=None):
         return self.from_fields([
-            f.to_array_field(array_namespace=array_namespace, device=device, **kwargs) for f in self
+            f.to_array_field(array_namespace=array_namespace, device=device, flatten=flatten, dtype=dtype) for f in self
         ])
 
     def to_tensor(self, *args, **kwargs):

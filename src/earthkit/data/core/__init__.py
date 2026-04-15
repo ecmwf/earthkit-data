@@ -37,7 +37,7 @@ class Loader(Base):
     """Base class for all objects that can be loaded using a loader."""
 
     @abstractmethod
-    def cache_file(self, *args, **kwargs):
+    def _cache_file(self, *args, **kwargs):
         pass
 
     def mutate(self):

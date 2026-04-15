@@ -80,7 +80,7 @@ class ECMWFApi(FileSource):
         def retrieve(target, request):
             self.service().execute(request, target)
 
-        return self.cache_file(
+        return self._cache_file(
             retrieve,
             request,
         )

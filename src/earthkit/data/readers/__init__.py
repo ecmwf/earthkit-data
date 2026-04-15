@@ -63,8 +63,8 @@ class Reader(Loader, Encodable, os.PathLike):
     def binary(self):
         return self._binary
 
-    def cache_file(self, *args, **kwargs):
-        return self.source.cache_file(*args, **kwargs)
+    def _cache_file(self, *args, **kwargs):
+        return self.source._cache_file(*args, **kwargs)
 
     def to_target(self, target, *args, **kwargs):
         from earthkit.data.targets import to_target

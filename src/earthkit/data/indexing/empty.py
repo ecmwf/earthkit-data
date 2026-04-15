@@ -12,8 +12,9 @@ from earthkit.data.indexing.simple import SimpleFieldListBase
 
 
 class EmptyFieldList(SimpleFieldListBase):
+    """A FieldList implementation that contains no fields."""
+
     def __init__(self):
-        r"""Initialize a FieldList object."""
         self.__fields = []
 
     @property

@@ -61,7 +61,7 @@ _DEFAULT_DESCRIBE_SELECTION = _PARAMETER
 
 
 class _ComponentMaker:
-    """A factory class to delay import of component classes."""
+    """A factory class to delay the import of component classes."""
 
     def from_dict(self, name, *args, **kwargs):
         return self.default_cls(name).from_dict(*args, **kwargs)
@@ -111,7 +111,7 @@ _COMPONENT_MAKER = _ComponentMaker()
 class Field(Base):
     """A class to represent a field in Earthkit.
 
-    A Field is a horizontal slice of the atmosphere/hydrosphere a given time.
+    A Field is a horizontal slice of the atmosphere/hydrosphere at a given time.
 
     A Field object is composed of several components:
 
@@ -132,12 +132,72 @@ class Field(Base):
       :py:class:`~earthkit.data.field.handler.labels.SimpleLabels`)
 
     Field is not polymorphic, but its components are. The components are meant to be format
-    independent, but they can have format specific implementations. For example, the geography
-    component of a GRIB field can have a different implementation than the geography component of a
-    NetCDF field.
+    independent, but they can have format specific implementations with the same interface.
+    For example, the geography component of a GRIB field can have a different implementation
+    than the geography component of a NetCDF field.
 
+    Creating Fields
+    ----------------
     To create a new Field object use the factory methods: :meth:`from_dict`, :meth:`from_field`
     or :meth:`from_components`.
+
+    Values
+    ----------------
+
+    Metadata
+    ---------------
+    The metadata of a field can be divided into three categories:
+
+    - Core component metadata: the metadata that is stored in the components of the field.
+      Each component can be accessed by the corresponding property of the field, such as :obj:`time` for
+      the time component. The metadata of a component can be accessed by the methods of the component, e.g.
+
+      >>> field.time.valid_datetime()
+
+      The same metadata can also be accessed by the :meth:`get` method of the field with
+      the appropriate key, e.g.
+
+      >>> field.get("time.valid_datetime")  # equivalent to field.time.valid_datetime()
+
+    - Labels: the "labels" component of the field is a dictionary-like object that can store any
+      user defined key-value pairs. It can be accessed by the :obj:`labels` property of
+      the field, e.g.
+
+      >>> field.labels # returns the labels component of the field
+      >>> field.labels["my_key"] # returns the value of label "my_key"
+      >>> field.labels.get("my_key")  # equivalent to field.labels["my_key"]
+      >>> field.get("labels.my_key")  # equivalent to field.labels["my_key"]
+
+    - Raw metadata: the field can also store raw metadata that is not part of any component
+      or labels. For example if the field is created from a GRIB message the raw metadata
+      can include all the ecCodes GRIB keys. To access the raw metadata use the :meth:`get`
+      method by prefixing the raw metadata key with "metadata.", e.g.
+
+      >>> field.get("metadata.shortName")
+
+      The same can also be accessed by the :obj:`metadata` method of the field, which is
+      can only access the raw metadata of the field, e.g.
+
+      >>> field.metadata("shortName")
+      >>> field.metadata("metadata.shortName")
+
+      Please not that while :meth:`get` has a ``default`` argument to specify a default value when
+      the key is not found, the :meth:`metadata` method does not have this argument and will raise
+      a KeyError if the key is not found in the raw metadata.
+
+      Currently it is not possible to inspect what raw metadata keys are available in a field,
+      but this feature might be added in the future.
+
+
+    Modifying Fields
+    -----------------
+
+
+
+
+    Field arithmetic
+    ----------------
+    The Field class supports arithmetic operations such as addition, subtraction, multiplication
 
 
     """
@@ -258,7 +318,7 @@ class Field(Base):
         Returns
         -------
         Field
-            A new Field object with the components copied from the original field
+            A new Field with the components copied from the original field
             or specified in the keyword arguments.
         """
         _kwargs = {
@@ -291,7 +351,7 @@ class Field(Base):
 
     @classmethod
     def from_dict(cls, d):
-        r"""Create a Field object from a dictionary.
+        r"""Create a Field from a dictionary.
 
         Parameters
         ----------
@@ -302,7 +362,7 @@ class Field(Base):
         Returns
         -------
         Field
-            A new Field object created from the dictionary.
+            A new Field created from the dictionary.
         """
         if not isinstance(d, dict):
             raise TypeError("d must be a dictionary")
@@ -359,7 +419,7 @@ class Field(Base):
         proc=None,
         labels=None,
     ):
-        r"""Create a Field object from components.
+        r"""Create a Field from components.
 
         Parameters
         ----------
@@ -383,7 +443,7 @@ class Field(Base):
         Returns
         -------
         Field
-            A new Field object with the components copied from the original field
+            A new Field with the components copied from the original field
             or specified in the keyword arguments.
         """
         _kwargs = {
@@ -425,32 +485,68 @@ class Field(Base):
 
     @property
     def time(self):
-        """Time: Return the time component of the field."""
+        """Return the time component of the field.
+
+        Returns
+        -------
+        :py:class:`~earthkit.data.field.component.time.TimeBase`
+            The time component of the field.
+        """
         return self._components[_TIME].component
 
     @property
     def vertical(self):
-        """Vertical: Return the vertical component of the field."""
+        """Return the vertical component of the field.
+
+        Returns
+        -------
+        :py:class:`~earthkit.data.field.component.vertical.VerticalBase`
+            The vertical component of the field.
+        """
         return self._components[_VERTICAL].component
 
     @property
     def parameter(self):
-        """Parameter: Return the parameter component of the field."""
+        """Return the parameter component of the field.
+
+        Returns
+        -------
+        :py:class:`~earthkit.data.field.component.parameter.ParameterBase`
+            The parameter component of the field.
+        """
         return self._components[_PARAMETER].component
 
     @property
     def geography(self):
-        """Geography: Return the geography component of the field."""
+        """Return the geography component of the field.
+
+        Returns
+        -------
+        :py:class:`~earthkit.data.field.component.geography.GeographyBase`
+            The geography component of the field.
+        """
         return self._components[_GEOGRAPHY].component
 
     @property
     def proc(self):
-        """Proc: Return the proc component of the field."""
+        """Return the proc component of the field.
+
+        Returns
+        -------
+        :py:class:`~earthkit.data.field.component.proc.ProcBase`
+            The proc component of the field.
+        """
         return self._components[_PROC].component
 
     @property
     def labels(self):
-        """SimpleLabels: Return the labels of the field."""
+        """Return the labels of the field.
+
+        Returns
+        -------
+        :py:class:`~earthkit.data.field.handler.labels.SimpleLabels`
+            The labels of the field.
+        """
         return self._components[_LABELS]
 
     @property
@@ -463,7 +559,30 @@ class Field(Base):
 
     @property
     def values(self):
-        """array-like: Return the values of the field."""
+        """Return the values of the fields as a flat array.
+
+        Returns
+        -------
+        array-like
+            Flat array containing the field values without performing any copying or conversion. The underlying
+            array format of the field is used. For GRIB it is a numpy array.
+
+        See Also
+        --------
+        to_numpy
+        to_array
+
+        Examples
+        --------
+        >>> import earthkit.data as ekd
+        >>> f = ekd.from_source("sample", "test.grib").to_fieldlist()[0]
+        >>> v = f.values
+        >>> v.shape
+        (209,)
+        >>> v[0][:3]
+        array([262.78027344, 267.44726562, 268.61230469])
+
+        """
         return self._components[_DATA].values
 
     @property
@@ -489,7 +608,7 @@ class Field(Base):
         copy: bool
             When it is True a copy of the data is returned. Otherwise a view is returned where possible.
         index: ndarray indexing object, optional
-            The index of the values and to be extracted. When it
+            The index of the values to be extracted. When it
             is None all the values are extracted
 
         Returns
@@ -534,7 +653,7 @@ class Field(Base):
         device: str or None
             The device where the array will be allocated. When it is :obj:`None` the default device is used.
         index: array indexing object, optional
-            The index of the values and to be extracted. When it
+            The index of the values to be extracted. When it
             is None all the values are extracted.
 
         Returns
@@ -587,11 +706,16 @@ class Field(Base):
 
         Examples
         --------
-        - :ref:`/how-tos/grib/grib_lat_lon_value_ll.ipynb`
+        How-to examples for the :meth:`data` method can be found in the following notebooks:
 
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test6.grib").to_fieldlist()
-        >>> d = ds[0].data()
+        - :ref:`/how-tos/grib/grib_lat_lon_value_ll.ipynb`
+        - :ref:`/how-tos/grib/grib_lat_lon_value_rgg.ipynb`
+
+        Other examples:
+
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("file", "docs/how-tos/test6.grib").to_fieldlist()
+        >>> d = fl[0].data()
         >>> d.shape
         (3, 7, 12)
         >>> d[0, 0, 0]  # first latitude
@@ -600,7 +724,7 @@ class Field(Base):
         0.0
         >>> d[2, 0, 0]  # first value
         272.56417847
-        >>> d = ds[0].data(keys="lon")
+        >>> d = fl[0].data(keys="lon")
         >>> d.shape
         (7, 12)
         >>> d[0, 0]  # first longitude
@@ -886,12 +1010,12 @@ class Field(Base):
         Parameters
         ----------
         keys: str, list or tuple
-            Specify the key(s) to extract. Can be a single key (str) or multiple
+            Specify the field metadata keys to extract. Can be a single key (str) or multiple
             keys as a list/tuple of str. Keys are assumed to be of the form
-            "component.key". For example, "time.valid_datetime" or "parameter.name". It is also allowed to specify
-            just the component name like "time" or "parameter". In this case the corresponding component's
-            ``to_dict()`` method is called and its result is returned. For other keys, the method looks for them in
-            the private components (if any) and returns the value from the first private component that contains it.
+            "component.key". For example, "time.valid_datetime" or "parameter.name". Keys from the
+            raw metadata (if any) can be accessed using the "metadata.key" syntax.
+            For example, when a :obj:`Field` was created from a GRIB message, the ecCodes GRIB keys can
+            be accessed as "metadata.shortName" or "metadata.level".
         default: Any, None
             Specify the default value(s) for ``keys``. Returned when the given key
             is not found and ``raise_on_missing`` is False. When ``default`` is a single
@@ -903,6 +1027,15 @@ class Field(Base):
             It is only applied to keys returning a single value.
         raise_on_missing: bool
             When True, raises KeyError if any of ``keys`` is not found.
+        collections: str, list or tuple
+            Specify the metadata collections to extract. Can be a single collection (str) or multiple
+            collections as a list/tuple of str. A collection is a component of the field (e.g. "time",
+            "parameter", "geography", etc.) as a dictionary. It can also be a collection within the
+            raw "metadata" component. For example, when a :obj:`Field` was created from a GRIB
+            message, the ecCodes GRIB "namespaces" can be accessed as collections, e.g. "metadata.mars"
+            means the ecCodes GRIB "mars" namespace. The returned value for a collection is a dictionary with
+            the keys and values in the collection. To flatten the returned dictionary for a collection, use
+            the ``output==dict`` and ``flatten_dict=True`` options.
         output: type, str
             Specify the output type. Can be:
 
@@ -912,6 +1045,7 @@ class Field(Base):
             - list or "list": returns a list of values.
             - tuple or "tuple": returns a tuple of values.
             - dict or "dict": returns a dictionary with keys and their values.
+
             Other types are not supported.
         flatten_dict: bool
             When True and ``output`` is dict, if any of the values in the returned dict
@@ -938,6 +1072,67 @@ class Field(Base):
         KeyError
             If ``raise_on_missing`` is True and any of ``keys`` is not found.
 
+
+        Examples
+        --------
+        >>> import earthkit.data as ekd
+        >>> f = ekd.from_source("sample", "test.grib").to_fieldlist()[0]
+        >>> f.get("parameter.variable")
+        '2t'
+
+        Get multiple keys as a list/tuple of values:
+
+        >>> f.get(["parameter.variable", "parameter.units"])
+        ['2t', 'K']
+        >>> f.get(("parameter.variable", "parameter.units"))
+        ('2t', 'K')
+
+        Get multiple keys as a dictionary:
+
+        >>> f.get(["parameter.variable", "parameter.units"], output="dict")
+        {'parameter.variable': '2t', 'parameter.units': 'K'}
+
+        Get collections:
+
+        >>> f.get(collections="time")
+        {'base_datetime': datetime.datetime(2020, 5, 13, 0, 0),
+        'step': datetime.timedelta(hours=0),
+        'valid_datetime': datetime.datetime(2020, 5, 13, 0, 0)}
+        >>> f.get(collections=["time", "parameter"])
+        [{'base_datetime': datetime.datetime(2020, 5, 13, 0, 0),
+        'step': datetime.timedelta(hours=0 ),
+        'valid_datetime': datetime.datetime(2020, 5, 13, 0, 0)},
+        {'variable': '2t',
+        'units': 'K'}]
+        >>> f.get(collections=["time", "parameter"], dict=True)
+        {'time': {'base_datetime': datetime.datetime(2020, 5, 13, 0, 0),
+        'step': datetime.timedelta(hours=0 ),
+        'valid_datetime': datetime.datetime(2020, 5, 13, 0, 0)},
+        'parameter': {'variable': '2t',
+        'units': 'K'}}
+
+        Use ``output=dict`` and ``flatten_dict=True`` to flatten the returned dictionary for collections:
+
+        >>> f.get(collections=["time"], output="dict", flatten_dict=True)
+        {'time.base_datetime': datetime.datetime(2020, 5, 13, 0, 0),
+        'time.step': datetime.timedelta(hours=0),
+        'time.valid_datetime': datetime.datetime(2020, 5, 13, 0, 0)}
+
+        Get the ecCodes GRIB "mars" namespace as a collection from the raw metadata
+        (result trimmed for brevity):
+        >>> f.get(collections="metadata.mars", output="dict")
+        {"metadata.mars": {'class': 'od', 'date': 20200513, 'expver': '0001'}}
+
+        Mix keys and collections (result trimmed for brevity):
+
+        >>> f.get(keys="metadata.shortName", collections="metadata.mars", output="dict")
+        {'metadata.shortName': '2t', 'metadata.mars': {'class': 'od', 'date': 20200513, 'expver': '0001'}}
+        >>> f.get(keys="metadata.shortName", collections="metadata.mars", output="dict", flatten_dict=True)
+        {'metadata.shortName': '2t',
+        'metadata.mars.class': 'od',
+        'metadata.mars.date': 20200513,
+        'metadata.mars.expver': '0001'}
+
         """
         if not keys and not collections:
             raise ValueError("At least one key or collection must be specified.")
@@ -947,14 +1142,6 @@ class Field(Base):
             default=default,
             astype=astype,
         )
-
-        # if collections:
-        #     if isinstance(collections, str):
-        #         keys = [keys]
-        #     elif isinstance(keys, tuple):
-        #         keys = list(keys)
-        #     for collection in collections:
-        #         keys.append(collection + ".*")
 
         if output == "auto":
             if keys_arg_type is not str:
@@ -991,7 +1178,63 @@ class Field(Base):
         remapping=None,
         patch=None,
     ):
+        r"""Return the raw metadata values.
 
+        Parameters
+        ----------
+        keys: str, list or tuple
+            Specify the raw metadata keys to extract. Can be a single key (str) or multiple
+            keys as a list/tuple of str. Keys can be optionally prefixed with "metadata.". For example,
+            if the raw metadata has the key "shortName", it can also be specified
+            as "metadata.shortName".
+        astype: type as str, int or float
+            Return type for ``keys``.  When ``astype`` is a single type, it is used for
+            all the keys. Otherwise it must be a list/tuple of the same length as ``keys``.
+            It is only applied to keys returning a single value.
+        output: type, str
+            Specify the output type. Can be:
+
+            - "auto" (default):
+                - when ``keys`` is a str returns a single value
+                - when ``keys`` is a list/tuple returns a list/tuple of values
+            - list or "list": returns a list of values.
+            - tuple or "tuple": returns a tuple of values.
+            - dict or "dict": returns a dictionary with keys and their values.
+            Other types are not supported.
+        remapping: dict, optional
+            Create new metadata keys from existing ones. E.g. to define a new
+            key "param_level" as the concatenated value of the "param" and "level" keys use::
+
+                remapping={"param_level": "{param}{level}"}
+
+        patch: dict, optional
+            A dictionary of patch to be applied to the returned values.
+
+        Returns
+        -------
+        single value, list, tuple or dict
+            The values for the specified ``keys``. The structure of the returned value(s) depends on the ``output``
+            and ``flatten_dict`` parameters.
+
+        Raises
+        ------
+        KeyError
+            If any of ``keys`` is not found in the raw metadata.
+
+
+        Examples
+        --------
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "test.grib").to_fieldlist()
+        >>> f = fl[0]
+        >>> f.metadata("shortName")
+        '2t'
+        >>> f.metadata(["shortName", "units"])
+        ['2t', 'K']
+        >>> f.metadata(("shortName", "units"))
+        ('2t', 'K')
+
+        """
         if isinstance(keys, str) and not keys.startswith("metadata."):
             keys = "metadata." + keys
         else:
@@ -1010,7 +1253,7 @@ class Field(Base):
         )
 
     def set(self, *args, **kwargs):
-        """Return a new Field with the specified metadata keys set to the given values.
+        """Return a new field with the specified metadata keys set to the given values.
 
         Parameters
         ----------
@@ -1025,7 +1268,7 @@ class Field(Base):
         Returns
         -------
         Field
-            A new Field object with the specified metadata keys set to the given values.
+            A new field with the specified metadata keys set to the given values.
 
         """
         kwargs = kwargs.copy()
@@ -1085,11 +1328,23 @@ class Field(Base):
         Parameters
         ----------
         target: object
-            The target object to write the field into.
+            The :ref:`target <data-target-objects>` to write the field into.
         *args: tuple
             Positional arguments used to specify the target object.
         **kwargs: dict, optional
             Other keyword arguments used to write the field into the target object.
+
+        See Also
+        --------
+        :ref:`targets`
+        :ref:`data-target-objects`
+
+        Examples
+        --------
+        How-to examples for the :meth:`to_target` method can be found in the following notebooks:
+
+        - :ref:`/how-tos/target/file_target.ipynb`
+        - :ref:`/how-tos/target/grib_to_file_target.ipynb`
         """
         from earthkit.data.targets import to_target
 
@@ -1147,6 +1402,20 @@ class Field(Base):
         return self._dispatch_to_fieldlist_method("to_xarray", *args, **kwargs)
 
     def to_pandas(self, *args, **kwargs):
+        """Convert the Field into a Pandas DataFrame.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments passed to :obj:`FieldList.to_pandas`.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`FieldList.to_pandas`.
+
+        Returns
+        -------
+        Pandas DataFrame
+
+        """
         return self._dispatch_to_fieldlist_method("to_pandas", *args, **kwargs)
 
     def _dump_component(self, component="all", *, filter=None, prefix_keys=False, unwrap_single=True):
@@ -1213,8 +1482,7 @@ class Field(Base):
             have a special meaning:
 
             - :obj:`all`: all the available components will be used.
-            - None or empty str: all the available keys will be used
-                (without a component qualifier)
+
 
         **kwargs: dict, optional
             Other keyword arguments used for testing only
@@ -1222,8 +1490,8 @@ class Field(Base):
         Returns
         -------
         NamespaceDump
-            Dict-like object with one item per namespace. In a Jupyter notebook represented
-            as a tabbed interface to browse the dump contents.
+            Dict-like object with one item s per component. In a Jupyter notebook represented
+            as a tabbed interface to browse the dump con stents.
 
 
         See Also
@@ -1262,33 +1530,103 @@ class Field(Base):
 
     @property
     def default_ls_keys(self):
+        """list: Return the default keys to be used for the :meth:`ls` method."""
         return _LS_KEYS
 
-    def ls(self, *args, **kwargs):
-        r"""Generate a list-like summary using a set of metadata keys.
+    def ls(
+        self,
+        n=None,
+        keys="default",
+        extra_keys=None,
+        collections=None,
+    ):
+        r"""Generate a one row summary of the Field using a set of metadata keys.
 
         Parameters
         ----------
-        *args: tuple
-            Positional arguments passed to :obj:`FieldList.ls`.
-        **kwargs: dict, optional
-            Other keyword arguments passed to :obj:`FieldList.ls`.
+        n: int, None
+            This parameter is ignored since the summary is generated for a single field. It is
+            only used for compatibility with the
+            :py:meth:`earthkit.data.core.fieldlist.FieldList.ls` method.
+        keys: list of str, dict, None
+            The metadata keys to extract. If ``keys="default"``, a built-in default set of keys is used.
+            To specify a column title for each key in the output use a dict as a mapping from the keys to the
+            column titles.
+        extra_keys: list of str, dict, None
+            List of additional keys on top of ``keys``. To specify a column title for each key in the output
+            use a dict as a mapping from the keys to the column titles.
+        collections: str, list of str, None
+            The collections to extract. Can be a single collection (str) or multiple collections as a
+            list of str. A collection is a component of the field (e.g. "time", "parameter",
+            "geography", etc.) as a dictionary. It can also be a collection within the raw
+            "metadata" component. For example, when a :obj:`Field` was created from a GRIB message, the
+            ecCodes GRIB "namespaces" can be accessed as collections, e.g. "metadata.mars" means
+            the ecCodes GRIB "mars" namespace.
 
         Returns
         -------
         Pandas DataFrame
-            DataFrame with one row.
+            DataFrame with one row per :obj:`Field`.
+
+        See Also
+        --------
+        head
+        tail
 
         """
-        return self._dispatch_to_fieldlist_method("ls", *args, **kwargs)
+        return self._dispatch_to_fieldlist_method(
+            "ls", n=None, keys=keys, extra_keys=extra_keys, collections=collections
+        )
 
     def head(self, *args, **kwargs):
-        r"""Generate a head summary of the Field."""
-        return self._dispatch_to_fieldlist_method("head", *args, **kwargs)
+        r"""Generate a one row summary of the Field using a set of metadata keys.
+
+        Same as calling :obj:`ls`.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments passed to :obj:`ls`.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`ls`.
+
+        Returns
+        -------
+        Pandas DataFrame
+            See :obj:`ls`.
+
+        See Also
+        --------
+        ls
+        tail
+
+        """
+        return self.ls("head", *args, **kwargs)
 
     def tail(self, *args, **kwargs):
-        r"""Generate a tail summary of the Field."""
-        return self._dispatch_to_fieldlist_method("tail", *args, **kwargs)
+        r"""Generate a one row summary of the Field using a set of metadata keys.
+
+        Same as calling :obj:`ls`.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments passed to :obj:`ls`.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`ls`.
+
+        Returns
+        -------
+        Pandas DataFrame
+            See :obj:`ls`.
+
+        See Also
+        --------
+        ls
+        tail
+
+        """
+        return self.ls("tail", *args, **kwargs)
 
     def message(self):
         r"""Return a buffer containing the encoded message for Fields generated from a message based format (e.g. GRIB).
@@ -1346,11 +1684,73 @@ class Field(Base):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""
         return kwargs
 
-    def sel(self, *args, **kwargs):
-        pass
+    # def sel(self, *args, **kwargs):
+    #     r"""Check if a field matches the given selection criteria.
 
-    def order_by(self, *args, **kwargs):
-        pass
+    #     Parameters
+    #     ----------
+    #     *args: tuple
+    #         Positional arguments specifying the filter conditions as a dict.
+    #         Both single or multiple keys are allowed to use. When multiple filter conditions
+    #         are specified, they are combined with a logical AND operator. Each metadata key in
+    #         the filter conditions can specify the following type of filter values:
+
+    #         - single value::
+
+    #             f.sel({parameter.variable: "t"})
+
+    #         - list of values::
+
+    #             f.sel({parameter.variable: ["u", "v"]})
+
+    #         - slice of values (defines a closed interval, so treated as inclusive of both the start
+    #         and stop values, unlike normal Python indexing). The following example filters the fields
+    #         with "vertical.level" between 300 and 500 inclusively::
+
+    #             f.sel({vertical.level: slice(300, 500)})
+
+    #         Date and time related keys from the "time" field component are automatically normalised
+    #         for comparison. This is also applied to the following keys from the
+    #         raw metadata: "metadata.base_datetime", "metadata.valid_datetime" and "metadata.step_timedelta".
+
+    #         For example, when filtering by "time.valid_datetime" the following calls are equivalent:
+
+    #         >>> f.sel({ "time.valid_datetime": "2018-08-01T12:00:00"})
+    #         >>> f.sel({ "time.valid_datetime": "2018080112"})
+    #         >>> f.sel({ "time.valid_datetime": 2018080112})
+    #         >>> f.sel({ "time.valid_datetime": datetime(2018, 8, 1, 12, 0) })
+
+    #         Similarly, when filtering by "time.step" the following calls are equivalent (values are assumed
+    #         to be in hours when the unit is not specified):
+
+    #         >>> f.sel({ "time.step": "6h"})
+    #         >>> f.sel({ "time.step": 6})
+    #         >>> f.sel({ "time.step": "360m"})
+    #         >>> f.sel({ "time.step": timedelta(hours=6)})
+
+    #     remapping: dict
+    #         Define new metadata keys from existing ones to use in ``*args`` and ``**kwargs``.
+    #         E.g. to define a new key "param_level" as the concatenated value of
+    #         the "parameter.variable" and "vertical.level" keys use::
+
+    #         >>> remapping={"param_level": "{parameter.variable}{vertical.level}"}
+
+    #     **kwargs: dict, optional
+    #         Other keyword arguments specifying the filter conditions.
+
+    #     Returns
+    #     -------
+    #     Field or None
+    #         Returns the field itself if it matches the selection criteria, otherwise returns None.
+    #     """
+    #     res = self._dispatch_to_fieldlist_method("sel", *args, **kwargs)
+
+    #     if res and len(res) == 1:
+    #         return self
+    #     return None
+
+    # def order_by(self, *args, **kwargs):
+    #     pass
 
     def _unary_op(self, oper):
         v = oper(self.values)

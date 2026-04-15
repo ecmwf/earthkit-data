@@ -73,7 +73,7 @@ class ArchiveReader(Reader):
             fsize = 0
             mtime = 0
 
-        self.path = self.cache_file(
+        self.path = self._cache_file(
             unpack,
             [self.path, fsize, mtime],
             extension=".d",

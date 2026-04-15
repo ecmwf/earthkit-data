@@ -25,7 +25,7 @@ class ECFSRetriever(FileSource):
     ):
         super().__init__(url, **kwargs)
 
-        self.path = self.cache_file(
+        self.path = self._cache_file(
             self._fetch,
             url,
             force=force,
