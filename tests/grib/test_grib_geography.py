@@ -27,7 +27,7 @@ from earthkit.data.utils.testing import (
     NO_GEO,
     check_array,
     check_array_type,
-    earthkit_examples_file,
+    earthkit_remote_test_data_file,
     earthkit_test_data_file,
 )
 
@@ -292,7 +292,7 @@ def test_grib_projection_mercator(fl_type):
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
-    "filename,expected_shape, expected_lat, expected_lon",
+    "filename,expected_shape, expected_lat, expected_lon, expected_area",
     [
         (
             "mercator.grib",
@@ -302,24 +302,28 @@ def test_grib_projection_mercator(fl_type):
             ),
             [16.9775, 16.9775, 16.9775, 16.9775],
             [291.9722, 291.9841626, 291.9961252, 292.0080878],
+            [16.9775, 291.9722, 19.5221, 296.0156],
         ),
         (
             "rgg_small_subarea_cellarea_ref.grib",
             (340,),
             [89.87647835, 89.80635732, 89.73614327, 89.66589394],
             [45.0, 38.57142857, 45.0, 40.0],
+            [89.877, 36.233, 84.815, 46.185],
         ),
         (
             "rotated_N32_subarea.grib",
             (225,),
             [85.489232, 84.81188, 83.171928, 81.086144],
             [140.0, 110.950144, 92.460416, 82.07156],
+            [26.511, 0.0, -12.558, 39.375],
         ),
         (
             "rotated_wind_20x20.grib",
             (9, 18),
             [30.0, 29.351052, 27.504876, 24.734374],
             [140.0, 136.09296, 132.770576, 130.469424],
+            [80.0, 0.0, -80.0, 340.0],
         ),
         (
             "ll_10_20.grib",
@@ -329,23 +333,69 @@ def test_grib_projection_mercator(fl_type):
             ),
             [80.0, 80.0, 80.0, 80.0],
             [0.0, 10.0, 20.0, 30.0],
+            [80.0, 0.0, -80.0, 350.0],
         ),
         (
             "shifted_ll_subarea.grib",
             (11, 19),
             [73.0, 73.0, 73.0, 73.0],
             [-27.0, -23.0, -19.0, -15.0],
+            [73, -27, 33, 45],
         ),
-        ("shifted_ll_3x3_subarea.grib", (19, 29), [79.0, 79.0, 79.0, 79.0], [-25.0, -22.0, -19.0, -16.0]),
+        (
+            "shifted_ll_3x3_subarea.grib",
+            (19, 29),
+            [79.0, 79.0, 79.0, 79.0],
+            [-25.0, -22.0, -19.0, -16.0],
+            [79, -25, 25, 59],
+        ),
     ],
 )
-def test_grib_latlon_various_grids(fl_type, filename, expected_shape, expected_lat, expected_lon):
+def test_grib_latlon_various_grids_1(fl_type, filename, expected_shape, expected_lat, expected_lon, expected_area):
     ds, _ = load_grib_data(filename, fl_type, folder="data")
+
     lat, lon = ds[0].geography.latlons()
     assert lat.shape == expected_shape
     assert lon.shape == expected_shape
     assert np.allclose(lat.flatten()[:4], expected_lat)
     assert np.allclose(lon.flatten()[:4], expected_lon)
+    assert np.allclose(np.asarray(ds[0].geography.area()), np.asarray(expected_area))
+
+
+@pytest.mark.skip(
+    "This test is currently failing because the GRIB field geography is not correctly handled in ecCodes."
+)
+@pytest.mark.parametrize(
+    "filename,expected_shape, expected_lat, expected_lon, expected_area",
+    [
+        (
+            "icon_ch1.grib2",
+            (1147980,),
+            [50.24130630493164, 50.23910903930664, 50.23666763305664, 50.22787857055664],
+            [17.710683465003967, 17.689199090003967, 17.702382683753967, 17.704824090003967],
+            [50.6, -0.9, 41.9, 17.8],
+        ),
+        (
+            "eORCA025_T.grib",
+            (
+                1442,
+                1207,
+            ),
+            [-89.5, -89.5, -89.5, -89.5],
+            [72.75, 73.0, 73.25, 73.5],
+            [90.0, 0.0, -90.0, 360.0],
+        ),
+    ],
+)
+def test_grib_latlon_various_grids_2(filename, expected_shape, expected_lat, expected_lon, expected_area):
+    fl = earthkit.data.from_source("url", earthkit_remote_test_data_file("xr_engine/grid", filename)).to_fieldlist()
+
+    lat, lon = fl[0].geography.latlons()
+    assert lat.shape == expected_shape
+    assert lon.shape == expected_shape
+    assert np.allclose(lat.flatten()[:4], expected_lat)
+    assert np.allclose(lon.flatten()[:4], expected_lon)
+    assert np.allclose(np.asarray(fl[0].geography.area()), np.asarray(expected_area))
 
 
 @pytest.mark.skip(
@@ -382,69 +432,6 @@ def test_grib_eckit_grid_object(fl_type, filename, shape, grid_spec, area, grid_
     lat, lon = ds[0].geography.latlons()
     assert lat.shape == shape
     assert lon.shape == shape
-
-
-@pytest.mark.parametrize(
-    "path,expected_value",
-    [
-        (earthkit_examples_file("test.grib"), [70.0, -20.0, 35.0, 40.0]),
-        (earthkit_test_data_file("shifted_ll_subarea.grib"), [73, -27, 33, 45]),
-        (earthkit_test_data_file("shifted_ll_3x3_subarea.grib"), [79, -25, 25, 59]),
-        (
-            earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"),
-            [89.877, 36.233, 84.815, 46.185],
-        ),
-        (
-            earthkit_test_data_file("rotated_N32_subarea.grib"),
-            [26.511, 0.0, -12.558, 39.375],
-        ),
-        (
-            earthkit_test_data_file("rotated_wind_20x20.grib"),
-            [80.0, 0.0, -80.0, 340.0],
-        ),
-        (
-            earthkit_test_data_file("mercator.grib"),
-            [16.9775, 291.9722, 19.5221, 296.0156],
-        ),
-    ],
-)
-def test_grib_area_various_grids(path, expected_value):
-    ds = earthkit.data.from_source("file", path).to_fieldlist()
-
-    assert np.allclose(np.asarray(ds[0].geography.area()), np.asarray(expected_value))
-
-
-# @pytest.mark.parametrize(
-#     "path,expected_value",
-#     [
-#         (earthkit_examples_file("test.grib"), [4.0, 4.0]),
-#         (
-#             earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"),
-#             "O1280",
-#         ),
-#         (
-#             earthkit_test_data_file("rotated_N32_subarea.grib"),
-#             "N32",
-#         ),
-#         (
-#             earthkit_test_data_file("rotated_wind_20x20.grib"),
-#             [20.0, 20.0],
-#         ),
-#         (
-#             earthkit_test_data_file("mercator.grib"),
-#             [None, None],
-#         ),
-#     ],
-# )
-# def test_grib_mars_grid(path, expected_value):
-#     ds = earthkit.data.from_source("file", path).to_fieldlist()
-
-#     if isinstance(expected_value, str):
-#         assert ds[0].geography.mars_grid() == expected_value
-#     elif expected_value == [None, None]:
-#         assert ds[0].geography.mars_grid() == expected_value
-#     else:
-#         assert np.allclose(np.asarray(ds[0].geography.mars_grid()), np.asarray(expected_value))
 
 
 @pytest.mark.skipif(NO_GEO, reason="No earthkit-geo support")

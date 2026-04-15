@@ -13,6 +13,7 @@ GRIB
     grib_selection.ipynb
     grib_order_by.ipynb
     grib_indexing.ipynb
+    grib_modify_values.ipynb
     grib_missing.ipynb
     grib_array_namespace.ipynb
     grib_nearest_gridpoint.ipynb
