@@ -15,7 +15,7 @@ repos:
   - id: check-merge-conflict     # Check for files that contain merge conflict
     exclude: /README\.rst$|^docs/.*\.rst$
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.15.4
+  rev: v0.15.9
   hooks:
   - id: ruff-check
     args:
