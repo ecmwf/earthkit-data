@@ -16,7 +16,6 @@ from earthkit.data.core import Loader
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.plugins import find_plugin
 from earthkit.data.core.plugins import register as register_plugin
-from earthkit.data.data.source import DefaultSourceData
 
 
 class Source(Loader):
@@ -64,6 +63,8 @@ class Source(Loader):
 
     def to_data_object(self):
         """Convert this source into a data object, if possible."""
+        from earthkit.data.data.source import DefaultSourceData
+
         return DefaultSourceData(self)
 
 

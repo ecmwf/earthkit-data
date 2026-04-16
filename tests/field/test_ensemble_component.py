@@ -21,6 +21,13 @@ def test_ensemble_component_alias_1():
     assert r.realization() == "1"
 
 
+def test_ensemble_component_alias_2():
+    r = Ensemble(member=None)
+    assert r.member() is None
+    assert r.realisation() is None
+    assert r.realization() is None
+
+
 @pytest.mark.parametrize(
     "input_d,ref",
     [
@@ -34,6 +41,14 @@ def test_ensemble_component_alias_1():
                 {"realization": "5"},
             ],
             ("5",),
+        ),
+        (
+            [
+                {"member": None},
+                {"realisation": None},
+                {"realization": None},
+            ],
+            (None,),
         ),
     ],
 )
