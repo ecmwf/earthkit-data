@@ -26,6 +26,7 @@ def test_icon_to_xarray(fl_type):
     g, _ = load_grib_data("test_icon.grib", fl_type, folder="data")
 
     ds = g.to_xarray(engine="cfgrib")
+
     assert len(ds.data_vars) == 1
     # Dataset contains 9 levels and 9 grid points per level
     ref_levs = g.get("vertical.level")

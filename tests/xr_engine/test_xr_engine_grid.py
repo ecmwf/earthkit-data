@@ -41,7 +41,7 @@ def grid_list(files=None):
 @pytest.mark.parametrize("lazy_load", [True])
 @pytest.mark.parametrize(
     "file,dims,coords,distinct_ll",
-    # grid_list(files=["regular_gg_F16.grib1"]),
+    # grid_list(files=["eORCA025_T.grib"]),
     grid_list(),
 )
 def test_xr_engine_grid_core(allow_holes, lazy_load, file, dims, coords, distinct_ll):
@@ -57,7 +57,9 @@ def test_xr_engine_grid_core(allow_holes, lazy_load, file, dims, coords, distinc
         assert a.coords[k].dims == to_tuple(v[0])
         assert a.coords[k].shape == to_tuple(v[1])
 
-    assert a.t.dims[-(len(dims)) :] == tuple(dims.keys())
+    first_da = next(iter(a.data_vars.values()))
+
+    assert first_da.dims[-(len(dims)) :] == tuple(dims.keys())
 
     if "latitude" in a.coords and "longitude" in a.coords:
         if distinct_ll:

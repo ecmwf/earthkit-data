@@ -588,11 +588,12 @@ class Field(Base):
     @property
     def shape(self):
         """tuple: Return the shape of the field."""
-        v = self.geography.shape()
-        if v is not None:
-            return v
-        else:
-            return self.values.shape
+        try:
+            v = self.geography.shape()
+        except Exception:
+            v = None
+
+        return v if v is not None else self.values.shape
 
     def to_numpy(self, flatten=False, dtype=None, copy=True, index=None):
         r"""Return the values stored in the field as an ndarray.
