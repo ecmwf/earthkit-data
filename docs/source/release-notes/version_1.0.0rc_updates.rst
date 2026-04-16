@@ -2,6 +2,21 @@ Version 1.0.0 Release Candidate Updates
 ///////////////////////////////////////
 
 
+Version 1.0.0rc2
+==================
+
+Changes
+-------
+
+- Changed the default value for the Field ``ensemble.member`` metadata from "0" to None. It is used when the Field does not contain any ensemble member information. (:pr:`960`).
+
+Fixes
+-------
+
+- Fixed issue when the geography for GRIB data on ORCA and ICON grids was not correctly handled (:pr:`961`).
+
+
+
 Version 1.0.0rc0
 ==================
 
