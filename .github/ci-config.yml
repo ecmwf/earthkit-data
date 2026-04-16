@@ -1,8 +1,8 @@
 dependencies: |
   ecmwf/ecbuild
   MathisRosenhauer/libaec@refs/tags/v1.1.3
-  ecmwf/eccodes
-  ecmwf/eckit
+  ecmwf/eccodes@v2.44.0
+  ecmwf/eckit@v2.0.6.17
   ecmwf/odc
   ecmwf/metkit
   ecmwf/fdb
