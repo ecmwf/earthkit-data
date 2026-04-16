@@ -205,3 +205,30 @@
     values: 1122
   coords: {}
   distinct_ll: false
+- file: eORCA025_T.grib
+  dims:
+    y: 1442
+    x: 1207
+  coords:
+    latitude:
+    - - y
+      - x
+    - - 1442
+      - 1207
+    longitude:
+    - - y
+      - x
+    - - 1442
+      - 1207
+  distinct_ll: false
+- file: icon_ch1.grib2
+  dims:
+    values: 1147980
+  coords:
+    latitude:
+    - values
+    - 1147980
+    longitude:
+    - values
+    - 1147980
+  distinct_ll: false

@@ -29,10 +29,8 @@ class GribEnsembleBuilder:
             return handle.get(key, default=default)
 
         v = _get("number")
-        print("number", v)
         if v is None:
             v = _get("perturbationNumber")
-            print
 
         return dict(
             member=v,

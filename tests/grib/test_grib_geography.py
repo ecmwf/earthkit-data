@@ -362,9 +362,9 @@ def test_grib_latlon_various_grids_1(fl_type, filename, expected_shape, expected
     assert np.allclose(np.asarray(ds[0].geography.area()), np.asarray(expected_area))
 
 
-@pytest.mark.skip(
-    "This test is currently failing because the GRIB field geography is not correctly handled in ecCodes."
-)
+# @pytest.mark.skip(
+#     "This test is currently failing because the GRIB field geography is not correctly handled in ecCodes."
+# )
 @pytest.mark.parametrize(
     "filename,expected_shape, expected_lat, expected_lon, expected_area",
     [
