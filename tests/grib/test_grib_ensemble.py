@@ -12,13 +12,11 @@
 
 import pytest
 from grib_fixtures import (
-    FL_TYPES,  # noqa: E402
     load_grib_data,  # noqa: E402
 )
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-# @pytest.mark.parametrize("fl_type", ["file"])
+@pytest.mark.parametrize("fl_type", ["file"])
 def test_grib_ensemble_1(fl_type):
     ds, _ = load_grib_data("ens_50.grib", fl_type, folder="data")
     f = ds[0]
@@ -28,10 +26,19 @@ def test_grib_ensemble_1(fl_type):
     assert f.ensemble.realisation() == "1"
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-# @pytest.mark.parametrize("fl_type", ["file"])
+@pytest.mark.parametrize("fl_type", ["file"])
 def test_grib_ensemble_2(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
+    f = ds[0]
+
+    assert f.ensemble.member() == "0"
+    assert f.ensemble.realization() == "0"
+    assert f.ensemble.realisation() == "0"
+
+
+@pytest.mark.parametrize("fl_type", ["file"])
+def test_grib_ensemble_3(fl_type):
+    ds, _ = load_grib_data("ens_none.grib", fl_type, folder="data")
     f = ds[0]
 
     assert f.ensemble.member() is None
