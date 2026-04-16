@@ -2,6 +2,12 @@ Version 1.0.0 Release Candidate Updates
 ///////////////////////////////////////
 
 
+Version 1.0.0rc3
+==================
+
+- Fixed issue when setting time on a Field failed
+
+
 Version 1.0.0rc2
 ==================
 

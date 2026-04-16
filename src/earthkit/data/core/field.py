@@ -1261,15 +1261,74 @@ class Field(Base):
         *args: tuple
             Positional arguments used to specify the metadata keys and values to set. Each
             argument can be a dict with keys and values to set. When multiple dicts are given
-            they are merged together with the latter dicts taking precedence over the former ones.
-        **kwargs: dict, optional
+            they are merged together with the latter dicts taking precedence over the former
+            ones.
+
+            >>> field.set({"parameter.variable": "t"})
+            >>> field.set({"parameter.variable": "t", "vertical.level": 1000})
+
+            New data values can  be set by using the "data" or "values" key with the new values
+            as a value. For example,
+
+            >>> field.set(data=new_values_array)
+
+            will replace the data values in the field with the values in ``new_values_array``.
+
+            Only high-level metadata keys (and "data" or "values") are allowed here, i.e. keys that
+            belong to a component. Modifying raw metadata keys is not allowed and we cannot use them
+            in :meth:`set` with or without the "metadata." prefix. For example, although
+            in fields generated from GRIB we can use the "metadata.shortName" key in the :meth:`get`
+            method to access the "shortName" key we cannot use it in :meth:`set`.
+
+            Entire components can be set by using the component name as a key and the component
+            object or the equivalent dict as a value. For example,
+
+            >>> field.set(parameter={"variable": "t", "units": "K"})
+
+            will replace the entire parameter component.
+
+            Date and time related keys from the "time" field component can take
+            different formats of date/time/duration values as input. For example, when
+            setting by "time.base_datetime" the following calls are equivalent:
+
+            >>> fl.set({ "time.base_datetime": "2018-08-01T12"})
+            >>> fl.set({ "time.base_datetime": datetime(2018, 8, 1, 12, 0) })
+
+            Similarly, when setting "time.step" the following calls are equivalent.
+
+            >>> fl.set({ "time.step": "6h"})
+            >>> fl.set({ "time.step": 6})
+            >>> fl.set({ "time.step": "360m"})
+            >>> fl.set({ "time.step": timedelta(hours=6)})
+
+            Values are assumed to be in hours when the unit is not specified. When the unit is specified
+            it can be either "h", "m" or "s" for hours, minutes or seconds, respectively.
+
+        **kwargs: dict
             Keyword arguments used to specify the metadata keys and values to set. They take
-            precedence over the positional arguments.
+            precedence over the positional arguments. The same rules for the keys and values
+            as for the positional arguments apply here.
 
         Returns
         -------
         Field
             A new field with the specified metadata keys set to the given values.
+
+        Examples
+        --------
+        See the how-to examples for the :meth:`set` method in the following notebook:
+
+        - :ref:`/how-tos/grib/grib_modify_metadata.ipynb`
+        - :ref:`/how-tos/grib/grib_modify_values.ipynb`
+
+        Further examples:
+
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "test.grib").to_fieldlist()
+        >>> f = fl[0]
+        >>> f2 = f.set({"parameter.variable": "10t", "parameter.units": "K"})
+        >>> f2.get(["parameter.variable", "parameter.units"])
+        ['10t', 'K']
 
         """
         kwargs = kwargs.copy()

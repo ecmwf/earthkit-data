@@ -503,7 +503,7 @@ class ForecastTime(TimeBase):
             data = method(**d1)
             return data
 
-        raise ValueError(f"Invalid keys in data: {list(d.keys())}. Expected one of {KEYS}.")
+        raise ValueError(f"Cannot create ForecastTime from keys: {list(d.keys())}.")
 
     def set(self, *args, **kwargs):
         """Create a new instance with updated data.
@@ -579,7 +579,7 @@ class ForecastTime(TimeBase):
             data = method(**d)
             return data
 
-        raise ValueError(f"Invalid keys in data: {list(d.keys())}. Allowed keys: {KEYS}.")
+        raise ValueError(f"Cannot create ForecastTime from keys: {list(d.keys())}.")
 
     def _set_generic(
         self,
@@ -1046,7 +1046,7 @@ class MonthlyForecastTime(TimeBase):
             data = method(**d1)
             return data
 
-        raise ValueError(f"Invalid keys in data: {list(d.keys())}. Expected one of {KEYS}.")
+        raise ValueError(f"Cannot create MonthlyForecastTime from keys: {list(d.keys())}.")
 
     def set(self, *args, **kwargs):
         """Create a new instance with updated data.

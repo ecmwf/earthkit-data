@@ -225,7 +225,7 @@ autodocs/
 
 # PyBuilder
 .pybuilder/
-target/
+
 
 # Jupyter Notebook
 

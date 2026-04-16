@@ -673,8 +673,6 @@ class FieldList(Source, Encodable):
             For example, when filtering by "time.valid_datetime" the following calls are equivalent:
 
             >>> fl.sel({ "time.valid_datetime": "2018-08-01T12:00:00"})
-            >>> fl.sel({ "time.valid_datetime": "2018080112"})
-            >>> fl.sel({ "time.valid_datetime": 2018080112})
             >>> fl.sel({ "time.valid_datetime": datetime(2018, 8, 1, 12, 0) })
 
             Similarly, when filtering by "time.step" the following calls are equivalent (values are assumed

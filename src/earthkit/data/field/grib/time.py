@@ -77,10 +77,10 @@ class GribTimeContextCollector(GribContextCollector):
         r["time"] = time
         r["step"] = step
 
-        if component.forecast_month is not None:
-            r["forecastMonth"] = component.forecast_month
-            if component.indexing_datetime is not None:
-                idate, itime = datetime_to_grib(component.indexing_datetime)
+        if component.forecast_month() is not None:
+            r["forecastMonth"] = component.forecast_month()
+            if component.indexing_datetime() is not None:
+                idate, itime = datetime_to_grib(component.indexing_datetime())
                 r["indexingDate"] = idate
                 r["indexingTime"] = itime
 
