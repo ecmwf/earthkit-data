@@ -40,6 +40,21 @@ class RemappingBuilder:
             self.patch.update(patch)
 
 
+class AuxCoords(dict):
+    def __init__(self, aux_coords):
+        super().__init__()
+        for coord_label, key_dims in ensure_dict(aux_coords).items():
+            try:
+                key, dims = key_dims
+                dims = ensure_iterable(dims)
+            except Exception:
+                raise ValueError(
+                    f"Auxiliary coordinate {coord_label} has invalid specification: got {key_dims} "
+                    f"while a tuple (<key>, <dim(s)>) is expected"
+                )
+            self[coord_label] = (key, dims)
+
+
 class ProfileConf:
     def __init__(self):
         self._conf = {}
@@ -184,7 +199,7 @@ class MonoVariable(ProfileVariable):
 
 
 class Profile:
-    USER_ONLY_OPTIONS = ["remapping", "patch", "fill_metadata"]
+    USER_ONLY_OPTIONS = ["remapping", "patch", "fill_metadata", "aux_coords"]
     DEFAULT_PROFILE_NAME = "earthkit"
 
     def __init__(
@@ -213,6 +228,7 @@ class Profile:
                     patch[k] = v
 
         self.remapping = RemappingBuilder(kwargs.pop("remapping", None), patch)
+        self.aux_coords = AuxCoords(kwargs.pop("aux_coords", None))
 
         # variables
         mono_variable = kwargs.pop("mono_variable")

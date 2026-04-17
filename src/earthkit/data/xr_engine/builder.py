@@ -8,9 +8,11 @@
 #
 
 import datetime
+import itertools
 import logging
 from abc import ABCMeta, abstractmethod
 
+import numpy
 import xarray
 import xarray.core.indexing as indexing
 
@@ -348,6 +350,61 @@ class BackendDataBuilder(metaclass=ABCMeta):
             if _dims is not None and _vals is not None:
                 self.tensor_coords["valid_time"] = Coord.make("valid_time", _vals, dims=_dims)
 
+    def collect_aux_coords(self):
+        from .coord import Coord
+
+        strict = self.profile.strict
+        allow_holes = self.profile.allow_holes
+        remapping = self.profile.remapping.build()
+        for coord_label, (metadata_key, dims) in self.profile.aux_coords.items():
+            dims_set = set(dims)
+            dim_objs = []
+            for d in self.dims:
+                if d.name in dims_set:
+                    dims_set.remove(d.name)
+                    dim_objs.append(d)
+            assert len(dims_set) == 0, (
+                f"Auxiliary coordinate '{coord_label}' has unknown dimension(s): {tuple(dims_set)}"
+            )
+            coords = {d.key: self.tensor_coords[d.key].vals for d in dim_objs if d.key in self.tensor_coords}
+
+            dim_keys = tuple(coords)
+            _default = [None] * len(dim_keys)
+            _astype = [None] * len(dim_keys)
+
+            vals = {}
+            for f in self.ds:
+                # TODO: perf: pull this internal loop outside the loop over self.profile.aux_coords
+                f_coords = f._get_fast(dim_keys, default=_default, astype=_astype, output=tuple, remapping=remapping)
+                try:
+                    val = vals[f_coords]
+                    val_missing = False
+                except KeyError:
+                    val = None
+                    val_missing = True
+                if val_missing or strict:
+                    new_val = f._get_fast(metadata_key, remapping=remapping)
+                    if not val_missing:
+                        assert new_val == val, (
+                            f"Conflicting values for the auxiliary coordinate {coord_label}({dim_keys}) "
+                            f"at {f_coords}: {val} and {new_val}. "
+                            f"Try other dimensions than {dim_keys} or use strict=False"
+                        )
+                    vals[f_coords] = new_val
+
+            vals_flatten = []
+            for f_coords in itertools.product(*coords.values()):
+                try:
+                    val = vals[f_coords]
+                except KeyError:
+                    if allow_holes:
+                        val = numpy.nan
+                    else:
+                        raise
+                vals_flatten.append(val)
+            vals_reshaped = numpy.array(vals_flatten).reshape(tuple(len(c) for c in coords.values()))
+            self.tensor_coords[coord_label] = Coord.make(coord_label, vals_reshaped, list(coords))
+
     def build(self):
         if self.profile.allow_holes:
             if self.profile.add_valid_time_coord:
@@ -371,6 +428,11 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         # we assume each variable forms a full cube
         var_builders = self.pre_build_variables()
+
+        # From now on, self.tensor_coords is a mapping:
+        # dimension_name->a Coord object + possibly the same for "valid_time"
+
+        self.collect_aux_coords()
 
         # build variable and global attributes
         xr_attrs = self.profile.attrs.builder.build(self.ds, var_builders, rename=True)
