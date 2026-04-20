@@ -11,7 +11,9 @@ fixed_dims: []
 split_dims: []
 rename_dims: {}
 dims_as_attrs: []
-time_dim_mode: forecast
+time_dims:
+- forecast_reference_time
+- step
 level_dim_mode: level
 squeeze: true
 # attributes

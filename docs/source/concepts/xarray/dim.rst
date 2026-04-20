@@ -15,7 +15,7 @@ Predefined dimensions and dimension roles
 By default, the following predefined dimensions are generated, in the following order:
 
 - ensemble forecast member dimension
-- temporal dimensions, controlled by ``time_dim_mode``  (see details :ref:`here <xr_time_dim_modes>`)
+- temporal dimensions, controlled by ``time_dims``  (see details :ref:`here <xr_time_dims>`)
 - vertical dimensions, controlled by ``level_dim_mode`` (see details :ref:`here <xr_level_dim_modes>`)
 
 The predefined dimensions are based on the ``dim_roles``, which is a mapping between the "roles" and the metadata keys. This mapping is defined for each :ref:`profile <xr_profile>` and can be customised by the user. The possible roles are as follows:
@@ -30,19 +30,19 @@ The predefined dimensions are based on the ``dim_roles``, which is a mapping bet
      - Ensemble forecast member
      - "ensemble.member"
    * - "forecast_reference_time"
-     -  Forecast reference time (base datetime). Can be a single  metadata key, or a list/tuple of two metadata keys representing the "date" and "time" parts of the forecast reference time. Alternatively, it can be a dict with "date" and "time" keys specifying the corresponding metadata keys. Used when ``time_dim_mode="forecast"``.
+     - Forecast reference time (base datetime). Can be a single metadata key, or a list/tuple of two metadata keys representing the "date" and "time" parts of the forecast reference time. Alternatively, it can be a dict with "date" and "time" keys specifying the corresponding metadata keys. Used when ``"forecast_reference_time"`` is in ``time_dims``.
      - "time.forecast_reference_time"
    * - "step"
      - Forecast step
      - "time.step"
    * - "valid_time"
-     - Valid datetime. Used when ``time_dim_mode="valid_time"`` or ``add_valid_time_coord=True``.
+     - Valid datetime. Used when ``"valid_time"`` is in ``time_dims`` or ``add_valid_time_coord=True``.
      - "time.valid_datetime"
    * - "date"
-     - Date part of the forecast reference time. This dimension is used only when ``time_dim_mode="raw"``.
+     - Date part of the forecast reference time. Used when ``"date"`` is in ``time_dims``.
      - "time.base_date"
    * - "time"
-     - Time part of the forecast reference time. This dimension is used only when ``time_dim_mode="raw"``.
+     - Time part of the forecast reference time. Used when ``"time"`` is in ``time_dims``.
      - "time.base_time"
    * - "level"
      - Level
@@ -65,26 +65,27 @@ Ensemble member dimension
 
 The ensemble member dimension is a single dimension named ``"member"`` by default, unless ``dim_name_from_role_name=False`` and ``dim_roles`` defines it differently.
 
-.. _xr_time_dim_modes:
+.. _xr_time_dims:
 
-Temporal dimension modes
+Temporal dimensions
 --------------------------------------
 
 The temporal dimensions can be generated in multiple ways, and can be represented by multiple individual dimensions in an Xarray dataset.
-The ``time_dim_mode`` option controls what temporal dimensions are generated in the Xarray dataset,
+The ``time_dims`` option explicitly specifies which time dimensions are constructed and their order,
 while ``dim_roles`` (together with ``dim_name_from_role_name``) controls their names and the way their coordinates are formed.
 
+Each element of ``time_dims`` is a role name (e.g. ``"forecast_reference_time"``, ``"step"``, ``"valid_time"``, ``"date"``, ``"time"``).
 
-.. list-table:: Temporal dimensions modes
+.. list-table:: Common ``time_dims`` configurations
    :header-rows: 1
 
-   * - ``time_dim_mode``
+   * - ``time_dims``
      - Dimensions generated
-   * - "forecast" (default)
+   * - ["forecast_reference_time", "step"] (default)
      - "forecast_reference_time", "step"
-   * - "valid_time"
+   * - ["valid_time"]
      - "valid_time"
-   * - "raw"
+   * - ["date", "time", "step"]
      - "date", "time", "step"
 
 

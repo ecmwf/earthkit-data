@@ -25,7 +25,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "dim_roles": {"step": "metadata.step"},
                 "decode_times": False,
                 "allow_holes": True,
@@ -102,7 +102,7 @@ def test_xr_engine_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, dims, or
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "dim_roles": {"step": "metadata.step"},
                 "dims_as_attrs": ["step"],
                 "decode_times": False,
@@ -197,7 +197,7 @@ def test_xr_engine_incomplete_tensor_holes_2(
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "dim_roles": {"step": "metadata.step"},
                 "decode_times": False,
                 "allow_holes": True,
