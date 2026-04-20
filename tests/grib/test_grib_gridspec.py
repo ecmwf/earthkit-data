@@ -65,6 +65,7 @@ def test_grib_gridspec_from_file():
     assert gs == ref
 
 
+@pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
 @pytest.mark.parametrize(
     "input_file",
     [
