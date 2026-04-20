@@ -77,7 +77,7 @@ def new_array_grib_field(field, handle, array_namespace=None, device=None, flatt
     return new_field
 
 
-def create_grib_field_from_buffer(buf):
+def create_grib_field_from_message(buf):
     from earthkit.data.readers.grib.handle import MemoryGribHandle
 
     return create_grib_field(MemoryGribHandle.from_message(buf), cache=False)

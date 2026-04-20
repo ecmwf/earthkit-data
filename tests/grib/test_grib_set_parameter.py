@@ -20,16 +20,21 @@ from earthkit.data.core.temporary import temp_file
 # @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("fl_type", ["file"])
 @pytest.mark.parametrize(
-    "_kwargs,ref1,ref2",
+    "_kwargs,ref1,ref_grib,ref2",
     [
         (
             {"parameter.variable": "q", "parameter.units": "kg/kg"},
             {
                 "parameter.variable": "q",
-                "metadata.param": "t",
-                "metadata.shortName": "t",
+                "metadata.param": None,
+                "metadata.shortName": None,
                 "parameter.units": "kg/kg",
-                "metadata.units": "K",
+                "metadata.units": None,
+            },
+            {
+                "param": "t",
+                "shortName": "t",
+                "units": "K",
             },
             {
                 "parameter.variable": "q",
@@ -45,13 +50,19 @@ from earthkit.data.core.temporary import temp_file
         # ),
     ],
 )
-def test_grib_set_parameter_1(fl_type, _kwargs, ref1, ref2):
+def test_grib_set_parameter_1(fl_type, _kwargs, ref1, ref_grib, ref2):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     f = ds_ori[0].set(**_kwargs)
 
     for k, v in ref1.items():
         assert f.get(k) == v
+
+    # the field still stores the original GRIB metadata as private metadata,
+    # which is hidden but used when writing back to GRIB
+    grib_md = f._get_grib()
+    for k, v in ref_grib.items():
+        assert grib_md.get(k) == v
 
     with temp_file() as tmp:
         f.to_target("file", tmp)
@@ -69,6 +80,6 @@ def test_grib_set_parameter_2(
 
     f = ds_ori[0].set({"parameter.variable": "ta", "parameter.units": "kg/kg"})
     assert f.get("parameter.variable") == "ta"
-    assert f.get("metadata.shortName") == "t"
+    assert f.get("metadata.shortName") is None
     assert f.get("parameter.units") == "kg/kg"
-    assert f.get("metadata.units") == "K"
+    assert f.get("metadata.units") is None

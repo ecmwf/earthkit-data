@@ -184,7 +184,7 @@ class DataFieldComponentHandler(BaseDataFieldComponentHandler):
         """Get the GRIB context for the data component of the field."""
         from earthkit.data.field.grib.data import COLLECTOR
 
-        COLLECTOR.collect_keys(self, context)
+        COLLECTOR.collect(self, context)
 
     @classmethod
     def create_empty(cls) -> "DataFieldComponentHandler":

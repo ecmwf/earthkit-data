@@ -42,11 +42,11 @@ def test_grib_set_detailed(fl_type):
     })
 
     assert f.get("parameter.variable") == "q"
-    assert f.get("metadata.shortName") == "t"
+    assert f.get("metadata.shortName") is None
     assert f.get("vertical.level") == 600
-    assert f.get("metadata.levelist") == 500
-    assert f.get(("metadata.date", "parameter.variable")) == (20070101, "q")
-    assert f.get(("parameter.variable", "metadata.date")) == ("q", 20070101)
+    assert f.get("metadata.levelist") is None
+    assert f.get(("metadata.date", "parameter.variable")) == (None, "q")
+    assert f.get(("parameter.variable", "metadata.date")) == ("q", None)
     assert f.get("labels.my_shape") == (181, 360)
     assert f.get("labels.my_name") == "t_500"
 
@@ -100,14 +100,14 @@ def test_grib_set_detailed(fl_type):
     })
 
     assert f.get("parameter.variable") == "pt"
-    assert f.get("metadata.shortName") == "t"
+    assert f.get("metadata.shortName") is None
     assert f.get("vertical.level") == 800
-    assert f.get("metadata.level") == 500
-    assert f.get("metadata.levelist") == 500
+    assert f.get("metadata.level") is None
+    assert f.get("metadata.levelist") is None
     # TODO: this should be 800
     # assert f.metadata("levelist") == 700
-    assert f.get(("metadata.date", "parameter.variable")) == (20070101, "pt")
-    assert f.get(("parameter.variable", "metadata.date")) == ("pt", 20070101)
+    assert f.get(("metadata.date", "parameter.variable")) == (None, "pt")
+    assert f.get(("parameter.variable", "metadata.date")) == ("pt", None)
     # assert np.allclose(np.array(f.metadata("mars_area")), np.array([90.0, 0.0, -90.0, 359.0]))
     assert f.get("labels.my_name") == "t_500"
 
@@ -126,9 +126,9 @@ def test_grib_set_detailed(fl_type):
     ds = FieldList.from_fields(fields)
 
     assert ds.get("parameter.variable") == ["q", "q"]
-    assert ds.get("metadata.shortName") == ["t", "z"]
+    assert ds.get("metadata.shortName") == [None, None]
     assert ds.get("vertical.level") == [600, 600]
-    assert ds.get("metadata.levelist") == [500, 500]
+    assert ds.get("metadata.levelist") == [None, None]
 
     # write back to grib
     with temp_file() as tmp:
@@ -167,11 +167,11 @@ def test_grib_set_combined(fl_type):
     })
 
     assert f.get("parameter.variable") == "q"
-    assert f.get("metadata.shortName") == "t"
+    assert f.get("metadata.shortName") is None
     assert f.get("vertical.level") == 600
-    assert f.get("metadata.levelist") == 500
-    assert f.get(("metadata.date", "parameter.variable")) == (20070101, "q")
-    assert f.get(("parameter.variable", "metadata.date")) == ("q", 20070101)
+    assert f.get("metadata.levelist") is None
+    assert f.get(("metadata.date", "parameter.variable")) == (None, "q")
+    assert f.get(("parameter.variable", "metadata.date")) == ("q", None)
     assert np.allclose(f.values, vals_ori + 1)
     assert np.allclose(ds_ori[0].values, vals_ori)
 
@@ -202,11 +202,11 @@ def test_grib_set_combined(fl_type):
     })
 
     assert f.get("parameter.variable") == "pt"
-    assert f.get("metadata.shortName") == "t"
+    assert f.get("metadata.shortName") is None
     assert f.get("vertical.level") == 800
-    assert f.get("metadata.levelist") == 500
-    assert f.get(("metadata.date", "parameter.variable")) == (20070101, "pt")
-    assert f.get(("parameter.variable", "metadata.date")) == ("pt", 20070101)
+    assert f.get("metadata.levelist") is None
+    assert f.get(("metadata.date", "parameter.variable")) == (None, "pt")
+    assert f.get(("parameter.variable", "metadata.date")) == ("pt", None)
     assert np.allclose(f.values, vals_ori + 2)
     assert np.allclose(ds_ori[0].values, vals_ori)
 
@@ -226,9 +226,9 @@ def test_grib_set_combined(fl_type):
     ds = FieldList.from_fields(fields)
 
     assert ds.get("parameter.variable") == ["q", "q"]
-    assert ds.get("metadata.shortName") == ["t", "z"]
+    assert ds.get("metadata.shortName") == [None, None]
     assert ds.get("vertical.level") == [600, 600]
-    assert ds.get("metadata.levelist") == [500, 500]
+    assert ds.get("metadata.levelist") == [None, None]
     assert np.allclose(ds[0].values, vals_ori + 1)
     assert np.allclose(ds[1].values, vals_ori + 2)
 

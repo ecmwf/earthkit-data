@@ -349,6 +349,55 @@ class Field(Base):
                     v.sync(r)
         return r
 
+    def _from_set(
+        self,
+        data=None,
+        time=None,
+        parameter=None,
+        geography=None,
+        vertical=None,
+        ensemble=None,
+        proc=None,
+        labels=None,
+    ):
+        _kwargs = {
+            _DATA: data,
+            _TIME: time,
+            _PARAMETER: parameter,
+            _GEOGRAPHY: geography,
+            _VERTICAL: vertical,
+            _ENSEMBLE: ensemble,
+            _PROC: proc,
+            _LABELS: labels,
+        }
+
+        has_new_metadata = False
+        for name in Field._COMPONENT_NAMES:
+            v = _kwargs[name]
+            if v is not None:
+                _kwargs[name] = _COMPONENT_MAKER.default_cls(name).from_any(v)
+                if name != "data" and name != "labels":
+                    has_new_metadata = True
+            else:
+                _kwargs[name] = self._components[name]
+
+        r = self.__class__(**_kwargs)
+
+        # copy private data and initialize
+        if self._private:
+            r._private = self._private.copy()
+            if has_new_metadata:
+                for k in list(r._private.keys()):
+                    v = r._private[k]
+                    if not k.startswith("_"):
+                        r._private.pop(k)
+                        k = f"_{k}"
+                    if hasattr(v, "sync"):
+                        v = v.sync(r)
+                    r._private[k] = v
+
+        return r
+
     @classmethod
     def from_dict(cls, d):
         r"""Create a Field from a dictionary.
@@ -826,25 +875,26 @@ class Field(Base):
         if component:
             return component.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
         elif component_name == _METADATA:
-            for _, private_component in self._private.items():
-                if hasattr(private_component, "metadata"):
-                    return private_component.metadata(
-                        key_name, default=default, astype=astype, raise_on_missing=raise_on_missing
-                    )
-                else:
+            for p_name, p_component in self._private.items():
+                if not p_name.startswith("_"):
+                    if hasattr(p_component, "metadata"):
+                        return p_component.metadata(
+                            key_name, default=default, astype=astype, raise_on_missing=raise_on_missing
+                        )
+                    else:
 
-                    def _cast(v):
-                        if callable(astype):
-                            try:
-                                return astype(v)
-                            except Exception:
-                                return None
-                        return v
+                        def _cast(v):
+                            if callable(astype):
+                                try:
+                                    return astype(v)
+                                except Exception:
+                                    return None
+                            return v
 
-                    # TODO: review this
-                    v = self.private_component.get(key)
-                    if v is not None:
-                        return _cast(v)
+                        # TODO: review this
+                        v = p_component.get(key)
+                        if v is not None:
+                            return _cast(v)
 
         if raise_on_missing:
             raise KeyError(f"Key {key} not found in field")
@@ -1267,7 +1317,7 @@ class Field(Base):
             >>> field.set({"parameter.variable": "t"})
             >>> field.set({"parameter.variable": "t", "vertical.level": 1000})
 
-            New data values can  be set by using the "data" or "values" key with the new values
+            New data values can be set by using the "data" or "values" key with the new values
             as a value. For example,
 
             >>> field.set(data=new_values_array)
@@ -1313,6 +1363,42 @@ class Field(Base):
         -------
         Field
             A new field with the specified metadata keys set to the given values.
+
+
+        Notes
+        -----
+        When the field was created from a GRIB message, calling :meth:`set` does not modify the original
+        GRIB message and the new field returned by :meth:`set` is not linked to a GRIB message. In the new field
+        the GRIB message/handle will not be available and the GRIB specific keys in the raw metadata will not be
+        accessible.
+
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "test.grib").to_fieldlist()
+        >>> f = fl[0]
+        >>> f1 = f.set({"parameter.variable": "msl", "parameter.units": "Pa"})
+        >>> f1.get("metadata.shortName")
+        None
+        >>> f1.metadata("shortName")
+        KeyError: 'metadata.shortName' not found in field
+        >>> f1.message()
+        None
+
+        However, if only the "data" or "values" key is used in :meth:`set` to set new data values, the new
+        field returned by :meth:`set` is still linked to the original GRIB message and the GRIB specific keys
+        in the raw metadata are still accessible. When calling :meth:`message` on the new field, the original GRIB
+        message with the modified data values is returned.
+
+         >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "test.grib").to_fieldlist()
+        >>> f = fl[0]
+        >>> f1 = f.set(values=f.values()+1)
+        >>> f1.get("metadata.shortName")
+        "2t"
+        >>> f1.metadata("shortName")
+        "2t"
+        >>> f1.message()
+        <grib message with modified data values>
+
 
         Examples
         --------
@@ -1372,7 +1458,7 @@ class Field(Base):
                 _components[component_name] = s
 
         if _components:
-            return Field.from_field(self, **_components)
+            return self._from_set(**_components)
         elif kwargs:
             raise ValueError("No valid keys to set in the field.")
 
@@ -1689,15 +1775,19 @@ class Field(Base):
         return self.ls("tail", *args, **kwargs)
 
     def message(self):
-        r"""Return a buffer containing the encoded message for Fields generated from a message based format (e.g. GRIB).
+        r"""Return a buffer containing the encoded message associated with the field.
+
+        Only available for fields generated from a message based format (e.g. GRIB).
+        Once the field metadata is modified by calling :meth:`set` the link to the original
+        message is lost and this method will return None.
 
         Returns
         -------
         bytes
         """
-        grib = self._get_grib()
+        grib = self._get_grib(strict=True)
         if grib is not None:
-            return grib.message()
+            return grib.message(owner=self)
         return None
 
     def _dispatch_to_fieldlist_method(self, method_name, *args, **kwargs):
@@ -1710,10 +1800,15 @@ class Field(Base):
     def _get_private_data(self, name):
         return self._private.get(name)
 
-    def _get_grib(self):
-        if self._private and "metadata" in self._private and getattr(self._private["metadata"], "NAME", None) == _GRIB:
-            return self._private["metadata"]
-
+    def _get_grib(self, strict=False):
+        r"""Return the GRIB metadata object associated with the field if available."""
+        if self._private:
+            names = ["metadata", "_metadata"] if not strict else ["metadata"]
+            for name in names:
+                if name in self._private:
+                    md = self._private[name]
+                    if getattr(md, "NAME", None) == _GRIB:
+                        return md
         return None
 
     def _check(self):
@@ -1743,74 +1838,6 @@ class Field(Base):
     def _normalise_key_values(**kwargs):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""
         return kwargs
-
-    # def sel(self, *args, **kwargs):
-    #     r"""Check if a field matches the given selection criteria.
-
-    #     Parameters
-    #     ----------
-    #     *args: tuple
-    #         Positional arguments specifying the filter conditions as a dict.
-    #         Both single or multiple keys are allowed to use. When multiple filter conditions
-    #         are specified, they are combined with a logical AND operator. Each metadata key in
-    #         the filter conditions can specify the following type of filter values:
-
-    #         - single value::
-
-    #             f.sel({parameter.variable: "t"})
-
-    #         - list of values::
-
-    #             f.sel({parameter.variable: ["u", "v"]})
-
-    #         - slice of values (defines a closed interval, so treated as inclusive of both the start
-    #         and stop values, unlike normal Python indexing). The following example filters the fields
-    #         with "vertical.level" between 300 and 500 inclusively::
-
-    #             f.sel({vertical.level: slice(300, 500)})
-
-    #         Date and time related keys from the "time" field component are automatically normalised
-    #         for comparison. This is also applied to the following keys from the
-    #         raw metadata: "metadata.base_datetime", "metadata.valid_datetime" and "metadata.step_timedelta".
-
-    #         For example, when filtering by "time.valid_datetime" the following calls are equivalent:
-
-    #         >>> f.sel({ "time.valid_datetime": "2018-08-01T12:00:00"})
-    #         >>> f.sel({ "time.valid_datetime": "2018080112"})
-    #         >>> f.sel({ "time.valid_datetime": 2018080112})
-    #         >>> f.sel({ "time.valid_datetime": datetime(2018, 8, 1, 12, 0) })
-
-    #         Similarly, when filtering by "time.step" the following calls are equivalent (values are assumed
-    #         to be in hours when the unit is not specified):
-
-    #         >>> f.sel({ "time.step": "6h"})
-    #         >>> f.sel({ "time.step": 6})
-    #         >>> f.sel({ "time.step": "360m"})
-    #         >>> f.sel({ "time.step": timedelta(hours=6)})
-
-    #     remapping: dict
-    #         Define new metadata keys from existing ones to use in ``*args`` and ``**kwargs``.
-    #         E.g. to define a new key "param_level" as the concatenated value of
-    #         the "parameter.variable" and "vertical.level" keys use::
-
-    #         >>> remapping={"param_level": "{parameter.variable}{vertical.level}"}
-
-    #     **kwargs: dict, optional
-    #         Other keyword arguments specifying the filter conditions.
-
-    #     Returns
-    #     -------
-    #     Field or None
-    #         Returns the field itself if it matches the selection criteria, otherwise returns None.
-    #     """
-    #     res = self._dispatch_to_fieldlist_method("sel", *args, **kwargs)
-
-    #     if res and len(res) == 1:
-    #         return self
-    #     return None
-
-    # def order_by(self, *args, **kwargs):
-    #     pass
 
     def _unary_op(self, oper):
         v = oper(self.values)

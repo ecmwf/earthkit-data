@@ -21,7 +21,7 @@ from earthkit.data.core.temporary import temp_file
 @pytest.mark.parametrize("fl_type", ["file"])
 @pytest.mark.parametrize("write_method", ["target"])
 @pytest.mark.parametrize(
-    "_kwargs,ref1,ref2",
+    "_kwargs,ref1,grib_ref,ref2",
     [
         (
             {
@@ -33,10 +33,16 @@ from earthkit.data.core.temporary import temp_file
                 "vertical.level_type": "potential_temperature",
                 "vertical.units": "K",
                 "vertical.abbreviation": "pt",
-                "metadata.levelist": 500,
-                "metadata.level": 500,
-                "metadata.levtype": "pl",
-                "metadata.typeOfLevel": "isobaricInhPa",
+                "metadata.levelist": None,
+                "metadata.level": None,
+                "metadata.levtype": None,
+                "metadata.typeOfLevel": None,
+            },
+            {
+                "levelist": 500,
+                "level": 500,
+                "levtype": "pl",
+                "typeOfLevel": "isobaricInhPa",
             },
             {
                 "vertical.level": 320,
@@ -73,7 +79,7 @@ from earthkit.data.core.temporary import temp_file
         # ),
     ],
 )
-def test_grib_set_vertical(fl_type, write_method, _kwargs, ref1, ref2):
+def test_grib_set_vertical(fl_type, write_method, _kwargs, ref1, grib_ref, ref2):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     f = ds_ori[0].set(**_kwargs)
@@ -84,6 +90,12 @@ def test_grib_set_vertical(fl_type, write_method, _kwargs, ref1, ref2):
     # the original field is unchanged
     assert ds_ori[0].get("vertical.level") == 500
     assert ds_ori[0].get("vertical.level_type") == "pressure"
+
+    # the field still stores the original GRIB metadata as private metadata,
+    # which is hidden but used when writing back to GRIB
+    grib_md = f._get_grib()
+    for k, v in grib_ref.items():
+        assert grib_md.get(k) == v
 
     with temp_file() as tmp:
         f.to_target("file", tmp)

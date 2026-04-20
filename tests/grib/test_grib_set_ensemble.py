@@ -20,7 +20,7 @@ from earthkit.data.core.temporary import temp_file
 # @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("fl_type", ["file"])
 @pytest.mark.parametrize(
-    "_kwargs,ref_ori, ref_set,ref_saved",
+    "_kwargs,ref_ori, ref_set,ref_grib,ref_saved",
     [
         (
             {"ensemble.member": 3},
@@ -31,8 +31,12 @@ from earthkit.data.core.temporary import temp_file
             },
             {
                 "ensemble.member": "3",
-                "metadata.number": 1,
-                "metadata.level": 850,
+                "metadata.number": None,
+                "metadata.level": None,
+            },
+            {
+                "number": 1,
+                "level": 850,
             },
             {
                 "ensemble.member": "3",
@@ -42,7 +46,7 @@ from earthkit.data.core.temporary import temp_file
         ),
     ],
 )
-def test_grib_set_ensemble(fl_type, _kwargs, ref_ori, ref_set, ref_saved):
+def test_grib_set_ensemble(fl_type, _kwargs, ref_ori, ref_set, ref_grib, ref_saved):
     ds_ori, _ = load_grib_data("ens_50.grib", fl_type, folder="data")
 
     f = ds_ori[0].set(**_kwargs)
@@ -53,6 +57,12 @@ def test_grib_set_ensemble(fl_type, _kwargs, ref_ori, ref_set, ref_saved):
     # the original field is unchanged
     for k, v in ref_ori.items():
         assert ds_ori[0].get(k) == v
+
+    # the field still stores the original GRIB metadata as private metadata,
+    # which is hidden but used when writing back to GRIB
+    grib_md = f._get_grib()
+    for k, v in ref_grib.items():
+        assert grib_md.get(k) == v
 
     with temp_file() as tmp:
         f.to_target("file", tmp)
