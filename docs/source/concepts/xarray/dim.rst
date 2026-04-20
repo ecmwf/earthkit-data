@@ -186,6 +186,42 @@ used as the coordinates of a newly created dimension.
 Extra dimensions are handled in the same way as predefined dimensions: if an extra dimension has size 1, it can be
 :ref:`squeezed or ensured <xr_squeeze_and_ensure_dims>`, or :ref:`converted into a variable attribute <xr_dims_as_attrs>`.
 
+.. _xr_extra_dims_collision:
+
+Collision with predefined dimensions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When an ``extra_dims`` entry refers to a metadata key that belongs to a
+:ref:`predefined dimension <xr_predefined_dims>` that is **not** part of
+the current ``time_dims`` or ``level_dim_mode`` selection, the entry is
+silently ignored. This prevents the same underlying metadata from
+appearing twice — once through the predefined dimension machinery and
+once as an extra dimension — which would lead to conflicts or duplicate
+axes.
+
+For example, when ``time_dims=["valid_time"]`` is used, only the
+``"valid_time"`` role is selected. The other time-related roles
+(``"forecast_reference_time"``, ``"step"``, ``"date"``, ``"time"``) and
+all their associated metadata keys are excluded. If any of those
+metadata keys are listed in ``extra_dims``, they will **not** be added
+as dimensions:
+
+.. code-block:: python
+
+   # "time.step" belongs to the "step" time role, which is not in
+   # time_dims, so it is suppressed even though it appears in extra_dims.
+   ds = fl.to_xarray(
+       profile="earthkit",
+       time_dims=["valid_time"],
+       extra_dims=["time.step"],
+   )
+   assert "valid_time" in ds.dims
+   assert "step" not in ds.dims       # blocked – collides with excluded predefined dim
+   assert "time.step" not in ds.dims  # blocked as well
+
+This rule applies to all predefined dimension roles listed in the
+:ref:`dimension roles table <xr_dim_roles>`, not only temporal ones.
+
 For a detailed discussion and examples, see the following notebook:
 
 - :ref:`/how-tos/xr_engine/xarray_engine_extra_dims.ipynb`

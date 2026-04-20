@@ -940,7 +940,7 @@ class DimHandler:
         # construct initial dims, ensure core dims are in the right order
         all_dims = {}
         for k in dims:
-            if k in remapping_dims or (k not in core_dims and k not in ignored):
+            if k in remapping_dims or (k not in core_dims and not self._is_ignored(k, ignored)):
                 if k in self.ensure_dims or k not in self.drop_dims:
                     all_dims[k] = dims[k]
 
@@ -958,6 +958,16 @@ class DimHandler:
 
         # print(f"all_dims", all_dims)
         return all_dims
+
+    @staticmethod
+    def _is_ignored(key, ignored):
+        """Check if *key* matches any ignored dim by name, key or alias."""
+        if key in ignored:
+            return True
+        for d in ignored.values():
+            if key in d:
+                return True
+        return False
 
     def var_dim_found_error_message(self, keys):
         return (
