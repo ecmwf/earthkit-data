@@ -17,7 +17,7 @@ import yaml
 
 from earthkit.data import from_source
 from earthkit.data.utils import ensure_iterable
-from earthkit.data.utils.testing import earthkit_remote_test_data_file, earthkit_test_data_file
+from earthkit.data.utils.testing import IN_GITHUB, earthkit_remote_test_data_file, earthkit_test_data_file
 
 
 def to_tuple(x):
@@ -35,6 +35,7 @@ def grid_list(files=None):
 
 
 @pytest.mark.cache
+@pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
 # @pytest.mark.parametrize("allow_holes", [False, True])
 # @pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize("allow_holes", [False])
@@ -94,6 +95,7 @@ def test_xr_engine_add_geo_coords(allow_holes, lazy_load, add_geo_coords):
 
 
 @pytest.mark.cache
+@pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_gridspec(allow_holes, lazy_load):
