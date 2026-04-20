@@ -16,7 +16,7 @@ import yaml
 
 from earthkit.data import FieldList, from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.utils.testing import earthkit_remote_test_data_file, earthkit_test_data_file
+from earthkit.data.utils.testing import IN_GITHUB, earthkit_remote_test_data_file, earthkit_test_data_file
 
 
 def _make_gridspec_list(grid_types):
@@ -45,6 +45,7 @@ def gridspec_list(grid_types):
         yield (item["metadata"], item["gridspec"], item["file"])
 
 
+@pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
 def test_grib_gridspec_from_file():
     ds = from_source(
         "file",
@@ -64,6 +65,7 @@ def test_grib_gridspec_from_file():
     assert gs == ref
 
 
+@pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
 @pytest.mark.parametrize(
     "input_file",
     [
