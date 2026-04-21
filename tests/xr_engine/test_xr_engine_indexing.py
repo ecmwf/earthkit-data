@@ -33,7 +33,7 @@ def test_xr_engine_daily_mean(allow_holes, kwargs):
     ds_ek = from_source(
         "url", earthkit_remote_test_data_file("era5-Europe-sfc-2m-temperature-3deg-2015-2017.grib")
     ).to_fieldlist()
-    ds = ds_ek.to_xarray(time_dim_mode="valid_time", allow_holes=allow_holes, **kwargs)
+    ds = ds_ek.to_xarray(time_dims="valid_time", allow_holes=allow_holes, **kwargs)
 
     daily_mean_ds = ds.groupby("valid_time.dayofyear").mean()
     temp_variability_ds = daily_mean_ds.mean(["longitude", "latitude"]).std("dayofyear").compute()
@@ -63,7 +63,7 @@ def test_xr_engine_groupby_forecast_valid_time():
     )
     seas5_data = seas5_data.to_fieldlist()
     seas5_xr = seas5_data.to_xarray(
-        time_dim_mode="forecast",
+        time_dims=["forecast_reference_time", "step"],
         add_valid_time_coord=True,
     ).rename({"2t": "t2m"})
 

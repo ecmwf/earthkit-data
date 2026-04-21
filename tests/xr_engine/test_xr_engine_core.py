@@ -71,7 +71,7 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
     if api == "earthkit":
         ds = ds_ek.to_xarray(
             profile="mars",
-            time_dim_mode="raw",
+            time_dims=["date", "time", "step"],
             decode_times=False,
             decode_timedelta=False,
             add_valid_time_coord=False,
@@ -86,7 +86,7 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
             ds_ek.path,
             profile="mars",
             engine="earthkit",
-            time_dim_mode="raw",
+            time_dims=["date", "time", "step"],
             decode_times=False,
             decode_timedelta=False,
             add_valid_time_coord=False,
@@ -271,7 +271,7 @@ def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
     if api == "earthkit":
         ds = ds_ek.to_xarray(
             profile=None,
-            time_dim_mode="raw",
+            time_dims=["date", "time", "step"],
             decode_times=False,
             decode_timedelta=False,
             add_valid_time_coord=False,
@@ -286,7 +286,7 @@ def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
             ds_ek.path,
             engine="earthkit",
             profile=None,
-            time_dim_mode="raw",
+            time_dims=["date", "time", "step"],
             decode_times=False,
             decode_timedelta=False,
             add_valid_time_coord=False,
@@ -476,7 +476,7 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
         "xarray_open_dataset_kwargs": {
             "backend_kwargs": {
                 "profile": "mars",
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "decode_times": False,
                 "decode_timedelta": False,
                 "flatten_values": True,
@@ -654,7 +654,7 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
         "xarray_open_dataset_kwargs": {
             "backend_kwargs": {
                 "profile": None,
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "decode_times": False,
                 "decode_timedelta": False,
                 "flatten_values": True,
@@ -834,7 +834,7 @@ def test_xr_engine_invalid_kwargs(kwargs):
         xr.open_dataset(
             ds_ek.path,
             engine="earthkit",
-            time_dim_mode="raw",
+            time_dims=["date", "time", "step"],
             **kwargs,
         )
 
@@ -866,7 +866,7 @@ def test_xr_engine_single_field(allow_holes, lazy_load):
 
     ds = ds_ek.to_xarray(
         profile="mars",
-        time_dim_mode="raw",
+        time_dims=["date", "time", "step"],
         decode_times=False,
         decode_timedelta=False,
         add_valid_time_coord=False,
@@ -948,7 +948,7 @@ def test_xr_engine_add_earthkit_attrs_1(add):
 
     ds = ds_ek.to_xarray(
         profile="mars",
-        time_dim_mode="raw",
+        time_dims=["date", "time", "step"],
         decode_times=False,
         decode_timedelta=False,
         add_valid_time_coord=False,

@@ -31,7 +31,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "decode_times": False,
                 "decode_timedelta": False,
                 "dim_name_from_role_name": True,
@@ -46,7 +46,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "dim_name_from_role_name": True,
             },
             {
@@ -59,7 +59,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "forecast",
+                "time_dims": ["forecast_reference_time", "step"],
                 "decode_times": False,
                 "decode_timedelta": False,
                 "dim_name_from_role_name": True,
@@ -78,7 +78,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "forecast",
+                "time_dims": ["forecast_reference_time", "step"],
                 "dim_name_from_role_name": True,
             },
             {
@@ -95,7 +95,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "valid_time",
+                "time_dims": ["valid_time"],
                 "decode_times": False,
                 "decode_timedelta": False,
                 "dim_name_from_role_name": True,
@@ -117,7 +117,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "valid_time",
+                "time_dims": ["valid_time"],
                 "decode_times": True,
                 "decode_timedelta": True,
                 "dim_name_from_role_name": True,
@@ -139,7 +139,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "decode_times": False,
                 "decode_timedelta": False,
                 "dim_name_from_role_name": False,
@@ -154,7 +154,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "dim_name_from_role_name": False,
             },
             {
@@ -315,7 +315,7 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "forecast",
+                "time_dims": ["forecast_reference_time", "step"],
                 "dim_roles": {"step": "metadata.forecastMonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -336,7 +336,7 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "forecast",
+                "time_dims": ["forecast_reference_time", "step"],
                 "dim_roles": {"step": "metadata.fcmonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -357,7 +357,7 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
         (
             {
                 "profile": "earthkit",
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "dim_roles": {"step": "metadata.forecastMonth"},
                 "ensure_dims": [
                     "member",
@@ -383,7 +383,7 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "forecast",
+                "time_dims": ["forecast_reference_time", "step"],
                 "dim_roles": {"step": "metadata.forecastMonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -404,7 +404,7 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "forecast",
+                "time_dims": ["forecast_reference_time", "step"],
                 "dim_roles": {"step": "metadata.fcmonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -425,7 +425,7 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "dim_roles": {"step": "metadata.forecastMonth"},
                 "decode_times": True,
                 "decode_timedelta": True,
@@ -471,7 +471,7 @@ def test_xr_engine_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_
         (
             {
                 "profile": "earthkit",
-                "time_dim_mode": "forecast",
+                "time_dims": ["forecast_reference_time", "step"],
                 "add_valid_time_coord": True,
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -541,7 +541,7 @@ def test_xr_engine_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_
         (
             {
                 "profile": "earthkit",
-                "time_dim_mode": "forecast",
+                "time_dims": ["forecast_reference_time", "step"],
                 "add_valid_time_coord": True,
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -596,7 +596,7 @@ def test_xr_engine_time_valid_time_coord(allow_holes, kwargs, dims, step_units, 
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "dim_name_from_role_name": True,
                 "ensure_dims": ["date", "time", "step"],
             },
@@ -636,7 +636,7 @@ def test_xr_engine_time_step_range_1(allow_holes, lazy_load, kwargs, dims, step_
         (
             {
                 "profile": "earthkit",
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "dim_name_from_role_name": True,
                 "ensure_dims": ["date", "time", "step"],
             },
@@ -650,7 +650,7 @@ def test_xr_engine_time_step_range_1(allow_holes, lazy_load, kwargs, dims, step_
         (
             {
                 "profile": "mars",
-                "time_dim_mode": "forecast",
+                "time_dims": ["forecast_reference_time", "step"],
                 "dim_name_from_role_name": True,
                 "dim_roles": {"step": "metadata.stepRange"},
                 "ensure_dims": ["forecast_reference_time", "step"],
@@ -681,7 +681,7 @@ def test_xr_engine_time_step_range_2(allow_holes, lazy_load, kwargs, dims, step_
 def test_xr_engine_time_forecast_per_month(allow_holes, lazy_load):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib")).to_fieldlist()
 
-    ds = ds_ek.to_xarray(profile="mars", allow_holes=allow_holes, lazy_load=lazy_load, time_dim_mode="valid_time")
+    ds = ds_ek.to_xarray(profile="mars", allow_holes=allow_holes, lazy_load=lazy_load, time_dims=["valid_time"])
 
     ref = []
     start = np.datetime64("1979-01-01T06:00:00", "ns")
@@ -705,7 +705,7 @@ def test_xr_engine_time_forecast_per_month(allow_holes, lazy_load):
     [
         (
             {
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "dim_name_from_role_name": True,
                 "ensure_dims": ["date", "time", "step"],
             },
@@ -718,7 +718,7 @@ def test_xr_engine_time_forecast_per_month(allow_holes, lazy_load):
         ),
         (
             {
-                "time_dim_mode": "forecast",
+                "time_dims": ["forecast_reference_time", "step"],
                 "dim_name_from_role_name": True,
                 "ensure_dims": ["forecast_reference_time", "step"],
             },
@@ -730,7 +730,7 @@ def test_xr_engine_time_forecast_per_month(allow_holes, lazy_load):
         ),
         (
             {
-                "time_dim_mode": "valid_time",
+                "time_dims": ["valid_time"],
                 "dim_name_from_role_name": True,
                 "ensure_dims": ["valid_time"],
             },
