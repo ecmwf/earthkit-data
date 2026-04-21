@@ -81,3 +81,6 @@ def create_grib_field_from_message(buf):
     from earthkit.data.readers.grib.handle import MemoryGribHandle
 
     return create_grib_field(MemoryGribHandle.from_message(buf), cache=False)
+
+
+create_grib_field_from_buffer = create_grib_field_from_message
