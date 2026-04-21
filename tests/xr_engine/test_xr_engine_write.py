@@ -26,10 +26,15 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"profile": "mars", "time_dim_mode": "raw"},
-        {"profile": "mars", "time_dim_mode": "forecast"},
-        {"profile": "mars", "time_dim_mode": "raw", "decode_times": False, "decode_timedelta": False},
-        {"profile": "mars", "time_dim_mode": "forecast", "decode_times": False, "decode_timedelta": False},
+        {"profile": "mars", "time_dims": ["date", "time", "step"]},
+        {"profile": "mars", "time_dims": ["forecast_reference_time", "step"]},
+        {"profile": "mars", "time_dims": ["date", "time", "step"], "decode_times": False, "decode_timedelta": False},
+        {
+            "profile": "mars",
+            "time_dims": ["forecast_reference_time", "step"],
+            "decode_times": False,
+            "decode_timedelta": False,
+        },
     ],
 )
 def test_xr_engine_write_1(allow_holes, lazy_load, kwargs):
@@ -119,8 +124,8 @@ def test_xr_engine_write_1(allow_holes, lazy_load, kwargs):
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"profile": "mars", "time_dim_mode": "valid_time"},
-        # {"profile": "mars", "time_dim_mode": "valid_time", "decode_times": False, "decode_timedelta": False},
+        {"profile": "mars", "time_dims": ["valid_time"]},
+        # {"profile": "mars", "time_dims": ["valid_time"], "decode_times": False, "decode_timedelta": False},
     ],
 )
 def test_xr_engine_write_2(allow_holes, lazy_load, kwargs):
@@ -275,7 +280,7 @@ def test_xr_write_seasonal(allow_holes, lazy_load):
 
     ds = ds_ek.to_xarray(
         profile="mars",
-        time_dim_mode="forecast",
+        time_dims=["forecast_reference_time", "step"],
         dim_roles={
             "forecast_reference_time": {"date": "metadata.indexingDate", "time": "metadata.indexingTime"},
             "step": "metadata.forecastMonth",
@@ -320,7 +325,9 @@ def test_xr_engine_write_bits_per_value(allow_holes, lazy_load):
 
     xr.set_options(keep_attrs=True)
 
-    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **{"profile": "mars", "time_dim_mode": "raw"})
+    ds = ds_ek.to_xarray(
+        allow_holes=allow_holes, lazy_load=lazy_load, **{"profile": "mars", "time_dims": ["date", "time", "step"]}
+    )
     ds += 1
 
     # assert ds["t"].earthkit._reference_field.metadata("bitsPerValue") == 8
@@ -339,7 +346,7 @@ def test_xr_engine_write_bits_per_value(allow_holes, lazy_load):
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"profile": "mars", "time_dim_mode": "raw"},
+        {"profile": "mars", "time_dims": ["date", "time", "step"]},
     ],
 )
 def test_xr_engine_write_to_grib_file_dataarray(allow_holes, lazy_load, method, kwargs):
@@ -426,7 +433,7 @@ def test_xr_engine_write_to_grib_file_dataarray(allow_holes, lazy_load, method, 
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"profile": "mars", "time_dim_mode": "raw"},
+        {"profile": "mars", "time_dims": ["date", "time", "step"]},
     ],
 )
 def test_xr_engine_write_to_grib_file_dataset(allow_holes, lazy_load, method, kwargs):
@@ -473,7 +480,7 @@ def test_xr_engine_write_to_grib_file_dataset(allow_holes, lazy_load, method, kw
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"profile": "mars", "time_dim_mode": "raw"},
+        {"profile": "mars", "time_dims": ["date", "time", "step"]},
     ],
 )
 def test_xr_write_to_netcdf_file_dataarray(allow_holes, lazy_load, method, kwargs):
@@ -516,7 +523,7 @@ def test_xr_write_to_netcdf_file_dataarray(allow_holes, lazy_load, method, kwarg
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"profile": "mars", "time_dim_mode": "raw"},
+        {"profile": "mars", "time_dims": ["date", "time", "step"]},
     ],
 )
 def test_xr_engine_write_to_netcdf_file_dataset(allow_holes, lazy_load, method, kwargs):
@@ -558,7 +565,7 @@ def test_xr_engine_write_to_netcdf_file_dataset(allow_holes, lazy_load, method, 
 def test_xr_engine_write_forecast_per_month():
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib")).to_fieldlist()
 
-    ds = ds_ek.to_xarray(profile="mars", time_dim_mode="valid_time")
+    ds = ds_ek.to_xarray(profile="mars", time_dims=["valid_time"])
     r = ds.earthkit.to_fieldlist()
     assert len(r) == 236
 

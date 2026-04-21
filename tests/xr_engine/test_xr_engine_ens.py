@@ -127,7 +127,7 @@ def test_xr_engine_member_dim_missing_1(allow_holes, lazy_load):
 
     ds = ds_ek[10].to_xarray(
         profile="mars",
-        time_dim_mode="valid_time",
+        time_dims=["valid_time"],
         ensure_dims="member",
         fill_metadata={"metadata.number": 10},
         allow_holes=allow_holes,
@@ -147,7 +147,7 @@ def test_xr_engine_member_dim_missing_2(allow_holes, lazy_load):
 
     ds = ds_ek[10].to_xarray(
         profile="mars",
-        time_dim_mode="valid_time",
+        time_dims=["valid_time"],
         dim_roles={"member": "metadata.number"},
         ensure_dims="number",
         fill_metadata={"metadata.number": 10},

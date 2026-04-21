@@ -243,7 +243,7 @@ class Profile:
             kwargs.pop("dim_roles"),
             kwargs.pop("dim_name_from_role_name"),
             kwargs.pop("dims_as_attrs"),
-            kwargs.pop("time_dim_mode"),
+            kwargs.pop("time_dims"),
             kwargs.pop("level_dim_mode"),
             kwargs.pop("squeeze"),
         )

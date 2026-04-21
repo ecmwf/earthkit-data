@@ -132,7 +132,7 @@ def test_lazy_fdb():
         #  Xarray tests
         # --------------------
 
-        a = ds.to_xarray(time_dim_mode="forecast")
+        a = ds.to_xarray(time_dims=["forecast_reference_time", "step"])
 
         # TODO: use methods from xr_engine tests for comparison
         compare_coord(

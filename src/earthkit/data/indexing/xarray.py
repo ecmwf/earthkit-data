@@ -153,7 +153,7 @@ class XarrayMixIn:
                 (in a fixed order):
 
                 - ensemble forecast member dimension
-                - temporal dimensions (controlled by ``time_dim_mode``)
+                - temporal dimensions (controlled by ``time_dims``)
                 - vertical dimensions (controlled by ``level_dim_mode``)
 
                 ``dim_roles`` is a mapping between the "roles" and the metadata keys representing the roles.
@@ -163,12 +163,12 @@ class XarrayMixIn:
                 - "forecast_reference_time": metadata key interpreted as forecast reference time. Can be a single
                   metadata key, or a list/tuple of two metadata keys representing the date and time parts of the
                   forecast reference time. Alternatively, it can be a dict with "date" and "time" keys specifying
-                  the corresponding metadata keys. Used when ``time_dim_mode`` is "forecast".
+                  the corresponding metadata keys. Used when ``"forecast_reference_time"`` is in ``time_dims``.
                 - "step": metadata key interpreted as forecast step
-                - "valid_time": metadata key interpreted as valid time. Used when ``time_dim_mode`` is "valid_time" or
-                  ``add_valid_time_coord`` is True.
-                - "date": metadata key interpreted as base date. Used only when ``time_dim_mode`` is "raw".
-                - "time": metadata key interpreted as base time. Used only when ``time_dim_mode`` is "raw".
+                - "valid_time": metadata key interpreted as valid time. Used when ``"valid_time"`` is in ``time_dims``
+                  or ``add_valid_time_coord`` is True.
+                - "date": metadata key interpreted as base date. Used when ``"date"`` is in ``time_dims``.
+                - "time": metadata key interpreted as base time. Used when ``"time"`` is in ``time_dims``.
                 - "level": metadata key interpreted as level
                 - "level_type": metadata key interpreted as level type
 
@@ -204,19 +204,16 @@ class XarrayMixIn:
                 Note that such size-1 dimensions are still preserved if they are
                 explicitly listed in ``ensure_dims``.
                 The default is ``None``.
-            * time_dim_mode: str, None
-                Define how predefined temporal dimensions are formed. The default is "forecast".
-                The possible values are as follows:
+            * time_dims: str, list of str, or None
+                Explicitly specify the time dimension(s) to construct, together with their order.
+                Each element is a role name from ``dim_roles``. The default is
+                ``["forecast_reference_time", "step"]``.
+                Common configurations:
 
-                - "forecast": adds two dimensions:
-
-                  - "forecast_reference_time": built from the "forecast_reference_time" role
-                    (see ``dim_roles``) as np.datetime64 values
-                  - "step": built from the "step" role. When ``decode_times=True`` the values are
-                    np.timedelta64
-                - "valid_time": adds a dimension called "valid_time" built from the "valid_time"
-                  role (see ``dim_roles``). Will contain np.datetime64 values.
-                - "raw": the "date", "time" and "step" roles are turned into 3 separate dimensions
+                - ``["forecast_reference_time", "step"]``: two dimensions for forecast reference
+                  time and step (default)
+                - ``["valid_time"]``: a single valid-time dimension
+                - ``["date", "time", "step"]``: three separate raw dimensions
             * level_dim_mode: str, None
                 Controls how predefined vertical dimensions are constructed.
                 The default is ``"level"``.
@@ -241,7 +238,7 @@ class XarrayMixIn:
                 to True unless the ``profile`` overwrites it.
             * add_valid_time_coord: bool, None
                 If True, add the `valid_time` coordinate containing np.datetime64 values to the
-                dataset. Only makes effect when ``time_dim_mode`` is not "valid_time". Its default
+                dataset. Only takes effect when ``"valid_time"`` is not in ``time_dims``. Its default
                 value (None) expands to False unless the ``profile`` overwrites it.
             * decode_times: bool, None
                 If True, decode date and datetime coordinates into ``datetime64`` values.
@@ -399,11 +396,11 @@ class XarrayMixIn:
         --------
         >>> import earthkit.data
         >>> fs = earthkit.data.from_source("sample", "pl.grib")
-        >>> ds = fs.to_xarray(time_dim_mode="forecast")
+        >>> ds = fs.to_xarray(time_dims=["forecast_reference_time", "step"])
         >>> # also possible to use the xarray_open_dataset_kwargs
         >>> ds = fs.to_xarray(
         ...     xarray_open_dataset_kwargs={
-        ...         "backend_kwargs": {"time_dim_mode": "forecast"}
+        ...         "backend_kwargs": {"time_dims": ["forecast_reference_time", "step"]}
         ...     }
         ... )
 

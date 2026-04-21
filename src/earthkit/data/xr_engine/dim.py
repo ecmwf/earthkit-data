@@ -474,30 +474,20 @@ class DimRole:
             return default, default
 
 
-class DimMode:
-    default = {}  # maps key to name
+class _ForecastRefTimeDimFactory:
+    """Helper to build forecast_reference_time dims with CustomForecastRefDim support."""
 
-    def build(self, profile, owner, active=True, dims=None):
-        if not dims:
-            dims = self.default
-        return {name: make_dim(owner, name=name, key=key, active=active) for name, key in dims.items()}
-
-
-class ForecastTimeDimMode(DimMode):
-    name = "forecast"
-
-    def build(self, profile, owner, active=True):
+    @staticmethod
+    def build(owner, active=True):
         ref_time_key, ref_time_name = owner.dim_roles.role("forecast_reference_time", raise_error=False)
-        # print(f"{ref_time_key=}, {ref_time_name=}", flush=True)  ###PW
-        # TODO: decide if we allow this fallback when forecast_reference_time is None
         if ref_time_key is None:
             date, _ = owner.dim_roles.role("date")
             time, _ = owner.dim_roles.role("time")
-            ref_time_dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
+            dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
         elif isinstance(ref_time_key, dict):
             date = ref_time_key.get("date", None)
             time = ref_time_key.get("time", None)
-            ref_time_dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
+            dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
         elif isinstance(ref_time_key, (tuple, list)):
             if len(ref_time_key) != 2:
                 raise ValueError(
@@ -508,9 +498,9 @@ class ForecastTimeDimMode(DimMode):
                 )
             date = ref_time_key[0]
             time = ref_time_key[1]
-            ref_time_dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
+            dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
         elif isinstance(ref_time_key, str):
-            ref_time_dim = make_dim(owner, name=ref_time_name, key=ref_time_key, active=active)
+            dim = make_dim(owner, name=ref_time_name, key=ref_time_key, active=active)
         else:
             raise ValueError(
                 (
@@ -518,77 +508,24 @@ class ForecastTimeDimMode(DimMode):
                     " with 'date' and 'time' or a list/tuple with two elements representing date and time keys."
                 )
             )
+        if active:
+            _ForecastRefTimeDimFactory._register_ref_time_key(dim.key)
+        return dim
 
-        step_key, step_name = owner.dim_roles.role("step")
-        step_dim = make_dim(owner, name=step_name, key=step_key, active=active)
-
-        # TODO: the next two lines seem to have no effect!
-        self.register_ref_time_key(ref_time_dim.key)
-        self.register_step_key(step_dim.key)
-
-        return {d.name: d for d in [ref_time_dim, step_dim]}
-
-    def register_ref_time_key(self, name):
+    @staticmethod
+    def _register_ref_time_key(name):
         global BASE_DATETIME_KEYS
-        global VALID_DATETIME_KEYS
         if name not in BASE_DATETIME_KEYS:
             BASE_DATETIME_KEYS.append(name)
 
-    def register_step_key(self, name):
-        global STEP_KEYS
-        if name not in STEP_KEYS:
-            STEP_KEYS.append(name)
+
+def _register_step_key(name):
+    global STEP_KEYS
+    if name not in STEP_KEYS:
+        STEP_KEYS.append(name)
 
 
-class ValidTimeDimMode(DimMode):
-    name = "valid_time"
-    default = {"valid_time": "time.valid_datetime"}
-
-
-class RawTimeDimMode(DimMode):
-    name = "raw"
-
-    def build(self, profile, owner, active=True):
-        dims = {}
-
-        date_key, date_name = owner.dim_roles.role("date")
-        dims[date_name] = date_key
-        time_key, time_name = owner.dim_roles.role("time")
-        dims[time_name] = time_key
-        step_key, step_name = owner.dim_roles.role("step")
-        dims[step_name] = step_key
-
-        no_date = dims[date_name] is None
-        no_time = dims[time_name] is None
-
-        if no_date and no_time:
-            v = owner.dim_roles.role("forecast_reference_time")
-            if not isinstance(v, str):
-                raise ValueError(
-                    "Dimension roles: forecast_reference_time must be a single string when date and time"
-                    " roles are not specified for time_dim_mode=raw"
-                )
-
-            if v in ["time.forecast_reference_time", "time.base_datetime"]:
-                dims[date_name] = "time.base_date"
-                dims[time_name] = "time.base_time"
-            else:
-                raise ValueError(
-                    "Dimension roles: when the date or time role is unspecified time_dim_mode=raw is only"
-                    " supported when forecast_reference_time is"
-                    " time.forecast_reference_time or time.base_datetime."
-                )
-
-        elif no_date or no_time:
-            raise ValueError(
-                "Dimension roles: either forecast_reference_time or both date and time must be specified"
-                " for time_dim_mode=raw"
-            )
-
-        return super().build(profile, owner, active=active, dims=dims)
-
-
-class LevelDimMode(DimMode):
+class LevelDimMode:
     name = "level"
 
     def build(self, profile, owner, **kwargs):
@@ -603,7 +540,7 @@ class LevelDimMode(DimMode):
         return {level_dim.name: level_dim, level_type_dim.name: level_type_dim}
 
 
-class LevelAndTypeDimMode(DimMode):
+class LevelAndTypeDimMode:
     name = "level_and_type"
     dim = LevelAndTypeDim
 
@@ -620,7 +557,7 @@ class LevelPerTypeDimMode(LevelAndTypeDimMode):
     dim = LevelPerTypeDim
 
 
-TIME_DIM_MODES = {v.name: v for v in [ForecastTimeDimMode, ValidTimeDimMode, RawTimeDimMode]}
+ALL_TIME_ROLES = ["forecast_reference_time", "step", "valid_time", "date", "time"]
 LEVEL_DIM_MODES = {v.name: v for v in [LevelDimMode, LevelPerTypeDimMode, LevelAndTypeDimMode]}
 
 
@@ -643,22 +580,88 @@ class MemberDimBuilder(DimBuilder):
 
 
 class TimeDimBuilder(DimBuilder):
+    """Build time dimensions based on the ``time_dims`` list.
+
+    Each element of ``time_dims`` is a role name (e.g. ``"forecast_reference_time"``,
+    ``"step"``, ``"valid_time"``, ``"date"``, ``"time"``).  For every requested role
+    the corresponding dimension is created as *active*; all other known time roles
+    are created as *inactive* (ignored).
+    """
+
     name = "time"
 
     def __init__(self, profile, owner):
-        mode = TIME_DIM_MODES.get(owner.time_dim_mode, None)
-        if mode is None:
-            raise ValueError(f"Unknown time_dim_mode={owner.time_dim_mode}")
-
-        mode_instance = mode()
-        self.used = mode_instance.build(profile, owner)
+        self.used = {}
         self.ignored = {}
-        for _, other_mode in TIME_DIM_MODES.items():
-            if other_mode != mode:
-                _ignored = other_mode().build(profile, owner, active=False)
-                for name in self.used:
-                    _ignored.pop(name, None)
-                self.ignored.update(_ignored)
+
+        requested = list(owner.time_dims)
+
+        for role_name in requested:
+            if role_name not in ALL_TIME_ROLES:
+                raise ValueError(
+                    f"Unknown time dimension role '{role_name}' in time_dims. Must be one of {ALL_TIME_ROLES}"
+                )
+
+        # Handle date/time fallback when both are requested but roles are None
+        self._resolve_date_time_fallback(requested, owner)
+
+        for role_name in requested:
+            dim = self._build_dim_for_role(role_name, owner, active=True)
+            if dim is not None:
+                self.used[dim.name] = dim
+
+        for role_name in ALL_TIME_ROLES:
+            if role_name not in requested:
+                dim = self._build_dim_for_role(role_name, owner, active=False)
+                if dim is not None and dim.name not in self.used:
+                    self.ignored[dim.name] = dim
+
+    @staticmethod
+    def _resolve_date_time_fallback(requested, owner):
+        """When both 'date' and 'time' are requested but their roles are None,
+        fall back to deriving them from the forecast_reference_time role.
+        """
+        if "date" in requested and "time" in requested:
+            date_key, _ = owner.dim_roles.role("date", raise_error=False)
+            time_key, _ = owner.dim_roles.role("time", raise_error=False)
+            no_date = date_key is None
+            no_time = time_key is None
+
+            if no_date and no_time:
+                frt_key, _ = owner.dim_roles.role("forecast_reference_time", raise_error=False)
+                if isinstance(frt_key, str) and frt_key in [
+                    "time.forecast_reference_time",
+                    "time.base_datetime",
+                ]:
+                    owner.dim_roles.d["date"] = "time.base_date"
+                    owner.dim_roles.d["time"] = "time.base_time"
+                else:
+                    raise ValueError(
+                        "Dimension roles: when the date and time roles are unspecified, "
+                        "time_dims containing both 'date' and 'time' is only supported when "
+                        "forecast_reference_time is time.forecast_reference_time or time.base_datetime."
+                    )
+            elif no_date or no_time:
+                raise ValueError(
+                    "Dimension roles: either both or neither of date and time roles must be "
+                    "specified when both 'date' and 'time' are in time_dims"
+                )
+
+    @staticmethod
+    def _build_dim_for_role(role_name, owner, active=True):
+        if role_name == "forecast_reference_time":
+            return _ForecastRefTimeDimFactory.build(owner, active=active)
+        elif role_name == "step":
+            key, name = owner.dim_roles.role("step")
+            dim = make_dim(owner, name=name, key=key, active=active)
+            if active:
+                _register_step_key(dim.key)
+            return dim
+        else:
+            key, name = owner.dim_roles.role(role_name, raise_error=False)
+            if key is None:
+                return None
+            return make_dim(owner, name=name, key=key, active=active)
 
 
 class LevelDimBuilder(DimBuilder):
@@ -712,7 +715,7 @@ class DimHandler:
         dim_roles,
         dim_name_from_role_name,
         dims_as_attrs,
-        time_dim_mode,
+        time_dims,
         level_dim_mode,
         squeeze,
     ):
@@ -728,7 +731,7 @@ class DimHandler:
         self.split_dims = ensure_iterable(split_dims)
         self.rename_dims_map = ensure_dict(rename_dims)
         self.dims_as_attrs = list(ensure_iterable(dims_as_attrs))
-        self.time_dim_mode = time_dim_mode
+        self.time_dims = ensure_iterable(time_dims)
         self.level_dim_mode = level_dim_mode
         self.squeeze = squeeze
 
@@ -937,7 +940,7 @@ class DimHandler:
         # construct initial dims, ensure core dims are in the right order
         all_dims = {}
         for k in dims:
-            if k in remapping_dims or (k not in core_dims and k not in ignored):
+            if k in remapping_dims or (k not in core_dims and not self._is_ignored(k, ignored)):
                 if k in self.ensure_dims or k not in self.drop_dims:
                     all_dims[k] = dims[k]
 
@@ -955,6 +958,16 @@ class DimHandler:
 
         # print(f"all_dims", all_dims)
         return all_dims
+
+    @staticmethod
+    def _is_ignored(key, ignored):
+        """Check if *key* matches any ignored dim by name, key or alias."""
+        if key in ignored:
+            return True
+        for d in ignored.values():
+            if key in d:
+                return True
+        return False
 
     def var_dim_found_error_message(self, keys):
         return (

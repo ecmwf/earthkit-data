@@ -24,7 +24,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
     [
         (
             ["level", "pl.grib"],
-            {"time_dim_mode": "raw", "split_dims": ["time.step"], "dim_name_from_role_name": False},
+            {"time_dims": ["date", "time", "step"], "split_dims": ["time.step"], "dim_name_from_role_name": False},
             2,
             ["2t", "msl", "r", "t"],
             ["date", "time", "levelist"],
@@ -33,7 +33,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         (
             ["level", "pl.grib"],
             {
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "split_dims": ["metadata.step"],
                 "ensure_dims": "metadata.step",
                 "dim_name_from_role_name": False,
@@ -46,13 +46,13 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         (
             ["cds-reanalysis-era5-single-levels-20230101-low-resol.grib"],
             {
-                "time_dim_mode": "valid_time",
+                "time_dims": ["valid_time"],
                 "split_dims": ["metadata.stream", "metadata.dataType", "metadata.edition", "metadata.Ni"],
                 "dim_name_from_role_name": False,
             },
             11,
             None,
-            ["valid_time"],
+            ["valid_datetime"],
             [
                 {
                     "metadata.stream": "enda",
@@ -124,7 +124,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         ),
         (
             ["level", "pl.grib"],
-            {"time_dim_mode": "raw", "split_dims": ["time.step"], "dim_name_from_role_name": True},
+            {"time_dims": ["date", "time", "step"], "split_dims": ["time.step"], "dim_name_from_role_name": True},
             2,
             ["2t", "msl", "r", "t"],
             ["date", "time", "level"],
@@ -132,7 +132,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         ),
         (
             ["level", "pl.grib"],
-            {"time_dim_mode": "raw", "split_dims": ["metadata.step"], "dim_name_from_role_name": True},
+            {"time_dims": ["date", "time", "step"], "split_dims": ["metadata.step"], "dim_name_from_role_name": True},
             2,
             ["2t", "msl", "r", "t"],
             ["date", "time", "level"],
@@ -141,7 +141,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         (
             ["level", "pl.grib"],
             {
-                "time_dim_mode": "raw",
+                "time_dims": ["date", "time", "step"],
                 "split_dims": ["time.step"],
                 "ensure_dims": "step",
                 "dim_name_from_role_name": True,
