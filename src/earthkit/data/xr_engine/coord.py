@@ -83,7 +83,9 @@ class Coord:
         # datetime64 arrays are already in the required format
         if isinstance(vals, np.ndarray):
             if not np.issubdtype(vals.dtype, np.datetime64):
-                return to_datetime_list(vals.tolist())
+                original_shape = vals.shape
+                flat = to_datetime_list(vals.flatten().tolist())
+                return np.array(flat, dtype="datetime64[ns]").reshape(original_shape)
         else:
             return to_datetime_list(vals)
 

@@ -337,19 +337,6 @@ class BackendDataBuilder(metaclass=ABCMeta):
             r[k] = xarray.Variable(dims, v, self.profile.attrs.coord_attrs.get(k, {}))
         return r
 
-    def collect_date_coords(self, tensor):
-        if (
-            self.profile.add_valid_time_coord
-            and "valid_time" not in tensor.user_dims
-            and "valid_datetime" not in tensor.user_coords
-            and "valid_time" not in self.tensor_coords
-        ):
-            from .coord import Coord
-
-            _dims, _vals = tensor.make_valid_datetime(self.dims)
-            if _dims is not None and _vals is not None:
-                self.tensor_coords["valid_time"] = Coord.make("valid_time", _vals, dims=_dims)
-
     def collect_aux_coords(self):
         from .coord import Coord
 
@@ -408,9 +395,6 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
     def build(self):
         if self.profile.allow_holes:
-            if self.profile.add_valid_time_coord:
-                raise NotImplementedError("add_valid_time_coord=True not yet supported when allow_holes=True")
-
             global_tensor_dims, self.raw_global_tensor_coords, _ = self.prepare_tensor(
                 self.ds, self.dims, "<ALL VARIABLES>"
             )
@@ -432,6 +416,16 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         # From now on, self.tensor_coords is a mapping:
         # dimension_name->a Coord object + possibly the same for "valid_time"
+
+        # Inject valid_time as an auxiliary coordinate when requested and when valid_time is not a dimension
+        if (
+            self.profile.add_valid_time_coord
+            and "valid_time" not in [d.name for d in self.dims]
+            and "time.valid_datetime" not in self.tensor_coords
+        ):
+            time_dim_names = self.profile.dims.active_time_dim_names
+            if time_dim_names:
+                self.profile.aux_coords.setdefault("valid_time", ("time.valid_datetime", time_dim_names))
 
         self.collect_aux_coords()
 
@@ -518,7 +512,6 @@ class BackendDataBuilder(metaclass=ABCMeta):
             var_dims.append(k)
         var_dims.extend(tensor.field_dims)
 
-        self.collect_date_coords(tensor)
         data_maker = self.build_values
         remapping = self.profile.remapping.build()
 
