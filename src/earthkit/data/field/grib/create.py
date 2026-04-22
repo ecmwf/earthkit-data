@@ -11,7 +11,7 @@
 from earthkit.data.field.handler.data import ArrayDataFieldComponentHandler
 
 
-def create_grib_field(handle, data=None, cache=False, extra_keys=None):
+def create_grib_field(handle, data=None, cache=False, extra_keys=None, template_field=None):
     from earthkit.data.core.field import Field
     from earthkit.data.field.grib.data import GribData
     from earthkit.data.field.grib.ensemble import GribEnsemble
@@ -22,18 +22,8 @@ def create_grib_field(handle, data=None, cache=False, extra_keys=None):
     from earthkit.data.field.grib.time import GribTime
     from earthkit.data.field.grib.vertical import GribVertical
 
-    # from earthkit.data.specs.labels import SimpleLabels
-
     if data is None:
         data = GribData(handle)
-
-    # parameter = GribParameter(handle)
-    # time = GribTime(handle)
-    # geography = GribGeography(handle)
-    # vertical = GribVertical(handle)
-    # labels = SimpleLabels()
-    # ensemble = GribEnsemble(handle)
-    # grib = GribLabels(handle)
 
     time = GribTime(handle)
     geography = GribGeographyHandler(handle)
@@ -43,6 +33,10 @@ def create_grib_field(handle, data=None, cache=False, extra_keys=None):
     parameter = GribParameter(handle)
     grib = GribMetadata(handle, extra_keys=extra_keys, cache=cache)
 
+    labels = None
+    if template_field is not None:
+        labels = template_field.labels
+
     r = Field(
         data=data,
         parameter=parameter,
@@ -51,7 +45,7 @@ def create_grib_field(handle, data=None, cache=False, extra_keys=None):
         vertical=vertical,
         ensemble=ensemble,
         proc=proc,
-        # labels=labels,
+        labels=labels,
     )
 
     r._set_private_data("metadata", grib)
@@ -77,10 +71,10 @@ def new_array_grib_field(field, handle, array_namespace=None, device=None, flatt
     return new_field
 
 
-def create_grib_field_from_message(buf):
+def create_grib_field_from_message(buf, template_field=None):
     from earthkit.data.readers.grib.handle import MemoryGribHandle
 
-    return create_grib_field(MemoryGribHandle.from_message(buf), cache=False)
+    return create_grib_field(MemoryGribHandle.from_message(buf), template_field=template_field, cache=False)
 
 
 create_grib_field_from_buffer = create_grib_field_from_message

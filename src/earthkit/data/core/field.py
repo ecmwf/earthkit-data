@@ -1368,7 +1368,7 @@ class Field(Base):
         Notes
         -----
         When the field was created from a GRIB message, calling :meth:`set` does not modify the original
-        GRIB message and the new field returned by :meth:`set` is not linked to a GRIB message. In the new field
+        GRIB message and the new field is not linked to a GRIB message. In the new field
         the GRIB message/handle will not be available and the GRIB specific keys in the raw metadata will not be
         accessible.
 
@@ -1383,10 +1383,10 @@ class Field(Base):
         >>> f1.message()
         None
 
-        However, if only the "data" or "values" key is used in :meth:`set` to set new data values, the new
+        However, if only the labels or the values are set (the latter via the "data" or "values" keys), the new
         field returned by :meth:`set` is still linked to the original GRIB message and the GRIB specific keys
-        in the raw metadata are still accessible. When calling :meth:`message` on the new field, the original GRIB
-        message with the modified data values is returned.
+        in the raw metadata are still accessible. If the values were modified, when calling :meth:`message` on the
+        new field, the original GRIB message updated with the modified data values is returned.
 
          >>> import earthkit.data as ekd
         >>> fl = ekd.from_source("sample", "test.grib").to_fieldlist()

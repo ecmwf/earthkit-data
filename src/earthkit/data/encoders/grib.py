@@ -205,12 +205,12 @@ class GribHandleMaker:
                     if handle is not None:
                         return _result(handle)
                 # GRIB sample as string
-                elif isinstance(handle, str):
+                elif isinstance(template, str):
                     handle = GribCodesHandle.from_sample(template)
                     if handle is not None:
                         return _result(handle)
                 # raw ecCodes handle
-                else:
+                elif isinstance(template, int):
                     try:
                         handle = GribCodesHandle._from_raw_handle(template)
                         if handle is not None:
@@ -606,7 +606,7 @@ class GribEncoder(Encoder):
         if values is None:
             values = field_values
 
-        if values is None and template is None:
+        if values is None:
             values = field.values
 
         if template is None:
