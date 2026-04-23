@@ -1468,7 +1468,7 @@ class Field(Base):
         data = self._components[_DATA].set_values(array)
         return Field.from_field(self, data=data)
 
-    def sync_raw_metadata(self):
+    def sync(self):
         """Return a field with the raw metadata in sync with the field's components.
 
         When a field is created from a GRIB message, the field stores this associated GRIB message/handle
@@ -1493,7 +1493,7 @@ class Field(Base):
         None
         >>> f1.metadata("shortName")
         KeyError: 'metadata.shortName' not found in field
-        >>> f2 = f1.sync_raw_metadata()
+        >>> f2 = f1.sync()
         >>> f2.get("metadata.shortName")
         'msl'
         >>> f2.metadata("shortName")
@@ -1503,7 +1503,10 @@ class Field(Base):
             from earthkit.data.encoders.grib import GribEncoder
 
             encoder = GribEncoder()
-            return encoder.encode(data=self).to_field()
+            f = encoder.encode(data=self).to_field()
+            if self.labels:
+                f = f.set(labels=self.labels)
+            return f
         return self
 
     def to_target(self, target, *args, **kwargs):

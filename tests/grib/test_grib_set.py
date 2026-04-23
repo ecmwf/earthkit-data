@@ -20,19 +20,8 @@ from earthkit.data.core.temporary import temp_file
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 # @pytest.mark.parametrize("fl_type", ["file"])
-def test_grib_set_detailed(fl_type):
+def test_grib_set_field_detailed_1(fl_type):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
-
-    # ---------------
-    # field
-    # ---------------
-
-    # f = ds_ori[0].clone(
-    #     param="q",
-    #     levelist=_func1,
-    #     mars_area=_func2,
-    #     name=_func3,
-    # )
 
     f = ds_ori[0].set({
         "parameter.variable": "q",
@@ -50,20 +39,15 @@ def test_grib_set_detailed(fl_type):
     assert f.get("labels.my_shape") == (181, 360)
     assert f.get("labels.my_name") == "t_500"
 
-    # TODO: apply wrapped metadata to namespaces
-    # assert f.get(namespace="mars") == {
-    #     "class": "ea",
-    #     "date": 20070101,
-    #     "domain": "g",
-    #     "expver": "0001",
-    #     "levelist": 500,
-    #     "levtype": "pl",
-    #     "param": "t",
-    #     "step": 0,
-    #     "stream": "oper",
-    #     "time": 1200,
-    #     "type": "an",
-    # }
+    f1 = f.sync()
+    assert f1.get("parameter.variable") == "q"
+    assert f1.get("metadata.shortName") == "q"
+    assert f1.get("vertical.level") == 600
+    assert f1.get("metadata.levelist") == 600
+    assert f1.get(("metadata.date", "parameter.variable")) == (20070101, "q")
+    assert f1.get(("parameter.variable", "metadata.date")) == ("q", 20070101)
+    assert f1.get("labels.my_shape") == (181, 360)
+    assert f1.get("labels.my_name") == "t_500"
 
     # write back to grib
     with temp_file() as tmp:
@@ -83,9 +67,11 @@ def test_grib_set_detailed(fl_type):
         assert f_saved.get("vertical.level_type") == "pressure"
         assert f_saved.get("metadata.typeOfLevel") == "isobaricInhPa"
 
-    # ---------------------
-    # field - repeated use
-    # ---------------------
+
+@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+# @pytest.mark.parametrize("fl_type", ["file"])
+def test_grib_set_field_detailed_2(fl_type):
+    ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     f = ds_ori[0].set({
         "parameter.variable": "q",
@@ -104,16 +90,27 @@ def test_grib_set_detailed(fl_type):
     assert f.get("vertical.level") == 800
     assert f.get("metadata.level") is None
     assert f.get("metadata.levelist") is None
-    # TODO: this should be 800
-    # assert f.metadata("levelist") == 700
     assert f.get(("metadata.date", "parameter.variable")) == (None, "pt")
     assert f.get(("parameter.variable", "metadata.date")) == ("pt", None)
-    # assert np.allclose(np.array(f.metadata("mars_area")), np.array([90.0, 0.0, -90.0, 359.0]))
     assert f.get("labels.my_name") == "t_500"
 
-    # ---------------
-    # fieldlist
-    # ---------------
+    f1 = f.sync()
+    assert f1.get("parameter.variable") == "pt"
+    assert f1.get("metadata.shortName") == "pt"
+    assert f1.get("vertical.level") == 800
+    assert f1.get("metadata.level") == 800
+    assert f1.get("metadata.levelist") == 800
+    assert f1.get("metadata.typeOfLevel") == "isobaricInhPa"
+    assert f1.get("vertical.level_type") == "pressure"
+    assert f1.get(("metadata.date", "parameter.variable")) == (20070101, "pt")
+    assert f1.get(("parameter.variable", "metadata.date")) == ("pt", 20070101)
+    assert f1.get("labels.my_name") == "t_500"
+
+
+@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+# @pytest.mark.parametrize("fl_type", ["file"])
+def test_grib_set_fieldlist_detailed(fl_type):
+    ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     fields = []
     for i in range(2):
@@ -419,3 +416,33 @@ def test_grib_set_no_args(fl_type):
     f = ds[0]
     r = f.set()
     assert r is f
+
+
+@pytest.mark.parametrize("fl_type", ["file"])
+def test_grib_set_field_sync(fl_type):
+    ds, _ = load_grib_data("test4.grib", fl_type)
+
+    f = ds[0]
+    f = f.set({
+        "parameter.variable": "q",
+        "vertical.level": 600,
+        "labels.my_shape": (181, 360),
+        "labels.my_name": "t_500",
+    })
+
+    assert f.get("parameter.variable") == "q"
+    assert f.get("metadata.shortName") is None
+    assert f.get("vertical.level") == 600
+    assert f.get("metadata.levelist") is None
+    assert f.get(("metadata.date", "parameter.variable")) == (None, "q")
+    assert f.get(("parameter.variable", "metadata.date")) == ("q", None)
+
+    f1 = f.sync()
+    assert f1.get("parameter.variable") == "q"
+    assert f1.get("metadata.shortName") == "q"
+    assert f1.get("vertical.level") == 600
+    assert f1.get("metadata.levelist") == 600
+    assert f1.get(("metadata.date", "parameter.variable")) == (20070101, "q")
+    assert f1.get(("parameter.variable", "metadata.date")) == ("q", 20070101)
+    assert f1.get("labels.my_shape") == (181, 360)
+    assert f1.get("labels.my_name") == "t_500"

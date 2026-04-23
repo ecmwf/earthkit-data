@@ -369,9 +369,68 @@ class GribHandleMaker:
 
 
 class GribEncoder(Encoder):
-    """Encode GRIB data."""
+    """Encoder for GRIB format.
 
-    def __init__(self, **kwargs):
+    This class is used to encode data to GRIB format via the :meth:`encode` method.
+
+    Parameters
+    ----------
+    template: Field, GribCodesHandle, bytes, str, int, None
+        A preset template to use for encoding when :meth:`encode` is called without a template.
+        It can be a :py:class:`~earthkit.data.core.field.Field`,
+        a :py:class:`~earthkit.data.reader.grib.GribCodesHandle`, a GRIB message as
+        bytes, an ecCodes GRIB sample name as string, a raw ecCodes handle as an integer, or None.
+        See :meth:`encode` for more details on how the template is used.
+    metadata: dict
+        A preset metadata to encode. The keys must be ecCodes GRIB keys, optionally prefixed with "metadata.".
+        This metadata is used as default when :meth:`encode` is called without metadata. If metadata is provided
+        in the :meth:`encode` method, it is merged with this preset metadata, with the metadata provided
+        in the :meth:`encode` method taking precedence.
+    kwargs: dict
+        Additional keyword arguments interpreted as metadata to encode. The keys must be ecCodes GRIB keys,
+        optionally prefixed with "metadata.".
+
+    Examples
+    --------
+    See the howto examples for more details and examples of encoding GRIB data with :class:`GribEncoder`.
+
+    - :ref:`/how-tos/target/grib_encoder.ipynb`
+    - :ref:`/how-tos/grib/grib_modify_metadata.ipynb`
+    - :ref:`/how-tos/grib/grib_modify_values.ipynb`
+
+    Using with a preset template and metadata:
+
+    >>> import earthkit.data as ekd
+    >>> template = ekd.from_source("sample", "test.grid").to_fieldlist()[0]
+    >>> template.get("metadata.shortName")
+    '2t'
+    >>> encoder = GribEncoder(template=template, metadata={"shortName": "msl"})
+    >>> d = encoder.encode(values=template.values + 1.0, step=6)
+    >>> f = d.to_field()
+    >>> f.get("parameter.variable")
+    'msl'
+    >>> f.get("parameter.shortName")
+    'msl'
+    >>> f.get("parameter.units")
+    'hPa'
+    >>> f.get("step")
+    6
+
+    Using without preset template and metadata:
+    >>> encoder = GribEncoder()
+    >>> d = encoder.encode(values=template.values + 1.0, metadata={"shortName": "msl"}, step=6)
+    >>> f = d.to_field()
+    >>> f.get("parameter.variable")
+    'msl'
+    >>> f.get("parameter.shortName")
+    'msl'
+    >>> f.get("parameter.units")
+    'hPa'
+    >>> f.get("step")
+    6
+    """
+
+    def __init__(self, template=None, metadata=None, **kwargs):
         super().__init__(**kwargs)
         self._bbox = {}
         # the template is stored as a handle to be used as a basis for encoding,
