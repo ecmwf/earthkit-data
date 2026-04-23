@@ -431,7 +431,7 @@ class GribEncoder(Encoder):
     """
 
     def __init__(self, template=None, metadata=None, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(template=template, metadata=metadata, **kwargs)
         self._bbox = {}
         # the template is stored as a handle to be used as a basis for encoding,
         # (when available)
