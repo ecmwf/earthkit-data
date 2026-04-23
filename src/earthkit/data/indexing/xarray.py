@@ -255,7 +255,7 @@ class XarrayMixIn:
                 overwrites it.
             * aux_coords: dict, None
                 Mapping from an auxiliary coordinate label to a tuple:
-                (metadata key, the dataset dimension(s)). The default value is None.
+                ``(metadata_key: str, dataset_dimension(s): str or iterable of str)``. The default value is None.
             * add_geo_coords: bool, None
                 Add geographic coordinates to the dataset when field values are represented by
                 a single "values" dimension. Its default value (None) expands
