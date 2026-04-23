@@ -369,8 +369,9 @@ class BackendDataBuilder(metaclass=ABCMeta):
             coords = {d.key: self.tensor_coords[d.key].vals for d in dim_objs if d.key in self.tensor_coords}
 
             dim_keys = tuple(coords)
-            _default = [None] * len(dim_keys)
-            _astype = [None] * len(dim_keys)
+            dim_names = tuple(d.name for d in dim_objs if d.key in self.tensor_coords)
+            _default = [None] * len(dim_names)
+            _astype = [None] * len(dim_names)
 
             vals = {}
             for f in self.ds:
@@ -386,9 +387,9 @@ class BackendDataBuilder(metaclass=ABCMeta):
                     new_val = f._get_fast(metadata_key, remapping=remapping)
                     if not val_missing:
                         assert new_val == val, (
-                            f"Conflicting values for the auxiliary coordinate {coord_label}({dim_keys}) "
-                            f"at {f_coords}: {val} and {new_val}. "
-                            f"Try other dimensions than {dim_keys} or use strict=False"
+                            f"Conflicting values for the auxiliary coordinate {coord_label}{dim_names} "
+                            f"at {f_coords}: {val} != {new_val}. "
+                            f"Try other dimensions than {dim_names} or use strict=False"
                         )
                     vals[f_coords] = new_val
 

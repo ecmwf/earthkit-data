@@ -258,7 +258,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             If None (default), assume the same value of ``decode_times`` unless the ``profile``
             overwrites it.
         aux_coords: dict, None
-            Mapping from an auxiliary coordinate label metadata keys to a tuple:
+            Mapping from an auxiliary coordinate label to a tuple:
             (metadata key, the dataset dimension(s)). The default value is None.
         add_geo_coords: bool, None
             If True, add geographic coordinates to the dataset when field values are represented by
