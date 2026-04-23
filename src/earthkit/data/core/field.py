@@ -1367,10 +1367,12 @@ class Field(Base):
 
         Notes
         -----
-        When the field was created from a GRIB message, calling :meth:`set` does not modify the original
-        GRIB message and the new field is not linked to a GRIB message. In the new field
-        the GRIB message/handle will not be available and the GRIB specific keys in the raw metadata will not be
-        accessible.
+        When the field is created from a GRIB message, calling :meth:`set` copies the associated
+        GRIB message into the new field without any modifications. Since it is now out of sync with the
+        new field's components, the new field will not provide access to any GRIB metadata
+        neither via :meth:`get` nor via :meth:`metadata`. Additionally, when calling
+        :meth:`message` on the new field, None is returned. (Use :meth:`sync` to synchronize the
+        associated GRIB message to the new field and expose the GRIB metadata keys again).
 
         >>> import earthkit.data as ekd
         >>> fl = ekd.from_source("sample", "test.grib").to_fieldlist()
@@ -1385,8 +1387,8 @@ class Field(Base):
 
         However, if only the labels or the values are set (the latter via the "data" or "values" keys), the new
         field returned by :meth:`set` is still linked to the original GRIB message and the GRIB specific keys
-        in the raw metadata are still accessible. If the values were modified, when calling :meth:`message` on the
-        new field, the original GRIB message updated with the modified data values is returned.
+        in the raw metadata are still accessible. If the values were modified, :meth:`message` will return
+        the original GRIB message updated with the modified data values.
 
          >>> import earthkit.data as ekd
         >>> fl = ekd.from_source("sample", "test.grib").to_fieldlist()
@@ -1471,11 +1473,14 @@ class Field(Base):
     def sync(self):
         """Return a field with the raw metadata in sync with the field's components.
 
-        When a field is created from a GRIB message, the field stores this associated GRIB message/handle
-        and the raw metadata is extracted from it. When the field's components are modified using :meth:`set`,
-        the raw metadata is not automatically updated to reflect the changes in the components and will
-        become hidden to the user. This method can be used to create a new field with the raw metadata updated
-        to be consistent with the current state of the field's components.
+        When a field is created from a GRIB message, it stores this associated GRIB message/handle
+        and the raw GRIB metadata is extracted from it e.g. when calling :meth:`get`. When the field's
+        components are modified using :meth:`set`, the GRIB message is copied into the new field but not
+        modified. Since it is now out of sync with the new field's components, the new field will
+        not provide access to any GRIB metadata either via :meth:`get` or via :meth:`metadata`. When
+        :meth:`sync` is called on such a field the GRIB message is re-encoded using the field's components
+        and the raw GRIB metadata will become available again and in sync with the field's components.
+
 
         Returns
         -------
