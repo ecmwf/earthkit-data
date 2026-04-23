@@ -7,7 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 import logging
 import math
 
@@ -79,26 +78,14 @@ class ListDiff:
 
     @staticmethod
     def _compare(v1, v2):
-        if isinstance(v1, int) and isinstance(v2, int):
-            return v1 == v2, ListDiff.VALUE_DIFF
-        elif isinstance(v1, float) and isinstance(v2, float):
+        if isinstance(v1, float) and isinstance(v2, float):
             return math.isclose(v1, v2, rel_tol=1e-9), ListDiff.VALUE_DIFF
-        elif isinstance(v1, str) and isinstance(v2, str):
-            return v1 == v2, ListDiff.VALUE_DIFF
-        elif isinstance(v1, datetime.datetime) and isinstance(v2, datetime.datetime):
-            return v1 == v2, ListDiff.VALUE_DIFF
-        elif isinstance(v1, datetime.date) and isinstance(v2, datetime.date):
-            return v1 == v2, ListDiff.VALUE_DIFF
-        elif isinstance(v1, datetime.time) and isinstance(v2, datetime.time):
-            return v1 == v2, ListDiff.VALUE_DIFF
-        elif isinstance(v1, datetime.timedelta) and isinstance(v2, datetime.timedelta):
-            return v1 == v2, ListDiff.VALUE_DIFF
         elif v1 is None and v2 is None:
             return True, ListDiff.VALUE_DIFF
         elif type(v1) is not type(v2):
             return False, ListDiff.TYPE_DIFF
         else:
-            raise ValueError(f"Unsupported type: {type(v1)}")
+            return v1 == v2, ListDiff.VALUE_DIFF
 
     @staticmethod
     def diff(vals1, vals2, name=str()):
