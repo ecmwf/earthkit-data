@@ -1468,6 +1468,44 @@ class Field(Base):
         data = self._components[_DATA].set_values(array)
         return Field.from_field(self, data=data)
 
+    def sync_raw_metadata(self):
+        """Return a field with the raw metadata in sync with the field's components.
+
+        When a field is created from a GRIB message, the field stores this associated GRIB message/handle
+        and the raw metadata is extracted from it. When the field's components are modified using :meth:`set`,
+        the raw metadata is not automatically updated to reflect the changes in the components and will
+        become hidden to the user. This method can be used to create a new field with the raw metadata updated
+        to be consistent with the current state of the field's components.
+
+        Returns
+        -------
+        Field
+            A field with the raw metadata in sync with the field's components. If the field is not associated with
+            a GRIB message or if the raw metadata is already in sync, the original field is returned.
+
+        Examples
+        --------
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "test.grib").to_fieldlist()
+        >>> f = fl[0]
+        >>> f1 = f.set({"parameter.variable": "msl", "parameter.units": "Pa"})
+        >>> f1.get("metadata.shortName")
+        None
+        >>> f1.metadata("shortName")
+        KeyError: 'metadata.shortName' not found in field
+        >>> f2 = f1.sync_raw_metadata()
+        >>> f2.get("metadata.shortName")
+        'msl'
+        >>> f2.metadata("shortName")
+        'msl'
+        """
+        if self._get_grib() and self._private and "_metadata" in self._private:
+            from earthkit.data.encoders.grib import GribEncoder
+
+            encoder = GribEncoder()
+            return encoder.encode(data=self).to_field()
+        return self
+
     def to_target(self, target, *args, **kwargs):
         r"""Write the field into a target object.
 
