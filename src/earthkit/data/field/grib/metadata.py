@@ -31,6 +31,7 @@ class MetadataCacheHandler:
             return MetadataCacheHandler.make_default_cache()
         elif cache is not False and cache is not None:
             return cache
+        return None
 
     @staticmethod
     def make_default_cache():
@@ -192,7 +193,7 @@ class GribMetadata:
             v = self.get("step", None)
         return to_timedelta(v)
 
-    def message(self, deflate=False):
+    def message(self, deflate=False, owner=None):
         r"""Return a buffer containing the encoded message.
 
         Returns
@@ -201,6 +202,14 @@ class GribMetadata:
         """
         if deflate:
             return self._handle.deflate().get_buffer()
+        elif owner is not None:
+            data = owner._components.get("data")
+            if not hasattr(data, "handle"):
+                data = owner.to_numpy(flatten=True)
+                handle = self._handle.clone()
+                handle.set_values(data)
+                return handle.get_buffer()
+
         return self._handle.get_buffer()
 
     def as_namespace(self, namespace):
@@ -231,10 +240,11 @@ class GribMetadata:
                 handle_new = v.handle
 
         if handle_new:
-            self._handle = handle_new
             for k, v in owner._components.items():
-                if hasattr(v, "handle") and hasattr(v, "from_handle") and v.handle is not self.handle:
+                if hasattr(v, "handle") and hasattr(v, "from_handle") and v.handle is not handle_new:
                     owner._components[k] = v.from_handle(handle_new)
+            return GribMetadata(handle_new, extra_keys=self.extra_keys, cache=True if self._cache is not None else None)
+        return self
 
     def get_extra_key(self, key, default=None):
         if self.extra_keys is not None:

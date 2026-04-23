@@ -198,7 +198,9 @@ class CodesHandle(eccodes.Message):
         return cls(eccodes.codes_new_from_samples(name, cls.PRODUCT_ID), None, None)
 
     @classmethod
-    def _from_raw_handle(cls, handle):
+    def _from_raw_handle(cls, handle, clone=False):
+        if clone:
+            handle = eccodes.codes_clone(handle)
         return cls(handle, None, None)
 
     @classmethod
@@ -212,6 +214,14 @@ class CodesHandle(eccodes.Message):
     @classmethod
     def _raw_handle_from_message(cls, message):
         return eccodes.codes_new_from_message(message, cls.PRODUCT_ID)
+
+    def _raw_handle(self, clone=True):
+        # TODO: review if clone can be False at all. This object is managing the
+        # raw ecCodes handle and if clone is False, can cause issues.
+        if clone:
+            return eccodes.codes_clone(self._handle)
+        else:
+            return self._handle
 
     # TODO: just a wrapper around the base class implementation to handle the
     # s,l,d qualifiers. Once these are implemented in the base class this method can

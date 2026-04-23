@@ -88,7 +88,7 @@ class FilePatternTarget(SimpleTarget):
         def _convert(v):
             if v is None:
                 return "None"
-            return str(v)
+            return v
 
         keys = [_convert(data.get(k.split(":")[0])) for k in self.split_output]
         path = self.filename.format(*keys)

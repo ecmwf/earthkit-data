@@ -27,6 +27,7 @@ _SKIP = {
         "sources.SourceMaker",
     ],
     "data": [
+        "encoders.grib.encoder",
         "sources.get_source",
     ],
     "method": [
@@ -43,7 +44,9 @@ def _skip_api_items(app, what, name, obj, skip, options):
     # if "ArrayLike" in name:
     #     print(f"Skipping {what} {name} {obj}")
 
-    if what == "data" and ".ArrayLike" in name:
+    if name.endswith(".LOG"):
+        skip = True
+    elif what == "data" and ".ArrayLike" in name:
         skip = True
     else:
         s = _SKIP.get(what, [])
