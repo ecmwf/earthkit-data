@@ -21,6 +21,9 @@ from earthkit.data.utils.testing import earthkit_examples_file, load_nc_or_xr_so
     "key,expected_value",
     [
         ("parameter.variable", "t"),
+        ("parameter.standard_name", "air_temperature"),
+        ("parameter.long_name", "Temperature"),
+        ("parameter.units", "K"),
         ("vertical.level", 1000),
         (["parameter.variable"], ["t"]),
         (["parameter.variable", "vertical.level"], ["t", 1000]),

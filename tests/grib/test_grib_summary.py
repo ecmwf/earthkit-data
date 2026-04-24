@@ -329,7 +329,10 @@ def test_grib_ls_component(_kwargs, expected_values, fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     df = f.ls(**_kwargs)
-    assert expected_values == df.to_dict()
+    d = df.to_dict()
+    for k, v in expected_values.items():
+        assert k in d, f"key {k} missing from result"
+        assert v == d[k], f"key {k} expected {v} got {d[k]}"
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)

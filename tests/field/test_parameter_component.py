@@ -19,6 +19,8 @@ def test_parameter_component_alias_1():
     assert r.variable() == "t"
     assert r.param() == "t"
     assert r.units() == "K"
+    assert r.standard_name() is None
+    assert r.long_name() is None
 
 
 @pytest.mark.parametrize(
@@ -26,7 +28,17 @@ def test_parameter_component_alias_1():
     [
         (
             [{"variable": "t", "units": "K"}, {"param": "t", "units": "K"}],
-            ("t", "K"),
+            {"variable": "t", "param": "t", "units": "K", "standard_name": None, "long_name": None},
+        ),
+        (
+            {"variable": "t", "units": "K", "standard_name": "air_temperature", "long_name": "Temperature"},
+            {
+                "variable": "t",
+                "param": "t",
+                "units": "K",
+                "standard_name": "air_temperature",
+                "long_name": "Temperature",
+            },
         ),
     ],
 )
@@ -39,9 +51,11 @@ def test_parameter_component_from_dict_ok(input_d, ref):
         for d in input_d:
             r = Parameter.from_dict(d)
 
-            assert r.variable() == ref[0]
-            assert r.param() == ref[0]
-            assert r.units() == ref[1]
+            assert r.variable() == ref["variable"]
+            assert r.param() == ref["param"]
+            assert r.units() == ref["units"]
+            assert r.standard_name() == ref["standard_name"]
+            assert r.long_name() == ref["long_name"]
 
 
 @pytest.mark.parametrize(
