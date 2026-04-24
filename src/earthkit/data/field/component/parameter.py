@@ -34,6 +34,9 @@ class ParameterBase(SimpleFieldComponent):
     of supported keys are as follows:
 
     - "variable": string representing the parameter variable
+    - "standard_name": string representing the standard name of the parameter variable, based
+       on the CF standard name
+    - "long_name": string representing the long name of the parameter variable
     - "units": as a string or a :class:`Units` object representing the parameter units
     - "chem_variable": string representing the parameter chemical variable
     - "param": alias of "variable"
@@ -105,6 +108,25 @@ class ParameterBase(SimpleFieldComponent):
     def param(self) -> Optional[str]:
         pass
 
+    @mark_get_key
+    @abstractmethod
+    def standard_name(self) -> Optional[str]:
+        """Return the standard name of the parameter variable.
+
+        The standard name is a string representing the standard name of the parameter variable. It is
+        based on the CF standard name.
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def long_name(self) -> Optional[str]:
+        """Return the long name of the parameter variable.
+
+        The long name is a string representing the long name of the parameter variable
+        """
+        pass
+
 
 def create_parameter(d: dict) -> "ParameterBase":
     """Create a ParameterBase object from a dictionary.
@@ -123,7 +145,12 @@ def create_parameter(d: dict) -> "ParameterBase":
         raise TypeError(f"Cannot create Parameter from {type(d)}, expected dict")
 
     cls = Parameter
-    d1 = cls._normalise_create_kwargs(d, allowed_keys=("variable", "units", "chem_variable"))
+    d1 = cls._normalise_create_kwargs(
+        d, allowed_keys=("variable", "units", "chem_variable", "standard_name", "long_name")
+    )
+    if "variable" not in d1:
+        raise ValueError("Cannot create Parameter without variable")
+
     return cls(**d1)
 
 
@@ -132,6 +159,20 @@ class EmptyParameter(ParameterBase):
 
     def variable(self) -> None:
         r"""Return the parameter variable.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def standard_name(self) -> None:
+        r"""Return the standard name of the parameter variable.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def long_name(self) -> None:
+        r"""Return the long name of the parameter variable.
 
         An EmptyParameter does not contain any parameter information, and this method returns None.
         """
@@ -191,14 +232,29 @@ class Parameter(ParameterBase):
 
     _chem_variable = None
 
-    def __init__(self, variable: str = None, units: Union[str, "Units"] = None, chem_variable: str = None) -> None:
+    def __init__(
+        self,
+        variable: str = None,
+        standard_name: str = None,
+        long_name: str = None,
+        units: Union[str, "Units"] = None,
+        chem_variable: str = None,
+    ) -> None:
         self._variable = variable
+        self._standard_name = standard_name
+        self._long_name = long_name
         self._units = Units.from_any(units)
         if chem_variable is not None:
             self._chem_variable = chem_variable
 
     def variable(self) -> Optional[str]:
         return self._variable
+
+    def standard_name(self) -> Optional[str]:
+        return self._standard_name
+
+    def long_name(self) -> Optional[str]:
+        return self._long_name
 
     def units(self) -> Optional["Units"]:
         return self._units
@@ -228,17 +284,31 @@ class Parameter(ParameterBase):
         return create_parameter(d)
 
     def to_dict(self):
-        return {"variable": self._variable, "units": str(self._units)}
+        return {
+            "variable": self._variable,
+            "standard_name": self._standard_name,
+            "long_name": self._long_name,
+            "units": str(self._units),
+            "chem_variable": self._chem_variable,
+        }
 
     def __getstate__(self):
         state = {}
         state["variable"] = self._variable
+        state["standard_name"] = self._standard_name
+        state["long_name"] = self._long_name
         state["units"] = str(self._units)
         state["chem_variable"] = self._chem_variable
         return state
 
     def __setstate__(self, state):
-        self.__init__(variable=state["variable"], units=state["units"], chem_id=state["chem_variable"])
+        self.__init__(
+            variable=state["variable"],
+            standard_name=state["standard_name"],
+            long_name=state["long_name"],
+            units=state["units"],
+            chem_variable=state["chem_variable"],
+        )
 
     def set(self, *args, **kwargs):
         """Create a new instance with updated data.
@@ -254,11 +324,18 @@ class Parameter(ParameterBase):
 
             - "variable": The parameter variable.
             - "units": The parameter units, as a string or a Units object.
+            - "standard_name": The standard name of the parameter variable.
+            - "long_name": The long name of the parameter variable.
+            - "chem_variable": The chemical variable of the parameter.
         """
-        d = self._normalise_set_kwargs(*args, allowed_keys=("variable", "units", "chem_variable"), **kwargs)
+        d = self._normalise_set_kwargs(
+            *args, allowed_keys=("variable", "units", "chem_variable", "standard_name", "long_name"), **kwargs
+        )
 
         current = {
             "variable": self._variable,
+            "standard_name": self._standard_name,
+            "long_name": self._long_name,
             "units": self._units,
             "chem_variable": self._chem_variable,
         }
