@@ -32,14 +32,18 @@ class GribParameterBuilder:
             v = handle.get("paramId", ktype=str, default=None)
         if v is None:
             v = _get("param", None)
-        name = v
+        variable = v
+        standard_name = _get("cfName", None)
+        long_name = _get("name", None)
 
         units = _get("units", None)
 
         chem_name = _get("chemShortName", None)
 
         return dict(
-            variable=name,
+            variable=variable,
+            standard_name=standard_name,
+            long_name=long_name,
             units=units,
             chem_variable=chem_name,
         )
