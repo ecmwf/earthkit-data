@@ -19,38 +19,68 @@ from . import EncodedData, Encoder, FilePathEncodedData
 
 LOG = logging.getLogger(__name__)
 
-NOT_IN_EDITION_1 = (
+_NOT_IN_EDITION_1 = (
     "productDefinitionTemplateNumber",
     "typeOfGeneratingProcess",
 )
 
-COMPULSORY = (("date", "referenceDate"), ("param", "paramId", "shortName"))
+_COMPULSORY = (("date", "referenceDate"), ("param", "paramId", "shortName"))
 
 
 class GribEncodedData(EncodedData):
+    """The object representing the encoded GRIB message."""
+
     def __init__(self, handle):
+        """Initialize the GribEncodedData object.
+
+        Parameters
+        ----------
+        handle: GribCodesHandle
+            The handle to the GRIB message.
+        """
         self.handle = handle
 
     def to_bytes(self):
+        """Return the GRIB message as bytes."""
         return self.handle.get_buffer()
 
     def to_file(self, f):
+        """Write the GRIB message to a file.
+
+        Parameters
+        ----------
+        f: file-like object
+            The file-like object to write the GRIB message to.
+
+        """
         self.handle.write(f)
 
     def get(self, key, default=None):
-        if key:
+        """Get a value from the GRIB message metadata.
+
+        Parameters
+        ----------
+        key: str
+            The key of the metadata to retrieve.
+        default: any, optional
+            The default value to return if the key is not found.
+
+        Returns
+        -------
+        The value associated with the key, or the default value if the key is not found.
+        """
+        if key.startswith("metadata."):
+            return self.handle.get(key[9:], default=default)
+        elif key:
             return self.to_field().get(key, default=default)
         else:
             raise NotImplementedError
 
     def to_field(self):
-        # from earthkit.data.readers.grib.memory import GribFieldInMemory
+        """Convert the GRIB message to a Field object."""
+        from earthkit.data.field.grib.create import create_grib_field_from_message
 
-        # return GribFieldInMemory.from_buffer(self.to_bytes())
-
-        from earthkit.data.field.grib.create import create_grib_field_from_buffer
-
-        return create_grib_field_from_buffer(self.to_bytes())
+        return create_grib_field_from_message(self.to_bytes())
 
 
 class Combined:
@@ -107,7 +137,7 @@ class GribHandleMaker:
     """Create a new GribCodesHandle from a template, field or metadata."""
 
     def __init__(self, template=None):
-        self.template = template
+        self.template = self.handle_from_template(template, clone=False)
         self._bbox = {}
 
     def make(self, values=None, metadata=None, template=None):
@@ -124,40 +154,65 @@ class GribHandleMaker:
         template: GribCoder
             A template to use for encoding
         """
-        handle = self.handle_from_template(template)
+        if template is None:
+            template = self.template
+
+        handle = self.handle_from_template(template, clone=True)
         if handle is not None:
             self.update_metadata_from_template(metadata, template, handle)
-
-        # if handle is None and field is not None:
-        #     handle = self.handle_from_field(field)
-        #     if handle is not None:
-        #         self.update_metadata_from_template(metadata, field, handle)
 
         if handle is None:
             if values is None:
                 raise ValueError("No values to encode")
-            handle = self.handle_from_metadata(values, metadata, COMPULSORY)
+            handle = self.handle_from_metadata(values, metadata, _COMPULSORY)
 
         return handle
 
-    def handle_from_template(self, template):
+    @staticmethod
+    def handle_from_template(template, clone=True):
         handle = None
-        if template is None:
-            template = self.template
-
         if template is not None:
             from earthkit.data.core.field import Field
 
+            def _result(handle):
+                return handle.clone() if clone else handle
+
             if isinstance(template, Field):
-                return self.handle_from_field(template)
+                return GribHandleMaker.handle_from_field(template)
+            # GribMetadata or GribHandle
             elif hasattr(template, "handle"):
                 handle = template.handle
                 if handle is not None:
-                    return handle.clone()
+                    return _result(handle)
+            else:
+                from earthkit.data.readers.grib.handle import GribCodesHandle
+
+                if isinstance(template, GribCodesHandle):
+                    return _result(template)
+
+                # message buffer as bytes
+                elif isinstance(template, bytes):
+                    handle = GribCodesHandle.from_message(template)
+                    if handle is not None:
+                        return _result(handle)
+                # GRIB sample as string
+                elif isinstance(template, str):
+                    handle = GribCodesHandle.from_sample(template)
+                    if handle is not None:
+                        return _result(handle)
+                # raw ecCodes handle
+                elif isinstance(template, int):
+                    try:
+                        handle = GribCodesHandle._from_raw_handle(template)
+                        if handle is not None:
+                            return _result(handle)
+                    except Exception:
+                        pass
 
         return None
 
-    def handle_from_field(self, field):
+    @staticmethod
+    def handle_from_field(field):
         r = {}
         field._get_grib_context(r)
         handle = r.pop("handle", None)
@@ -198,7 +253,7 @@ class GribHandleMaker:
 
     def update_metadata_from_template(self, metadata, template, handle):
         return
-
+        # TODO: review this code
         # the template can contain extra metadata that is not encoded in the handle
         if "bitsPerValue" in metadata:
             return
@@ -211,34 +266,6 @@ class GribHandleMaker:
                 metadata["bitsPerValue"] = bpv
             else:
                 bpv = template_md.get("bitsPerValue", default=None)
-
-        # if bpv is None:
-
-        # if hasattr(template, "metadata"):
-        #     template_md = template.metadata()
-        #     from earthkit.data.core.metadata import WrappedMetadata
-
-        #     if isinstance(template_md, WrappedMetadata):
-        #         for k in template_md.extra.keys():
-        #             if k != "bitsPerValue" and k not in metadata:
-        #                 metadata[k] = template_md.get(k)
-
-        #     if "bitsPerValue" not in metadata:
-        #         bpv = template.metadata("bitsPerValue", default=None)
-
-        # # Either the handle has valid bitsPerValue or has to be extracted
-        # # from the template and added to the metadata to be encoded
-        # if "bitsPerValue" not in metadata:
-        #     if bpv is None:
-        #         try:
-        #             bpv = template.handle.get("bitsPerValue", None)
-        #         except Exception:
-        #             bpv = None
-
-        #     if bpv is not None and bpv > 0:
-        #         bpv_h = handle.get("bitsPerValue", None)
-        #         if bpv != bpv_h:
-        #             metadata["bitsPerValue"] = bpv
 
     def _ll_field(self, values, metadata):
         Nj, Ni = values.shape
@@ -342,11 +369,73 @@ class GribHandleMaker:
 
 
 class GribEncoder(Encoder):
-    """Encode GRIB data."""
+    """Encoder for GRIB format.
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    This class is used to encode data to GRIB format via the :meth:`encode` method.
+
+    Parameters
+    ----------
+    template: Field, GribCodesHandle, bytes, str, int, None
+        A preset template to use for encoding when :meth:`encode` is called without a template.
+        It can be a :py:class:`~earthkit.data.core.field.Field`,
+        a :py:class:`~earthkit.data.reader.grib.GribCodesHandle`, a GRIB message as
+        bytes, an ecCodes GRIB sample name as string, a raw ecCodes handle as an integer, or None.
+        See :meth:`encode` for more details on how the template is used.
+    metadata: dict
+        A preset metadata to encode. The keys must be ecCodes GRIB keys, optionally prefixed with "metadata.".
+        This metadata is used as default when :meth:`encode` is called without metadata. If metadata is provided
+        in the :meth:`encode` method, it is merged with this preset metadata, with the metadata provided
+        in the :meth:`encode` method taking precedence.
+    kwargs: dict
+        Additional keyword arguments interpreted as metadata to encode. The keys must be ecCodes GRIB keys,
+        optionally prefixed with "metadata.".
+
+    Examples
+    --------
+    See the howto examples for more details and examples of encoding GRIB data with :class:`GribEncoder`.
+
+    - :ref:`/how-tos/target/grib_encoder.ipynb`
+    - :ref:`/how-tos/grib/grib_modify_metadata.ipynb`
+    - :ref:`/how-tos/grib/grib_modify_values.ipynb`
+
+    Using with a preset template and metadata:
+
+    >>> import earthkit.data as ekd
+    >>> template = ekd.from_source("sample", "test.grid").to_fieldlist()[0]
+    >>> template.get("metadata.shortName")
+    '2t'
+    >>> encoder = GribEncoder(template=template, metadata={"shortName": "msl"})
+    >>> d = encoder.encode(values=template.values + 1.0, step=6)
+    >>> f = d.to_field()
+    >>> f.get("parameter.variable")
+    'msl'
+    >>> f.get("parameter.shortName")
+    'msl'
+    >>> f.get("parameter.units")
+    'hPa'
+    >>> f.get("step")
+    6
+
+    Using without preset template and metadata:
+    >>> encoder = GribEncoder()
+    >>> d = encoder.encode(values=template.values + 1.0, metadata={"shortName": "msl"}, step=6)
+    >>> f = d.to_field()
+    >>> f.get("parameter.variable")
+    'msl'
+    >>> f.get("parameter.shortName")
+    'msl'
+    >>> f.get("parameter.units")
+    'hPa'
+    >>> f.get("step")
+    6
+    """
+
+    def __init__(self, template=None, metadata=None, **kwargs):
+        super().__init__(template=template, metadata=metadata, **kwargs)
         self._bbox = {}
+        # the template is stored as a handle to be used as a basis for encoding,
+        # (when available)
+        self.template = GribHandleMaker.handle_from_template(self.template, clone=False)
 
     @normalise_grib_keys
     @normalise("date", "date")
@@ -376,24 +465,68 @@ class GribEncoder(Encoder):
         **kwargs,
     ):
         """
+        Encode new GRIB message(s).
+
         Parameters
         ----------
-        data: Field
-            The data to encode
-        values: numpy.ndarray
-            The values to encode
+        data: Field, FieldList, Numpy array, or None
+            The data to encode. Can be a :py:class:`~earthkit.data.core.field.Field`, a
+            :py:class:`~earthkit.data.core.fieldlist.FieldList`, a Numpy array, or None.
+            If None, the new GRIB message(s) will be created from the ``values``, ``metadata`` and
+            ``template``. Cannot be specified together with ``values`` and ``template``.
+            When ``template`` is also provided, it will be used as a basis for encoding,
+            but the values will be taken from ``data``.
+        values: numpy.ndarray or None
+            The values to encode. If None, the values will be taken from the ``data`` or
+            ``template``. Takes precedence over the values in ``data`` or ``template``
+            if any of them are provided. If the values contain NaNs, they will be replaced with the
+            ``missing_value`` provided. Cannot be specified together with ``data`` and ``template``.
         check_nans: bool
-            Check for NaNs in the values and replace them with missing_value
+            Check for NaNs in the values and replace them with ``missing_value``.
         metadata: dict
-            Metadata to encode
-        template: GribCoder
-            A template to use for encoding
-        return_bytes: bool
-            Return the encoded message as bytes
+            Metadata to encode. The keys must be ecCodes GRIB keys, optionally prefixed with "metadata.".
+        template: Field, GribCodesHandle, bytes, str, int, None
+            A template to use for encoding. It can be a :py:class:`~earthkit.data.core.field.Field`,
+            a :py:class:`~earthkit.data.reader.grib.GribCodesHandle`, a GRIB message as
+            bytes, an ecCodes GRIB sample name as string, a raw ecCodes handle as an integer, or None. If None, a
+            the :obj:`GribEncoder.template` will be used if provided. Otherwise a new handle will be
+            created from the ``data``, ``values`` and ``metadata``. Takes precedence over the
+            ``data`` in forming the new GRIB message, but values are taken from the ``data`` if no
+            provided directly. Cannot be specified together with ``data`` and ``values``.
         missing_value: float
-            The value to use for NaNs
+            The value to use for NaNs. Default is 9999, which is the default missing value used by ecCode
+            when encoding with a template that does not have a valid "bitsPerValue" key.
         kwargs: dict
-            Additional metadata to encode
+            Additional metadata to encode.
+
+        Returns
+        -------
+        :obj:`GribEncodedData` or generator of :obj:`GribEncodedData`
+            The object representing the encoded GRIB message(s). When a single GRIB message is encoded,
+            a :obj:`GribEncodedData` object is returned. When multiple GRIB messages are encoded, a generator
+            of :obj:`GribEncodedData` objects is returned that can be processed in a loop.
+
+        Notes
+        -----
+        ``data``, ``values`` and ``template`` cannot be specified together. If more than one of them
+        are provided, the following rules applied:
+
+        - ``data``, ``value``:  The values will be taken from the ``values`` argument.
+        - ``data``, ``template``: The ``template`` will be used as a basis for encoding, but
+            the values will be taken from the ``data`` argument.
+        - ``values``, ``template``: The ``template`` will be used as a basis for encoding, but
+            the values will be taken from the ``values`` argument.
+
+        When no ``data`` and ``template`` are provided, a new GRIB message will be created from the
+        ``values`` and ``metadata``. This is an experimental feature and only works for certain metadata
+        keys and the grid has to be either global lat-lon or reduced Gaussian grid. The geography is
+        inferred from the shape of the specified ``values``.
+
+        Examples
+        --------
+        See the howto examples for more details and examples of encoding GRIB data with :class:`GribEncoder`.
+
+        - :ref:`/how-tos/target/grib_encoder.ipynb`
         """
         if template is None:
             template = self.template
@@ -462,6 +595,7 @@ class GribEncoder(Encoder):
 
         r = {}
         field._get_grib_context(r)
+
         handle = r.pop("handle", None)
         field_values = r.pop("values", None)
 
@@ -494,7 +628,7 @@ class GribEncoder(Encoder):
         if values is None:
             values = field_values
 
-        if values is None and template:
+        if values is None:
             values = field.values
 
         if template is None:
@@ -538,7 +672,7 @@ class GribEncoder(Encoder):
         if metadata is None:
             metadata = {}
 
-        compulsory = COMPULSORY
+        compulsory = _COMPULSORY
 
         self._update_metadata(handle, metadata, compulsory, can_infer_time)
 
@@ -559,7 +693,7 @@ class GribEncoder(Encoder):
                 metadata["bitmapPresent"] = 1
 
         if str(metadata.get("edition")) == "1":
-            for k in NOT_IN_EDITION_1:
+            for k in _NOT_IN_EDITION_1:
                 metadata.pop(k, None)
 
         if int(metadata.get("deleteLocalDefinition", 0)):

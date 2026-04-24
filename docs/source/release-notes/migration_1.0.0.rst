@@ -129,6 +129,13 @@ Raw metadata keys are still available but they are only accessible either by usi
     f.metadata("shortName")
     f.metadata("metadata.shortName")
 
+Field modification
+++++++++++++++++++++++++
+
+Fields can be modified using the :py:meth:`~earthkit.data.core.field.Field.set` method. This method allows to set new data values and/or change  metadata keys. See the notebook examples:
+
+- :ref:`/how-tos/grib/grib_modify_metadata.ipynb`
+- :ref:`/how-tos/grib/grib_modify_values.ipynb`
 
 Field arithmetic
 ++++++++++++++++++++++++
@@ -319,8 +326,9 @@ The following table gives an overview of the changes in the Fieldlist API:
 Xarray engine
 ------------------
 
-The Xarray engine has been refactored and many of the internal classes and methods have been changed. The following table gives an overview of the changes in the Xarray engine:
+The Xarray engine has been refactored and many of the internal classes and methods have been changed. The following list gives an overview of the changes in the Xarray engine:
 
 - a new default profile :ref:`earthkit <xr_profile_earthkit>` has been added which is used when no profile is specified. This profile is designed to work with the new format independent metadata keys from :py:class:`~earthkit.data.core.field.Field` to generate the Xarray dataset.
 - the old  :ref:`mars <xr_profile_mars>` and :ref:`grib <xr_profile_grib>` profiles were kept but they are now using some of the new format independent metadata keys to generate the Xarray dataset.
 - the "number" ``dim_role`` was renamed to "member" in line with the new format independent metadata keys. See: :ref:`xr_dim` for more details.
+- the ``time_dim_mode`` kwarg in :func:`to_xarray` was replaced by ``time_dims`` and the meaning of some temporal dimensions in the ``dim_roles`` also changed.  See :ref:`xr_time_dims` for more details.

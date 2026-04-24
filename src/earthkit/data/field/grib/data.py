@@ -28,6 +28,8 @@ COLLECTOR = GribDataContextCollector()
 
 
 class GribData(DataFieldComponentHandler):
+    COLLECTOR = COLLECTOR
+
     def __init__(self, handle):
         self.handle = handle
 
@@ -43,8 +45,8 @@ class GribData(DataFieldComponentHandler):
     def check(self, owner):
         pass
 
-    def get_grib_context(self, context):
-        COLLECTOR.collect_keys(self, context)
+    # def get_grib_context(self, context):
+    #     COLLECTOR.collect_keys(self, context)
 
     def __getstate__(self):
         state = {}

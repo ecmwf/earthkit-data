@@ -36,6 +36,13 @@ def test_grib_set_data(fl_type):
     assert np.allclose(f.values, vals_ori + 1)
     assert np.allclose(ds_ori[0].values, vals_ori)
 
+    # # the field still stores the original GRIB metadata as private metadata,
+    # # which is hidden but used when writing back to GRIB
+    # grib_md = f._get_grib()
+    # assert grib_md.get("shortName") == "t"
+    # assert grib_md.get("levelist") == 500
+    # assert grib_md.get("date") == 20070101
+
     # write back to grib
     with temp_file() as tmp:
         f.to_target("file", tmp)
@@ -61,6 +68,13 @@ def test_grib_set_data(fl_type):
     assert f.get(("parameter.variable", "metadata.date")) == ("t", 20070101)
     assert np.allclose(f.values, vals_ori + 2)
     assert np.allclose(ds_ori[0].values, vals_ori)
+
+    # # the field still stores the original GRIB metadata as private metadata,
+    # # which is hidden but used when writing back to GRIB
+    # grib_md = f._get_grib()
+    # assert grib_md.get("shortName") == "t"
+    # assert grib_md.get("levelist") == 500
+    # assert grib_md.get("date") == 20070101
 
     # ---------------
     # fieldlist
