@@ -40,7 +40,9 @@ class GribEncodedData(EncodedData):
 
     def metadata(self, key=None):
         if key:
-            return self.to_field().metadata(key, default=None)
+            from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
+
+            return StandAloneGribMetadata(self.handle).get(key, default=None)
         else:
             raise NotImplementedError
 
