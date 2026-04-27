@@ -2,13 +2,13 @@ Version 1.0.0 Release Candidate Updates
 ///////////////////////////////////////
 
 
-Version 1.0.0rc4
-==================
+.. Version 1.0.0rc4
+.. ==================
 
-- Replaced the ``time_dim_mode`` keyword argument with ``time dims`` in the :ref:`Xarray engine <xr_engine>` (:pr:`967`).
-- Added the ``aux_coords`` keyword argument in the :ref:`Xarray engine <xr_engine>` to specify 1- or multi-dimensional auxiliary coordinate variables whose values are derived from any metadata key (:pr:`969`).
-- Changed how GRIB data is handled in fields created from GRIB data when the field metadata (related to the field components) is modified (:pr:`968`). GRIB related metadata keys are now not available on the modified field. Added the :func:`~earthkit.data.core.field.Field.sync` method to adjust the low level GRIB data to the field metadata. Having called this method the GRIB data is updated to be consistent with the field metadata, and the GRIB related metadata keys are available again on the field.
-- Added the ``standard_name`` and ``long_name`` metadata keys to the field parameter component (:pr:`971`).
+.. - Replaced the ``time_dim_mode`` keyword argument with ``time dims`` in the :ref:`Xarray engine <xr_engine>` (:pr:`967`).
+.. - Added the ``aux_coords`` keyword argument in the :ref:`Xarray engine <xr_engine>` to specify 1- or multi-dimensional auxiliary coordinate variables whose values are derived from any metadata key (:pr:`969`).
+.. - Changed how GRIB data is handled in fields created from GRIB data when the field metadata (related to the field components) is modified (:pr:`968`). GRIB related metadata keys are now not available on the modified field. Added the :func:`~earthkit.data.core.field.Field.sync` method to adjust the low level GRIB data to the field metadata. Having called this method the GRIB data is updated to be consistent with the field metadata, and the GRIB related metadata keys are available again on the field.
+.. - Added the ``standard_name`` and ``long_name`` metadata keys to the field parameter component (:pr:`971`).
 
 Version 1.0.0rc3
 ==================
