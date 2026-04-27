@@ -3,6 +3,15 @@ Version 0.19 Updates
 /////////////////////////
 
 
+Version 0.19.4
+===============
+
+Changes
+++++++++++++++++++++++++++++++
+
+- Improved the speed of writing GRIB data to the ``file-pattern`` target (:pr:`974`).
+
+
 Version 0.19.3
 ===============
 
