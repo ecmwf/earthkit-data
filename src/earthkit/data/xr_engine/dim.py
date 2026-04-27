@@ -98,6 +98,8 @@ BASE_DATETIME_KEYS = (
 
 DATETIME_KEYS = BASE_DATETIME_KEYS + VALID_DATETIME_KEYS
 
+_TIME_RELATED_KEYS = set(DATE_KEYS + TIME_KEYS + STEP_KEYS + MONTH_KEYS + VALID_DATETIME_KEYS + BASE_DATETIME_KEYS)
+
 KEYS = (
     ENS_KEYS,
     LEVEL_KEYS,
@@ -1014,6 +1016,31 @@ class DimHandler:
 
     def to_list(self):
         return list(self.dims.values())
+
+    @property
+    def active_time_dim_names(self):
+        """Return the names of the active time dimensions in dim order.
+
+        Handles both the normal case (dims built via ``TimeDimBuilder``) and
+        the ``fixed_dims`` case where dim names are raw metadata keys.
+        """
+        time_dim_names = set()
+        if not self.fixed_dims:
+            for role_name in self.time_dims:
+                if role_name in ALL_TIME_ROLES:
+                    # Add the role-resolved name and key
+                    _, name = self.dim_roles.role(role_name, raise_error=False)
+                    if name is not None:
+                        time_dim_names.add(name)
+        else:
+            # When fixed_dims are used, `self.time_dims` is irrelevant, and we check all `self.fixed_dims`
+            # for time-related keys.
+            for dim_name, dim_key in self.fixed_dims.items():
+                if dim_key in _TIME_RELATED_KEYS:
+                    time_dim_names.add(dim_name)
+
+        # Return in dim order
+        return [d.name for d in self.dims.values() if d.active and d.name in time_dim_names]
 
     def get_dims(self, names):
         r = []
