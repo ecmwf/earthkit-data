@@ -723,15 +723,21 @@ class GribEncoder(Encoder):
             else:
                 multiple[k] = v
 
-        try:
-            # Try to set all metadata at once
-            # This is needed when we set multiple keys that are interdependent
-            handle.set_multiple(single)
-        except Exception as e:
-            LOG.error("Failed to set metadata at once: %s", e)
-            # Try again, but one by one
-            for k, v in single.items():
-                handle.set(k, v)
+        if len(single) == 1:
+            # if there is only one key, set it directly to avoid the overhead of set_multiple
+            k, v = next(iter(single.items()))
+            handle.set(k, v)
+            single = {}
+        elif len(single) > 1:
+            try:
+                # Try to set all metadata at once
+                # This is needed when we set multiple keys that are interdependent
+                handle.set_multiple(single)
+            except Exception as e:
+                LOG.warning("Failed to set metadata at once: %s", e)
+                # Try again, but one by one
+                for k, v in single.items():
+                    handle.set(k, v)
 
         for k, v in multiple.items():
             handle.set(k, v)
