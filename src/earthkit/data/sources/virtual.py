@@ -12,8 +12,9 @@ import datetime
 import logging
 import threading
 
-from earthkit.data import from_source
 from earthkit.data.readers.grib.index import GribFieldList
+
+from earthkit.data import from_source
 from earthkit.data.utils.serialise import register_serialisation
 
 LOG = logging.getLogger(__name__)
