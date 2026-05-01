@@ -274,7 +274,7 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
     for v in var_attrs:
         v_attrs = dict(ds[v].attrs)
         v_attrs.pop("_earthkit", None)
-        v_attrs.pop("ek_grid_spec", None)
+        v_attrs.pop("earthkit_grid_spec", None)
         assert v_attrs == var_attrs[v]
     assert ds.attrs == global_attrs
 
@@ -502,7 +502,7 @@ def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, 
     for v in var_attrs:
         v_attrs = dict(ds[v].attrs)
         v_attrs.pop("_earthkit", None)
-        v_attrs.pop("ek_grid_spec", None)
+        v_attrs.pop("earthkit_grid_spec", None)
         assert v_attrs == var_attrs[v]
     assert ds.attrs == global_attrs
 
@@ -660,7 +660,7 @@ def test_xr_engine_level_per_type_dim(lazy_load, path, sel, kwargs, coords, dims
     for v in var_attrs:
         v_attrs = dict(ds[v].attrs)
         v_attrs.pop("_earthkit", None)
-        v_attrs.pop("ek_grid_spec", None)
+        v_attrs.pop("earthkit_grid_spec", None)
         assert v_attrs == var_attrs[v], f"Variable {v} attributes do not match expected values"
     assert ds.attrs == global_attrs
 
@@ -766,7 +766,7 @@ def test_xr_engine_dims_as_attrs_1(
     for v in var_attrs:
         v_attrs = dict(ds[v].attrs)
         v_attrs.pop("_earthkit", None)
-        v_attrs.pop("ek_grid_spec", None)
+        v_attrs.pop("earthkit_grid_spec", None)
         assert v_attrs == var_attrs[v]
     assert ds.attrs == global_attrs
 
@@ -959,6 +959,6 @@ def test_xr_engine_dims_as_attrs2(lazy_load, path, sel, idx, kwargs, coords, dim
     for v in var_attrs:
         v_attrs = dict(ds[v].attrs)
         v_attrs.pop("_earthkit", None)
-        v_attrs.pop("ek_grid_spec", None)
+        v_attrs.pop("earthkit_grid_spec", None)
         assert v_attrs == var_attrs[v]
     assert ds.attrs == global_attrs

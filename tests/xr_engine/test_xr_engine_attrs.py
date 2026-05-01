@@ -257,7 +257,7 @@ def test_xr_engine_dims_as_attrs_2(allow_holes, lazy_load, idx, kwargs, coords, 
     for v in var_attrs:
         v_attrs = dict(ds[v].attrs)
         v_attrs.pop("_earthkit", None)
-        v_attrs.pop("ek_grid_spec", None)
+        v_attrs.pop("earthkit_grid_spec", None)
         assert v_attrs == var_attrs[v]
     assert ds.attrs == global_attrs
 
@@ -355,7 +355,7 @@ def test_xr_engine_dims_as_attrs_3(lazy_load, allow_holes, idx, kwargs, coords, 
     for v in var_attrs:
         v_attrs = dict(ds[v].attrs)
         v_attrs.pop("_earthkit", None)
-        v_attrs.pop("ek_grid_spec", None)
+        v_attrs.pop("earthkit_grid_spec", None)
         assert v_attrs == var_attrs[v]
     assert ds.attrs == global_attrs
 
@@ -424,7 +424,7 @@ def test_xr_engine_attrs_types(lazy_load, kwargs, coords, dims, attrs):
     compare_dims(ds, dims, sizes=True)
 
     for k, v in attrs.items():
-        if k not in ["_earthkit", "ek_grid_spec"]:
+        if k not in ["_earthkit", "earthkit_grid_spec"]:
             assert ds["t"].attrs[k] == v, f"{k}"
 
 

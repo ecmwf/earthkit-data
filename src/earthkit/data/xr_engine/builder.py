@@ -107,7 +107,7 @@ class VariableBuilder:
             self._attrs["_earthkit"] = attrs
 
         if grid_spec is not None:
-            self._attrs["ek_grid_spec"] = grid_spec
+            self._attrs["earthkit_grid_spec"] = grid_spec
 
         self._attrs.update(self.fixed_local_attrs)
         data = self.data_maker(self.tensor, self.var_dims, self.name)
