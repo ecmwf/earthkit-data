@@ -566,8 +566,8 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
     def grid_spec(self):
         """Return the grid specification of the DataArray."""
         try:
-            if "ek_grid_spec" in self._obj.attrs:
-                v = self._obj.attrs["ek_grid_spec"]
+            if "earthkit_grid_spec" in self._obj.attrs:
+                v = self._obj.attrs["earthkit_grid_spec"]
                 if isinstance(v, str):
                     import json
 
