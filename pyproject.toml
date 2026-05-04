@@ -36,6 +36,7 @@ dependencies = [
   "pandas",
   "pdbufr>=0.11",
   "pyyaml",
+  "requests",
   "tqdm>=4.63",
   "xarray>=0.19"
 ]
