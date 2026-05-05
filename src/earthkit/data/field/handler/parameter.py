@@ -25,6 +25,10 @@ class ParameterFieldComponentHandler(SimpleFieldComponentHandler):
         COLLECTOR.collect(self, context)
 
     @classmethod
+    def from_component(cls, component: ParameterBase) -> "ParameterFieldComponentHandler":
+        return ParameterFieldComponentHandler(component)
+
+    @classmethod
     def create_empty(cls) -> "ParameterFieldComponentHandler":
         return EMPTY_PARAMETER_HANDLER
 

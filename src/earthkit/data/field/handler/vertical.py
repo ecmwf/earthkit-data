@@ -25,6 +25,10 @@ class VerticalFieldComponentHandler(SimpleFieldComponentHandler):
         COLLECTOR.collect(self, context)
 
     @classmethod
+    def from_component(cls, component: VerticalBase) -> "VerticalFieldComponentHandler":
+        return VerticalFieldComponentHandler(component)
+
+    @classmethod
     def create_empty(cls) -> "VerticalFieldComponentHandler":
         return EMPTY_VERTICAL_HANDLER
 

@@ -217,12 +217,14 @@ class SimpleFieldComponentHandler(FieldComponentHandler):
     def from_dict(cls, d: dict, **kwargs) -> "SimpleFieldComponentHandler":
         """Create a SimpleFieldComponent object from a dictionary."""
         component = cls.COMPONENT_MAKER(d, **kwargs)
-        return cls(component)
+        return cls.from_component(component)
 
     @classmethod
+    @abstractmethod
     def from_component(cls, component: Any) -> "SimpleFieldComponentHandler":
         """Create a SimpleFieldComponent object from a component object."""
-        return cls(component)
+        # return cls._from_component(component)
+        pass
 
     @classmethod
     def from_any(cls, data: Any, dict_kwargs=None) -> "SimpleFieldComponentHandler":

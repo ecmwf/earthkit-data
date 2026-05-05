@@ -20,7 +20,6 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 # @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("write_method", ["target"])
 @pytest.mark.parametrize(
     "_kwargs,ref_set,ref_saved,edition_saved",
     [
@@ -336,7 +335,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
         # ),
     ],
 )
-def test_grib_set_time_1(fl_type, write_method, _kwargs, ref_set, ref_saved, edition_saved):
+def test_grib_set_time_1(fl_type, _kwargs, ref_set, ref_saved, edition_saved):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     f = ds_ori[0].set(**_kwargs)

@@ -86,9 +86,9 @@ class GeoTIFFGeography(GeographyBase):
     def area(self):
         pass
 
-    @classmethod
-    def from_dict(d):
-        raise NotImplementedError("XArrayGeography.form_dict() is not implemented")
+    # @classmethod
+    # def from_dict(d):
+    #     raise NotImplementedError("XArrayGeography.form_dict() is not implemented")
 
     def _grid_mapping(self):
         if self._ds.rio.grid_mapping == "spatial_ref":
