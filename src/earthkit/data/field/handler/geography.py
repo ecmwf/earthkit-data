@@ -25,6 +25,10 @@ class GeographyFieldComponentHandler(SimpleFieldComponentHandler):
         COLLECTOR.collect(self, context)
 
     @classmethod
+    def from_component(cls, component: GeographyBase) -> "GeographyFieldComponentHandler":
+        return GeographyFieldComponentHandler(component)
+
+    @classmethod
     def create_empty(cls) -> "GeographyFieldComponentHandler":
         return EMPTY_GEOGRAPHY_HANDLER
 

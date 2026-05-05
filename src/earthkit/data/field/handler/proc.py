@@ -28,6 +28,10 @@ class ProcFieldComponentHandler(SimpleFieldComponentHandler):
         return ProcFieldComponentHandler(spec)
 
     @classmethod
+    def from_component(cls, component: ProcBase) -> "ProcFieldComponentHandler":
+        return ProcFieldComponentHandler(component)
+
+    @classmethod
     def create_empty(cls) -> "ProcFieldComponentHandler":
         return EMPTY_PROC_HANDLER
 

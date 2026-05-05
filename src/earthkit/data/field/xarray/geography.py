@@ -81,9 +81,9 @@ class XArrayGeography(GeographyBase):
         r"""Return the area of the grid."""
         pass
 
-    @classmethod
-    def from_dict(d):
-        raise NotImplementedError("XArrayGeography.form_dict() is not implemented")
+    # @classmethod
+    # def from_dict(*args, **kwargs):
+    #     raise NotImplementedError("XArrayGeography cannot be created from a dictionary")
 
     def latlons(self, flatten=False, dtype=None):
         lat, lon = self.owner.grid.latlons

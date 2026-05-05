@@ -20,7 +20,7 @@ from earthkit.data.core.temporary import temp_file
 
 # @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("fl_type", ["file"])
-def test_grib_set_data(fl_type):
+def test_grib_set_data_field(fl_type):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values
@@ -76,9 +76,12 @@ def test_grib_set_data(fl_type):
     # assert grib_md.get("levelist") == 500
     # assert grib_md.get("date") == 20070101
 
-    # ---------------
-    # fieldlist
-    # ---------------
+
+@pytest.mark.parametrize("fl_type", ["file"])
+def test_grib_set_data_fieldlist(fl_type):
+    ds_ori, _ = load_grib_data("test4.grib", fl_type)
+
+    vals_ori = ds_ori[0].values
 
     fields = []
     for i in range(2):

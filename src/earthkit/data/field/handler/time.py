@@ -26,6 +26,10 @@ class TimeFieldComponentHandler(SimpleFieldComponentHandler):
         COLLECTOR.collect(self, context)
 
     @classmethod
+    def from_component(cls, component: TimeBase) -> "TimeFieldComponentHandler":
+        return TimeFieldComponentHandler(component)
+
+    @classmethod
     def create_empty(cls) -> "TimeFieldComponentHandler":
         return EMPTY_TIME_HANDLER
 

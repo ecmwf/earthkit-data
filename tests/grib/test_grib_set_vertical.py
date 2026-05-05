@@ -19,7 +19,6 @@ from earthkit.data.core.temporary import temp_file
 
 # @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("write_method", ["target"])
 @pytest.mark.parametrize(
     "_kwargs,ref1,grib_ref,ref2",
     [
@@ -79,7 +78,7 @@ from earthkit.data.core.temporary import temp_file
         # ),
     ],
 )
-def test_grib_set_vertical(fl_type, write_method, _kwargs, ref1, grib_ref, ref2):
+def test_grib_set_vertical(fl_type, _kwargs, ref1, grib_ref, ref2):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     f = ds_ori[0].set(**_kwargs)

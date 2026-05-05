@@ -170,9 +170,9 @@ class GribGeography(GeographyBase):
         r"""Return the grid type."""
         return self.handle.get("gridType", default=None)
 
-    @classmethod
-    def from_dict(*args, **kwargs):
-        raise NotImplementedError("GribGeography cannot be created from a dictionary")
+    # @classmethod
+    # def from_dict(*args, **kwargs):
+    #     raise NotImplementedError("GribGeography cannot be created from a dictionary")
 
     # def to_dict(self):
     #     return dict()
