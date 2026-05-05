@@ -26,24 +26,6 @@ def create_fieldlist(fields=None):
 
 
 class IndexFeatureListBase(Index, FeatureList):
-    # @staticmethod
-    # def from_fields(fields):
-    #     r"""Create a :class:`SimpleFieldList`.
-
-    #     Parameters
-    #     ----------
-    #     fields: iterable
-    #         Iterable of :obj:`Field` objects.
-
-    #     Returns
-    #     -------
-    #     :class:`SimpleFieldList`
-
-    #     """
-    #     from earthkit.data.indexing.simple import SimpleFieldList
-
-    #     return SimpleFieldList.from_fields(fields)
-
     def get(
         self,
         keys,
