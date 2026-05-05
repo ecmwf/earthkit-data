@@ -2,6 +2,12 @@ Version 1.0.0 Release Candidate Updates
 ///////////////////////////////////////
 
 
+Version 1.0.0rc7
+==================
+
+- Fixed issue when could not set data/metadata on fields created from other data than GRIB (:pr:`981`).
+
+
 Version 1.0.0rc6
 ==================
 
