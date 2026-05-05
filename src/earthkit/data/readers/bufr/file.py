@@ -211,24 +211,24 @@ class BUFRList(IndexFeatureListBase):
             the metadata keys and values as the column titles. If ``keys`` is None the following dict
             will be used to define the titles and the keys::
 
-                {
-                    "edition": "edition",
-                    "type": "dataCategory",
-                    "subtype": "dataSubCategory",
-                    "c": "bufrHeaderCentre",
-                    "mv": "masterTablesVersionNumber",
-                    "lv": "localTablesVersionNumber",
-                    "subsets": "numberOfSubsets",
-                    "compr": "compressedData",
-                    "typicalDate": "typicalDate",
-                    "typicalTime": "typicalTime",
-                    "ident": "ident",
-                    "lat": "localLatitude",
-                    "lon": "localLongitude",
-                }
+                [
+                    "edition",
+                    "dataCategory",
+                    "dataSubCategory",
+                    "bufrHeaderCentre",
+                    "masterTablesVersionNumber",
+                    "localTablesVersionNumber",
+                    "numberOfSubsets",
+                    "compressedData",
+                    "typicalDate",
+                    "typicalTime",
+                    "ident",
+                    "localLatitude",
+                    "localLongitude",
+                ]
 
         extra_keys: list of str, dict, None
-            List of additional keys to ``keys``. To specify a column title for each key in the output
+            List of additional keys to ``keys``s. To specify a column title for each key in the output
             use a dict.
 
         Returns
