@@ -181,10 +181,10 @@ class CoordinateGuesser(ABC):
         if coordinate.shape in ((1,), tuple()):
             return ScalarCoordinate(coordinate)
 
-        LOG.warning(
-            f"Coordinate {coord} not supported\n{axis=}, {name=},"
-            f" {long_name=}, {standard_name=}, units\n\n{coordinate}\n\n{type(coordinate.values)} {coordinate.shape}"
-        )
+        # LOG.warning(
+        #     f"Coordinate {coord} not supported\n{axis=}, {name=},"
+        #     f" {long_name=}, {standard_name=}, units\n\n{coordinate}\n\n{type(coordinate.values)} {coordinate.shape}"
+        # )
 
         return UnsupportedCoordinate(coordinate)
 
