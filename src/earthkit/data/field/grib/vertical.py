@@ -213,7 +213,7 @@ class GribVerticalBuilder:
 
     @staticmethod
     def _build_dict(handle):
-        level_type = handle.get("typeOfLevel", None)
+        level_type = handle.get("typeOfLevel", default=None)
         t = _GRIB_TYPES.get(level_type)
         if t is None:
             from earthkit.data.field.component.level_type import get_level_type
