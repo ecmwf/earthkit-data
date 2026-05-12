@@ -466,6 +466,14 @@ class XarrayEarthkit:
 
         return GeneratorFieldList(self._to_fields())
 
+    @property
+    def provenance(self):
+        return {"history": self._obj.attrs["history"]}
+
+    def append_provenance(self, provenance):
+        history = self.provenance.get("history", "")
+        return self._obj.assign_attrs({"history": "\n".join([history, provenance])})
+
 
 @xarray.register_dataarray_accessor("earthkit")
 class XarrayEarthkitDataArray(XarrayEarthkit):

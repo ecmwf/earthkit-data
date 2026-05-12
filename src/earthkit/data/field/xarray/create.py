@@ -16,6 +16,7 @@ def create_xarray_field(variable, selection=None):
     from earthkit.data.field.xarray.ensemble import XArrayEnsemble
     from earthkit.data.field.xarray.geography import XArrayGeographyHandler
     from earthkit.data.field.xarray.parameter import XArrayParameter
+    from earthkit.data.field.xarray.provenance import XArrayProvenance
     from earthkit.data.field.xarray.time import XArrayTimeHandler
     from earthkit.data.field.xarray.vertical import XArrayVertical
 
@@ -25,6 +26,7 @@ def create_xarray_field(variable, selection=None):
     time = XArrayTimeHandler(variable, selection)
     geography = XArrayGeographyHandler(variable, selection)
     vertical = XArrayVertical(variable, selection)
+    provenance = XArrayProvenance(variable, selection)
     labels = SimpleLabels()
 
     r = Field(
@@ -35,6 +37,7 @@ def create_xarray_field(variable, selection=None):
         vertical=vertical,
         ensemble=ensemble,
         labels=labels,
+        provenance=provenance,
     )
 
     # r._set_private_data("grib", grib)

@@ -45,6 +45,7 @@ _ENSEMBLE = "ensemble"
 _PROC = "proc"
 _LABELS = "labels"
 _METADATA = "metadata"
+_PROVENANCE = "provenance"
 
 _DESCRIBE_ORDER = [
     _DATA,
@@ -55,6 +56,7 @@ _DESCRIBE_ORDER = [
     _GEOGRAPHY,
     _PROC,
     _LABELS,
+    _PROVENANCE,
 ]
 
 _DEFAULT_DESCRIBE_SELECTION = _PARAMETER
@@ -80,6 +82,7 @@ class _ComponentMaker:
         from earthkit.data.field.handler.labels import SimpleLabels
         from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
         from earthkit.data.field.handler.proc import ProcFieldComponentHandler
+        from earthkit.data.field.handler.provenance import ProvenanceFieldComponentHandler
         from earthkit.data.field.handler.time import TimeFieldComponentHandler
         from earthkit.data.field.handler.vertical import VerticalFieldComponentHandler
 
@@ -92,6 +95,7 @@ class _ComponentMaker:
             _ENSEMBLE: EnsembleFieldComponentHandler,
             _PROC: ProcFieldComponentHandler,
             _LABELS: SimpleLabels,
+            _PROVENANCE: ProvenanceFieldComponentHandler,
         }
 
     def empty_object(self, name):
@@ -202,16 +206,7 @@ class Field(Base):
 
     """
 
-    _COMPONENT_NAMES = (
-        _DATA,
-        _TIME,
-        _PARAMETER,
-        _GEOGRAPHY,
-        _VERTICAL,
-        _ENSEMBLE,
-        _PROC,
-        _LABELS,
-    )
+    _COMPONENT_NAMES = (_DATA, _TIME, _PARAMETER, _GEOGRAPHY, _VERTICAL, _ENSEMBLE, _PROC, _LABELS, _PROVENANCE)
 
     def __init__(
         self,
@@ -224,6 +219,7 @@ class Field(Base):
         ensemble=None,
         proc=None,
         labels=None,
+        provenance=None,
     ):
         """
         Create a Field object.
@@ -267,6 +263,7 @@ class Field(Base):
             _ENSEMBLE: _ensure(_ENSEMBLE, ensemble),
             _PROC: _ensure(_PROC, proc),
             _LABELS: _ensure(_LABELS, labels),
+            _PROVENANCE: _ensure(_PROVENANCE, provenance),
         }
 
         self._private = dict()
@@ -283,6 +280,7 @@ class Field(Base):
         ensemble=None,
         proc=None,
         labels=None,
+        provenance=None,
     ):
         r"""Create a Field from another Field.
 
@@ -330,6 +328,7 @@ class Field(Base):
             _ENSEMBLE: ensemble,
             _PROC: proc,
             _LABELS: labels,
+            _PROVENANCE: provenance,
         }
 
         for name in Field._COMPONENT_NAMES:
@@ -359,6 +358,7 @@ class Field(Base):
         ensemble=None,
         proc=None,
         labels=None,
+        provenance=None,
     ):
         _kwargs = {
             _DATA: data,
@@ -369,6 +369,7 @@ class Field(Base):
             _ENSEMBLE: ensemble,
             _PROC: proc,
             _LABELS: labels,
+            _PROVENANCE: provenance,
         }
 
         has_new_metadata = False
@@ -467,6 +468,7 @@ class Field(Base):
         ensemble=None,
         proc=None,
         labels=None,
+        provenance=None,
     ):
         r"""Create a Field from components.
 
@@ -502,6 +504,7 @@ class Field(Base):
             _ENSEMBLE: ensemble,
             _PROC: proc,
             _LABELS: labels,
+            _PROVENANCE: provenance,
         }
 
         components = {}
@@ -597,6 +600,17 @@ class Field(Base):
             The labels of the field.
         """
         return self._components[_LABELS]
+
+    @property
+    def provenance(self):
+        """Return the provenance component of the field.
+
+        Returns
+        -------
+        :py:class:`~earthkit.data.field.component.provenance.ProvenanceBase`
+            The provenance component of the field.
+        """
+        return self._components[_PROVENANCE]
 
     @property
     def array_namespace(self):
