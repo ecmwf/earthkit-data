@@ -72,42 +72,47 @@ class VariableBuilder:
         self.remapping = remapping
 
     def build(self, add_earthkit_attrs=True):
-        grid_spec = None
-        try:
-            grid_spec = self.tensor.source[0].geography.grid_spec()
-            if grid_spec is not None:
-                if isinstance(grid_spec, dict):
-                    import json
+        from .accessor import EarthkitAttrsBuilder
 
-                    grid_spec = json.dumps(grid_spec)
-        except Exception:
-            grid_spec = None
+        attrs = EarthkitAttrsBuilder().build(self.tensor.source[0], add_earthkit_attrs=add_earthkit_attrs)
+        if attrs:
+            self._attrs.update(attrs)
 
-        if add_earthkit_attrs:
-            f = self.tensor.source[0]
-            bpv = None
-            try:
-                md = f._get_grib().message(deflate=True)
-                bpv = f._get_grib().get_extra_key("bitsPerValue", default=None)
-                if bpv is None:
-                    bpv = f.get("metadata.bitsPerValue", default=None)
-            except Exception:
-                md = ""
+        # try:
+        #     grid_spec = self.tensor.source[0].geography.grid_spec()
+        #     if grid_spec is not None:
+        #         if isinstance(grid_spec, dict):
+        #             import json
 
-            attrs = {
-                "message": md,
-            }
+        #             grid_spec = json.dumps(grid_spec)
+        # except Exception:
+        #     grid_spec = None
 
-            if bpv is not None and bpv != 0:
-                attrs["bitsPerValue"] = bpv
+        # if add_earthkit_attrs:
+        #     f = self.tensor.source[0]
+        #     bpv = None
+        #     try:
+        #         md = f._get_grib().message(deflate=True)
+        #         bpv = f._get_grib().get_extra_key("bitsPerValue", default=None)
+        #         if bpv is None:
+        #             bpv = f.get("metadata.bitsPerValue", default=None)
+        #     except Exception:
+        #         md = ""
 
-            if grid_spec is not None:
-                attrs["grid_spec"] = grid_spec
+        #     attrs = {
+        #         "message": md,
+        #     }
 
-            self._attrs["_earthkit"] = attrs
+        #     if bpv is not None and bpv != 0:
+        #         attrs["bitsPerValue"] = bpv
 
-        if grid_spec is not None:
-            self._attrs["earthkit_grid_spec"] = grid_spec
+        #     if grid_spec is not None:
+        #         attrs["grid_spec"] = grid_spec
+
+        #     self._attrs["_earthkit"] = attrs
+
+        # if grid_spec is not None:
+        #     self._attrs["earthkit_grid_spec"] = grid_spec
 
         self._attrs.update(self.fixed_local_attrs)
         data = self.data_maker(self.tensor, self.var_dims, self.name)
@@ -431,7 +436,11 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         # build variable and global attributes
         xr_attrs = self.profile.attrs.builder.build(self.ds, var_builders, rename=True)
+
         xr_coords = self.coords()
+        grid_spec = self.grid.grid_spec_str
+        if grid_spec is not None:
+            xr_coords["earthkit_grid_spec"] = grid_spec
 
         # build variables
         xr_vars = {
@@ -443,12 +452,6 @@ class BackendDataBuilder(metaclass=ABCMeta):
         dataset = xarray.Dataset(xr_vars, coords=xr_coords, attrs=xr_attrs)
 
         dataset = self.profile.rename_dataset_dims(dataset)
-
-        # dim_map = self.profile.rename_dims_map()
-        # if dim_map:
-        #     d = {k: v for k, v in dim_map.items() if k in dataset.dims}
-        #     if d:
-        #         dataset = dataset.rename(d)
 
         if "source" not in dataset.encoding:
             dataset.encoding["source"] = None

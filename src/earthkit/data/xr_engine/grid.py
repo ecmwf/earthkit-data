@@ -117,6 +117,9 @@ class TensorGrid:
     def __init__(self, field, flatten_values=False):
         self.dims, self.coords, self.coords_dim = self.build(field, flatten_values)
 
+        self.grid_spec = field.geography.grid_spec()
+        self.grid_spec_str = self._to_str(self.grid_spec)
+
     @staticmethod
     def build(field, flatten_values):
         field_shape = field.shape
@@ -193,3 +196,19 @@ class TensorGrid:
             assert v.size == math.prod([dims[x] for x in coords_dim[k]])
 
         return dims, coords, coords_dim
+
+    @staticmethod
+    def _to_str(d):
+        if isinstance(d, (str)):
+            return d
+        elif isinstance(d, (dict, list, tuple)):
+            try:
+                if d is not None:
+                    import json
+
+                    return json.dumps(d)
+
+            except Exception:
+                return None
+
+        return None
