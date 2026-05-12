@@ -401,7 +401,7 @@ class GribEncoder(Encoder):
     Using with a preset template and metadata:
 
     >>> import earthkit.data as ekd
-    >>> template = ekd.from_source("sample", "test.grid").to_fieldlist()[0]
+    >>> template = ekd.from_source("sample", "test.grib").to_fieldlist()[0]
     >>> template.get("metadata.shortName")
     '2t'
     >>> encoder = GribEncoder(template=template, metadata={"shortName": "msl"})
