@@ -74,45 +74,10 @@ class VariableBuilder:
     def build(self, add_earthkit_attrs=True):
         from .accessor import EarthkitAttrsBuilder
 
-        attrs = EarthkitAttrsBuilder().build(self.tensor.source[0], add_earthkit_attrs=add_earthkit_attrs)
-        if attrs:
-            self._attrs.update(attrs)
-
-        # try:
-        #     grid_spec = self.tensor.source[0].geography.grid_spec()
-        #     if grid_spec is not None:
-        #         if isinstance(grid_spec, dict):
-        #             import json
-
-        #             grid_spec = json.dumps(grid_spec)
-        # except Exception:
-        #     grid_spec = None
-
-        # if add_earthkit_attrs:
-        #     f = self.tensor.source[0]
-        #     bpv = None
-        #     try:
-        #         md = f._get_grib().message(deflate=True)
-        #         bpv = f._get_grib().get_extra_key("bitsPerValue", default=None)
-        #         if bpv is None:
-        #             bpv = f.get("metadata.bitsPerValue", default=None)
-        #     except Exception:
-        #         md = ""
-
-        #     attrs = {
-        #         "message": md,
-        #     }
-
-        #     if bpv is not None and bpv != 0:
-        #         attrs["bitsPerValue"] = bpv
-
-        #     if grid_spec is not None:
-        #         attrs["grid_spec"] = grid_spec
-
-        #     self._attrs["_earthkit"] = attrs
-
-        # if grid_spec is not None:
-        #     self._attrs["earthkit_grid_spec"] = grid_spec
+        if add_earthkit_attrs:
+            attrs = EarthkitAttrsBuilder().build(self.tensor.source[0])
+            if attrs:
+                self._attrs.update(attrs)
 
         self._attrs.update(self.fixed_local_attrs)
         data = self.data_maker(self.tensor, self.var_dims, self.name)
@@ -438,9 +403,6 @@ class BackendDataBuilder(metaclass=ABCMeta):
         xr_attrs = self.profile.attrs.builder.build(self.ds, var_builders, rename=True)
 
         xr_coords = self.coords()
-        grid_spec = self.grid.grid_spec_str
-        if grid_spec is not None:
-            xr_coords["earthkit_grid_spec"] = grid_spec
 
         # build variables
         xr_vars = {

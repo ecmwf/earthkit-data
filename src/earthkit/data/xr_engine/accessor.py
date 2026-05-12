@@ -10,59 +10,46 @@
 
 class EarthkitAttrsBuilder:
     ACCESSOR_KEY = "_earthkit"
-    VARIABLE_GRID_SPEC_KEY = "earthkit_grid_spec"
 
     @staticmethod
     def grid_spec_str(field):
         try:
             grid_spec = field.geography.grid_spec()
-            if grid_spec is not None:
-                import json
+            from earthkit.data.utils import to_str
 
-                return json.dumps(grid_spec)
-            return None
+            return to_str(grid_spec)
 
         except Exception:
             return None
 
-    # def build_variable_grid_spec_attr(self, field):
-    #     grid_spec = self.grid_spec_str(field)
-    #     if grid_spec is not None:
-    #         return {self.VARIABLE_GRID_SPEC_KEY: grid_spec}
-    #     return dict()
-
-    def build(self, field, add_earthkit_attrs=True):
+    def build(self, field):
         res = dict()
         grid_spec = self.grid_spec_str(field)
 
-        if add_earthkit_attrs:
-            bpv = None
-            try:
-                md = field._get_grib().message(deflate=True)
-                bpv = field._get_grib().get_extra_key("bitsPerValue", default=None)
-                if bpv is None:
-                    bpv = field.get("metadata.bitsPerValue", default=None)
-            except Exception:
-                md = ""
+        bpv = None
+        try:
+            md = field._get_grib().message(deflate=True)
+            bpv = field._get_grib().get_extra_key("bitsPerValue", default=None)
+            if bpv is None:
+                bpv = field.get("metadata.bitsPerValue", default=None)
+        except Exception:
+            md = ""
 
-            attrs = {
-                "message": md,
-            }
+        attrs = {
+            "message": md,
+        }
 
-            if bpv is not None and bpv != 0:
-                attrs["bitsPerValue"] = bpv
+        if bpv is not None and bpv != 0:
+            attrs["bitsPerValue"] = bpv
 
-            if grid_spec is not None:
-                attrs["grid_spec"] = grid_spec
+        if grid_spec is not None:
+            attrs["grid_spec"] = grid_spec
 
-            res[self.ACCESSOR_KEY] = attrs
-
-        # if grid_spec is not None:
-        #     res[self.VARIABLE_GRID_SPEC_KEY] = grid_spec
+        res[self.ACCESSOR_KEY] = attrs
 
         return res
 
-    def set(self, field, da_attrs):
+    def set_field(self, field, da_attrs):
         res = dict()
 
         grid_spec = self.grid_spec_str(field)
@@ -87,10 +74,20 @@ class EarthkitAttrsBuilder:
             del attrs["grid_spec"]
 
         res[self.ACCESSOR_KEY] = attrs
+        return res
 
-        if grid_spec is not None:
-            res[self.VARIABLE_GRID_SPEC_KEY] = grid_spec
-        elif self.VARIABLE_GRID_SPEC_KEY in res:
-            res[self.VARIABLE_GRID_SPEC_KEY] = None
+    def set_grid_spec(self, grid_spec, da_attrs):
+        from earthkit.data.utils import to_str
+
+        res = dict()
+        grid_spec_str = to_str(grid_spec)
+        if grid_spec_str is None:
+            raise ValueError(f"Invalid grid_spec: {grid_spec}")
+
+        attrs_ori = da_attrs.get(self.ACCESSOR_KEY, dict())
+        attrs = attrs_ori.copy()
+        attrs["grid_spec"] = grid_spec_str
+
+        res[self.ACCESSOR_KEY] = attrs
 
         return res
