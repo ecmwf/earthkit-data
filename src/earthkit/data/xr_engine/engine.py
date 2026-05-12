@@ -698,7 +698,7 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
         ds = self._obj.copy(deep=False)
         for name in list(self._obj.data_vars.keys()):
             da = ds[name]
-            da = da.set(*args, **kwargs)
+            da = da.earthkit.set(*args, **kwargs)
             ds[name] = da
         return ds
 
