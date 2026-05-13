@@ -52,7 +52,6 @@ class StandaloneMarsClient:
 
             subprocess.run(
                 [self.command(), filename],
-                env=dict(os.environ, MARS_AUTO_SPLIT_BY_DATES="1"),
                 check=True,
                 **log,
             )
