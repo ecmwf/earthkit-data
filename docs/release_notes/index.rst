@@ -15,6 +15,7 @@ Version updates
 .. toctree::
     :maxdepth: 1
 
+    version_0.20_updates
     version_0.19_updates
     version_0.18_updates
     version_0.17_updates
