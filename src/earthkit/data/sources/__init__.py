@@ -11,11 +11,15 @@ import os
 import re
 import weakref
 from importlib import import_module
+from typing import TYPE_CHECKING
 
 from earthkit.data.core import Loader
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.plugins import find_plugin
 from earthkit.data.core.plugins import register as register_plugin
+
+if TYPE_CHECKING:
+    from earthkit.data.data import Data  # type: ignore[import]
 
 
 class Source(Loader):
@@ -54,12 +58,6 @@ class Source(Loader):
 
     def graph(self, depth=0):
         print(" " * depth, self)
-
-    # def _encode(self, encoder, **kwargs):
-    #     return encoder._encode(self, **kwargs)
-
-    # def _default_encoder(self):
-    #     return None
 
     def to_data_object(self):
         """Convert this source into a data object, if possible."""
@@ -110,11 +108,11 @@ class SourceMaker:
 get_source = SourceMaker()
 
 
-def from_source(name: str, *args, lazily=False, **kwargs) -> Source:
+def from_source(name: str, *args, lazily=False, **kwargs) -> "Data":
     if lazily:
         return from_source_lazily(name, *args, **kwargs)
 
-    src = from_source_internal(name, *args, **kwargs)
+    src = _from_source_internal(name, *args, **kwargs)
 
     if hasattr(src, "to_data_object"):
         data = src.to_data_object()
@@ -124,7 +122,7 @@ def from_source(name: str, *args, lazily=False, **kwargs) -> Source:
     raise ValueError(f"Source {src} cannot be converted into a data object")
 
 
-def from_source_internal(name: str, *args, lazily=False, **kwargs) -> Source:
+def _from_source_internal(name: str, *args, lazily=False, **kwargs) -> Source:
     if lazily:
         return from_source_lazily(name, *args, **kwargs)
 
