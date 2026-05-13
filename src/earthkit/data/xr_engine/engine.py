@@ -473,7 +473,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         self._obj = xarray_obj
 
     @property
-    def _reference_field(self):
+    def reference_field(self):
         message = self._grib_message()
 
         try:
@@ -554,7 +554,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         from .grib import data_array_to_fields
 
         for f in data_array_to_fields(
-            self._obj, reference_field=self._reference_field, metadata=self._extra_grib_metadata()
+            self._obj, reference_field=self.reference_field, metadata=self._extra_grib_metadata()
         ):
             yield f
 
@@ -586,7 +586,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
             return self._obj
 
         try:
-            field = self._reference_field
+            field = self.reference_field
         except Exception:
             field = None
 
@@ -639,7 +639,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
             pass
 
         try:
-            return self._reference_field.geography.grid_spec()
+            return self.reference_field.geography.grid_spec()
         except Exception:
             # print(e)
             return None

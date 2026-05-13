@@ -337,7 +337,7 @@ def test_xr_engine_write_bits_per_value(allow_holes, lazy_load):
     )
     ds += 1
 
-    # assert ds["t"].earthkit._reference_field.metadata("bitsPerValue") == 8
+    # assert ds["t"].earthkit.reference_field.metadata("bitsPerValue") == 8
 
     # data-array
     r = ds["t"].earthkit.to_fieldlist()

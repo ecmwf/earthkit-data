@@ -104,7 +104,7 @@ def data_array_to_fields(da, reference_field=None, metadata=None):
 
     # extract metadata template from dataarray
     if reference_field is None and hasattr(da, "earthkit"):
-        reference_field = da.earthkit._reference_field
+        reference_field = da.earthkit.reference_field
 
     if reference_field is None:
         raise ValueError("Earthkit attribute not found in DataArray. Required for conversion to FieldList!")

@@ -35,7 +35,7 @@ def test_xr_engine_accessor_grib(lazy_load):
     assert md["grid_spec"] == ref_grid_spec_str
     assert da.earthkit.grid_spec == ref_grid_spec_dict
 
-    field = da.earthkit._reference_field
+    field = da.earthkit.reference_field
     assert field is not None
     assert field._get_grib().message(deflate=True) == md["message"]
     assert field.geography.grid_spec() == ref_grid_spec_dict
@@ -49,7 +49,7 @@ def test_xr_engine_accessor_grib(lazy_load):
     assert md_1["grid_spec"] == ref_grid_spec_1_str
     assert da_1.earthkit.grid_spec == ref_grid_spec_1_dict
 
-    field_1 = da_1.earthkit._reference_field
+    field_1 = da_1.earthkit.reference_field
     assert field_1 is not None
     assert field_1.geography.grid_spec() == ref_grid_spec_1_dict
 
