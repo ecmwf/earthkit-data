@@ -13,9 +13,10 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.utils.testing import earthkit_remote_test_data_file, earthkit_test_data_file
+from earthkit.data.utils.testing import IN_GITHUB, earthkit_remote_test_data_file, earthkit_test_data_file
 
 
+@pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
 @pytest.mark.cache
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_accessor_grib(lazy_load):
