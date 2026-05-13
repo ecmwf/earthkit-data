@@ -133,7 +133,7 @@ class GribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
             )
         elif policy == "memory":
             from earthkit.data.core.caching import cache_file
-            from earthkit.data.sources import from_source_internal
+            from earthkit.data.sources import _from_source_internal
 
             def _create(path, args):
                 with open(path, "wb") as f:
@@ -148,7 +148,7 @@ class GribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
             handle_policy = state["handle_policy"]
             handle_cache_size = state["handle_cache_size"]
             use_metadata_cache = state["use_metadata_cache"]
-            ds = from_source_internal(
+            ds = _from_source_internal(
                 "file",
                 path,
                 grib_handle_policy=handle_policy,

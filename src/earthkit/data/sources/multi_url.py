@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.sources import from_source_internal
+from earthkit.data.sources import _from_source_internal
 
 from .multi import MultiSource
 
@@ -27,7 +27,7 @@ class MultiUrl(MultiSource):
             url_spec = url_spec.sorted()
 
         sources = [
-            from_source_internal(
+            _from_source_internal(
                 "url",
                 x,
                 filter=filter,

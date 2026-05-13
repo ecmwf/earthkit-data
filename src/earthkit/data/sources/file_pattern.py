@@ -11,7 +11,7 @@ from typing import Any as TypingAny
 from typing import Dict, Optional, Tuple, Union
 
 from earthkit.data import concat
-from earthkit.data.sources import Source, from_source_internal
+from earthkit.data.sources import Source, _from_source_internal
 from earthkit.data.sources.empty import EmptySource
 from earthkit.data.sources.file import File
 from earthkit.data.sources.multi import MultiSource
@@ -39,7 +39,7 @@ class HiveFilePattern(Source):
         if rest:
             out = EmptySource()
             for f in self.scanner.scan(**kwargs):
-                ds = from_source_internal("file", f).to_fieldlist()
+                ds = _from_source_internal("file", f).to_fieldlist()
                 out = concat(out, ds.sel(**rest))
                 if _hive_diag:
                     _hive_diag.file(1)

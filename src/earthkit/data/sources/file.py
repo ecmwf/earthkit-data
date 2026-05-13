@@ -17,7 +17,7 @@ from earthkit.data.core.caching import CACHE
 from earthkit.data.readers import reader
 from earthkit.data.utils.parts import PathAndParts
 
-from . import Source, from_source_internal
+from . import Source, _from_source_internal
 
 LOG = logging.getLogger(__name__)
 
@@ -66,10 +66,10 @@ class FileSource(Source, Encodable, os.PathLike):
             if len(self.path) == 1:
                 self.path = self.path[0]
             else:
-                return from_source_internal(
+                return _from_source_internal(
                     "multi",
                     [
-                        from_source_internal("file", p, parts=part, filter=self.filter, **self._kwargs)
+                        _from_source_internal("file", p, parts=part, filter=self.filter, **self._kwargs)
                         for p, part in zip(self.path, self.parts)
                     ],
                     filter=self.filter,
@@ -244,10 +244,10 @@ class StreamFileSource(FileSource):
             if len(self.path) == 1:
                 self.path = self.path[0]
             else:
-                return from_source_internal(
+                return _from_source_internal(
                     "multi",
                     [
-                        from_source_internal("file", p, parts=part, filter=self.filter, stream=True, **self._kwargs)
+                        _from_source_internal("file", p, parts=part, filter=self.filter, stream=True, **self._kwargs)
                         for p, part in zip(self.path, self.parts)
                     ],
                     filter=self.filter,
