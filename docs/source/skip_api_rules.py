@@ -18,7 +18,7 @@ def _ends_with_any(name, suffixes):
 _SKIP = {
     "function": [
         "sources.from_source",
-        "sources.from_source_internal",
+        "sources._from_source_internal",
         "sources.from_source_lazily",
         "sources.register",
     ],
@@ -66,7 +66,7 @@ def _skip_api_items(app, what, name, obj, skip, options):
     #         name,
     #         [
     #             "sources.from_source",
-    #             "sources.from_source_internal",
+    #             "sources._from_source_internal",
     #             "sources.from_source_lazily",
     #             "sources.get_source",
     #             "sources.register",
