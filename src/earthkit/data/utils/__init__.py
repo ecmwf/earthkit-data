@@ -175,3 +175,31 @@ def ensure_dict(obj):
 
 def is_module_loaded(module_name):
     return module_name in sys.modules
+
+
+def to_dict(d):
+    if isinstance(d, dict):
+        return d
+    elif isinstance(d, str):
+        try:
+            return json.loads(d)
+        except Exception:
+            pass
+
+    return None
+
+
+def to_str(s):
+    if isinstance(s, str):
+        return s
+    elif isinstance(s, dict):
+        import json
+
+        try:
+            return json.dumps(s)
+        except Exception:
+            return None
+    elif isinstance(s, (int, float, bool)):
+        return str(s)
+    else:
+        return None

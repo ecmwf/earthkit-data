@@ -28,7 +28,12 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
     [
         {"profile": "mars", "time_dims": ["date", "time", "step"]},
         {"profile": "mars", "time_dims": ["forecast_reference_time", "step"]},
-        {"profile": "mars", "time_dims": ["date", "time", "step"], "decode_times": False, "decode_timedelta": False},
+        {
+            "profile": "mars",
+            "time_dims": ["date", "time", "step"],
+            "decode_times": False,
+            "decode_timedelta": False,
+        },
         {
             "profile": "mars",
             "time_dims": ["forecast_reference_time", "step"],
@@ -326,11 +331,13 @@ def test_xr_engine_write_bits_per_value(allow_holes, lazy_load):
     xr.set_options(keep_attrs=True)
 
     ds = ds_ek.to_xarray(
-        allow_holes=allow_holes, lazy_load=lazy_load, **{"profile": "mars", "time_dims": ["date", "time", "step"]}
+        allow_holes=allow_holes,
+        lazy_load=lazy_load,
+        **{"profile": "mars", "time_dims": ["date", "time", "step"]},
     )
     ds += 1
 
-    # assert ds["t"].earthkit._reference_field.metadata("bitsPerValue") == 8
+    # assert ds["t"].earthkit.reference_field.metadata("bitsPerValue") == 8
 
     # data-array
     r = ds["t"].earthkit.to_fieldlist()

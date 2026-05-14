@@ -72,42 +72,12 @@ class VariableBuilder:
         self.remapping = remapping
 
     def build(self, add_earthkit_attrs=True):
-        grid_spec = None
-        try:
-            grid_spec = self.tensor.source[0].geography.grid_spec()
-            if grid_spec is not None:
-                if isinstance(grid_spec, dict):
-                    import json
-
-                    grid_spec = json.dumps(grid_spec)
-        except Exception:
-            grid_spec = None
+        from .accessor import EarthkitAttrsBuilder
 
         if add_earthkit_attrs:
-            f = self.tensor.source[0]
-            bpv = None
-            try:
-                md = f._get_grib().message(deflate=True)
-                bpv = f._get_grib().get_extra_key("bitsPerValue", default=None)
-                if bpv is None:
-                    bpv = f.get("metadata.bitsPerValue", default=None)
-            except Exception:
-                md = ""
-
-            attrs = {
-                "message": md,
-            }
-
-            if bpv is not None and bpv != 0:
-                attrs["bitsPerValue"] = bpv
-
-            if grid_spec is not None:
-                attrs["grid_spec"] = grid_spec
-
-            self._attrs["_earthkit"] = attrs
-
-        if grid_spec is not None:
-            self._attrs["earthkit_grid_spec"] = grid_spec
+            attrs = EarthkitAttrsBuilder().build(self.tensor.source[0])
+            if attrs:
+                self._attrs.update(attrs)
 
         self._attrs.update(self.fixed_local_attrs)
         data = self.data_maker(self.tensor, self.var_dims, self.name)
@@ -431,6 +401,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         # build variable and global attributes
         xr_attrs = self.profile.attrs.builder.build(self.ds, var_builders, rename=True)
+
         xr_coords = self.coords()
 
         # build variables
@@ -443,12 +414,6 @@ class BackendDataBuilder(metaclass=ABCMeta):
         dataset = xarray.Dataset(xr_vars, coords=xr_coords, attrs=xr_attrs)
 
         dataset = self.profile.rename_dataset_dims(dataset)
-
-        # dim_map = self.profile.rename_dims_map()
-        # if dim_map:
-        #     d = {k: v for k, v in dim_map.items() if k in dataset.dims}
-        #     if d:
-        #         dataset = dataset.rename(d)
 
         if "source" not in dataset.encoding:
             dataset.encoding["source"] = None

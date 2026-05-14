@@ -27,4 +27,5 @@ Xarray engine
     xarray_engine_holes.ipynb
     xarray_engine_chunks.ipynb
     xarray_engine_chunks_on_dask_cluster.ipynb
+    xarray_engine_grib_workflow.ipynb
     xarray_cupy.ipynb

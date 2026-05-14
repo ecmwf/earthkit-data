@@ -473,33 +473,8 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         self._obj = xarray_obj
 
     @property
-    def _reference_field(self):
-        if "_earthkit" not in self._obj.attrs:
-            raise ValueError(
-                "The xarray object does not contain the '_earthkit' attribute. Cannot determine the reference field."
-            )
-
-        md = self._obj.attrs.get("_earthkit")
-
-        if not isinstance(md, dict):
-            raise ValueError(
-                (
-                    "The '_earthkit' attribute must be a dictionary containing the metadata of the"
-                    f" reference field. Found: {type(md)}"
-                )
-            )
-
-        if "message" not in md:
-            raise ValueError(
-                "The '_earthkit' attribute must contain the 'message' key with the metadata of the reference field."
-            )
-
-        message = md.get("message")
-
-        if not message:
-            raise ValueError(
-                "The 'message' key in the '_earthkit' attribute must contain the metadata of the reference field."
-            )
+    def reference_field(self):
+        message = self._grib_message()
 
         try:
             if message:
@@ -514,6 +489,49 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
                     f"Error: {str(e)}"
                 )
             ) from e
+
+        return None
+
+    def _grib_message(self, raise_error=True):
+        if "_earthkit" not in self._obj.attrs:
+            if raise_error:
+                raise ValueError(
+                    (
+                        "The xarray object does not contain the '_earthkit' attribute. Cannot determine"
+                        " the reference field."
+                    )
+                )
+            return None
+
+        md = self._obj.attrs.get("_earthkit")
+
+        if not isinstance(md, dict):
+            if raise_error:
+                raise ValueError(
+                    (
+                        "The '_earthkit' attribute must be a dictionary containing the metadata of the"
+                        f" reference field. Found: {type(md)}"
+                    )
+                )
+            return None
+
+        if "message" not in md:
+            if raise_error:
+                raise ValueError(
+                    "The '_earthkit' attribute must contain the 'message' key with the metadata of the reference field."
+                )
+            return None
+
+        message = md.get("message")
+
+        if not message:
+            if raise_error:
+                raise ValueError(
+                    "The 'message' key in the '_earthkit' attribute must contain the metadata of the reference field."
+                )
+                return None
+
+        return message
 
     def _extra_grib_metadata(self):
         if "_earthkit" in self._obj.attrs:
@@ -536,7 +554,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         from .grib import data_array_to_fields
 
         for f in data_array_to_fields(
-            self._obj, reference_field=self._reference_field, metadata=self._extra_grib_metadata()
+            self._obj, reference_field=self.reference_field, metadata=self._extra_grib_metadata()
         ):
             yield f
 
@@ -562,20 +580,68 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         da.data = moved
         return da
 
+    def set(self, *args, **kwargs):
+        """Return a new DataArray with updated attributes."""
+        if not args and not kwargs:
+            return self._obj
+
+        try:
+            field = self.reference_field
+        except Exception:
+            field = None
+
+        if field is not None:
+            from .accessor import EarthkitAttrsBuilder
+
+            field = field.set(*args, **kwargs).sync()
+            da = self._obj.copy(deep=False)
+            attrs = EarthkitAttrsBuilder().set_field(field, da.attrs)
+            da.attrs.update(attrs)
+        else:
+            kwargs = kwargs.copy()
+            for a in args:
+                if a is None:
+                    continue
+                if isinstance(a, dict):
+                    kwargs.update(a)
+                    continue
+                raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
+
+            # allow setting grid_spec without reference field, but only if it's the only attribute being set
+            if len(kwargs) == 1 and list(kwargs.keys())[0] == "geography.grid_spec":
+                from .accessor import EarthkitAttrsBuilder
+
+                da = self._obj.copy(deep=False)
+                attrs = EarthkitAttrsBuilder().set_grid_spec(kwargs["geography.grid_spec"], da.attrs)
+                da.attrs.update(attrs)
+            else:
+                raise ValueError(
+                    (
+                        "Cannot update attributes of the reference field because it cannot be determined"
+                        " from the xarray object."
+                    )
+                )
+
+        return da
+
     @property
-    def grid_spec(self):
+    def grid_spec(self) -> dict | None:
         """Return the grid specification of the DataArray."""
         try:
-            if "earthkit_grid_spec" in self._obj.attrs:
-                v = self._obj.attrs["earthkit_grid_spec"]
-                if isinstance(v, str):
-                    import json
+            if "_earthkit" in self._obj.attrs:
+                from earthkit.data.utils import to_dict
 
-                    return json.loads(v)
-                return v
-            return self._reference_field.geography.grid_spec()
-        except Exception as e:
-            print(e)
+                v = self._obj.attrs["_earthkit"].get("grid_spec", None)
+                v = to_dict(v)
+                if v is not None:
+                    return v
+        except Exception:
+            pass
+
+        try:
+            return self.reference_field.geography.grid_spec()
+        except Exception:
+            # print(e)
             return None
 
 
@@ -622,6 +688,18 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
         ds = self._obj.copy(deep=False)
         for name, var in ds.data_vars.items():
             ds[name].data = convert(var.data, device=device, array_namespace=array_namespace, **kwargs)
+        return ds
+
+    def set(self, *args, **kwargs):
+        """Return a new DataArray with updated attributes."""
+        if not args and not kwargs:
+            return self._obj
+
+        ds = self._obj.copy(deep=False)
+        for name in list(self._obj.data_vars.keys()):
+            da = ds[name]
+            da = da.earthkit.set(*args, **kwargs)
+            ds[name] = da
         return ds
 
     @property
