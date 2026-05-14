@@ -179,7 +179,7 @@ def test_grib_encoder_field_data_and_values_and_template():
 
 
 @pytest.mark.parametrize("init_encoder", [None, ["template", "metadata"], ["template"], ["metadata"]])
-def test_grib_encoder_field_metadata_1(init_encoder):
+def test_grib_encoder_field_grib_metadata_1(init_encoder):
     fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     f = fl[0]
@@ -202,7 +202,7 @@ def test_grib_encoder_field_metadata_1(init_encoder):
     assert f_r.get("time.base_datetime") == datetime.datetime(1998, 5, 2, 12)
 
 
-def test_grib_encoder_field_metadata_2():
+def test_grib_encoder_field_grib_metadata_2():
     fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     f = fl[0]
@@ -218,7 +218,7 @@ def test_grib_encoder_field_metadata_2():
     assert f_r.get("time.base_datetime") == datetime.datetime(1998, 5, 2, 0)
 
 
-def test_grib_encoder_field_metadata_3():
+def test_grib_encoder_field_grib_metadata_3():
     fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     f = fl[0]
@@ -231,5 +231,162 @@ def test_grib_encoder_field_metadata_3():
     assert f is not f_r
     assert f.message() != f_r.message()
     assert np.allclose(f.values + 1.0, f_r.values)
+
     assert f.get("time.base_datetime") == datetime.datetime(2020, 5, 13, 12, 0)
+    assert f.get("time.valid_datetime") == datetime.datetime(2020, 5, 13, 12, 0)
+    assert f.get("time.step") == datetime.timedelta(hours=0)
+    assert f.get("metadata.dataDate") == 20200513
+    assert f.get("metadata.dataTime") == 1200
+    assert f.get("metadata.step") == 0
+    assert f.get("metadata.validityDate") == 20200513
+    assert f.get("metadata.validityTime") == 1200
+
     assert f_r.get("time.base_datetime") == datetime.datetime(1998, 5, 2, 0)
+    assert f_r.get("time.valid_datetime") == datetime.datetime(1998, 5, 2, 0)
+    assert f_r.get("time.step") == datetime.timedelta(hours=0)
+    assert f_r.get("metadata.dataDate") == 19980502
+    assert f_r.get("metadata.dataTime") == 0
+    assert f_r.get("metadata.step") == 0
+    assert f_r.get("metadata.validityDate") == 19980502
+    assert f_r.get("metadata.validityTime") == 0
+
+
+@pytest.mark.parametrize("init_encoder", [None, ["template", "metadata"], ["template"], ["metadata"]])
+@pytest.mark.parametrize(
+    "new_base_datetime_metadata", [19980502, datetime.datetime(1998, 5, 2, 0, 0), "1998-05-02T00:00:00"]
+)
+def test_grib_encoder_field_hl_metadata_1(init_encoder, new_base_datetime_metadata):
+    fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+
+    f = fl[0]
+
+    encoder_kwargs = {}
+    encode_kwargs = {"template": f, "metadata": {"time.base_datetime": new_base_datetime_metadata}}
+    if init_encoder is not None:
+        for key in init_encoder:
+            if key in encode_kwargs:
+                encoder_kwargs[key] = encode_kwargs.pop(key)
+
+    encoder = create_encoder("grib", **encoder_kwargs)
+    r = encoder.encode(data=f, **encode_kwargs)
+
+    f_r = r.to_field()
+    assert f is not f_r
+    assert f.message() != f_r.message()
+    assert np.allclose(f.values, f_r.values)
+
+    assert f.get("time.base_datetime") == datetime.datetime(2020, 5, 13, 12, 0)
+    assert f.get("time.valid_datetime") == datetime.datetime(2020, 5, 13, 12, 0)
+    assert f.get("time.step") == datetime.timedelta(hours=0)
+    assert f.get("metadata.dataDate") == 20200513
+    assert f.get("metadata.dataTime") == 1200
+    assert f.get("metadata.step") == 0
+    assert f.get("metadata.validityDate") == 20200513
+    assert f.get("metadata.validityTime") == 1200
+
+    assert f_r.get("time.base_datetime") == datetime.datetime(1998, 5, 2, 0)
+    assert f_r.get("time.valid_datetime") == datetime.datetime(1998, 5, 2, 0)
+    assert f_r.get("time.step") == datetime.timedelta(hours=0)
+    assert f_r.get("metadata.dataDate") == 19980502
+    assert f_r.get("metadata.dataTime") == 0
+    assert f_r.get("metadata.step") == 0
+    assert f_r.get("metadata.validityDate") == 19980502
+    assert f_r.get("metadata.validityTime") == 0
+
+
+def test_grib_encoder_field_hl_metadata_2():
+    fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+
+    f = fl[0]
+
+    encoder = create_encoder("grib", metadata={"time.step": 6})
+    r = encoder.encode(data=f, template=f, metadata={"time.base_datetime": datetime.datetime(1998, 5, 2, 0, 0)})
+
+    f_r = r.to_field()
+    assert f is not f_r
+    assert f.message() != f_r.message()
+    assert np.allclose(f.values, f_r.values)
+
+    assert f.get("time.base_datetime") == datetime.datetime(2020, 5, 13, 12, 0)
+    assert f.get("time.valid_datetime") == datetime.datetime(2020, 5, 13, 12, 0)
+    assert f.get("time.step") == datetime.timedelta(hours=0)
+    assert f.get("metadata.dataDate") == 20200513
+    assert f.get("metadata.dataTime") == 1200
+    assert f.get("metadata.step") == 0
+    assert f.get("metadata.validityDate") == 20200513
+    assert f.get("metadata.validityTime") == 1200
+
+    assert f_r.get("time.base_datetime") == datetime.datetime(1998, 5, 2, 0)
+    assert f_r.get("time.valid_datetime") == datetime.datetime(1998, 5, 2, 6)
+    assert f_r.get("time.step") == datetime.timedelta(hours=6)
+    assert f_r.get("metadata.dataDate") == 19980502
+    assert f_r.get("metadata.dataTime") == 0
+    assert f_r.get("metadata.step") == 6
+    assert f_r.get("metadata.validityDate") == 19980502
+    assert f_r.get("metadata.validityTime") == 600
+
+
+def test_grib_encoder_field_hl_metadata_3():
+    fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+
+    f = fl[0]
+    vals = f.values + 1.0
+
+    encoder = create_encoder("grib", metadata={"time.step": 6})
+    r = encoder.encode(values=vals, template=f, metadata={"time.base_datetime": datetime.datetime(1998, 5, 2, 0, 0)})
+
+    f_r = r.to_field()
+    assert f is not f_r
+    assert f.message() != f_r.message()
+    assert np.allclose(f.values + 1.0, f_r.values)
+
+    assert f.get("time.base_datetime") == datetime.datetime(2020, 5, 13, 12, 0)
+    assert f.get("time.valid_datetime") == datetime.datetime(2020, 5, 13, 12, 0)
+    assert f.get("time.step") == datetime.timedelta(hours=0)
+    assert f.get("metadata.dataDate") == 20200513
+    assert f.get("metadata.dataTime") == 1200
+    assert f.get("metadata.step") == 0
+    assert f.get("metadata.validityDate") == 20200513
+    assert f.get("metadata.validityTime") == 1200
+
+    assert f_r.get("time.base_datetime") == datetime.datetime(1998, 5, 2, 0)
+    assert f_r.get("time.valid_datetime") == datetime.datetime(1998, 5, 2, 6)
+    assert f_r.get("time.step") == datetime.timedelta(hours=6)
+    assert f_r.get("metadata.dataDate") == 19980502
+    assert f_r.get("metadata.dataTime") == 0
+    assert f_r.get("metadata.step") == 6
+    assert f_r.get("metadata.validityDate") == 19980502
+    assert f_r.get("metadata.validityTime") == 600
+
+
+def test_grib_encoder_field_mixed_metadata():
+    fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+
+    f = fl[0]
+    vals = f.values + 1.0
+
+    encoder = create_encoder("grib", metadata={"metadata.step": 5, "metadata.time": 600})
+    r = encoder.encode(values=vals, template=f, metadata={"time.base_datetime": datetime.datetime(1998, 5, 2, 0, 0)})
+
+    f_r = r.to_field()
+    assert f is not f_r
+    assert f.message() != f_r.message()
+    assert np.allclose(f.values + 1.0, f_r.values)
+
+    assert f.get("time.base_datetime") == datetime.datetime(2020, 5, 13, 12, 0)
+    assert f.get("time.valid_datetime") == datetime.datetime(2020, 5, 13, 12, 0)
+    assert f.get("time.step") == datetime.timedelta(hours=0)
+    assert f.get("metadata.dataDate") == 20200513
+    assert f.get("metadata.dataTime") == 1200
+    assert f.get("metadata.step") == 0
+    assert f.get("metadata.validityDate") == 20200513
+    assert f.get("metadata.validityTime") == 1200
+
+    assert f_r.get("time.base_datetime") == datetime.datetime(1998, 5, 2, 6)
+    assert f_r.get("time.valid_datetime") == datetime.datetime(1998, 5, 2, 11)
+    assert f_r.get("time.step") == datetime.timedelta(hours=5)
+    assert f_r.get("metadata.dataDate") == 19980502
+    assert f_r.get("metadata.dataTime") == 600
+    assert f_r.get("metadata.step") == 5
+    assert f_r.get("metadata.validityDate") == 19980502
+    assert f_r.get("metadata.validityTime") == 1100

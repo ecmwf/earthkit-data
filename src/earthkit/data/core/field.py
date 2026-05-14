@@ -1551,9 +1551,13 @@ class Field(Base):
         else:
             return None
 
-    def _encode(self, encoder, hints=None, **kwargs):
+    def _encode(self, encoder, hints=None, field_metadata=None, **kwargs):
         """Double dispatch to the encoder."""
-        return encoder._encode_field(self, **kwargs)
+        if field_metadata:
+            field = self.set(**field_metadata)
+        else:
+            field = self
+        return encoder._encode_field(field, **kwargs)
 
     def to_field(self, array=True):
         """Return the field itself."""
