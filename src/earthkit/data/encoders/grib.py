@@ -140,44 +140,57 @@ class GribHandleMaker:
         self.template = self.handle_from_template(template, clone=False)
         self._bbox = {}
 
-    def make(self, values=None, metadata=None, template=None):
+    def make(self, values=None, metadata=None, template=None, field_metadata=None):
         """Create a new GribCodesHandle from a template, field or metadata.
 
         May modify existing metadata
 
         Parameters
         ----------
-        values: numpy.ndarray
+        values: numpy.ndarray, optional
             The values to encode
-        metadata: dict
+        metadata: dict, optional
             Metadata to encode
-        template: GribCoder
+        template: GribCoder, optional
             A template to use for encoding
+        field_metadata: dict, optional
+            Metadata to be set on the field before encoding.
         """
         if template is None:
             template = self.template
 
-        handle = self.handle_from_template(template, clone=True)
+        handle = self.handle_from_template(template, field_metadata=field_metadata, clone=True)
         if handle is not None:
             self.update_metadata_from_template(metadata, template, handle)
 
         if handle is None:
             if values is None:
                 raise ValueError("No values to encode")
+            if field_metadata:
+                raise ValueError("Cannot provide field_metadata without a template or handle")
             handle = self.handle_from_metadata(values, metadata, _COMPULSORY)
 
         return handle
 
     @staticmethod
-    def handle_from_template(template, clone=True):
+    def handle_from_template(template, field_metadata=None, clone=True):
         handle = None
         if template is not None:
             from earthkit.data.core.field import Field
 
             def _result(handle):
+                if field_metadata:
+                    from earthkit.data.field.grib.create import create_grib_field
+
+                    field = create_grib_field(handle)
+                    field = field.set(**field_metadata)
+                    # it clones the handle internally, so we don't need to clone it again here
+                    return GribHandleMaker.handle_from_field(field)
                 return handle.clone() if clone else handle
 
             if isinstance(template, Field):
+                if field_metadata:
+                    template = template.set(**field_metadata)
                 return GribHandleMaker.handle_from_field(template)
             # GribMetadata or GribHandle
             elif hasattr(template, "handle"):
@@ -214,6 +227,7 @@ class GribHandleMaker:
     @staticmethod
     def handle_from_field(field):
         r = {}
+        field = field.sync()
         field._get_grib_context(r)
         handle = r.pop("handle", None)
 
@@ -442,13 +456,24 @@ class GribEncoder(Encoder):
     def _normalise_kwargs_names(self, **kwargs):
         return kwargs
 
-    def _normalise_metadata_key_names(self, md):
+    def _normalise_metadata_key_names(self, metadata):
         def _convert(name):
             if name.startswith("metadata."):
                 return name[9:]
             return name
 
-        return {_convert(k): v for k, v in md.items()}
+        return {_convert(k): v for k, v in metadata.items()}
+
+    def _separate_metadata(self, metadata):
+        field = {}
+        grib = {}
+        for k, v in metadata.items():
+            if "." in k:
+                field[k] = v
+            else:
+                grib[k] = v
+
+        return field, grib
 
     def _get_handle(self, **kwargs):
         return GribHandleMaker(template=self.template).make(**kwargs)
@@ -484,7 +509,10 @@ class GribEncoder(Encoder):
         check_nans: bool
             Check for NaNs in the values and replace them with ``missing_value``.
         metadata: dict
-            Metadata to encode. The keys must be ecCodes GRIB keys, optionally prefixed with "metadata.".
+            Metadata to encode. The keys can be ecCodes GRIB keys, optionally prefixed with "metadata."
+            The format independent keys from :py:class:`~earthkit.data.core.field.Field` metadata are also
+            accepted. If format independent keys are provided, they are applied first to create a new handle,
+            then if ecCodes GRIB keys are provided too, they are applied on top of the handle.
         template: Field, GribCodesHandle, bytes, str, int, None
             A template to use for encoding. It can be a :py:class:`~earthkit.data.core.field.Field`,
             a :py:class:`~earthkit.data.reader.grib.GribCodesHandle`, a GRIB message as
@@ -538,8 +566,11 @@ class GribEncoder(Encoder):
         md = self._normalise_kwargs_names(**self.metadata)
         md.update(self._normalise_kwargs_names(**metadata))
         md.update(self._normalise_kwargs_names(**kwargs))
-
         md = self._normalise_metadata_key_names(md)
+
+        # separate the metadata into format independent field metadata,
+        # and ecCodes GRIB metadata
+        field_metadata, md = self._separate_metadata(md)
 
         # when the input date a datetime object time can be inferred from it
         can_infer_time = (
@@ -557,6 +588,8 @@ class GribEncoder(Encoder):
         kwargs["missing_value"] = missing_value
         kwargs["can_infer_time"] = can_infer_time
 
+        # detect if the data can be written straight to a file without going through the full
+        # encoding process, which can be very expensive for large data.
         path_allowed = (
             target is not None
             and target._name == "file"
@@ -564,17 +597,21 @@ class GribEncoder(Encoder):
             and values is not None
             and template is not None
             and missing_value == 9999
+            and not field_metadata
         )
-
         hints = {"path_allowed": path_allowed}
 
         if data is not None:
             from earthkit.data.data.wrappers import from_object
 
             data = from_object(data)
-            return data._encode(self, hints=hints, target=target, template=template, **kwargs)
+            return data._encode(
+                self, hints=hints, target=target, template=template, field_metadata=field_metadata, **kwargs
+            )
         else:
-            handle = self._get_handle(template=template, values=values, metadata=metadata)
+            handle = self._get_handle(
+                template=template, values=values, metadata=metadata, field_metadata=field_metadata
+            )
             return self._make_message(handle, **kwargs)
 
     def _has_standard_date_input(self, d):
