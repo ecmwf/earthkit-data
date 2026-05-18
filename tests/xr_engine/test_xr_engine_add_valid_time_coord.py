@@ -244,6 +244,34 @@ def test_fixed_dims_different_order(pl_fl, lazy_load, allow_holes):
 
 
 # -------------------------------------------------------------------------
+# valid_time aux coord should work even if there is no field for a given
+# (forecast_reference_time, step) pair (i.e. holes in the data) and thus
+# the corresponding valid_time value is NaT
+# -------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("lazy_load", [True, False])
+@pytest.mark.parametrize("dim_name_from_role_name", [True, False])
+def test_NaT(pl_fl, lazy_load, dim_name_from_role_name):
+    fl_with_holes = pl_fl.to_fieldlist().sel({"vertical.level": 500})[2:]
+    ds = fl_with_holes.to_xarray(
+        profile="earthkit",
+        add_valid_time_coord=True,
+        dim_name_from_role_name=dim_name_from_role_name,
+        lazy_load=lazy_load,
+        allow_holes=True,
+    )
+
+    assert "valid_time" in ds.coords
+    assert "valid_time" not in ds.sizes
+    assert ds.coords["valid_time"].dims == ("forecast_reference_time", "step")
+    assert ds.coords["valid_time"].shape == (4, 2)
+    _valid_time = np.array(VALID_TIME_FRT_STEP)
+    _valid_time[0, 0] = np.datetime64("NaT")
+    np.testing.assert_array_equal(ds.coords["valid_time"].values, _valid_time)
+
+
+# -------------------------------------------------------------------------
 # Edge case: add_valid_time_coord=False should not add it
 # -------------------------------------------------------------------------
 

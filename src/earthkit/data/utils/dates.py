@@ -67,6 +67,22 @@ def to_datetime(dt):
     if hasattr(dt, "isoformat"):
         return datetime.datetime.fromisoformat(dt.isoformat())
 
+    # if dt is NaT-like, then return None
+    if dt is None:
+        return dt
+    try:
+        # covers nan, np.datetime64('NaT') and np.timedelta64('NaT')
+        if np.isnan(dt):
+            return None
+    except Exception:
+        pass
+    try:
+        # covers pd.NaT
+        if np.isnan(dt.second):
+            return None
+    except Exception:
+        pass
+
     dt = from_object(dt)
 
     return to_datetime(dt.to_datetime())
