@@ -482,6 +482,10 @@ def test_xr_engine_global_attrs(allow_holes, lazy_load):
                 "dim_name_from_role_name": True,
             },
             {
+                "member": {
+                    "standard_name": "realization",
+                    "long_name": "ensemble member id",
+                },
                 "latitude": {
                     "units": "degrees_north",
                     "standard_name": "latitude",
@@ -519,6 +523,7 @@ def test_xr_engine_global_attrs(allow_holes, lazy_load):
                 "longitude": {"units": "degrees_east", "axis": "X"},
                 "step": {"units": "hours", "axis": "T"},
                 "forecast_reference_time": {},
+                "member": {},
             },
         ),
         # valid_time coord attrs
@@ -529,6 +534,10 @@ def test_xr_engine_global_attrs(allow_holes, lazy_load):
                 "dim_name_from_role_name": True,
             },
             {
+                "member": {
+                    "standard_name": "realization",
+                    "long_name": "ensemble member id",
+                },
                 "valid_time": {
                     "standard_name": "time",
                     "long_name": "valid_time",
@@ -551,7 +560,7 @@ def test_xr_engine_coord_attrs(lazy_load, kwargs, expected_coord_attrs):
     """Test that coordinate variables have the expected attributes."""
     ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib")).to_fieldlist()
 
-    ds = ds0.to_xarray(lazy_load=lazy_load, **kwargs)
+    ds = ds0.to_xarray(lazy_load=lazy_load, ensure_dims="member", **kwargs)
 
     for coord_name, expected_attrs in expected_coord_attrs.items():
         assert coord_name in ds.coords, f"Coordinate '{coord_name}' not found in dataset"

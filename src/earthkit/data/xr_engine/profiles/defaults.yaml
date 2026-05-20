@@ -51,6 +51,9 @@ dim_roles:
   level_type: vertical.level_type
 dim_name_from_role_name: true
 coord_attrs:
+  member:
+    standard_name: realization
+    long_name: ensemble member id
   latitude:
     units: degrees_north
     standard_name: latitude
