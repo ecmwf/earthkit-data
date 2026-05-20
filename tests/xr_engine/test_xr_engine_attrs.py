@@ -467,3 +467,122 @@ def test_xr_engine_global_attrs(allow_holes, lazy_load):
         "centre_fixed": "_ecmf_",
     }
     assert ds.attrs == ref_global_attrs
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("lazy_load", [True, False])
+@pytest.mark.parametrize(
+    "kwargs,expected_coord_attrs",
+    [
+        # Default coord_attrs from defaults.yaml profile for latitude/longitude/step
+        (
+            {
+                # "profile": "mars",
+                "time_dims": ["forecast_reference_time", "step"],
+                "dim_name_from_role_name": True,
+            },
+            {
+                "latitude": {
+                    "units": "degrees_north",
+                    "standard_name": "latitude",
+                    "long_name": "latitude",
+                },
+                "longitude": {
+                    "units": "degrees_east",
+                    "standard_name": "longitude",
+                    "long_name": "longitude",
+                },
+                "forecast_reference_time": {
+                    "standard_name": "forecast_reference_time",
+                    "long_name": "initial time of forecast",
+                },
+                "step": {
+                    "standard_name": "forecast_period",
+                    "long_name": "time since forecast_reference_time",
+                },
+            },
+        ),
+        # Custom coord_attrs override via kwargs
+        (
+            {
+                "profile": "mars",
+                "time_dims": ["forecast_reference_time", "step"],
+                "dim_name_from_role_name": True,
+                "coord_attrs": {
+                    "latitude": {"units": "degrees_north", "axis": "Y"},
+                    "longitude": {"units": "degrees_east", "axis": "X"},
+                    "step": {"units": "hours", "axis": "T"},
+                },
+            },
+            {
+                "latitude": {"units": "degrees_north", "axis": "Y"},
+                "longitude": {"units": "degrees_east", "axis": "X"},
+                "step": {"units": "hours", "axis": "T"},
+                "forecast_reference_time": {},
+            },
+        ),
+        # valid_time coord attrs
+        (
+            {
+                "profile": "mars",
+                "time_dims": ["valid_time"],
+                "dim_name_from_role_name": True,
+            },
+            {
+                "valid_time": {
+                    "standard_name": "time",
+                    "long_name": "valid_time",
+                },
+                "latitude": {
+                    "units": "degrees_north",
+                    "standard_name": "latitude",
+                    "long_name": "latitude",
+                },
+                "longitude": {
+                    "units": "degrees_east",
+                    "standard_name": "longitude",
+                    "long_name": "longitude",
+                },
+            },
+        ),
+    ],
+)
+def test_xr_engine_coord_attrs(lazy_load, kwargs, expected_coord_attrs):
+    """Test that coordinate variables have the expected attributes."""
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib")).to_fieldlist()
+
+    ds = ds0.to_xarray(lazy_load=lazy_load, **kwargs)
+
+    for coord_name, expected_attrs in expected_coord_attrs.items():
+        assert coord_name in ds.coords, f"Coordinate '{coord_name}' not found in dataset"
+        actual_attrs = dict(ds.coords[coord_name].attrs)
+        for attr_key, attr_val in expected_attrs.items():
+            assert attr_key in actual_attrs, (
+                f"Attribute '{attr_key}' not found in coordinate '{coord_name}' attrs: {actual_attrs}"
+            )
+            assert actual_attrs[attr_key] == attr_val, (
+                f"Coordinate '{coord_name}' attr '{attr_key}': expected {attr_val!r}, got {actual_attrs[attr_key]!r}"
+            )
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_engine_level_coord_attrs_grib_profile(lazy_load):
+    """Test that level coordinate has standard CF attributes from the grib profile."""
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib")).to_fieldlist()
+
+    ds = ds0.to_xarray(
+        profile="grib",
+        level_dim_mode="level",
+        dim_name_from_role_name=True,
+        lazy_load=lazy_load,
+    )
+
+    # Level coordinate should have attrs derived from the level type (pressure levels)
+    level_attrs = dict(ds.coords["level"].attrs)
+    assert "standard_name" in level_attrs, f"Missing 'standard_name' in level coord attrs: {level_attrs}"
+    assert "units" in level_attrs, f"Missing 'units' in level coord attrs: {level_attrs}"
+    assert "long_name" in level_attrs, f"Missing 'long_name' in level coord attrs: {level_attrs}"
+    assert "positive" in level_attrs, f"Missing 'positive' in level coord attrs: {level_attrs}"
+    assert level_attrs["units"] == "hectopascal"
+    assert level_attrs["positive"] == "down"
