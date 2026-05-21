@@ -268,7 +268,7 @@ class Dim:
         if key not in self.coords:
             from .coord import Coord
 
-            self.coords[key] = Coord.make(key, values, ds=source)
+            self.coords[key] = Coord.make(key, values, simple_name=self.get_simple_name(), ds=source)
         return key, self.coords[key]
 
     def remapping_keys(self):

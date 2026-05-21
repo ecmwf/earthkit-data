@@ -21,12 +21,12 @@ LOG = logging.getLogger(__name__)
 class Coord:
     LOOKUP_NAME = None
 
-    def __init__(self, name, vals, dims=None, ds=None):
-        self.name = name
+    def __init__(self, name, vals, dims=None, simple_name=None, ds=None):
+        self.name = simple_name if simple_name is not None else name
         self.vals = vals
         self.dims = dims
         if not self.dims:
-            self.dims = (self.name,)
+            self.dims = (name,)
 
     @staticmethod
     def make(name, *args, **kwargs):
@@ -69,9 +69,6 @@ class Coord:
         attrs = profile.attrs.coord_attrs.get(self.name, {})
         if not attrs and self.LOOKUP_NAME:
             attrs = profile.attrs.coord_attrs.get(self.LOOKUP_NAME, {})
-        # PW: TODO: need to replace this somehow?
-        # if profile.add_earthkit_attrs and self.component:
-        #     attrs["_earthkit"] = {"keys": self.component[0], "values": self.component[1]}
         return attrs
 
     @staticmethod
@@ -98,7 +95,6 @@ class DateTimeCoord(Coord):
 
     def attrs(self, profile):
         attrs = profile.attrs.coord_attrs.get(self.name, {})
-        # PW: TODO: need to replace this somehow?
         # if self.component:
         #     attrs["_earthkit"] = {"keys": self.component[0]}
         return attrs

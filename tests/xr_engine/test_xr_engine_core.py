@@ -111,6 +111,28 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
         "longitude": lons,
     }
 
+    # coordinate variable attributes
+    assert ds.coords["latitude"].attrs == {
+        "standard_name": "latitude",
+        "long_name": "latitude",
+        "units": "degrees_north",
+    }
+    assert ds.coords["longitude"].attrs == {
+        "standard_name": "longitude",
+        "long_name": "longitude",
+        "units": "degrees_east",
+    }
+    assert ds.coords["step"].attrs == {
+        "standard_name": "forecast_period",
+        "long_name": "time since forecast_reference_time",
+    }
+    assert ds.coords["levelist"].attrs == {
+        "standard_name": "air_pressure",
+        "long_name": "pressure",
+        "units": "hectopascal",
+        "positive": "down",
+    }
+
     dims_ref_full = {
         "date": 2,
         "time": 2,
