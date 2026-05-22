@@ -80,7 +80,7 @@ def test_netcdf_fieldlist_multi_subset_save_bad():
     assert len(ds) == 6
 
     with temp_file() as tmp:
-        with pytest.raises((AttributeError, IndexError)):
+        with pytest.raises((AttributeError, IndexError, ValueError)):
             ds.to_target("file", tmp)
 
 

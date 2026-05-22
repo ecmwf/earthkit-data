@@ -53,6 +53,28 @@ def xr_lod_nongeo():
 
 
 @pytest.fixture
+def xr_lod_nongeo_many_shapes():
+    prototype1 = {
+        "values": [1, 2, 3, 4, 5, 6],
+        "time": {"valid_datetime": "2018-08-01T09:00:00Z"},
+    }
+
+    prototype2 = {
+        "values": [1, 2, 3, 4, 5, 6, 7],
+        "time": {"valid_datetime": "2018-08-01T09:00:00Z"},
+    }
+
+    d = [
+        {"parameter": {"variable": "t"}, "vertical": {"level": 500}, **prototype1},
+        {"parameter": {"variable": "t"}, "vertical": {"level": 850}, **prototype1},
+        {"parameter": {"variable": "u"}, "vertical": {"level": 500}, **prototype2},
+        {"parameter": {"variable": "u"}, "vertical": {"level": 850}, **prototype2},
+    ]
+    ds = from_source("list-of-dicts", d).to_fieldlist()
+    return ds
+
+
+@pytest.fixture
 def xr_lod_forecast():
     prototype = {
         "geography": {"latitudes": [10.0, 0.0, -10.0], "longitudes": [20, 40.0]},
@@ -185,6 +207,16 @@ def test_xr_engine_lod_nongeo(allow_holes, lazy_load, xr_lod_nongeo):
     ])
     assert np.allclose(ds["t"].values, ref)
     assert np.allclose(ds["u"].values, ref)
+
+
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_engine_lod_nongeo_many_shapes(allow_holes, lazy_load, xr_lod_nongeo_many_shapes):
+    ds_in = xr_lod_nongeo_many_shapes
+    with pytest.raises(ValueError, match="Fields do not have the same grid geometry"):
+        ds_in.to_xarray(
+            profile="earthkit", time_dims=["date", "time", "step"], allow_holes=allow_holes, lazy_load=lazy_load
+        )
 
 
 @pytest.mark.parametrize("allow_holes", [False, True])

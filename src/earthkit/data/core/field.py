@@ -525,6 +525,9 @@ class Field(Base):
             )
         elif geography is not None:
             components[_GEOGRAPHY] = _COMPONENT_MAKER.default_cls(_GEOGRAPHY).from_any(geography)
+        elif geography is None and shape_hint is not None:
+            # create EmptyGeography with shape_hint
+            components[_GEOGRAPHY] = _COMPONENT_MAKER.default_cls(_GEOGRAPHY).from_dict({}, shape_hint=shape_hint)
         return cls(**components)
 
     @property

@@ -643,10 +643,11 @@ class DatasetBuilder:
             ds,
             keys=profile.index_keys,
             remapping=remapping,
-            # component=profile.add_earthkit_attrs
-            # PW: check the role of the `component` kwarg
         )
         # LOG.debug(f"{ds.db=}")
+
+        # check grid consistency across fields
+        ds_xr.geography.unique_grid_id()
 
         # LOG.debug(f"before update: {profile.dim_keys=}")
         profile.update(ds_xr)
