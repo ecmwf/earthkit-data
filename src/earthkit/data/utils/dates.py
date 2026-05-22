@@ -20,6 +20,27 @@ SUFFIX_STEP_PATTERN = re.compile(r"\d+[a-zA-Z]{1}")
 STEP_RANGE_PATTERN = re.compile(r"\d+-\d+")
 
 
+def _is_null_like(value):
+    """Return True if value is a null-like object (None, NaN, NaT, pd.NaT)."""
+    if value is None:
+        return True
+
+    try:
+        # covers nan, np.datetime64('NaT') and np.timedelta64('NaT')
+        if np.isnan(value):
+            return True
+    except Exception:
+        pass
+    try:
+        # covers pd.NaT
+        if np.isnan(value.second):
+            return True
+    except Exception:
+        pass
+
+    return False
+
+
 def _handle_complex_object_datetime(dt: np.ndarray) -> np.ndarray:
     """Attempt to handle complex object datetime arrays."""
     dt = dt.ravel()
@@ -45,6 +66,9 @@ def _handle_complex_object_datetime(dt: np.ndarray) -> np.ndarray:
 
 
 def to_datetime(dt):
+    if _is_null_like(dt):
+        return None
+
     if isinstance(dt, datetime.datetime):
         return dt
 
@@ -66,22 +90,6 @@ def to_datetime(dt):
 
     if hasattr(dt, "isoformat"):
         return datetime.datetime.fromisoformat(dt.isoformat())
-
-    # if dt is NaT-like, then return None
-    if dt is None:
-        return dt
-    try:
-        # covers nan, np.datetime64('NaT') and np.timedelta64('NaT')
-        if np.isnan(dt):
-            return None
-    except Exception:
-        pass
-    try:
-        # covers pd.NaT
-        if np.isnan(dt.second):
-            return None
-    except Exception:
-        pass
 
     dt = from_object(dt)
 
@@ -142,6 +150,9 @@ def to_date_list(obj):
 
 
 def to_time(dt):
+    if _is_null_like(dt):
+        return None
+
     if isinstance(dt, float):
         dt = int(dt)
 
@@ -194,6 +205,9 @@ def to_time_list(times):
 
 
 def to_timedelta(td):
+    if _is_null_like(td):
+        return None
+
     if isinstance(td, int):
         return datetime.timedelta(hours=td)
 
@@ -234,11 +248,15 @@ def to_timedelta_list(td):
 
 
 def numpy_timedelta_to_timedelta(td):
+    if np.isnat(td):
+        return None
     td = td.astype("timedelta64[s]").astype(int)
     return datetime.timedelta(seconds=int(td))
 
 
 def numpy_datetime_to_datetime(dt):
+    if np.isnat(dt):
+        return None
     dt = dt.astype("datetime64[s]").astype(int)
     return datetime.datetime.fromtimestamp(int(dt), datetime.timezone.utc).replace(tzinfo=None)
 

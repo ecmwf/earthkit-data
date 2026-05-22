@@ -10,8 +10,10 @@
 #
 
 import datetime
+import math
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from earthkit.data.utils.dates import (
@@ -361,6 +363,70 @@ def test_time_to_grib(d, expected_value, error):
     else:
         with pytest.raises(error):
             time_to_grib(d)
+
+
+@pytest.mark.parametrize(
+    "d",
+    [
+        None,
+        math.nan,
+        np.nan,
+        np.datetime64("NaT"),
+        np.timedelta64("NaT"),
+        pd.NaT,
+    ],
+)
+def test_to_datetime_null_like(d):
+    assert to_datetime(d) is None
+
+
+@pytest.mark.parametrize(
+    "d",
+    [
+        None,
+        math.nan,
+        np.nan,
+        np.datetime64("NaT"),
+        np.timedelta64("NaT"),
+        pd.NaT,
+    ],
+)
+def test_to_time_null_like(d):
+    assert to_time(d) is None
+
+
+@pytest.mark.parametrize(
+    "d",
+    [
+        None,
+        math.nan,
+        np.nan,
+        np.timedelta64("NaT"),
+        pd.NaT,
+    ],
+)
+def test_to_timedelta_null_like(d):
+    assert to_timedelta(d) is None
+
+
+@pytest.mark.parametrize(
+    "d",
+    [
+        np.datetime64("NaT"),
+    ],
+)
+def test_numpy_datetime_to_datetime_null_like(d):
+    assert numpy_datetime_to_datetime(d) is None
+
+
+@pytest.mark.parametrize(
+    "d",
+    [
+        np.timedelta64("NaT"),
+    ],
+)
+def test_numpy_timedelta_to_timedelta_null_like(d):
+    assert numpy_timedelta_to_timedelta(d) is None
 
 
 @pytest.mark.parametrize(
