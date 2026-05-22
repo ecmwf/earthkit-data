@@ -59,7 +59,7 @@ Install from PyPI:
 pip install earthkit-data
 ```
 
-More details, such as optional dependencies can be found at https://earthkit-data.readthedocs.io/en/latest/install.html.
+More details, such as optional dependencies can be found at https://earthkit-data.readthedocs.io/en/latest/installation.html#install
 
 Alternatively, install via `conda` with:
 
