@@ -431,7 +431,16 @@ class IndexFieldListBase(XarrayMixIn, PandasMixIn, IndexForFieldList, FieldList)
         elif len(self) == 0:
             raise ValueError("Cannot determine geography of an empty FieldList")
         else:
-            raise ValueError("Fields do not have the same grid geometry")
+            field_iter = iter(self)
+            field0_grid_id = next(field_iter).geography.unique_grid_id()
+            for i, f in enumerate(field_iter, start=1):
+                other_field_grid_id = f.geography.unique_grid_id()
+                if other_field_grid_id != field0_grid_id:
+                    break
+            raise ValueError(
+                f"Fields do not have the same grid geometry: field 0 has grid id {field0_grid_id}, "
+                f"but field {i} has grid id {other_field_grid_id}; field list length is {len(self)}"
+            )
 
     @thread_safe_cached_property
     def _has_shared_geography(self):

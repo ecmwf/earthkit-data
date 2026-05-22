@@ -692,10 +692,10 @@ class SingleDatasetBuilder(DatasetBuilder):
         super().__init__(*args, **kwargs)
 
         if self.split_dims:
-            raise ValueError("SingleDatasetMaker does not support splitting")
+            raise ValueError("SingleDatasetBuilder does not support splitting")
 
         if from_xr and self.direct_backend:
-            raise ValueError("SingleDatasetMaker does not support direct_backend=True when invoked from xarray")
+            raise ValueError("SingleDatasetBuilder does not support direct_backend=True when invoked from xarray")
 
     def build(self):
         ds_sorted, _ = self.parse(self.ds, self.profile)
@@ -727,7 +727,7 @@ class SplitDatasetBuilder(DatasetBuilder):
             self.xr_open_dataset_kwargs["backend_kwargs"] = backend_kwargs
 
         if not self.split_dims:
-            raise ValueError("SplitDatasetMaker requires split_dims")
+            raise ValueError("SplitDatasetBuilder requires split_dims")
 
     def prepare(self, keys):
         from .fieldlist import XArrayInputFieldList
@@ -742,13 +742,23 @@ class SplitDatasetBuilder(DatasetBuilder):
 
         return ds_xr, vals
 
-    def build(self):
-        from .splitter import Splitter
+    def split(self):
+        ds_xr, dims = self.prepare(self.split_dims)
 
-        splitter = Splitter.make(self.split_dims)
+        for x in itertools.product(*dims.values()):
+            y = dict(zip(dims.keys(), x))
+            ds_sel = ds_xr.sel(y)
+            if len(ds_sel) == 0:
+                continue
+            ds_sort, profile = self.parse(ds_sel, None)
+            if len(ds_sort) == 0:
+                raise ValueError(f"No field found for selection={y}")
+            yield ds_sort, profile, y
+
+    def build(self):
         datasets = []
         split_coords_list = []
-        for ds, profile, split_coords in splitter.split(self):
+        for ds, profile, split_coords in self.split():
             dims = profile.dims.to_list()
             split_coords_list.append(dict(split_coords))
             LOG.debug(f"splitting {dims=} type of s_ds={type(ds)} {split_coords=}")
