@@ -114,3 +114,13 @@ def test_xr_engine_gridspec(allow_holes, lazy_load):
     gs = r.earthkit.grid_spec
     #  assert gs["type"] == "reduced_gg"
     assert gs["grid"] == "O32"
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_engine_different_grids(allow_holes, lazy_load):
+    url = earthkit_remote_test_data_file("xr_engine", "grid", "different_grid_resolutions.grib")
+    ds = from_source("url", url).to_fieldlist()
+    with pytest.raises(ValueError, match="Fields do not have the same grid geometry"):
+        ds.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load)
