@@ -10,8 +10,8 @@ dim_roles:
 variable_key: parameter.variable
 attrs_mode: fixed
 variable_attrs:
-- metadata.cfName
-- metadata.name
+- parameter.standard_name
+- parameter.long_name
 - parameter.units
 - vertical.level_type
 global_attrs:

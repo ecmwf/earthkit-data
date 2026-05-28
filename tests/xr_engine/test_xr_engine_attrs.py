@@ -422,8 +422,9 @@ def test_xr_engine_attrs_types(lazy_load, kwargs, coords, dims, attrs):
     compare_dims(ds, dims, sizes=True)
 
     for k, v in attrs.items():
-        if k not in ["_earthkit"]:
-            assert ds["t"].attrs[k] == v, f"{k}"
+        assert ds["t"].attrs[k] == v, f"{k}"
+
+    assert set(ds["t"].attrs).difference(attrs).difference(["_earthkit"]) == set()
 
 
 @pytest.mark.cache
