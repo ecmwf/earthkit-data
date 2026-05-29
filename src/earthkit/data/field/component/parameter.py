@@ -39,6 +39,9 @@ class ParameterBase(SimpleFieldComponent):
     - "long_name": string representing the long name of the parameter variable
     - "units": as a string or a :class:`Units` object representing the parameter units
     - "chem_variable": string representing the parameter chemical variable
+    - "chem_long_name": string representing the long name of the parameter chemical variable
+    - "wavelength": int representing the optical parameter wavelength in nanometers,
+       or a 2-tuple of ints representing the wavelength range in nanometers
     - "param": alias of "variable"
 
     Depending on the type of parameter information available, some of these keys may not be supported
@@ -104,6 +107,12 @@ class ParameterBase(SimpleFieldComponent):
         r"""Return the parameter chemical variable."""
         pass
 
+    @mark_get_key
+    @abstractmethod
+    def chem_long_name(self) -> Optional[str]:
+        r"""Return the long name of the parameter chemical variable."""
+        pass
+
     @mark_alias("variable")
     def param(self) -> Optional[str]:
         pass
@@ -127,6 +136,12 @@ class ParameterBase(SimpleFieldComponent):
         """
         pass
 
+    @mark_get_key
+    @abstractmethod
+    def wavelength(self) -> Optional[Union[int, tuple[int, int]]]:
+        """Return the optical parameter wavelength or wavelength interval in nanometers."""
+        pass
+
 
 def create_parameter(d: dict) -> "ParameterBase":
     """Create a ParameterBase object from a dictionary.
@@ -146,7 +161,16 @@ def create_parameter(d: dict) -> "ParameterBase":
 
     cls = Parameter
     d1 = cls._normalise_create_kwargs(
-        d, allowed_keys=("variable", "units", "chem_variable", "standard_name", "long_name")
+        d,
+        allowed_keys=(
+            "variable",
+            "units",
+            "chem_variable",
+            "chem_long_name",
+            "standard_name",
+            "long_name",
+            "wavelength",
+        ),
     )
     if "variable" not in d1:
         raise ValueError("Cannot create Parameter without variable")
@@ -192,6 +216,20 @@ class EmptyParameter(ParameterBase):
         """
         return None
 
+    def chem_long_name(self) -> None:
+        r"""Return the long name of the parameter chemical variable.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wavelength(self) -> None:
+        r"""Return the optical parameter wavelength or wavelength interval in nanometers.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
     @classmethod
     def from_dict(cls, d: dict) -> "ParameterBase":
         """Create an EmptyParameter object from a dictionary."""
@@ -228,9 +266,13 @@ class Parameter(ParameterBase):
         The parameter units, by default None. Can be provided as a string or a Units object.
     chem_variable : str, optional
         The parameter chemical variable, by default None.
+    wavelength : int or 2-tuple of ints, optional
+        The optical parameter wavelength in nanometers, or a wavelength range in nanometers, by default None.
     """
 
     _chem_variable = None
+    _chem_long_name = None
+    _wavelength = None
 
     def __init__(
         self,
@@ -239,6 +281,8 @@ class Parameter(ParameterBase):
         long_name: str = None,
         units: Union[str, "Units"] = None,
         chem_variable: str = None,
+        chem_long_name: str = None,
+        wavelength: Union[int, tuple[int, int]] = None,
     ) -> None:
         self._variable = variable
         self._standard_name = standard_name
@@ -246,6 +290,10 @@ class Parameter(ParameterBase):
         self._units = Units.from_any(units)
         if chem_variable is not None:
             self._chem_variable = chem_variable
+        if chem_long_name is not None:
+            self._chem_long_name = chem_long_name
+        if wavelength is not None:
+            self._wavelength = wavelength
 
     def variable(self) -> Optional[str]:
         return self._variable
@@ -262,6 +310,12 @@ class Parameter(ParameterBase):
     def chem_variable(self) -> Optional[str]:
         return self._chem_variable
 
+    def chem_long_name(self) -> Optional[str]:
+        return self._chem_long_name
+
+    def wavelength(self) -> Optional[Union[int, tuple[int, int]]]:
+        return self._wavelength
+
     @classmethod
     def from_dict(cls, d: dict) -> "Parameter":
         """Create a Parameter object from a dictionary.
@@ -274,7 +328,13 @@ class Parameter(ParameterBase):
             The dictionary can contain the following keys:
 
             - "variable": The parameter variable.
+            - "standard_name": The standard name of the parameter variable.
+            - "long_name": The long name of the parameter variable.
             - "units": The parameter units, as a string or a Units object.
+            - "chem_variable": The chemical variable of the parameter.
+            - "chem_long_name": The long name of the chemical variable of the parameter.
+            - "wavelength": The optical parameter wavelength in nanometers, or a wavelength range in nanometers,
+               as an int or a 2-tuple of ints.
 
         Returns
         -------
@@ -290,6 +350,8 @@ class Parameter(ParameterBase):
             "long_name": self._long_name,
             "units": str(self._units),
             "chem_variable": self._chem_variable,
+            "chem_long_name": self._chem_long_name,
+            "wavelength": self._wavelength,
         }
 
     def __getstate__(self):
@@ -299,6 +361,8 @@ class Parameter(ParameterBase):
         state["long_name"] = self._long_name
         state["units"] = str(self._units)
         state["chem_variable"] = self._chem_variable
+        state["chem_long_name"] = self._chem_long_name
+        state["wavelength"] = self._wavelength
         return state
 
     def __setstate__(self, state):
@@ -308,6 +372,8 @@ class Parameter(ParameterBase):
             long_name=state["long_name"],
             units=state["units"],
             chem_variable=state["chem_variable"],
+            chem_long_name=state["chem_long_name"],
+            wavelength=state["wavelength"],
         )
 
     def set(self, *args, **kwargs):
@@ -327,9 +393,21 @@ class Parameter(ParameterBase):
             - "standard_name": The standard name of the parameter variable.
             - "long_name": The long name of the parameter variable.
             - "chem_variable": The chemical variable of the parameter.
+            - "chem_long_name": The long name of the chemical variable of the parameter.
+            - "wavelength": The optical parameter wavelength in nanometers, or a wavelength range in nanometers.
         """
         d = self._normalise_set_kwargs(
-            *args, allowed_keys=("variable", "units", "chem_variable", "standard_name", "long_name"), **kwargs
+            *args,
+            allowed_keys=(
+                "variable",
+                "units",
+                "chem_variable",
+                "chem_long_name",
+                "standard_name",
+                "long_name",
+                "wavelength",
+            ),
+            **kwargs,
         )
 
         current = {
@@ -338,6 +416,8 @@ class Parameter(ParameterBase):
             "long_name": self._long_name,
             "units": self._units,
             "chem_variable": self._chem_variable,
+            "chem_long_name": self._chem_long_name,
+            "wavelength": self._wavelength,
         }
 
         current.update(d)

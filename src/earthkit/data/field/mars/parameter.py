@@ -28,6 +28,8 @@ class MarsParameterBuilder:
 
     @staticmethod
     def _build_dict(request):
+        # TODO: add chem_variable and wavelength?
+        # TODO: chem_variable would require an unaliasing table "grib-chemid.csv"
         param = request.get("param", None)
 
         if param is None:

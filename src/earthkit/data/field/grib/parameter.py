@@ -38,7 +38,28 @@ class GribParameterBuilder:
 
         units = _get("units", None)
 
-        chem_name = _get("chemShortName", None)
+        chem_name = _get("parameter.chemShortName", None)
+        # using "parameter.chemShortName" instead of "chemShortName" avoids getting "unknown" if this key is not defined
+        # cf. https://github.com/ecmwf/eccodes/blob/eac2eb507b5b44fcc3d3c58e382efde3a274b1c4/definitions/grib2/parameters.def#L29
+
+        chem_long_name = _get("chemName", None)
+        if chem_long_name == "unknown":
+            chem_long_name = None
+
+        _wavelength = _get("mars.wavelength", None)
+        # The logic below follows the "mars.wavelength" key definition:
+        # https://github.com/ecmwf/eccodes/blob/develop/definitions/mars/mars.wavelength.def
+        if isinstance(_wavelength, (int, float)):
+            wavelength = round(_wavelength)
+        elif isinstance(_wavelength, str):
+            # expected format is "<wlen1>-<wlen2>"
+            try:
+                wlen1, wlen2 = _wavelength.split("-")
+                wavelength = round(float(wlen1)), round(float(wlen2))
+            except Exception:
+                wavelength = None
+        else:
+            wavelength = None
 
         return dict(
             variable=variable,
@@ -46,6 +67,8 @@ class GribParameterBuilder:
             long_name=long_name,
             units=units,
             chem_variable=chem_name,
+            chem_long_name=chem_long_name,
+            wavelength=wavelength,
         )
 
 

@@ -35,5 +35,7 @@ class XArrayParameter(ParameterFieldComponentHandler):
         standard_name = owner.variable.attrs.get("standard_name", "unknown")
         long_name = owner.variable.attrs.get("long_name", "unknown")
         units = owner.variable.attrs.get("units", None)
+        # TODO: add "chem_variable", "wavelength"
+        #  would need a similar mechanism to the one in the field/xarray/ensemble.py module
         p = Parameter.from_dict(dict(variable=name, standard_name=standard_name, long_name=long_name, units=units))
         super().__init__(p)
