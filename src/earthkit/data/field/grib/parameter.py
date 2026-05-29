@@ -61,6 +61,33 @@ class GribParameterBuilder:
         else:
             wavelength = None
 
+        _grib_edition = _get("edition", None)
+
+        def _scale_value(v, scaling_factor):
+            if _grib_edition == 1:
+                return float(v / scaling_factor)
+            elif _grib_edition >= 2:
+                return float(v * 10 ** (-scaling_factor))
+            raise ValueError(f"Unsupported GRIB edition: {_grib_edition}")
+
+        # Wave direction
+        try:
+            scaled_directions = _get("scaledDirections", None)
+            direction_number = _get("directionNumber", None)
+            direction_scaling_factor = _get("directionScalingFactor", None)
+            wave_direction = _scale_value(scaled_directions[direction_number - 1], direction_scaling_factor)
+        except Exception:
+            wave_direction = None
+
+        # Wave frequency
+        try:
+            scaled_frequencies = _get("scaledFrequencies", None)
+            frequency_number = _get("frequencyNumber", None)
+            frequency_scaling_factor = _get("frequencyScalingFactor", None)
+            wave_frequency = _scale_value(scaled_frequencies[frequency_number - 1], frequency_scaling_factor)
+        except Exception:
+            wave_frequency = None
+
         return dict(
             variable=variable,
             standard_name=standard_name,
@@ -69,6 +96,8 @@ class GribParameterBuilder:
             chem_variable=chem_name,
             chem_long_name=chem_long_name,
             wavelength=wavelength,
+            wave_direction=wave_direction,
+            wave_frequency=wave_frequency,
         )
 
 

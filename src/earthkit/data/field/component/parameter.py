@@ -42,6 +42,8 @@ class ParameterBase(SimpleFieldComponent):
     - "chem_long_name": string representing the long name of the parameter chemical variable
     - "wavelength": int representing the optical parameter wavelength in nanometers,
        or a 2-tuple of ints representing the wavelength range in nanometers
+    - "wave_direction": float representing the wave direction in degrees of the 2D spectra parameter, or None
+    - "wave_frequency": float representing the wave frequency in Hz of the 2D spectra parameter, or None
     - "param": alias of "variable"
 
     Depending on the type of parameter information available, some of these keys may not be supported
@@ -142,6 +144,18 @@ class ParameterBase(SimpleFieldComponent):
         """Return the optical parameter wavelength or wavelength interval in nanometers."""
         pass
 
+    @mark_get_key
+    @abstractmethod
+    def wave_direction(self) -> Optional[float]:
+        """Return the wave direction in degrees of the 2D spectra parameter."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wave_frequency(self) -> Optional[float]:
+        """Return the wave frequency in Hz of the 2D spectra parameter."""
+        pass
+
 
 def create_parameter(d: dict) -> "ParameterBase":
     """Create a ParameterBase object from a dictionary.
@@ -170,6 +184,8 @@ def create_parameter(d: dict) -> "ParameterBase":
             "standard_name",
             "long_name",
             "wavelength",
+            "wave_direction",
+            "wave_frequency",
         ),
     )
     if "variable" not in d1:
@@ -230,6 +246,20 @@ class EmptyParameter(ParameterBase):
         """
         return None
 
+    def wave_direction(self) -> None:
+        r"""Return the wave direction in degrees of the 2D spectra parameter.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency(self) -> None:
+        r"""Return the wave frequency in Hz of the 2D spectra parameter.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
     @classmethod
     def from_dict(cls, d: dict) -> "ParameterBase":
         """Create an EmptyParameter object from a dictionary."""
@@ -273,6 +303,8 @@ class Parameter(ParameterBase):
     _chem_variable = None
     _chem_long_name = None
     _wavelength = None
+    _wave_direction = None
+    _wave_frequency = None
 
     def __init__(
         self,
@@ -283,6 +315,8 @@ class Parameter(ParameterBase):
         chem_variable: str = None,
         chem_long_name: str = None,
         wavelength: Union[int, tuple[int, int]] = None,
+        wave_direction: float = None,
+        wave_frequency: float = None,
     ) -> None:
         self._variable = variable
         self._standard_name = standard_name
@@ -294,6 +328,10 @@ class Parameter(ParameterBase):
             self._chem_long_name = chem_long_name
         if wavelength is not None:
             self._wavelength = wavelength
+        if wave_direction is not None:
+            self._wave_direction = wave_direction
+        if wave_frequency is not None:
+            self._wave_frequency = wave_frequency
 
     def variable(self) -> Optional[str]:
         return self._variable
@@ -316,6 +354,12 @@ class Parameter(ParameterBase):
     def wavelength(self) -> Optional[Union[int, tuple[int, int]]]:
         return self._wavelength
 
+    def wave_direction(self) -> Optional[float]:
+        return self._wave_direction
+
+    def wave_frequency(self) -> Optional[float]:
+        return self._wave_frequency
+
     @classmethod
     def from_dict(cls, d: dict) -> "Parameter":
         """Create a Parameter object from a dictionary.
@@ -335,6 +379,8 @@ class Parameter(ParameterBase):
             - "chem_long_name": The long name of the chemical variable of the parameter.
             - "wavelength": The optical parameter wavelength in nanometers, or a wavelength range in nanometers,
                as an int or a 2-tuple of ints.
+            - "wave_direction": The wave direction in degrees of the 2D spectra parameter.
+            - "wave_frequency": The wave frequency in Hz of the 2D spectra parameter.
 
         Returns
         -------
@@ -352,6 +398,8 @@ class Parameter(ParameterBase):
             "chem_variable": self._chem_variable,
             "chem_long_name": self._chem_long_name,
             "wavelength": self._wavelength,
+            "wave_direction": self._wave_direction,
+            "wave_frequency": self._wave_frequency,
         }
 
     def __getstate__(self):
@@ -363,6 +411,8 @@ class Parameter(ParameterBase):
         state["chem_variable"] = self._chem_variable
         state["chem_long_name"] = self._chem_long_name
         state["wavelength"] = self._wavelength
+        state["wave_direction"] = self._wave_direction
+        state["wave_frequency"] = self._wave_frequency
         return state
 
     def __setstate__(self, state):
@@ -374,6 +424,8 @@ class Parameter(ParameterBase):
             chem_variable=state["chem_variable"],
             chem_long_name=state["chem_long_name"],
             wavelength=state["wavelength"],
+            wave_direction=state.get("wave_direction"),
+            wave_frequency=state.get("wave_frequency"),
         )
 
     def set(self, *args, **kwargs):
@@ -395,6 +447,8 @@ class Parameter(ParameterBase):
             - "chem_variable": The chemical variable of the parameter.
             - "chem_long_name": The long name of the chemical variable of the parameter.
             - "wavelength": The optical parameter wavelength in nanometers, or a wavelength range in nanometers.
+            - "wave_direction": The wave direction in degrees of the 2D spectra parameter.
+            - "wave_frequency": The wave frequency in Hz of the 2D spectra parameter.
         """
         d = self._normalise_set_kwargs(
             *args,
@@ -406,6 +460,8 @@ class Parameter(ParameterBase):
                 "standard_name",
                 "long_name",
                 "wavelength",
+                "wave_direction",
+                "wave_frequency",
             ),
             **kwargs,
         )
@@ -418,6 +474,8 @@ class Parameter(ParameterBase):
             "chem_variable": self._chem_variable,
             "chem_long_name": self._chem_long_name,
             "wavelength": self._wavelength,
+            "wave_direction": self._wave_direction,
+            "wave_frequency": self._wave_frequency,
         }
 
         current.update(d)
