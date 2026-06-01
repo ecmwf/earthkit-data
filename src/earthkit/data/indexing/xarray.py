@@ -286,15 +286,35 @@ class XarrayMixIn:
                 The following attributes are supported:
 
                 - str: Name of the attribute used as a metadata key to generate the value of
-                  the attribute. Can also be specified by prefixing with "key=" (e.g. "key=level").
+                  the attribute. Can also be specified by prefixing with "key=" (e.g. "key=vertical.level").
                   When prefixed with "namespace=" it specifies a metadata namespace
                   (e.g. "namespace=parameter"), which will be added as a dict to the attribute.
-                - callable: A callable that takes a Metadata object and returns a dict of attributes
+                - callable: A callable that takes a Field object and returns a dict of attributes, e.g.:
+
+                  .. code-block:: python
+
+                    def rounded_wavelength(field):
+                        wl = field.get("metadata.wavelength")
+                        if wl is not None:
+                            return {"wavelength": round(wl)}
+                        else:
+                            return {}
+
                 - dict: A dictionary of attributes with the keys as the attribute names.
-                  If the value is a callable it takes the attribute name and a Metadata object and
-                  returns the value of the attribute. A str value prefixed with "key=" or
-                  "namespace=" is interpreted as explained above. Any other values are used as the
-                  pre-defined value for the attribute.
+                  If the value is a callable it takes the attribute name and a Field object and
+                  returns the value of the attribute, e.g.:
+
+                  .. code-block:: python
+
+                    def ensure_rounded(key, field):
+                        val = field.get(key)
+                        try:
+                            return round(val)
+                        except Exception:
+                            return val
+
+                  A str value prefixed with "key=" or "namespace=" is interpreted as explained above.
+                  Any other values are used as the pre-defined value for the attribute.
             * variable_attrs: str, number, callable, dict or list of these, None
                 Variable attribute or attributes. For the allowed values see ``attrs``. Its
                 default value (None) expands to [] unless the ``profile`` overwrites it.

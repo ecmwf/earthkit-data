@@ -37,8 +37,8 @@ attrs:
 - metadata.levelist
 variable_attrs:
 - metadata.param
-- metadata.cfName
-- metadata.name
+- parameter.standard_name
+- parameter.long_name
 - metadata.paramId
 - parameter.units
 global_attrs:
