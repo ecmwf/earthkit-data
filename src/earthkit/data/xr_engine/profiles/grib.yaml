@@ -7,6 +7,10 @@ dim_roles:
   time: metadata.time
   level: metadata.level
   level_type: metadata.typeOfLevel
+  chem_variable: parameter.chem_variable
+  wavelength: parameter.wavelength
+  wave_direction: parameter.wave_direction
+  wave_frequency: parameter.wave_frequency
 variable_key: metadata.param
 attrs_mode: fixed
 variable_attrs:
