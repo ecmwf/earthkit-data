@@ -57,8 +57,10 @@ coord_attrs:
     standard_name: realization
     long_name: ensemble member id
   chem_variable:
+    standard_name: aerosol_type_in_atmosphere_layer_in_air
     long_name: chemical or physical constituent type
   wavelength:
+    standard_name: radiation_wavelength
     units: nm
     long_name: wavelength
   wave_direction: # see: https://github.com/wavespectra/wavespectra/blob/main/wavespectra/core/attributes.yml

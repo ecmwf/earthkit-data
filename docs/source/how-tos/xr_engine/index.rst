@@ -13,6 +13,8 @@ Xarray engine
     xarray_engine_seasonal.ipynb
     xarray_engine_level.ipynb
     xarray_engine_ensemble.ipynb
+    xarray_engine_chem.ipynb
+    xarray_engine_wave_spectra.ipynb
     xarray_engine_variable_key.ipynb
     xarray_engine_mono_variable.ipynb
     xarray_engine_mono_variable_remapping.ipynb

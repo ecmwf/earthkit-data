@@ -506,6 +506,64 @@ def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, 
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+@pytest.mark.parametrize(
+    "path,sel,kwargs,coords,dims,var_attrs,global_attrs",
+    [
+        (
+            "wave_spectra.grib",
+            None,
+            {
+                "profile": "grib",
+                "time_dims": "valid_time",
+                "squeeze": False,
+                "add_earthkit_attrs": False,
+            },
+            {
+                "wave_direction": [55.0, 115.0, 175.0, 235.0, 295.0, 355.0],
+                "wave_frequency": [0.034523, 0.1311, 0.497852],
+                "member": [0],
+                "valid_time": [pd.Timestamp("2025-12-10 00:00:00")],
+                "level": [0],
+                "level_type": ["meanSea"],
+            },
+            {
+                "wave_direction": 6,
+                "wave_frequency": 3,
+                "member": 1,
+                "valid_time": 1,
+                "level": 1,
+                "level_type": 1,
+            },
+            {
+                "2dfd": {
+                    "standard_name": "unknown",
+                    "long_name": "2D wave spectra (single)",
+                    "units": "meter ** 2 * second / radian",
+                    "typeOfLevel": "meanSea",
+                }
+            },
+            {"Conventions": "CF-1.8", "institution": "ECMWF"},
+        ),
+    ],
+)
+def test_xr_rare_builtin_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, var_attrs, global_attrs):
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path)).to_fieldlist()
+    if sel:
+        ds0 = ds0.sel(**sel)
+    ds = ds0.to_xarray(lazy_load=lazy_load, allow_holes=allow_holes, **kwargs)
+    compare_coords(ds, coords)
+    compare_dims(ds, dims, sizes=True)
+
+    for v in var_attrs:
+        v_attrs = dict(ds[v].attrs)
+        v_attrs.pop("_earthkit", None)
+        assert v_attrs == var_attrs[v]
+    assert ds.attrs == global_attrs
+
+
+@pytest.mark.cache
 @pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "path,sel,kwargs,coords,dims,var_attrs,global_attrs",

@@ -15,6 +15,12 @@ Predefined dimensions and dimension roles
 By default, the following predefined dimensions are generated, in the following order:
 
 - ensemble forecast member dimension
+- aerosol type, or atmospheric chemical or physical constituent type
+(discrete dimension, applicable for chemical parameters; see details :ref:`here <_xr_chem_optical_dims>`)
+- optical depth or wavelength range or colour channel (applicable for optical parameters,
+simulated satellite images, etc.; see details :ref:`here <_xr_chem_optical_dims>`)
+- direction and frequency of sea waves (applicable for 2D wave spectra parameters;
+see details :ref:`here <_xr_wave_spectra_dims>`)
 - temporal dimensions, controlled by ``time_dims``  (see details :ref:`here <xr_time_dims>`)
 - vertical dimensions, controlled by ``level_dim_mode`` (see details :ref:`here <xr_level_dim_modes>`)
 
@@ -29,6 +35,18 @@ The predefined dimensions are based on the ``dim_roles``, which is a mapping bet
    * - "member"
      - Ensemble forecast member
      - "ensemble.member"
+   * - "chem_variable"
+     - Aerosol type, or chemical or physical constituent type
+     - "parameter.chem_variable"
+   * - "wavelength"
+     - Optical wavelength in nanometers (e.g. for aerosol optical depth)
+     - "parameter.wavelength"
+   * - "wave_direction"
+     - Wave direction in degrees (for 2D wave spectra)
+     - "parameter.wave_direction"
+   * - "wave_frequency"
+     - Wave frequency in Hz (for 2D wave spectra)
+     - "parameter.wave_frequency"
    * - "forecast_reference_time"
      - Forecast reference time (base datetime). Can be a single metadata key, or a list/tuple of two metadata keys representing the "date" and "time" parts of the forecast reference time. Alternatively, it can be a dict with "date" and "time" keys specifying the corresponding metadata keys. Used when ``"forecast_reference_time"`` is in ``time_dims``.
      - "time.forecast_reference_time"
@@ -132,6 +150,38 @@ while ``dim_roles`` (together with ``dim_name_from_role_name``) controls their n
 The following example demonstrates the vertical dimensions modes:
 
 - :ref:`/how-tos/xr_engine/xarray_engine_level.ipynb`
+
+
+.. _xr_chem_optical_dims:
+
+Chemical and optical dimensions
+------------------------------------------------
+
+The following dimensions are applicable for chemical and optical parameters (see for example CAMS datasets):
+
+- ``"chem_variable"``: Indicates an aerosol type, chemical specie, etc. (for example, for the parameter representing *mass mixing ratio*, the coordinates can be ``"CO"``, ``"O3"``, etc.).
+
+- ``"wavelength"`` (*nm*): Wavelength at which the optical parameter is measured, modelled or reported.
+
+The following notebook illustrates the use of the above dimensions in a CAMS dataset containing chemical and optical parameters:
+
+- :ref:`/how-tos/xr_engine/xarray_engine_chem.ipynb`
+
+
+.. _xr_wave_spectra_dims:
+
+2D wave spectra dimensions
+------------------------------------------------
+
+The following dimensions are applicable for 2D wave spectra parameters:
+
+- ``"wave_direction"`` (*degree*): Direction from which the waves propagate, expressed in degrees clockwise from true north.
+
+- ``"wave_frequency"`` (*s-1*): Wave frequency corresponding to the spectral component.
+
+The following notebook presents an example 2D wave spectra dataset:
+
+- :ref:`/how-tos/xr_engine/xarray_engine_wave_spectra.ipynb`
 
 
 .. _xr_squeeze_and_ensure_dims:
