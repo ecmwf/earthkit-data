@@ -23,55 +23,46 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 @pytest.fixture(scope="module")
 def pl_grib_source():
-    print("HAHA pl.grib")
     return from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
 
 @pytest.fixture(scope="module")
 def pl_small_grib_source():
-    print("HAHA pl_small.grib")
     return from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
 
 
 @pytest.fixture(scope="module")
 def pl_sfc_grib_source():
-    print("HAHA pl_sfc.grib1")
     return from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_sfc.grib1"))
 
 
 @pytest.fixture(scope="module")
 def quantiles_pd_grib_source():
-    print("HAHA quantiles_pd.grib")
     return from_source("url", earthkit_remote_test_data_file("xr_engine/ens/quantiles_pd.grib"))
 
 
 @pytest.fixture(scope="module")
 def wave_spectra_grib_source():
-    print("HAHA wave_spectra.grib")
     return from_source("url", earthkit_remote_test_data_file("xr_engine/wave_spectra.grib"))
 
 
 @pytest.fixture(scope="module")
 def aifs_sfc_grib_source():
-    print("HAHA aifs-sfc.grib")
     return from_source("url", earthkit_remote_test_data_file("xr_engine/level/aifs-sfc.grib"))
 
 
 @pytest.fixture(scope="module")
 def aifs_pl_sfc_grib_source():
-    print("HAHA aifs-sfc.grib")
     return from_source("url", earthkit_remote_test_data_file("xr_engine/level/aifs-pl_sfc.grib"))
 
 
 @pytest.fixture(scope="module")
 def chem_cams_grib_source():
-    print("HAHA chem-cams.grib")
     return from_source("sample", "chem-cams.grib")
 
 
 @pytest.fixture(scope="module")
 def optical_cams_grib_source():
-    print("HAHA chem-cams.grib")
     return from_source("sample", "optical-cams.grib")
 
 
@@ -88,7 +79,6 @@ def source(
     chem_cams_grib_source,
     optical_cams_grib_source,
 ):
-    print(f"HAHA...: {request.param}")
     if request.param == "pl.grib":
         return pl_grib_source
     elif request.param == "pl_small.grib":
