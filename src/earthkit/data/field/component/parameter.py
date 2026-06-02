@@ -38,10 +38,10 @@ class ParameterBase(SimpleFieldComponent):
        on the CF standard name
     - "long_name": string representing the long name of the parameter variable
     - "units": as a string or a :class:`Units` object representing the parameter units
-    - "chem_variable": string representing the parameter chemical variable
-    - "chem_long_name": string representing the long name of the parameter chemical variable
+    - "chem_variable": string representing the parameter chemical variable, or None
+    - "chem_long_name": string representing the long name of the parameter chemical variable, or None
     - "wavelength": int representing the optical parameter wavelength in nanometers,
-       or a 2-tuple of ints representing the wavelength range in nanometers
+       or a 2-tuple of ints representing the wavelength range in nanometers, or None
     - "wave_direction": float representing the wave direction in degrees of the 2D spectra parameter, or None
     - "wave_frequency": float representing the wave frequency in Hz of the 2D spectra parameter, or None
     - "param": alias of "variable"
@@ -292,12 +292,22 @@ class Parameter(ParameterBase):
     ----------
     variable : str, optional
         The parameter variable, by default None.
+    standard_name : str, optional
+        The standard name of the parameter variable, by default None.
+    long_name : str, optional
+        The long name of the parameter variable, by default None.
     units : str or Units, optional
         The parameter units, by default None. Can be provided as a string or a Units object.
     chem_variable : str, optional
         The parameter chemical variable, by default None.
+    chem_long_name : str, optional
+        The long name of the parameter chemical variable, by default None.
     wavelength : int or 2-tuple of ints, optional
         The optical parameter wavelength in nanometers, or a wavelength range in nanometers, by default None.
+    wave_direction : float, optional
+        The wave direction in degrees of the 2D spectra parameter, by default None.
+    wave_frequency : float, optional
+        The wave frequency in Hz of the 2D spectra parameter, by default None.
     """
 
     _chem_variable = None
