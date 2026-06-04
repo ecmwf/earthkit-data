@@ -156,6 +156,36 @@ def test_array_fl_grib_from_to_fieldlist_repeat():
     check_array_fl_from_to_fieldlist(r1, [ds], md_full, **kwargs)
 
 
+def test_array_fl_immutable_values():
+    fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist().to_fieldlist(array_namespace="numpy")
+
+    # the field stores the values as a numpy array
+    f = fl[0]
+
+    v1 = f.to_numpy(copy=False)
+    v2 = f.to_numpy(copy=False)
+    assert v1 is v2
+    assert np.shares_memory(v1, v2)
+
+    v1 = f.to_numpy(copy=False)
+    v2 = f.to_numpy(copy=True)
+    assert v1 is not v2
+    assert np.allclose(v1, v2)
+
+    v_ori = f.values.copy()
+    with pytest.raises(AttributeError):
+        f.values = v_ori + 1
+
+    with pytest.raises(AttributeError):
+        f.values += 1
+
+    f.values[:] += 1
+    assert np.allclose(f.values, v_ori)
+
+    assert f.values is not f.values
+    assert not np.shares_memory(f.values, f.values)
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

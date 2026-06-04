@@ -21,3 +21,13 @@ How-tos:
 
     - :ref:`/how-tos/field/field_overview.ipynb`
     - :ref:`/how-tos/grib/grib_overview.ipynb`
+
+Immutability of field values
+------------------------------
+
+The values of a field are immutable, meaning that they cannot be modified in place. When you access the values of a field, you will receive a copy of the data, and any modifications to that copy will not affect the original field's data. This design choice ensures that the integrity of the field's data is maintained and prevents unintended side effects when working with field values.
+
+Arithmetic operations on fields
+------------------------------
+Arithmetic operations on fields (e.g., addition, subtraction, multiplication, division) are directly supported, and they return new field objects with the result of the operation. When performing arithmetic operations, the metadata of the resulting field is derived from first operand without any
+alterations.

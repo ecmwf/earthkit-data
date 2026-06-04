@@ -226,6 +226,36 @@ def test_netcdf_to_numpy_upper_dtype(mode, dtype):
     assert v.dtype == dtype
 
 
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+def test_netcdf_immutable_values(mode):
+    fl = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
+
+    # the field accesses the values from the underlying DataArray
+    f = fl[0]
+
+    v1 = f.to_numpy(copy=False)
+    v2 = f.to_numpy(copy=False)
+    assert np.shares_memory(v1, v2)
+
+    v1 = f.to_numpy(copy=False)
+    v2 = f.to_numpy(copy=True)
+    assert not np.shares_memory(v1, v2)
+    assert np.allclose(v1, v2)
+
+    v_ori = f.values.copy()
+    with pytest.raises(AttributeError):
+        f.values = v_ori + 1
+
+    with pytest.raises(AttributeError):
+        f.values += 1
+
+    f.values[:] += 1
+    assert np.allclose(f.values, v_ori)
+
+    assert f.values is not f.values
+    assert not np.shares_memory(f.values, f.values)
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

@@ -35,10 +35,14 @@ class GribData(DataFieldComponentHandler):
 
     def get_values(self, dtype=None, copy=True, index=None):
         """Get the values stored in the field as an array."""
+        # the code below relies on the fact that get_values() of
+        # the GRIB handle always returns a new array (i.e. a copy of the data)
         v = self.handle.get_values(dtype=dtype)
         if dtype is not None:
             from earthkit.utils.array import array_namespace
 
+            # since v is already a copy of the data we do not need to copy it
+            # again when converting to the requested dtype
             v = array_namespace(v).astype(v, dtype, copy=False)
         return v
 

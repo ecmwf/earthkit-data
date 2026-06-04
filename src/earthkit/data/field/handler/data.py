@@ -40,12 +40,12 @@ class BaseDataFieldComponentHandler(FieldComponentHandler):
     @property
     @abstractmethod
     def values(self):
-        r"""array-like: Get the values stored in the field as a 1D array."""
+        r"""array-like: Get a copy of the values stored in the field as a 1D array."""
         pass
 
     @abstractmethod
     def get_values(self, dtype=None, copy=True):
-        r"""array-like: Get the values stored in the field as an array.
+        r"""array-like: Get a copy of the values stored in the field as an array.
 
         Parameters
         ----------
@@ -130,8 +130,8 @@ class DataFieldComponentHandler(BaseDataFieldComponentHandler):
 
     @property
     def values(self):
-        r"""array-like: Get the values stored in the field as a 1D array."""
-        return flatten_array(self.get_values(copy=False))
+        r"""array-like: Get a copy of the values stored in the field as a 1D array."""
+        return flatten_array(self.get_values(copy=True))
 
     def set_values(self, array):
         """Set the values of the field.
