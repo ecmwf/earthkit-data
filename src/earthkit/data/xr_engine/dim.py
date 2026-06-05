@@ -48,7 +48,7 @@ _GRIB_ENS_KEYS = ["number", "perturbationNumber", "realization"]
 _ENS_KEYS = ["member", "realisation", "realization"]
 ENS_KEYS = ["member"] + _get_component_keys("ensemble", _ENS_KEYS) + _get_metadata_keys(_GRIB_ENS_KEYS)
 
-CHEM_KEYS = ["chem_variable"] + _get_component_keys("parameter", ["chem_variable"])
+CHEM_KEYS = ["chem"] + _get_component_keys("parameter", ["chem"])
 WAVELENGTH_KEYS = ["wavelength"] + _get_component_keys("parameter", ["wavelength"])
 WAVE_DIRECTION_KEYS = ["wave_direction"] + _get_component_keys("parameter", ["wave_direction"])
 WAVE_FREQUENCY_KEYS = ["wave_frequency"] + _get_component_keys("parameter", ["wave_frequency"])
@@ -483,7 +483,7 @@ class DimRole:
         "level_type",
         "forecast_reference_time",
         "valid_time",
-        "chem_variable",
+        "chem",
         "wavelength",
         "wave_direction",
         "wave_frequency",
@@ -623,7 +623,7 @@ class MemberDimBuilder(DimBuilder):
 
 
 class ChemDimBuilder(DimBuilder):
-    name = "chem_variable"
+    name = "chem"
     dim_class = ChemDim
 
 

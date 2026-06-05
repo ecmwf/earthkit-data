@@ -63,7 +63,7 @@ def test_grib_parameter_chem(fl_type):
 
     assert f.parameter.variable() == "tcvimd"
     assert f.parameter.param() == "tcvimd"
-    assert f.parameter.chem_variable() == "CO"
+    assert f.parameter.chem() == "CO"
     assert f.parameter.units() == "kg m**-2"
 
 
@@ -84,7 +84,7 @@ def test_grib_parameter_chem_long_name(fl_type):
         assert f.parameter.variable() == var
         assert f.parameter.param() == var
         assert f.parameter.units() == "dimensionless"
-        assert f.parameter.chem_variable() == chem
+        assert f.parameter.chem() == chem
         assert f.parameter.chem_long_name() == chem_long
         assert f.parameter.wavelength() is None
         assert f.parameter.wave_direction() is None

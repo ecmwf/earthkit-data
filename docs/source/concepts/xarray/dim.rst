@@ -35,9 +35,9 @@ The predefined dimensions are based on the ``dim_roles``, which is a mapping bet
    * - "member"
      - Ensemble forecast member
      - "ensemble.member"
-   * - "chem_variable"
+   * - "chem"
      - Aerosol type, or chemical or physical constituent type
-     - "parameter.chem_variable"
+     - "parameter.chem"
    * - "wavelength"
      - Optical wavelength in nanometers (e.g. for aerosol optical depth)
      - "parameter.wavelength"
@@ -159,7 +159,7 @@ Chemical and optical dimensions
 
 The following dimensions are applicable for chemical and optical parameters (see for example CAMS datasets):
 
-- ``"chem_variable"``: Indicates an aerosol type, chemical specie, etc. (for example, for the parameter representing *mass mixing ratio*, the coordinates can be ``"CO"``, ``"O3"``, etc.).
+- ``"chem"``: Indicates an aerosol type, chemical specie, etc. (for example, for the parameter representing *mass mixing ratio*, the coordinates can be ``"CO"``, ``"O3"``, etc.).
 
 - ``"wavelength"`` (*nm*): Wavelength at which the optical parameter is measured, modelled or reported.
 

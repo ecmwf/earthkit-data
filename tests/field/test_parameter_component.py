@@ -21,7 +21,7 @@ def test_parameter_component_alias_1():
     assert r.units() == "K"
     assert r.standard_name() is None
     assert r.long_name() is None
-    assert r.chem_variable() is None
+    assert r.chem() is None
     assert r.chem_long_name() is None
     assert r.wavelength() is None
     assert r.wave_direction() is None
@@ -51,7 +51,7 @@ def test_parameter_component_alias_1():
                 "standard_name": "unknown",
                 "long_name": "Aerosol optical depth",
                 "units": "Numeric",
-                "chem_variable": "aer_total",
+                "chem": "aer_total",
                 "chem_long_name": "Total aerosol",
                 "wavelength": 550,
                 "wave_direction": None,
@@ -63,7 +63,7 @@ def test_parameter_component_alias_1():
                 "standard_name": "unknown",
                 "long_name": "Aerosol optical depth",
                 "units": "Numeric",
-                "chem_variable": "aer_total",
+                "chem": "aer_total",
                 "chem_long_name": "Total aerosol",
                 "wavelength": 550,
                 "wave_direction": None,
@@ -86,7 +86,7 @@ def test_parameter_component_from_dict_ok(input_d, ref):
             assert r.units() == ref["units"]
             assert r.standard_name() == ref["standard_name"]
             assert r.long_name() == ref["long_name"]
-            assert r.chem_variable() == ref.get("chem_variable", None)
+            assert r.chem() == ref.get("chem", None)
             assert r.chem_long_name() == ref.get("chem_long_name", None)
             assert r.wavelength() == ref.get("wavelength", None)
             assert r.wave_direction() == ref.get("wave_direction", None)
@@ -113,7 +113,7 @@ def test_parameter_component_from_dict_ok(input_d, ref):
                 "units": "K",
                 "standard_name": None,
                 "long_name": None,
-                "chem_variable": None,
+                "chem": None,
                 "chem_long_name": None,
                 "wavelength": None,
                 "wave_direction": None,
@@ -127,7 +127,7 @@ def test_parameter_component_from_dict_ok(input_d, ref):
                     "standard_name": "unknown",
                     "long_name": "Aerosol optical depth",
                     "units": "Numeric",
-                    "chem_variable": "aer_total",
+                    "chem": "aer_total",
                     "chem_long_name": "Total aerosol",
                     "wavelength": 550,
                 }
@@ -138,7 +138,7 @@ def test_parameter_component_from_dict_ok(input_d, ref):
                 "standard_name": "unknown",
                 "long_name": "Aerosol optical depth",
                 "units": "Numeric",
-                "chem_variable": "aer_total",
+                "chem": "aer_total",
                 "chem_long_name": "Total aerosol",
                 "wavelength": 550,
                 "wave_direction": None,
@@ -162,7 +162,7 @@ def test_parameter_component_from_dict_ok(input_d, ref):
                 "standard_name": "unknown",
                 "long_name": "2D wave spectra (single)",
                 "units": "meter ** 2 * second / radian",
-                "chem_variable": None,
+                "chem": None,
                 "chem_long_name": None,
                 "wavelength": None,
                 "wave_direction": 5.0,

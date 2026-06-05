@@ -93,7 +93,7 @@ class GribParameterBuilder:
             standard_name=standard_name,
             long_name=long_name,
             units=units,
-            chem_variable=chem_name,
+            chem=chem_name,
             chem_long_name=chem_long_name,
             wavelength=wavelength,
             wave_direction=wave_direction,

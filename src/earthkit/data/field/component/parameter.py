@@ -26,10 +26,10 @@ class ParameterBase(SimpleFieldComponent):
 
     This class defines the interface for parameter components, which can represent
     different types of parameter information. Some of the methods may not be applicable to all parameter
-    types (e.g. :meth:`chem_variable`), and may return None.
+    types (e.g. :meth:`chem`), and may return None.
 
     The parameter information can be accessed by methods like :meth:`variable`,
-    :meth:`units`, and :meth:`chem_variable`. Each of these methods has an associated key
+    :meth:`units`, and :meth:`chem`. Each of these methods has an associated key
     that can be used in the :meth:`get` method to retrieve the corresponding information. The list
     of supported keys are as follows:
 
@@ -38,8 +38,8 @@ class ParameterBase(SimpleFieldComponent):
        on the CF standard name
     - "long_name": string representing the long name of the parameter variable
     - "units": as a string or a :class:`Units` object representing the parameter units
-    - "chem_variable": string representing the parameter chemical variable, or None
-    - "chem_long_name": string representing the long name of the parameter chemical variable, or None
+    - "chem": string representing the parameter chemical constituent or aerosol type, or None
+    - "chem_long_name": string representing the long name of the parameter chemical constituent or aerosol type, or None
     - "wavelength": int representing the optical parameter wavelength in nanometers,
        or a 2-tuple of ints representing the wavelength range in nanometers, or None
     - "wave_direction": float representing the wave direction in degrees of the 2D spectra parameter, or None
@@ -47,7 +47,7 @@ class ParameterBase(SimpleFieldComponent):
     - "param": alias of "variable"
 
     Depending on the type of parameter information available, some of these keys may not be supported
-    and will return None in the subclasses. For example, the "chem_variable" key is only supported
+    and will return None in the subclasses. For example, the "chem" key is only supported
     for chemical parameters, and will return None for other parameter types.
 
     Typically, this object is used as a component of a field, and can be accessed via the :attr:`parameter`
@@ -98,21 +98,21 @@ class ParameterBase(SimpleFieldComponent):
     def units(self) -> Optional["Units"]:
         r"""Return the parameter units.
 
-        The parameter units are :class:`Units` objects. The units are are based on Pint (when possible)
+        The parameter units are :class:`Units` objects. The units are based on Pint (when possible)
         and are normalised to a standard form. They can be used for unit conversions and comparisons.
         """
         pass
 
     @mark_get_key
     @abstractmethod
-    def chem_variable(self) -> Optional[str]:
-        r"""Return the parameter chemical variable."""
+    def chem(self) -> Optional[str]:
+        r"""Return the parameter chemical constituent or aerosol type."""
         pass
 
     @mark_get_key
     @abstractmethod
     def chem_long_name(self) -> Optional[str]:
-        r"""Return the long name of the parameter chemical variable."""
+        r"""Return the long name of the parameter chemical constituent or aerosol type."""
         pass
 
     @mark_alias("variable")
@@ -179,7 +179,7 @@ def create_parameter(d: dict) -> "ParameterBase":
         allowed_keys=(
             "variable",
             "units",
-            "chem_variable",
+            "chem",
             "chem_long_name",
             "standard_name",
             "long_name",
@@ -225,15 +225,15 @@ class EmptyParameter(ParameterBase):
         """
         return None
 
-    def chem_variable(self) -> None:
-        r"""Return the parameter chemical variable.
+    def chem(self) -> None:
+        r"""Return the parameter chemical constituent or aerosol type.
 
         An EmptyParameter does not contain any parameter information, and this method returns None.
         """
         return None
 
     def chem_long_name(self) -> None:
-        r"""Return the long name of the parameter chemical variable.
+        r"""Return the long name of the parameter chemical constituent or aerosol type.
 
         An EmptyParameter does not contain any parameter information, and this method returns None.
         """
@@ -298,10 +298,10 @@ class Parameter(ParameterBase):
         The long name of the parameter variable, by default None.
     units : str or Units, optional
         The parameter units, by default None. Can be provided as a string or a Units object.
-    chem_variable : str, optional
-        The parameter chemical variable, by default None.
+    chem : str, optional
+        The parameter chemical constituent or aerosol type, by default None.
     chem_long_name : str, optional
-        The long name of the parameter chemical variable, by default None.
+        The long name of the parameter chemical constituent or aerosol type, by default None.
     wavelength : int or 2-tuple of ints, optional
         The optical parameter wavelength in nanometers, or a wavelength range in nanometers, by default None.
     wave_direction : float, optional
@@ -310,7 +310,7 @@ class Parameter(ParameterBase):
         The wave frequency in Hz of the 2D spectra parameter, by default None.
     """
 
-    _chem_variable = None
+    _chem = None
     _chem_long_name = None
     _wavelength = None
     _wave_direction = None
@@ -322,7 +322,7 @@ class Parameter(ParameterBase):
         standard_name: str = None,
         long_name: str = None,
         units: Union[str, "Units"] = None,
-        chem_variable: str = None,
+        chem: str = None,
         chem_long_name: str = None,
         wavelength: Union[int, tuple[int, int]] = None,
         wave_direction: float = None,
@@ -332,8 +332,8 @@ class Parameter(ParameterBase):
         self._standard_name = standard_name
         self._long_name = long_name
         self._units = Units.from_any(units)
-        if chem_variable is not None:
-            self._chem_variable = chem_variable
+        if chem is not None:
+            self._chem = chem
         if chem_long_name is not None:
             self._chem_long_name = chem_long_name
         if wavelength is not None:
@@ -355,8 +355,8 @@ class Parameter(ParameterBase):
     def units(self) -> Optional["Units"]:
         return self._units
 
-    def chem_variable(self) -> Optional[str]:
-        return self._chem_variable
+    def chem(self) -> Optional[str]:
+        return self._chem
 
     def chem_long_name(self) -> Optional[str]:
         return self._chem_long_name
@@ -385,8 +385,8 @@ class Parameter(ParameterBase):
             - "standard_name": The standard name of the parameter variable.
             - "long_name": The long name of the parameter variable.
             - "units": The parameter units, as a string or a Units object.
-            - "chem_variable": The chemical variable of the parameter.
-            - "chem_long_name": The long name of the chemical variable of the parameter.
+            - "chem": The chemical constituent or aerosol type of the parameter.
+            - "chem_long_name": The long name of the chemical constituent or aerosol type of the parameter.
             - "wavelength": The optical parameter wavelength in nanometers, or a wavelength range in nanometers,
                as an int or a 2-tuple of ints.
             - "wave_direction": The wave direction in degrees of the 2D spectra parameter.
@@ -405,7 +405,7 @@ class Parameter(ParameterBase):
             "standard_name": self._standard_name,
             "long_name": self._long_name,
             "units": str(self._units),
-            "chem_variable": self._chem_variable,
+            "chem": self._chem,
             "chem_long_name": self._chem_long_name,
             "wavelength": self._wavelength,
             "wave_direction": self._wave_direction,
@@ -418,7 +418,7 @@ class Parameter(ParameterBase):
         state["standard_name"] = self._standard_name
         state["long_name"] = self._long_name
         state["units"] = str(self._units)
-        state["chem_variable"] = self._chem_variable
+        state["chem"] = self._chem
         state["chem_long_name"] = self._chem_long_name
         state["wavelength"] = self._wavelength
         state["wave_direction"] = self._wave_direction
@@ -431,7 +431,7 @@ class Parameter(ParameterBase):
             standard_name=state["standard_name"],
             long_name=state["long_name"],
             units=state["units"],
-            chem_variable=state["chem_variable"],
+            chem=state["chem"],
             chem_long_name=state["chem_long_name"],
             wavelength=state["wavelength"],
             wave_direction=state.get("wave_direction"),
@@ -454,8 +454,8 @@ class Parameter(ParameterBase):
             - "units": The parameter units, as a string or a Units object.
             - "standard_name": The standard name of the parameter variable.
             - "long_name": The long name of the parameter variable.
-            - "chem_variable": The chemical variable of the parameter.
-            - "chem_long_name": The long name of the chemical variable of the parameter.
+            - "chem": The chemical constituent or aerosol type of the parameter.
+            - "chem_long_name": The long name of the chemical constituent or aerosol type of the parameter.
             - "wavelength": The optical parameter wavelength in nanometers, or a wavelength range in nanometers.
             - "wave_direction": The wave direction in degrees of the 2D spectra parameter.
             - "wave_frequency": The wave frequency in Hz of the 2D spectra parameter.
@@ -465,7 +465,7 @@ class Parameter(ParameterBase):
             allowed_keys=(
                 "variable",
                 "units",
-                "chem_variable",
+                "chem",
                 "chem_long_name",
                 "standard_name",
                 "long_name",
@@ -481,7 +481,7 @@ class Parameter(ParameterBase):
             "standard_name": self._standard_name,
             "long_name": self._long_name,
             "units": self._units,
-            "chem_variable": self._chem_variable,
+            "chem": self._chem,
             "chem_long_name": self._chem_long_name,
             "wavelength": self._wavelength,
             "wave_direction": self._wave_direction,

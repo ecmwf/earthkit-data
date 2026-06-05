@@ -47,7 +47,7 @@ dim_roles:
   time: time.base_time
   level: vertical.level
   level_type: vertical.level_type
-  chem_variable: parameter.chem_variable
+  chem: parameter.chem
   wavelength: parameter.wavelength
   wave_direction: parameter.wave_direction
   wave_frequency: parameter.wave_frequency
@@ -56,7 +56,7 @@ coord_attrs:
   member:
     standard_name: realization
     long_name: ensemble member id
-  chem_variable:
+  chem:
     long_name: atmospheric chemical or physical constituent type
   wavelength:
     standard_name: radiation_wavelength

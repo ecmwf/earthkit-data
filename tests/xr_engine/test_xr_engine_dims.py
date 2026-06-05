@@ -674,14 +674,14 @@ def test_xr_wave_dims(source, allow_holes, lazy_load, sel, kwargs, coords, dims,
                 "step": [datetime.timedelta(0)],
                 "level": [1],
                 "level_type": ["hybrid"],
-                "chem_variable": ["CO", "HCHO", "O3"],
+                "chem": ["CO", "HCHO", "O3"],
             },
             {
                 "forecast_reference_time": 1,
                 "step": 1,
                 "level": 1,
                 "level_type": 1,
-                "chem_variable": 3,
+                "chem": 3,
             },
             {
                 "mass_mixrat": {
@@ -690,7 +690,7 @@ def test_xr_wave_dims(source, allow_holes, lazy_load, sel, kwargs, coords, dims,
                     "units": "dimensionless",
                     "level_type": "hybrid",
                 },
-                "chem_variable": {
+                "chem": {
                     "long_name": "atmospheric chemical or physical constituent type",
                 },
             },
@@ -709,7 +709,7 @@ def test_xr_wave_dims(source, allow_holes, lazy_load, sel, kwargs, coords, dims,
                 "step": [datetime.timedelta(0)],
                 "level": [0],
                 "level_type": ["surface"],
-                "chem_variable": ["aer_sm", "aer_total"],
+                "chem": ["aer_sm", "aer_total"],
                 "wavelength": [550, 800],
             },
             {
@@ -717,7 +717,7 @@ def test_xr_wave_dims(source, allow_holes, lazy_load, sel, kwargs, coords, dims,
                 "step": 1,
                 "level": 1,
                 "level_type": 1,
-                "chem_variable": 2,
+                "chem": 2,
                 "wavelength": 2,
             },
             {
@@ -727,7 +727,7 @@ def test_xr_wave_dims(source, allow_holes, lazy_load, sel, kwargs, coords, dims,
                     "units": "Numeric",
                     "level_type": "surface",
                 },
-                "chem_variable": {
+                "chem": {
                     "long_name": "atmospheric chemical or physical constituent type",
                 },
                 "wavelength": {
