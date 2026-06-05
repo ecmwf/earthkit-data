@@ -611,13 +611,14 @@ class Field(Base):
 
     @property
     def values(self):
-        """Return the values of the fields as a flat array.
+        """Return a copy of the values of the field as a flat array.
 
         Returns
         -------
         array-like
-            Flat array containing the field values without performing any copying or conversion. The underlying
-            array format of the field is used. For GRIB it is a numpy array.
+            Flat array containing the field values without performing any conversion. It is always
+            a copy of the underlying data. The underlying array format of the field is used. For GRIB
+            it is a numpy array.
 
         See Also
         --------
@@ -633,6 +634,7 @@ class Field(Base):
         (209,)
         >>> v[0][:3]
         array([262.78027344, 267.44726562, 268.61230469])
+        >>>
 
         """
         return self._components[_DATA].values

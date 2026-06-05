@@ -55,57 +55,81 @@ class ForcingMaker:
         return x, y, z
 
     @cached_method
-    def latitude_(self):
+    def _latitude(self):
         return self.grid_points()[0]
 
-    def latitude(self, date):
-        return self.latitude_()
+    def latitude(self, date, copy=True):
+        values = self._latitude()
+        if copy:
+            values = values.copy()
+        return values
 
     @cached_method
-    def cos_latitude_(self):
+    def _cos_latitude(self):
         return np.cos(np.deg2rad(self.grid_points()[0]))
 
-    def cos_latitude(self, date):
-        return self.cos_latitude_()
+    def cos_latitude(self, date, copy=True):
+        return self._cos_latitude()
 
     @cached_method
-    def sin_latitude_(self):
+    def _sin_latitude(self):
         return np.sin(np.deg2rad(self.grid_points()[0]))
 
-    def sin_latitude(self, date):
-        return self.sin_latitude_()
+    def sin_latitude(self, date, copy=True):
+        values = self._sin_latitude()
+        if copy:
+            values = values.copy()
+        return values
 
     @cached_method
-    def longitude_(self):
+    def _longitude(self):
         return self.grid_points()[1]
 
-    def longitude(self, date):
-        return self.longitude_()
+    def longitude(self, date, copy=True):
+        values = self._longitude()
+        if copy:
+            values = values.copy()
+        return values
 
     @cached_method
-    def cos_longitude_(self):
+    def _cos_longitude(self):
         return np.cos(np.deg2rad(self.grid_points()[1]))
 
-    def cos_longitude(self, date):
-        return self.cos_longitude_()
+    def cos_longitude(self, date, copy=True):
+        values = self._cos_longitude()
+        if copy:
+            values = values.copy()
+        return values
 
     @cached_method
-    def sin_longitude_(self):
+    def _sin_longitude(self):
         return np.sin(np.deg2rad(self.grid_points()[1]))
 
-    def sin_longitude(self, date):
-        return self.sin_longitude_()
+    def sin_longitude(self, date, copy=True):
+        values = self._sin_longitude()
+        if copy:
+            values = values.copy()
+        return values
 
-    def ecef_x(self, date):
-        return self.ecef_xyz()[0]
+    def ecef_x(self, date, copy=True):
+        values = self.ecef_xyz()[0]
+        if copy:
+            values = values.copy()
+        return values
 
-    def ecef_y(self, date):
-        return self.ecef_xyz()[1]
+    def ecef_y(self, date, copy=True):
+        values = self.ecef_xyz()[1]
+        if copy:
+            values = values.copy()
+        return values
 
-    def ecef_z(self, date):
-        return self.ecef_xyz()[2]
+    def ecef_z(self, date, copy=True):
+        values = self.ecef_xyz()[2]
+        if copy:
+            values = values.copy()
+        return values
 
-    def julian_day(self, date):
+    def julian_day(self, date, copy=True):
         date = to_datetime(date)
         if date.tzinfo is not None and date.tzinfo.utcoffset(date) is not None:
             year_start = datetime.datetime(date.year, 1, 1, tzinfo=date.tzinfo)
@@ -115,15 +139,15 @@ class ForcingMaker:
         julian_day = delta.days + delta.seconds / 86400.0
         return np.full((np.prod(self.field.shape),), julian_day)
 
-    def cos_julian_day(self, date):
+    def cos_julian_day(self, date, copy=True):
         radians = self.julian_day(date) / 365.25 * np.pi * 2
         return np.cos(radians)
 
-    def sin_julian_day(self, date):
+    def sin_julian_day(self, date, copy=True):
         radians = self.julian_day(date) / 365.25 * np.pi * 2
         return np.sin(radians)
 
-    def local_time(self, date):
+    def local_time(self, date, copy=True):
         lon = self.longitude(date)
         date = to_datetime(date)
         if date.tzinfo is not None and date.tzinfo.utcoffset(date) is not None:
@@ -134,38 +158,38 @@ class ForcingMaker:
         hours_since_midnight = (delta.days + delta.seconds / 86400.0) * 24
         return (lon / 360.0 * 24.0 + hours_since_midnight) % 24
 
-    def cos_local_time(self, date):
+    def cos_local_time(self, date, copy=True):
         radians = self.local_time(date) / 24 * np.pi * 2
         return np.cos(radians)
 
-    def sin_local_time(self, date):
+    def sin_local_time(self, date, copy=True):
         radians = self.local_time(date) / 24 * np.pi * 2
         return np.sin(radians)
 
-    def insolation(self, date):
+    def insolation(self, date, copy=True):
         return self.cos_solar_zenith_angle(date)
 
-    def toa_incident_solar_radiation(self, date):
+    def toa_incident_solar_radiation(self, date, copy=True):
         from earthkit.data.utils.meteo import toa_incident_solar_radiation
 
         date = to_datetime(date)
         result = toa_incident_solar_radiation(
             date - datetime.timedelta(minutes=30),
             date + datetime.timedelta(minutes=30),
-            self.latitude_(),
-            self.longitude_(),
+            self._latitude(),
+            self._longitude(),
             intervals_per_hour=2,
         )
         return result.flatten()
 
-    def cos_solar_zenith_angle(self, date):
+    def cos_solar_zenith_angle(self, date, copy=True):
         from earthkit.data.utils.meteo import cos_solar_zenith_angle
 
         date = to_datetime(date)
         result = cos_solar_zenith_angle(
             date,
-            self.latitude_(),
-            self.longitude_(),
+            self._latitude(),
+            self._longitude(),
         )
         return result.flatten()
 
@@ -346,11 +370,9 @@ class ForcingsFieldData(DataFieldComponentHandler):
 
     def get_values(self, dtype=None, copy=True):
         """Get the values stored in the field as an array."""
-        values = self.proc(self.date)
+        values = self.proc(self.date, copy=copy)
         if dtype is not None:
             values = values.astype(dtype)
-        if copy:
-            values = values.copy()
         return values
 
     def __getstate__(self):

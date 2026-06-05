@@ -21,7 +21,8 @@ from grib_fixtures import (
     load_grib_data,  # noqa: E402
 )
 
-from earthkit.data.utils.testing import check_array, check_array_type
+from earthkit.data import from_source
+from earthkit.data.utils.testing import check_array, check_array_type, earthkit_examples_file
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -648,6 +649,36 @@ def test_grib_values_with_missing(fl_type):
     m = v[mask]
     assert len(m) == 38
     assert xp.count_nonzero(xp.isnan(m)) == 38
+
+
+def test_grib_immutable_values():
+    fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+
+    # the field access the values via the grib handle
+    f = fl[0]
+
+    v1 = f.to_numpy(copy=False)
+    v2 = f.to_numpy(copy=False)
+    assert v1 is not v2
+    assert not np.shares_memory(v1, v2)
+
+    v1 = f.to_numpy(copy=False)
+    v2 = f.to_numpy(copy=True)
+    assert v1 is not v2
+    assert np.allclose(v1, v2)
+
+    v_ori = f.values.copy()
+    with pytest.raises(AttributeError):
+        f.values = v_ori + 1
+
+    with pytest.raises(AttributeError):
+        f.values += 1
+
+    f.values[:] += 1
+    assert np.allclose(f.values, v_ori)
+
+    assert f.values is not f.values
+    assert not np.shares_memory(f.values, f.values)
 
 
 if __name__ == "__main__":

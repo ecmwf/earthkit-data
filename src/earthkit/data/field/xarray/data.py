@@ -10,6 +10,8 @@
 import logging
 from typing import Any
 
+from earthkit.utils.array import array_namespace as eku_array_namespace
+
 from earthkit.data.field.handler.data import DataFieldComponentHandler
 
 LOG = logging.getLogger(__name__)
@@ -23,8 +25,9 @@ class XArrayData(DataFieldComponentHandler):
     def get_values(self, dtype=None, copy=True):
         """Get the values stored in the field as an array."""
         values = self.selection.values
-        if dtype is not None:
-            values = values.astype(dtype, copy=copy)
+        if copy or dtype is not None:
+            self.xp = eku_array_namespace(values)
+            values = self.xp.asarray(values, dtype=dtype, copy=copy)
         return values
 
     def __getstate__(self):
