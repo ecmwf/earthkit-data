@@ -139,9 +139,11 @@ class GribGeography(GeographyBase):
 
     def grid_spec(self):
         if ECKIT_GRID_SUPPORT.has_ecc_grid_spec and ECKIT_GRID_SUPPORT.has_grid:
-            return self._get_grid_spec_from_handle
-        else:
-            return None
+            gs = self._get_grid_spec_from_handle
+            if gs is not None:
+                return gs.copy()  # return a copy to avoid accidental modifications
+
+        return None
 
     @thread_safe_cached_property
     def _get_grid_spec_from_handle(self):

@@ -654,7 +654,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
                 v = self._obj.attrs["_earthkit"].get("grid_spec", None)
                 v = to_dict(v)
                 if v is not None:
-                    return v
+                    return v.copy()  # return a copy to avoid accidental modifications
         except Exception:
             pass
 

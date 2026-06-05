@@ -898,6 +898,8 @@ class GridsSpecBasedGeography(GeographyBase):
                 import json
 
                 return json.loads(self._grid_spec_in)
+            if isinstance(self._grid_spec_in, dict):
+                return self._grid_spec_in.copy()  # return a copy to avoid accidental modifications
             return self._grid_spec_in
 
     def area(self) -> tuple:
