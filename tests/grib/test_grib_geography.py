@@ -510,6 +510,7 @@ def test_grib_healpix_grid(fl_type):
     assert r["grid_type"] == "healpix"
 
 
+@pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
 @pytest.mark.parametrize("fl_type", ["file"])
 def test_grib_grid_spec_copy_1(fl_type):
     fl, _ = load_grib_data("test.grib", fl_type)
@@ -523,8 +524,8 @@ def test_grib_grid_spec_copy_1(fl_type):
     assert "new_key" not in gs_ori
 
 
+@pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
 @pytest.mark.cache
-# @pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
 def test_grib_grid_spec_copy_2():
     fl = earthkit.data.from_source(
         "url", earthkit_remote_test_data_file("xr_engine/grid", "icon_ch1.grib2")
