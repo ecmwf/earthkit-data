@@ -1308,7 +1308,7 @@ class Field(Base):
             patch=patch,
         )
 
-    def set(self, *args, **kwargs):
+    def set(self, *args, sync=False, **kwargs):
         """Return a new field with the specified metadata keys set to the given values.
 
         Parameters
@@ -1359,6 +1359,10 @@ class Field(Base):
             Values are assumed to be in hours when the unit is not specified. When the unit is specified
             it can be either "h", "m" or "s" for hours, minutes or seconds, respectively.
 
+        sync: bool
+            When True, try to ensure the raw metadata is in sync with the modified field's components.
+            It might not be possible and can raise an exception. Same as calling :meth:`sync` on the
+            new field returned by :meth:`set`.
         **kwargs: dict
             Keyword arguments used to specify the metadata keys and values to set. They take
             precedence over the positional arguments. The same rules for the keys and values
@@ -1436,6 +1440,8 @@ class Field(Base):
         _kwargs = defaultdict(dict)
 
         if not kwargs:
+            if sync:
+                return self.sync()
             return self
 
         _components = dict()
@@ -1465,7 +1471,10 @@ class Field(Base):
                 _components[component_name] = s
 
         if _components:
-            return self._from_set(**_components)
+            f_new = self._from_set(**_components)
+            if sync:
+                f_new = f_new.sync()
+            return f_new
         elif kwargs:
             raise ValueError("No valid keys to set in the field.")
 
@@ -1476,8 +1485,14 @@ class Field(Base):
         return Field.from_field(self, data=data)
 
     def sync(self):
-        """Return a field with the raw metadata in sync with the field's components.
+        """Return a field with the raw metadata made in sync with the field's components.
 
+        When a field is modified using :meth:`set`, the raw metadata (if existing) might become
+        out of sync with the field's components and some of the raw metadata keys might not be
+        available anymore. This method tries to synchronize the raw metadata with the field's
+        components.
+
+        At the moment the raw metadata is only available to fields created from GRIB messages.
         When a field is created from a GRIB message, it stores this associated GRIB message/handle
         and the raw GRIB metadata is extracted from it e.g. when calling :meth:`get`. When the field's
         components are modified using :meth:`set`, the GRIB message is copied into the new field but not
@@ -1490,7 +1505,7 @@ class Field(Base):
         Returns
         -------
         Field
-            A field with the raw metadata in sync with the field's components. If the field is not associated with
+            A field with the raw metadata made in sync with the field's components. If the field is not associated with
             a GRIB message or if the raw metadata is already in sync, the original field is returned.
 
         Examples
