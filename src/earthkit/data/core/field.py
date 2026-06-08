@@ -1323,17 +1323,18 @@ class Field(Base):
             >>> field.set({"parameter.variable": "t", "vertical.level": 1000})
 
             New data values can be set by using the "data" or "values" key with the new values
-            as a value. For example,
+            as a value. For example, both these calls are equivalent and will replace the data
+            values in the field with the values in ``new_values_array``:
 
             >>> field.set(data=new_values_array)
+            >>> field.set(values=new_values_array)
 
-            will replace the data values in the field with the values in ``new_values_array``.
-
-            Only high-level metadata keys (and "data" or "values") are allowed here, i.e. keys that
-            belong to a component. Modifying raw metadata keys is not allowed and we cannot use them
-            in :meth:`set` with or without the "metadata." prefix. For example, although
-            in fields generated from GRIB we can use the "metadata.shortName" key in the :meth:`get`
-            method to access the "shortName" key we cannot use it in :meth:`set`.
+            Preferably, high-level metadata keys (and "data" or "values") should be used in :meth:`set`
+            i.e. keys that belong to a component. However, modifying raw metadata keys is also
+            allowed, but they must be used with the "metadata." prefix just like in :meth:`get`.
+            Mixing high-level and raw metadata keys is allowed as well. In this keys the high-level
+            keys are set first and then the raw metadata keys. Please see the Notes section below
+            for the implications of modifying high-level metadata keys when the field has raw metadata.
 
             Entire components can be set by using the component name as a key and the component
             object or the equivalent dict as a value. For example,
@@ -1376,30 +1377,47 @@ class Field(Base):
 
         Notes
         -----
-        When the field is created from a GRIB message, calling :meth:`set` copies the associated
-        GRIB message into the new field without any modifications. Since it is now out of sync with the
-        new field's components, the new field will not provide access to any GRIB metadata
-        neither via :meth:`get` nor via :meth:`metadata`. Additionally, when calling
-        :meth:`message` on the new field, None is returned. (Use :meth:`sync` to synchronize the
-        associated GRIB message to the new field and expose the GRIB metadata keys again).
+        When the field has raw metadata (to date it is only the case for fields created from
+        GRIB messages) calling :meth:`set` with high-level metadata keys will not update the raw
+        metadata in the new field and it is now out of sync
+        with the new field's components and cannot be accessed anymore via :meth:`get` or
+        :meth:`metadata`. The :meth:`message` method will not work either. To access the raw
+        metadata keys again, use :meth:`sync` to synchronize
+        the raw metadata to the new field. Alternatively, using the ``sync=True`` option in :meth:`set`
+        will try to do this automatically. Please note, it might not be possible to synchronize
+        the new field to the raw metadata and an exception can be raised in this case.
+
+        The following example using GRIB data shows how modifying high-level metadata keys results in
+        a new field where the raw metadata is out of sync and cannot be accessed anymore
+        until :meth:`sync` is called:
 
         >>> import earthkit.data as ekd
         >>> fl = ekd.from_source("sample", "test.grib").to_fieldlist()
         >>> f = fl[0]
         >>> f1 = f.set({"parameter.variable": "msl", "parameter.units": "Pa"})
+        >>> f1.get("parameter.variable")
+        'msl'
         >>> f1.get("metadata.shortName")
         None
         >>> f1.metadata("shortName")
         KeyError: 'metadata.shortName' not found in field
         >>> f1.message()
         None
+        >>> f1 = f1.sync()
+        >>> f1.get("metadata.shortName")
+        'msl'
+        >>> f1.metadata("shortName")
+        'msl'
+        >>> f1.message()[:10]
+        <grib message with the updated GRIB metadata>
 
-        However, if only the labels or the values are set (the latter via the "data" or "values" keys), the new
-        field returned by :meth:`set` is still linked to the original GRIB message and the GRIB specific keys
-        in the raw metadata are still accessible. If the values were modified, :meth:`message` will return
-        the original GRIB message updated with the modified data values.
+        When only the labels or the values are set (the latter via the "data" or "values" keys),
+        the new field returned by :meth:`set` the original raw metadata is still valid and the
+        ecCodes GRIB keys are still accessible. There is no need to synchronize the raw metadata in
+        this case. If the values were modified, :meth:`message` will return the original GRIB message
+        updated with the modified data values.
 
-         >>> import earthkit.data as ekd
+        >>> import earthkit.data as ekd
         >>> fl = ekd.from_source("sample", "test.grib").to_fieldlist()
         >>> f = fl[0]
         >>> f1 = f.set(values=f.values()+1)
@@ -1445,6 +1463,7 @@ class Field(Base):
             return self
 
         _components = dict()
+        _raw = dict()
         for k, v in kwargs.items():
             if k in self._components:
                 _components[k] = v
@@ -1454,7 +1473,12 @@ class Field(Base):
                     if key_name is not None and key_name != "":
                         _kwargs[component_name][key_name] = v
                     else:
-                        raise KeyError(f"Key {k} cannot be set on the field.")
+                        raise KeyError(f"Invalid key={k} specified.")
+                elif component_name == _METADATA:
+                    if key_name is not None and key_name != "":
+                        _raw[key_name] = v
+                    else:
+                        raise KeyError(f"Invalid key={k} specified.")
                 else:
                     raise KeyError(f"Key {k} cannot be set on the field.")
 
@@ -1470,12 +1494,19 @@ class Field(Base):
                 s = component.set(**v)
                 _components[component_name] = s
 
+        f_new = self
         if _components:
             f_new = self._from_set(**_components)
+
+        if _raw:
+            return f_new._set_metadata(_raw)
+
+        if _components:
             if sync:
-                f_new = f_new.sync()
+                return f_new.sync()
             return f_new
-        elif kwargs:
+
+        if kwargs:
             raise ValueError("No valid keys to set in the field.")
 
         return None
@@ -1524,15 +1555,7 @@ class Field(Base):
         >>> f2.metadata("shortName")
         'msl'
         """
-        if self._get_grib() and self._private and "_metadata" in self._private:
-            from earthkit.data.encoders.grib import GribEncoder
-
-            encoder = GribEncoder()
-            f = encoder.encode(data=self).to_field()
-            if self.labels:
-                f = f.set(labels=self.labels)
-            return f
-        return self
+        return self._sync_metadata()
 
     def to_target(self, target, *args, **kwargs):
         r"""Write the field into a target object.
@@ -1893,6 +1916,23 @@ class Field(Base):
 
         for m in self._components.values():
             m.get_grib_context(context)
+
+    def _set_metadata(self, md):
+        g = self._get_grib()
+        if g is not None:
+            from earthkit.data.encoders.grib import GribEncoder
+
+            encoder = GribEncoder()
+            return encoder.encode(data=self, metadata=md).to_field()
+        return self
+
+    def _sync_metadata(self):
+        if self._get_grib() and self._private and "_metadata" in self._private:
+            from earthkit.data.encoders.grib import GribEncoder
+
+            encoder = GribEncoder()
+            return encoder.encode(data=self).to_field()
+        return self
 
     @normalise("time.valid_datetime", "date")
     @normalise("time.base_datetime", "date")
