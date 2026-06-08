@@ -2,6 +2,30 @@ Version 1.0.0 Release Candidate Updates
 ///////////////////////////////////////
 
 
+Version 1.0.0rc11
+==================
+
+Xarray engine changes
+-------------------------
+
+- Added the ``reference_field`` property to the Xarray ``earthkit`` accessor to allow getting
+  the reference field of the dataarray. Also added the ``set`` method to allow setting the
+  reference field of the dataarray using a Field or any args/kwargs accepted by :func:`~earthkit.data.core.field.Field.set`. :pr:`990`
+- Allowed using null values in datetime related objects :pr:`999`
+- Fixed missing coordinate variable attributes in Xarray engine :pr:`1001`
+- Fixed grid consistency check in Xarray engine :pr:`1003`
+- Cleaned up within Xarray engine profiles and docs :pr:`1006`
+
+Other changes
+-------------------------
+
+- Allowed using high level field metadata keys in the GribEncoder :pr:`997`
+- Ensured :attr:`~earthkit.data.core.field.Field.values` returns a copy :pr:`1009`
+- Ensured :func:`Field.geometry.grid_spec` returns a copy :pr:`1010`
+- Added ``sync=False`` keyword argument to :func:`~earthkit.data.core.field.Field.set` :pr:`1011`
+- Allowed using raw metadata keys in :func:`~earthkit.data.core.field.Field.set` :pr:`1012`
+
+
 Version 1.0.0rc10
 ==================
 
