@@ -17,6 +17,9 @@ import pytest
 from earthkit.data import create_encoder, from_source
 from earthkit.data.utils.testing import earthkit_examples_file
 
+_LABELS = {"my_label": "my_val"}
+_LABELS_SET_ARGS = {"labels.my_label": "my_val"}
+
 
 @pytest.mark.parametrize("_args,_kwargs", [(("<f>",), {}), ((), {"data": "<f>"}), ((), {"template": "<f>"})])
 def test_grib_encoder_field_1(_args, _kwargs):
@@ -38,28 +41,31 @@ def test_grib_encoder_field_1(_args, _kwargs):
 
 
 @pytest.mark.parametrize("init_encoder", [None, ["template"]])
-@pytest.mark.parametrize("template_arg", ["field", "message", "handle", "raw_handle"])
+@pytest.mark.parametrize("template_arg", ["field", "field_labels", "message", "handle", "raw_handle"])
 def test_grib_encoder_field_template_only(init_encoder, template_arg):
     fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     template = fl[1]
 
     if template_arg == "message":
-        template_arg = template.message()
+        template_arg_d = template.message()
     elif template_arg == "field":
-        template_arg = template
+        template_arg_d = template
+    elif template_arg == "field_labels":
+        template = template.set(_LABELS_SET_ARGS)
+        template_arg_d = template
     elif template_arg == "handle":
-        template_arg = template._get_grib().handle
+        template_arg_d = template._get_grib().handle
     elif template_arg == "raw_handle":
         # this is the clone of the raw handle
-        template_arg = template._get_grib().handle._raw_handle()
+        template_arg_d = template._get_grib().handle._raw_handle()
     else:
         raise ValueError(f"Invalid template_arg: {template_arg}")
 
     assert template.get("parameter.variable") == "msl"
 
     encoder_kwargs = {}
-    encode_kwargs = {"template": template_arg}
+    encode_kwargs = {"template": template_arg_d}
     if init_encoder is not None:
         for key in init_encoder:
             if key in encode_kwargs:
@@ -75,10 +81,12 @@ def test_grib_encoder_field_template_only(init_encoder, template_arg):
     assert template.message() == f_r.message()
     assert np.allclose(template.values, f_r.values)
     assert f_r.get("parameter.variable") == "msl"
+    if template_arg == "field_labels":
+        assert f_r.labels.to_dict() == _LABELS
 
 
 @pytest.mark.parametrize("init_encoder", [None, ["template"]])
-@pytest.mark.parametrize("template_arg", ["field", "message", "handle", "raw_handle"])
+@pytest.mark.parametrize("template_arg", ["field", "field_labels", "message", "handle", "raw_handle"])
 def test_grib_encoder_field_data_and_template(init_encoder, template_arg):
     fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
@@ -86,13 +94,16 @@ def test_grib_encoder_field_data_and_template(init_encoder, template_arg):
     template = fl[1]
 
     if template_arg == "message":
-        template_arg = template.message()
+        template_arg_d = template.message()
     elif template_arg == "field":
-        template_arg = template
+        template_arg_d = template
+    elif template_arg == "field_labels":
+        template = template.set(_LABELS_SET_ARGS)
+        template_arg_d = template
     elif template_arg == "handle":
-        template_arg = template._get_grib().handle
+        template_arg_d = template._get_grib().handle
     elif template_arg == "raw_handle":
-        template_arg = template._get_grib().handle._raw_handle()
+        template_arg_d = template._get_grib().handle._raw_handle()
     else:
         raise ValueError(f"Invalid template_arg: {template_arg}")
 
@@ -100,7 +111,7 @@ def test_grib_encoder_field_data_and_template(init_encoder, template_arg):
     assert template.get("parameter.variable") == "msl"
 
     encoder_kwargs = {}
-    encode_kwargs = {"template": template_arg}
+    encode_kwargs = {"template": template_arg_d}
     if init_encoder is not None:
         for key in init_encoder:
             if key in encode_kwargs:
@@ -119,10 +130,12 @@ def test_grib_encoder_field_data_and_template(init_encoder, template_arg):
     assert np.allclose(f.values, f_r.values)
     assert f.get("parameter.variable") == "2t"
     assert f_r.get("parameter.variable") == "msl"
+    if template_arg == "field_labels":
+        assert f_r.labels.to_dict() == _LABELS
 
 
 @pytest.mark.parametrize("init_encoder", [None, ["template"]])
-@pytest.mark.parametrize("template_arg", ["field", "message", "handle", "raw_handle"])
+@pytest.mark.parametrize("template_arg", ["field", "field_labels", "message", "handle", "raw_handle"])
 def test_grib_encoder_field_values_and_template(init_encoder, template_arg):
     fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
@@ -131,13 +144,16 @@ def test_grib_encoder_field_values_and_template(init_encoder, template_arg):
     template = fl[1]
 
     if template_arg == "message":
-        template_arg = template.message()
+        template_arg_d = template.message()
     elif template_arg == "field":
-        template_arg = template
+        template_arg_d = template
+    elif template_arg == "field_labels":
+        template = template.set(_LABELS_SET_ARGS)
+        template_arg_d = template
     elif template_arg == "handle":
-        template_arg = template._get_grib().handle
+        template_arg_d = template._get_grib().handle
     elif template_arg == "raw_handle":
-        template_arg = template._get_grib().handle._raw_handle()
+        template_arg_d = template._get_grib().handle._raw_handle()
     else:
         raise ValueError(f"Invalid template_arg: {template_arg}")
 
@@ -145,7 +161,7 @@ def test_grib_encoder_field_values_and_template(init_encoder, template_arg):
     assert template.get("parameter.variable") == "msl"
 
     encoder_kwargs = {}
-    encode_kwargs = {"template": template_arg}
+    encode_kwargs = {"template": template_arg_d}
     if init_encoder is not None:
         for key in init_encoder:
             if key in encode_kwargs:
@@ -164,6 +180,8 @@ def test_grib_encoder_field_values_and_template(init_encoder, template_arg):
     assert np.allclose(f.values + 1.0, f_r.values)
     assert f.get("parameter.variable") == "2t"
     assert f_r.get("parameter.variable") == "msl"
+    if template_arg == "field_labels":
+        assert f_r.labels.to_dict() == _LABELS
 
 
 def test_grib_encoder_field_data_and_values_and_template():
@@ -390,3 +408,25 @@ def test_grib_encoder_field_mixed_metadata():
     assert f_r.get("metadata.step") == 5
     assert f_r.get("metadata.validityDate") == 19980502
     assert f_r.get("metadata.validityTime") == 1100
+
+
+@pytest.mark.parametrize("_args,_kwargs", [(("<f>",), {}), ((), {"data": "<f>"}), ((), {"template": "<f>"})])
+def test_grib_encoder_field_labels_1(_args, _kwargs):
+    f = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()[0]
+
+    f = f.set({"labels.my_label": "val"})
+
+    _args = tuple(f if v == "<f>" else v for v in _args)
+    _kwargs = {k: (f if v == "<f>" else v) for k, v in _kwargs.items()}
+
+    encoder = create_encoder("grib")
+    r = encoder.encode(*_args, **_kwargs)
+
+    assert r.to_bytes() == f.message()
+
+    f_r = r.to_field()
+    assert f is not f_r
+    assert f.message() == f_r.message()
+    assert np.allclose(f.values, f_r.values)
+    assert f.get("parameter.variable") == f_r.get("parameter.variable")
+    assert f.get("labels.my_label") == "val"
