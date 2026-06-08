@@ -446,3 +446,40 @@ def test_grib_set_field_sync(fl_type):
     assert f1.get(("parameter.variable", "metadata.date")) == ("q", 20070101)
     assert f1.get("labels.my_shape") == (181, 360)
     assert f1.get("labels.my_name") == "t_500"
+
+
+@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+# @pytest.mark.parametrize("fl_type", ["file"])
+def test_grib_set_field_sync_kwarg(fl_type):
+    ds_ori, _ = load_grib_data("test4.grib", fl_type)
+
+    f = ds_ori[0].set(
+        {
+            "parameter.variable": "q",
+            "vertical.level": 600,
+            "labels.my_shape": (181, 360),
+            "labels.my_name": "t_500",
+        },
+        sync=True,
+    )
+
+    assert f.get("parameter.variable") == "q"
+    assert f.get("metadata.shortName") == "q"
+    assert f.get("vertical.level") == 600
+    assert f.get("metadata.levelist") == 600
+    assert f.get(("metadata.date", "parameter.variable")) == (20070101, "q")
+    assert f.get(("parameter.variable", "metadata.date")) == ("q", 20070101)
+    assert f.get("labels.my_shape") == (181, 360)
+    assert f.get("labels.my_name") == "t_500"
+
+    # repeated sync should not change anything
+    for _ in range(2):
+        f1 = f.sync()
+        assert f1.get("parameter.variable") == "q"
+        assert f1.get("metadata.shortName") == "q"
+        assert f1.get("vertical.level") == 600
+        assert f1.get("metadata.levelist") == 600
+        assert f1.get(("metadata.date", "parameter.variable")) == (20070101, "q")
+        assert f1.get(("parameter.variable", "metadata.date")) == ("q", 20070101)
+        assert f1.get("labels.my_shape") == (181, 360)
+        assert f1.get("labels.my_name") == "t_500"
