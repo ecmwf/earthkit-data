@@ -9,7 +9,7 @@
 
 import logging
 
-from earthkit.data.field.component.parameter import Parameter
+from earthkit.data.field.component.parameter import create_parameter
 from earthkit.data.field.handler.parameter import ParameterFieldComponent
 
 LOG = logging.getLogger(__name__)
@@ -33,5 +33,5 @@ class GeoTIFFParameter(ParameterFieldComponent):
         # self.owner = owner
         name = owner.name
         units = owner.variable.attrs.get("units", None)
-        spec = Parameter.from_dict(dict(variable=name, units=units))
+        spec = create_parameter(dict(variable=name, units=units))
         super().__init__(spec)

@@ -12,13 +12,24 @@ from .core import GribFieldComponentHandler
 
 
 class GribParameterBuilder:
+    """Builder for creating parameter components from GRIB message handles.
+
+    This builder extracts parameter metadata from GRIB messages and creates the appropriate
+    parameter component subclass (:class:`~earthkit.data.field.component.parameter.Parameter`,
+    :class:`~earthkit.data.field.component.parameter.ChemicalParameter`,
+    :class:`~earthkit.data.field.component.parameter.OpticalParameter`,
+    :class:`~earthkit.data.field.component.parameter.ChemicalOpticalParameter`, or
+    :class:`~earthkit.data.field.component.parameter.WaveSpectraParameter`) based on the
+    metadata contents.
+    """
+
     @staticmethod
     def build(handle):
-        from earthkit.data.field.component.parameter import Parameter
+        from earthkit.data.field.component.parameter import create_parameter
         from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
 
         d = GribParameterBuilder._build_dict(handle)
-        component = Parameter.from_dict(d)
+        component = create_parameter(d)
         handler = ParameterFieldComponentHandler.from_component(component)
         return handler
 

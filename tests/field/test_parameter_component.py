@@ -11,7 +11,14 @@
 
 import pytest
 
-from earthkit.data.field.component.parameter import Parameter
+from earthkit.data.field.component.parameter import (
+    ChemicalOpticalParameter,
+    ChemicalParameter,
+    OpticalParameter,
+    Parameter,
+    WaveSpectraParameter,
+    create_parameter,
+)
 
 
 def test_parameter_component_alias_1():
@@ -192,5 +199,111 @@ def test_parameter_component_set(input_d, ref):
 
 def test_parameter_component_wavelength_tuple():
     """Test wavelength as a tuple (wavelength range)."""
-    p = Parameter(variable="aod", wavelength=(400, 700))
+    p = OpticalParameter(variable="aod", wavelength=(400, 700))
     assert p.wavelength() == (400, 700)
+
+
+def test_parameter_component_create_parameter_regular():
+    """Test create_parameter returns a Parameter for regular parameters."""
+    p = create_parameter({"variable": "t", "units": "K"})
+    assert isinstance(p, Parameter)
+    assert p.variable() == "t"
+    assert p.units() == "K"
+    assert p.chem() is None
+    assert p.wavelength() is None
+    assert p.wave_direction() is None
+    assert p.wave_frequency() is None
+
+
+def test_parameter_component_create_parameter_chemical():
+    """Test create_parameter returns a ChemicalParameter for chemical parameters."""
+    p = create_parameter({"variable": "co", "units": "kg/kg", "chem": "carbon_monoxide", "chem_long_name": "CO"})
+    assert isinstance(p, ChemicalParameter)
+    assert p.variable() == "co"
+    assert p.chem() == "carbon_monoxide"
+    assert p.chem_long_name() == "CO"
+    assert p.wavelength() is None
+    assert p.wave_direction() is None
+
+
+def test_parameter_component_create_parameter_optical():
+    """Test create_parameter returns an OpticalParameter for optical parameters."""
+    p = create_parameter({"variable": "aod", "units": "Numeric", "wavelength": 550})
+    assert isinstance(p, OpticalParameter)
+    assert p.variable() == "aod"
+    assert p.wavelength() == 550
+    assert p.chem() is None
+
+
+def test_parameter_component_create_parameter_chemical_optical():
+    """Test create_parameter returns a ChemicalOpticalParameter for chemical-optical parameters."""
+    p = create_parameter({
+        "variable": "aod",
+        "units": "Numeric",
+        "chem": "aer_total",
+        "chem_long_name": "Total aerosol",
+        "wavelength": 550,
+    })
+    assert isinstance(p, ChemicalOpticalParameter)
+    assert p.variable() == "aod"
+    assert p.chem() == "aer_total"
+    assert p.chem_long_name() == "Total aerosol"
+    assert p.wavelength() == 550
+    assert p.wave_direction() is None
+
+
+def test_parameter_component_create_parameter_wave_spectra():
+    """Test create_parameter returns a WaveSpectraParameter for wave spectra parameters."""
+    p = create_parameter({
+        "variable": "2dfd",
+        "units": "m**2 s / rad",
+        "wave_direction": 5.0,
+        "wave_frequency": 0.034523,
+    })
+    assert isinstance(p, WaveSpectraParameter)
+    assert p.variable() == "2dfd"
+    assert p.wave_direction() == 5.0
+    assert p.wave_frequency() == 0.034523
+    assert p.chem() is None
+    assert p.wavelength() is None
+
+
+def test_parameter_component_set_changes_type():
+    """Test that set() can change the parameter type."""
+    p = Parameter(variable="t", units="K")
+    assert isinstance(p, Parameter)
+
+    # Add chem -> becomes ChemicalParameter
+    p2 = p.set(variable="co", chem="carbon_monoxide")
+    assert isinstance(p2, ChemicalParameter)
+    assert p2.chem() == "carbon_monoxide"
+
+    # Add wavelength to chem -> becomes ChemicalOpticalParameter
+    p3 = p2.set(wavelength=550)
+    assert isinstance(p3, ChemicalOpticalParameter)
+    assert p3.chem() == "carbon_monoxide"
+    assert p3.wavelength() == 550
+
+
+def test_parameter_component_inheritance():
+    """Test that subclasses have the correct inheritance relationships."""
+    cp = ChemicalParameter(variable="co", chem="co")
+    op = OpticalParameter(variable="aod", wavelength=550)
+    cop = ChemicalOpticalParameter(variable="aod", chem="aer", wavelength=550)
+    wp = WaveSpectraParameter(variable="2dfd", wave_direction=5.0)
+
+    # All are instances of Parameter
+    assert isinstance(cp, Parameter)
+    assert isinstance(op, Parameter)
+    assert isinstance(cop, Parameter)
+    assert isinstance(wp, Parameter)
+
+    # ChemicalOpticalParameter is both Chemical and Optical
+    assert isinstance(cop, ChemicalParameter)
+    assert isinstance(cop, OpticalParameter)
+
+    # But not cross-contaminated
+    assert not isinstance(cp, OpticalParameter)
+    assert not isinstance(op, ChemicalParameter)
+    assert not isinstance(wp, ChemicalParameter)
+    assert not isinstance(wp, OpticalParameter)

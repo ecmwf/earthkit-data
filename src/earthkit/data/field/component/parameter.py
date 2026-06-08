@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import inspect
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -160,6 +161,14 @@ class ParameterBase(SimpleFieldComponent):
 def create_parameter(d: dict) -> "ParameterBase":
     """Create a ParameterBase object from a dictionary.
 
+    The appropriate subclass is determined automatically based on the dictionary contents:
+
+    - If both ``chem`` and ``wavelength`` are present, a :class:`ChemicalOpticalParameter` is created.
+    - If only ``chem`` is present, a :class:`ChemicalParameter` is created.
+    - If only ``wavelength`` is present, an :class:`OpticalParameter` is created.
+    - If ``wave_direction`` or ``wave_frequency`` is present, a :class:`WaveSpectraParameter` is created.
+    - Otherwise, a :class:`Parameter` is created.
+
     Parameters
     ----------
     d : dict
@@ -168,7 +177,7 @@ def create_parameter(d: dict) -> "ParameterBase":
     Returns
     -------
     ParameterBase
-        The created ParameterBase instance.
+        The created parameter instance. The actual type depends on the dictionary contents.
     """
     if not isinstance(d, dict):
         raise TypeError(f"Cannot create Parameter from {type(d)}, expected dict")
@@ -191,7 +200,27 @@ def create_parameter(d: dict) -> "ParameterBase":
     if "variable" not in d1:
         raise ValueError("Cannot create Parameter without variable")
 
-    return cls(**d1)
+    has_chem = d1.get("chem") is not None
+    has_wavelength = d1.get("wavelength") is not None
+    has_wave_spectra = d1.get("wave_direction") is not None or d1.get("wave_frequency") is not None
+
+    if has_chem and has_wavelength:
+        cls = ChemicalOpticalParameter
+    elif has_chem:
+        cls = ChemicalParameter
+    elif has_wavelength:
+        cls = OpticalParameter
+    elif has_wave_spectra:
+        cls = WaveSpectraParameter
+    else:
+        cls = Parameter
+
+    # Filter d1 to only include keys accepted by the chosen class's __init__
+    sig = inspect.signature(cls.__init__)
+    valid_params = set(sig.parameters.keys()) - {"self"}
+    filtered = {k: v for k, v in d1.items() if k in valid_params}
+
+    return cls(**filtered)
 
 
 class EmptyParameter(ParameterBase):
@@ -286,7 +315,13 @@ class EmptyParameter(ParameterBase):
 
 
 class Parameter(ParameterBase):
-    """Parameter component representing parameter information.
+    """Parameter component representing a regular parameter.
+
+    A regular parameter is one that does not have any chemical, optical, or wave spectra
+    properties. For parameters with chemical constituents, use :class:`ChemicalParameter`.
+    For parameters with optical wavelength information, use :class:`OpticalParameter`.
+    For parameters with both chemical and optical properties, use :class:`ChemicalOpticalParameter`.
+    For parameters with wave spectra properties, use :class:`WaveSpectraParameter`.
 
     Parameters
     ----------
@@ -298,23 +333,7 @@ class Parameter(ParameterBase):
         The long name of the parameter variable, by default None.
     units : str or Units, optional
         The parameter units, by default None. Can be provided as a string or a Units object.
-    chem : str, optional
-        The parameter chemical constituent or aerosol type, by default None.
-    chem_long_name : str, optional
-        The long name of the parameter chemical constituent or aerosol type, by default None.
-    wavelength : int or 2-tuple of ints, optional
-        The optical parameter wavelength in nanometers, or a wavelength range in nanometers, by default None.
-    wave_direction : float, optional
-        The wave direction in degrees of the 2D spectra parameter, by default None.
-    wave_frequency : float, optional
-        The wave frequency in Hz of the 2D spectra parameter, by default None.
     """
-
-    _chem = None
-    _chem_long_name = None
-    _wavelength = None
-    _wave_direction = None
-    _wave_frequency = None
 
     def __init__(
         self,
@@ -322,26 +341,11 @@ class Parameter(ParameterBase):
         standard_name: str = None,
         long_name: str = None,
         units: Union[str, "Units"] = None,
-        chem: str = None,
-        chem_long_name: str = None,
-        wavelength: Union[int, tuple[int, int]] = None,
-        wave_direction: float = None,
-        wave_frequency: float = None,
     ) -> None:
         self._variable = variable
         self._standard_name = standard_name
         self._long_name = long_name
         self._units = Units.from_any(units)
-        if chem is not None:
-            self._chem = chem
-        if chem_long_name is not None:
-            self._chem_long_name = chem_long_name
-        if wavelength is not None:
-            self._wavelength = wavelength
-        if wave_direction is not None:
-            self._wave_direction = wave_direction
-        if wave_frequency is not None:
-            self._wave_frequency = wave_frequency
 
     def variable(self) -> Optional[str]:
         return self._variable
@@ -355,24 +359,46 @@ class Parameter(ParameterBase):
     def units(self) -> Optional["Units"]:
         return self._units
 
-    def chem(self) -> Optional[str]:
-        return self._chem
+    def chem(self) -> None:
+        r"""Return the parameter chemical constituent or aerosol type.
 
-    def chem_long_name(self) -> Optional[str]:
-        return self._chem_long_name
+        A regular Parameter does not have chemical information, and this method returns None.
+        """
+        return None
 
-    def wavelength(self) -> Optional[Union[int, tuple[int, int]]]:
-        return self._wavelength
+    def chem_long_name(self) -> None:
+        r"""Return the long name of the parameter chemical constituent or aerosol type.
 
-    def wave_direction(self) -> Optional[float]:
-        return self._wave_direction
+        A regular Parameter does not have chemical information, and this method returns None.
+        """
+        return None
 
-    def wave_frequency(self) -> Optional[float]:
-        return self._wave_frequency
+    def wavelength(self) -> None:
+        r"""Return the optical parameter wavelength or wavelength interval in nanometers.
+
+        A regular Parameter does not have optical information, and this method returns None.
+        """
+        return None
+
+    def wave_direction(self) -> None:
+        r"""Return the wave direction in degrees of the 2D spectra parameter.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency(self) -> None:
+        r"""Return the wave frequency in Hz of the 2D spectra parameter.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
 
     @classmethod
-    def from_dict(cls, d: dict) -> "Parameter":
-        """Create a Parameter object from a dictionary.
+    def from_dict(cls, d: dict) -> "ParameterBase":
+        """Create a parameter object from a dictionary.
+
+        The appropriate subclass is determined automatically based on the dictionary contents.
 
         Parameters
         ----------
@@ -394,52 +420,33 @@ class Parameter(ParameterBase):
 
         Returns
         -------
-        Parameter
-            The created Parameter instance.
+        ParameterBase
+            The created parameter instance. The actual type depends on the dictionary contents:
+            :class:`ChemicalOpticalParameter`, :class:`ChemicalParameter`,
+            :class:`OpticalParameter`, :class:`WaveSpectraParameter`, or :class:`Parameter`.
         """
         return create_parameter(d)
 
     def to_dict(self):
+        """Return a dictionary representation of the parameter."""
         return {
             "variable": self._variable,
             "standard_name": self._standard_name,
             "long_name": self._long_name,
             "units": str(self._units),
-            "chem": self._chem,
-            "chem_long_name": self._chem_long_name,
-            "wavelength": self._wavelength,
-            "wave_direction": self._wave_direction,
-            "wave_frequency": self._wave_frequency,
         }
 
     def __getstate__(self):
-        state = {}
-        state["variable"] = self._variable
-        state["standard_name"] = self._standard_name
-        state["long_name"] = self._long_name
-        state["units"] = str(self._units)
-        state["chem"] = self._chem
-        state["chem_long_name"] = self._chem_long_name
-        state["wavelength"] = self._wavelength
-        state["wave_direction"] = self._wave_direction
-        state["wave_frequency"] = self._wave_frequency
-        return state
+        return self.to_dict()
 
     def __setstate__(self, state):
-        self.__init__(
-            variable=state["variable"],
-            standard_name=state["standard_name"],
-            long_name=state["long_name"],
-            units=state["units"],
-            chem=state["chem"],
-            chem_long_name=state["chem_long_name"],
-            wavelength=state["wavelength"],
-            wave_direction=state.get("wave_direction"),
-            wave_frequency=state.get("wave_frequency"),
-        )
+        self.__init__(**state)
 
     def set(self, *args, **kwargs):
         """Create a new instance with updated data.
+
+        The returned instance type is determined by the resulting dictionary contents,
+        which may differ from the current instance type.
 
         Parameters
         ----------
@@ -476,17 +483,201 @@ class Parameter(ParameterBase):
             **kwargs,
         )
 
-        current = {
-            "variable": self._variable,
-            "standard_name": self._standard_name,
-            "long_name": self._long_name,
-            "units": self._units,
-            "chem": self._chem,
-            "chem_long_name": self._chem_long_name,
-            "wavelength": self._wavelength,
-            "wave_direction": self._wave_direction,
-            "wave_frequency": self._wave_frequency,
-        }
-
+        current = self.to_dict()
         current.update(d)
-        return self.from_dict(current)
+        return create_parameter(current)
+
+
+class ChemicalParameter(Parameter):
+    """Parameter component representing a chemical parameter.
+
+    A chemical parameter includes a chemical constituent or aerosol type identifier.
+    For parameters that also have optical wavelength information, use
+    :class:`ChemicalOpticalParameter`.
+
+    Parameters
+    ----------
+    variable : str, optional
+        The parameter variable, by default None.
+    standard_name : str, optional
+        The standard name of the parameter variable, by default None.
+    long_name : str, optional
+        The long name of the parameter variable, by default None.
+    units : str or Units, optional
+        The parameter units, by default None. Can be provided as a string or a Units object.
+    chem : str, optional
+        The parameter chemical constituent or aerosol type, by default None.
+    chem_long_name : str, optional
+        The long name of the parameter chemical constituent or aerosol type, by default None.
+    """
+
+    def __init__(
+        self,
+        variable: str = None,
+        standard_name: str = None,
+        long_name: str = None,
+        units: Union[str, "Units"] = None,
+        chem: str = None,
+        chem_long_name: str = None,
+    ) -> None:
+        Parameter.__init__(self, variable=variable, standard_name=standard_name, long_name=long_name, units=units)
+        self._chem = chem
+        self._chem_long_name = chem_long_name
+
+    def chem(self) -> Optional[str]:
+        r"""Return the parameter chemical constituent or aerosol type."""
+        return self._chem
+
+    def chem_long_name(self) -> Optional[str]:
+        r"""Return the long name of the parameter chemical constituent or aerosol type."""
+        return self._chem_long_name
+
+    def to_dict(self):
+        """Return a dictionary representation of the chemical parameter."""
+        d = Parameter.to_dict(self)
+        d["chem"] = self._chem
+        d["chem_long_name"] = self._chem_long_name
+        return d
+
+
+class OpticalParameter(Parameter):
+    """Parameter component representing an optical parameter.
+
+    An optical parameter includes a wavelength or wavelength range but no chemical
+    constituent. For parameters that have both chemical and optical properties, use
+    :class:`ChemicalOpticalParameter`.
+
+    Parameters
+    ----------
+    variable : str, optional
+        The parameter variable, by default None.
+    standard_name : str, optional
+        The standard name of the parameter variable, by default None.
+    long_name : str, optional
+        The long name of the parameter variable, by default None.
+    units : str or Units, optional
+        The parameter units, by default None. Can be provided as a string or a Units object.
+    wavelength : int or 2-tuple of ints, optional
+        The optical parameter wavelength in nanometers, or a wavelength range in nanometers, by default None.
+    """
+
+    def __init__(
+        self,
+        variable: str = None,
+        standard_name: str = None,
+        long_name: str = None,
+        units: Union[str, "Units"] = None,
+        wavelength: Union[int, tuple[int, int]] = None,
+    ) -> None:
+        Parameter.__init__(self, variable=variable, standard_name=standard_name, long_name=long_name, units=units)
+        self._wavelength = wavelength
+
+    def wavelength(self) -> Optional[Union[int, tuple[int, int]]]:
+        r"""Return the optical parameter wavelength or wavelength interval in nanometers."""
+        return self._wavelength
+
+    def to_dict(self):
+        """Return a dictionary representation of the optical parameter."""
+        d = Parameter.to_dict(self)
+        d["wavelength"] = self._wavelength
+        return d
+
+
+class ChemicalOpticalParameter(ChemicalParameter, OpticalParameter):
+    """Parameter component representing a chemical-optical parameter.
+
+    A chemical-optical parameter includes both a chemical constituent or aerosol type
+    and an optical wavelength or wavelength range. It inherits chemical properties from
+    :class:`ChemicalParameter` and optical properties from :class:`OpticalParameter`.
+
+    Parameters
+    ----------
+    variable : str, optional
+        The parameter variable, by default None.
+    standard_name : str, optional
+        The standard name of the parameter variable, by default None.
+    long_name : str, optional
+        The long name of the parameter variable, by default None.
+    units : str or Units, optional
+        The parameter units, by default None. Can be provided as a string or a Units object.
+    chem : str, optional
+        The parameter chemical constituent or aerosol type, by default None.
+    chem_long_name : str, optional
+        The long name of the parameter chemical constituent or aerosol type, by default None.
+    wavelength : int or 2-tuple of ints, optional
+        The optical parameter wavelength in nanometers, or a wavelength range in nanometers, by default None.
+    """
+
+    def __init__(
+        self,
+        variable: str = None,
+        standard_name: str = None,
+        long_name: str = None,
+        units: Union[str, "Units"] = None,
+        chem: str = None,
+        chem_long_name: str = None,
+        wavelength: Union[int, tuple[int, int]] = None,
+    ) -> None:
+        Parameter.__init__(self, variable=variable, standard_name=standard_name, long_name=long_name, units=units)
+        self._chem = chem
+        self._chem_long_name = chem_long_name
+        self._wavelength = wavelength
+
+    def to_dict(self):
+        """Return a dictionary representation of the chemical-optical parameter."""
+        d = Parameter.to_dict(self)
+        d["chem"] = self._chem
+        d["chem_long_name"] = self._chem_long_name
+        d["wavelength"] = self._wavelength
+        return d
+
+
+class WaveSpectraParameter(Parameter):
+    """Parameter component representing a wave spectra parameter.
+
+    A wave spectra parameter includes wave direction and/or wave frequency information
+    from 2D wave spectra fields.
+
+    Parameters
+    ----------
+    variable : str, optional
+        The parameter variable, by default None.
+    standard_name : str, optional
+        The standard name of the parameter variable, by default None.
+    long_name : str, optional
+        The long name of the parameter variable, by default None.
+    units : str or Units, optional
+        The parameter units, by default None. Can be provided as a string or a Units object.
+    wave_direction : float, optional
+        The wave direction in degrees of the 2D spectra parameter, by default None.
+    wave_frequency : float, optional
+        The wave frequency in Hz of the 2D spectra parameter, by default None.
+    """
+
+    def __init__(
+        self,
+        variable: str = None,
+        standard_name: str = None,
+        long_name: str = None,
+        units: Union[str, "Units"] = None,
+        wave_direction: float = None,
+        wave_frequency: float = None,
+    ) -> None:
+        Parameter.__init__(self, variable=variable, standard_name=standard_name, long_name=long_name, units=units)
+        self._wave_direction = wave_direction
+        self._wave_frequency = wave_frequency
+
+    def wave_direction(self) -> Optional[float]:
+        r"""Return the wave direction in degrees of the 2D spectra parameter."""
+        return self._wave_direction
+
+    def wave_frequency(self) -> Optional[float]:
+        r"""Return the wave frequency in Hz of the 2D spectra parameter."""
+        return self._wave_frequency
+
+    def to_dict(self):
+        """Return a dictionary representation of the wave spectra parameter."""
+        d = Parameter.to_dict(self)
+        d["wave_direction"] = self._wave_direction
+        d["wave_frequency"] = self._wave_frequency
+        return d

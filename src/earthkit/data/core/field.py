@@ -1729,8 +1729,8 @@ class Field(Base):
         Returns
         -------
         NamespaceDump
-            Dict-like object with one item s per component. In a Jupyter notebook represented
-            as a tabbed interface to browse the dump con stents.
+            Dict-like object with one item per component. In a Jupyter notebook represented
+            as a tabbed interface to browse the dump contents.
 
 
         See Also
