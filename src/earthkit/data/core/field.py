@@ -1439,6 +1439,7 @@ class Field(Base):
             return self
 
         _components = dict()
+        _raw = dict()
         for k, v in kwargs.items():
             if k in self._components:
                 _components[k] = v
@@ -1448,7 +1449,12 @@ class Field(Base):
                     if key_name is not None and key_name != "":
                         _kwargs[component_name][key_name] = v
                     else:
-                        raise KeyError(f"Key {k} cannot be set on the field.")
+                        raise KeyError(f"Invalid key={k} specified.")
+                elif component_name == _METADATA:
+                    if key_name is not None and key_name != "":
+                        _raw[key_name] = v
+                    else:
+                        raise KeyError(f"Invalid key={k} specified.")
                 else:
                     raise KeyError(f"Key {k} cannot be set on the field.")
 
@@ -1464,10 +1470,18 @@ class Field(Base):
                 s = component.set(**v)
                 _components[component_name] = s
 
+        new_field = self
         if _components:
-            return self._from_set(**_components)
+            new_field = self._from_set(**_components)
         elif kwargs:
             raise ValueError("No valid keys to set in the field.")
+
+        if _raw:
+            new_field = new_field.sync()
+            if new_field is not self:
+                return new_field._set_metadata(_raw)
+            else:
+                return self._set_metadata(_raw)
 
         return None
 
@@ -1509,15 +1523,7 @@ class Field(Base):
         >>> f2.metadata("shortName")
         'msl'
         """
-        if self._get_grib() and self._private and "_metadata" in self._private:
-            from earthkit.data.encoders.grib import GribEncoder
-
-            encoder = GribEncoder()
-            f = encoder.encode(data=self).to_field()
-            if self.labels:
-                f = f.set(labels=self.labels)
-            return f
-        return self
+        return self._sync_metadata()
 
     def to_target(self, target, *args, **kwargs):
         r"""Write the field into a target object.
@@ -1878,6 +1884,28 @@ class Field(Base):
 
         for m in self._components.values():
             m.get_grib_context(context)
+
+    def _set_metadata(self, md):
+        new_field = self.sync()
+        g = new_field._get_grib()
+        if g is not None:
+            from earthkit.data.encoders.grib import GribEncoder
+
+            encoder = GribEncoder()
+            d = encoder._encode(template=self, metadata=md)
+            return d.to_field()
+        return self
+
+    def _sync_metadata(self):
+        if self._get_grib() and self._private and "_metadata" in self._private:
+            from earthkit.data.encoders.grib import GribEncoder
+
+            encoder = GribEncoder()
+            f = encoder.encode(data=self).to_field()
+            if self.labels:
+                f = f.set(labels=self.labels)
+            return f
+        return self
 
     @normalise("time.valid_datetime", "date")
     @normalise("time.base_datetime", "date")
