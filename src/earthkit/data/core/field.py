@@ -1485,8 +1485,14 @@ class Field(Base):
         return Field.from_field(self, data=data)
 
     def sync(self):
-        """Return a field with the raw metadata in sync with the field's components.
+        """Return a field with the raw metadata made in sync with the field's components.
 
+        When a field is modified using :meth:`set`, the raw metadata (if existing) might become
+        out of sync with the field's components and some of the raw metadata keys might not be
+        available anymore. This method tries to synchronize the raw metadata with the field's
+        components.
+
+        At the moment the raw metadata is only available to fields created from GRIB messages.
         When a field is created from a GRIB message, it stores this associated GRIB message/handle
         and the raw GRIB metadata is extracted from it e.g. when calling :meth:`get`. When the field's
         components are modified using :meth:`set`, the GRIB message is copied into the new field but not
@@ -1499,7 +1505,7 @@ class Field(Base):
         Returns
         -------
         Field
-            A field with the raw metadata in sync with the field's components. If the field is not associated with
+            A field with the raw metadata made in sync with the field's components. If the field is not associated with
             a GRIB message or if the raw metadata is already in sync, the original field is returned.
 
         Examples
