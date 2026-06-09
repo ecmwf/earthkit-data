@@ -213,8 +213,13 @@ class ParameterBase(SimpleFieldComponent):
             - "chem_long_name": The long name of the chemical constituent or aerosol type of the parameter.
             - "wavelength": The optical parameter wavelength in nanometers, or a wavelength range in nanometers,
                as an int or a 2-tuple of ints.
+            - "wavelength_bounds": The optical parameter wavelength bounds in nanometers, as a 2-tuple of ints.
             - "wave_direction": The wave direction in degrees of the 2D spectra parameter.
+            - "wave_direction_index": The 0-based index of the wave direction bin.
+            - "wave_direction_bounds": The wave direction bounds in degrees, as a 2-tuple of floats.
             - "wave_frequency": The wave frequency in Hz of the 2D spectra parameter.
+            - "wave_frequency_index": The 0-based index of the wave frequency bin.
+            - "wave_frequency_bounds": The wave frequency bounds in Hz, as a 2-tuple of floats.
 
         Returns
         -------
@@ -568,8 +573,13 @@ class Parameter(ParameterBase):
             - "chem": The chemical constituent or aerosol type of the parameter.
             - "chem_long_name": The long name of the chemical constituent or aerosol type of the parameter.
             - "wavelength": The optical parameter wavelength in nanometers, or a wavelength range in nanometers.
+            - "wavelength_bounds": The optical parameter wavelength bounds in nanometers, as a 2-tuple of ints.
             - "wave_direction": The wave direction in degrees of the 2D spectra parameter.
+            - "wave_direction_index": The 0-based index of the wave direction bin.
+            - "wave_direction_bounds": The wave direction bounds in degrees, as a 2-tuple of floats.
             - "wave_frequency": The wave frequency in Hz of the 2D spectra parameter.
+            - "wave_frequency_index": The 0-based index of the wave frequency bin.
+            - "wave_frequency_bounds": The wave frequency bounds in Hz, as a 2-tuple of floats.
         """
         d = self._normalise_set_kwargs(
             *args,
