@@ -42,8 +42,14 @@ class ParameterBase(SimpleFieldComponent):
     - "chem_long_name": string representing the long name of the parameter chemical constituent or aerosol type, or None
     - "wavelength": int representing the optical parameter wavelength in nanometers,
        or a 2-tuple of ints representing the wavelength range in nanometers, or None
+    - "wavelength_bounds": 2-tuple of ints representing the optical parameter wavelength bounds
+       in nanometers, or None
     - "wave_direction": float representing the wave direction in degrees of the 2D spectra parameter, or None
+    - "wave_direction_index": int representing the 0-based index of the wave direction bin, or None
+    - "wave_direction_bounds": 2-tuple of floats representing the wave direction bounds in degrees, or None
     - "wave_frequency": float representing the wave frequency in Hz of the 2D spectra parameter, or None
+    - "wave_frequency_index": int representing the 0-based index of the wave frequency bin, or None
+    - "wave_frequency_bounds": 2-tuple of floats representing the wave frequency bounds in Hz, or None
     - "param": alias of "variable"
 
     Depending on the type of parameter information available, some of these keys may not be supported
@@ -146,14 +152,44 @@ class ParameterBase(SimpleFieldComponent):
 
     @mark_get_key
     @abstractmethod
+    def wavelength_bounds(self) -> Optional[tuple[int, int]]:
+        """Return the optical parameter wavelength bounds in nanometers."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
     def wave_direction(self) -> Optional[float]:
         """Return the wave direction in degrees of the 2D spectra parameter."""
         pass
 
     @mark_get_key
     @abstractmethod
+    def wave_direction_index(self) -> Optional[int]:
+        """Return the 0-based index of the wave direction bin."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wave_direction_bounds(self) -> Optional[tuple[float, float]]:
+        """Return the wave direction bounds in degrees of the 2D spectra parameter."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
     def wave_frequency(self) -> Optional[float]:
         """Return the wave frequency in Hz of the 2D spectra parameter."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wave_frequency_index(self) -> Optional[int]:
+        """Return the 0-based index of the wave frequency bin."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wave_frequency_bounds(self) -> Optional[tuple[float, float]]:
+        """Return the wave frequency bounds in Hz of the 2D spectra parameter."""
         pass
 
     @classmethod
@@ -214,7 +250,7 @@ def create_parameter(d: dict) -> ParameterBase:
     if not isinstance(d, dict):
         raise TypeError(f"Cannot create Parameter from {type(d)}, expected dict")
 
-    d1 = ParameterBase._normalise_create_kwargs(
+    d1 = Parameter._normalise_create_kwargs(
         d,
         allowed_keys=(
             "variable",
@@ -224,8 +260,13 @@ def create_parameter(d: dict) -> ParameterBase:
             "standard_name",
             "long_name",
             "wavelength",
+            "wavelength_bounds",
             "wave_direction",
+            "wave_direction_index",
+            "wave_direction_bounds",
             "wave_frequency",
+            "wave_frequency_index",
+            "wave_frequency_bounds",
         ),
     )
     if "variable" not in d1:
@@ -301,6 +342,13 @@ class EmptyParameter(ParameterBase):
         """
         return None
 
+    def wavelength_bounds(self) -> None:
+        r"""Return the optical parameter wavelength bounds in nanometers.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
     def wave_direction(self) -> None:
         r"""Return the wave direction in degrees of the 2D spectra parameter.
 
@@ -308,8 +356,36 @@ class EmptyParameter(ParameterBase):
         """
         return None
 
+    def wave_direction_index(self) -> None:
+        r"""Return the 0-based index of the wave direction bin.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wave_direction_bounds(self) -> None:
+        r"""Return the wave direction bounds in degrees of the 2D spectra parameter.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
     def wave_frequency(self) -> None:
         r"""Return the wave frequency in Hz of the 2D spectra parameter.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency_index(self) -> None:
+        r"""Return the 0-based index of the wave frequency bin.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency_bounds(self) -> None:
+        r"""Return the wave frequency bounds in Hz of the 2D spectra parameter.
 
         An EmptyParameter does not contain any parameter information, and this method returns None.
         """
@@ -406,6 +482,13 @@ class Parameter(ParameterBase):
         """
         return None
 
+    def wavelength_bounds(self) -> None:
+        r"""Return the optical parameter wavelength bounds in nanometers.
+
+        A regular Parameter does not have optical information, and this method returns None.
+        """
+        return None
+
     def wave_direction(self) -> None:
         r"""Return the wave direction in degrees of the 2D spectra parameter.
 
@@ -413,8 +496,36 @@ class Parameter(ParameterBase):
         """
         return None
 
+    def wave_direction_index(self) -> None:
+        r"""Return the 0-based index of the wave direction bin.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
+
+    def wave_direction_bounds(self) -> None:
+        r"""Return the wave direction bounds in degrees of the 2D spectra parameter.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
+
     def wave_frequency(self) -> None:
         r"""Return the wave frequency in Hz of the 2D spectra parameter.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency_index(self) -> None:
+        r"""Return the 0-based index of the wave frequency bin.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency_bounds(self) -> None:
+        r"""Return the wave frequency bounds in Hz of the 2D spectra parameter.
 
         A regular Parameter does not have wave spectra information, and this method returns None.
         """
@@ -470,8 +581,13 @@ class Parameter(ParameterBase):
                 "standard_name",
                 "long_name",
                 "wavelength",
+                "wavelength_bounds",
                 "wave_direction",
+                "wave_direction_index",
+                "wave_direction_bounds",
                 "wave_frequency",
+                "wave_frequency_index",
+                "wave_frequency_bounds",
             ),
             **kwargs,
         )
@@ -552,6 +668,8 @@ class OpticalParameter(Parameter):
         The parameter units, by default None. Can be provided as a string or a Units object.
     wavelength : int or 2-tuple of ints, optional
         The optical parameter wavelength in nanometers, or a wavelength range in nanometers, by default None.
+    wavelength_bounds : 2-tuple of ints, optional
+        The optical parameter wavelength bounds in nanometers, by default None.
     """
 
     def __init__(
@@ -561,18 +679,25 @@ class OpticalParameter(Parameter):
         long_name: str = None,
         units: Union[str, "Units"] = None,
         wavelength: Union[int, tuple[int, int]] = None,
+        wavelength_bounds: Optional[tuple[int, int]] = None,
     ) -> None:
         Parameter.__init__(self, variable=variable, standard_name=standard_name, long_name=long_name, units=units)
         self._wavelength = wavelength
+        self._wavelength_bounds = wavelength_bounds
 
     def wavelength(self) -> Optional[Union[int, tuple[int, int]]]:
         r"""Return the optical parameter wavelength or wavelength interval in nanometers."""
         return self._wavelength
 
+    def wavelength_bounds(self) -> Optional[tuple[int, int]]:
+        r"""Return the optical parameter wavelength bounds in nanometers."""
+        return self._wavelength_bounds
+
     def to_dict(self):
         """Return a dictionary representation of the optical parameter."""
         d = Parameter.to_dict(self)
         d["wavelength"] = self._wavelength
+        d["wavelength_bounds"] = self._wavelength_bounds
         return d
 
 
@@ -599,6 +724,8 @@ class ChemicalOpticalParameter(ChemicalParameter, OpticalParameter):
         The long name of the parameter chemical constituent or aerosol type, by default None.
     wavelength : int or 2-tuple of ints, optional
         The optical parameter wavelength in nanometers, or a wavelength range in nanometers, by default None.
+    wavelength_bounds : 2-tuple of ints, optional
+        The optical parameter wavelength bounds in nanometers, by default None.
     """
 
     def __init__(
@@ -610,11 +737,13 @@ class ChemicalOpticalParameter(ChemicalParameter, OpticalParameter):
         chem: str = None,
         chem_long_name: str = None,
         wavelength: Union[int, tuple[int, int]] = None,
+        wavelength_bounds: Optional[tuple[int, int]] = None,
     ) -> None:
         Parameter.__init__(self, variable=variable, standard_name=standard_name, long_name=long_name, units=units)
         self._chem = chem
         self._chem_long_name = chem_long_name
         self._wavelength = wavelength
+        self._wavelength_bounds = wavelength_bounds
 
     def to_dict(self):
         """Return a dictionary representation of the chemical-optical parameter."""
@@ -622,6 +751,7 @@ class ChemicalOpticalParameter(ChemicalParameter, OpticalParameter):
         d["chem"] = self._chem
         d["chem_long_name"] = self._chem_long_name
         d["wavelength"] = self._wavelength
+        d["wavelength_bounds"] = self._wavelength_bounds
         return d
 
 
@@ -643,8 +773,16 @@ class WaveSpectraParameter(Parameter):
         The parameter units, by default None. Can be provided as a string or a Units object.
     wave_direction : float, optional
         The wave direction in degrees of the 2D spectra parameter, by default None.
+    wave_direction_index : int, optional
+        The 0-based index of the wave direction bin, by default None.
+    wave_direction_bounds : 2-tuple of floats, optional
+        The wave direction bounds in degrees of the 2D spectra parameter, by default None.
     wave_frequency : float, optional
         The wave frequency in Hz of the 2D spectra parameter, by default None.
+    wave_frequency_index : int, optional
+        The 0-based index of the wave frequency bin, by default None.
+    wave_frequency_bounds : 2-tuple of floats, optional
+        The wave frequency bounds in Hz of the 2D spectra parameter, by default None.
     """
 
     def __init__(
@@ -654,23 +792,51 @@ class WaveSpectraParameter(Parameter):
         long_name: str = None,
         units: Union[str, "Units"] = None,
         wave_direction: float = None,
+        wave_direction_index: Optional[int] = None,
+        wave_direction_bounds: Optional[tuple[float, float]] = None,
         wave_frequency: float = None,
+        wave_frequency_index: Optional[int] = None,
+        wave_frequency_bounds: Optional[tuple[float, float]] = None,
     ) -> None:
         Parameter.__init__(self, variable=variable, standard_name=standard_name, long_name=long_name, units=units)
         self._wave_direction = wave_direction
+        self._wave_direction_index = wave_direction_index
+        self._wave_direction_bounds = wave_direction_bounds
         self._wave_frequency = wave_frequency
+        self._wave_frequency_index = wave_frequency_index
+        self._wave_frequency_bounds = wave_frequency_bounds
 
     def wave_direction(self) -> Optional[float]:
         r"""Return the wave direction in degrees of the 2D spectra parameter."""
         return self._wave_direction
 
+    def wave_direction_index(self) -> Optional[int]:
+        r"""Return the 0-based index of the wave direction bin."""
+        return self._wave_direction_index
+
+    def wave_direction_bounds(self) -> Optional[tuple[float, float]]:
+        r"""Return the wave direction bounds in degrees of the 2D spectra parameter."""
+        return self._wave_direction_bounds
+
     def wave_frequency(self) -> Optional[float]:
         r"""Return the wave frequency in Hz of the 2D spectra parameter."""
         return self._wave_frequency
+
+    def wave_frequency_index(self) -> Optional[int]:
+        r"""Return the 0-based index of the wave frequency bin."""
+        return self._wave_frequency_index
+
+    def wave_frequency_bounds(self) -> Optional[tuple[float, float]]:
+        r"""Return the wave frequency bounds in Hz of the 2D spectra parameter."""
+        return self._wave_frequency_bounds
 
     def to_dict(self):
         """Return a dictionary representation of the wave spectra parameter."""
         d = Parameter.to_dict(self)
         d["wave_direction"] = self._wave_direction
+        d["wave_direction_index"] = self._wave_direction_index
+        d["wave_direction_bounds"] = self._wave_direction_bounds
         d["wave_frequency"] = self._wave_frequency
+        d["wave_frequency_index"] = self._wave_frequency_index
+        d["wave_frequency_bounds"] = self._wave_frequency_bounds
         return d

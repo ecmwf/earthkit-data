@@ -7,6 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.data.field.component.parameter import create_parameter
+from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
+
 from .collector import GribContextCollector
 from .core import GribFieldComponentHandler
 
@@ -25,9 +28,6 @@ class GribParameterBuilder:
 
     @staticmethod
     def build(handle):
-        from earthkit.data.field.component.parameter import create_parameter
-        from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
-
         d = GribParameterBuilder._build_dict(handle)
         component = create_parameter(d)
         handler = ParameterFieldComponentHandler.from_component(component)
@@ -38,6 +38,7 @@ class GribParameterBuilder:
         def _get(key, default=None):
             return handle.get(key, default=default)
 
+        # Core metadata keys for identifying the parameter
         v = _get("shortName", None)
         if v == "~":
             v = handle.get("paramId", ktype=str, default=None)
@@ -49,15 +50,32 @@ class GribParameterBuilder:
 
         units = _get("units", None)
 
-        chem_name = _get("parameter.chemShortName", None)
-        # using "parameter.chemShortName" instead of "chemShortName" avoids getting "unknown" if this key is not defined
-        # cf. https://github.com/ecmwf/eccodes/blob/eac2eb507b5b44fcc3d3c58e382efde3a274b1c4/definitions/grib2/parameters.def#L29
+        d = dict(
+            variable=variable,
+            standard_name=standard_name,
+            long_name=long_name,
+            units=units,
+        )
 
-        chem_long_name = _get("chemName", None)
-        if chem_long_name == "unknown":
-            chem_long_name = None
+        # Metadata for chemical parameters
+        if _get("chemId", None) is not None:
+            # "chemId" is defined for chemical parameters
+            chem = _get("parameter.chemShortName", None)
+            # using "parameter.chemShortName" instead of "chemShortName"
+            # avoids getting "unknown" if this key is not defined
+            # cf. https://github.com/ecmwf/eccodes/blob/eac2eb507b5b44fcc3d3c58e38/definitions/grib2/parameters.def#L29
 
+            chem_long_name = _get("chemName", None)
+            if chem_long_name == "unknown":
+                chem_long_name = None
+
+            d["chem"] = chem
+            d["chem_long_name"] = chem_long_name
+
+        # Metadata for optical parameters
         _wavelength = _get("mars.wavelength", None)
+        wavelength = None
+        wavelength_bounds = None
         # The logic below follows the "mars.wavelength" key definition:
         # https://github.com/ecmwf/eccodes/blob/develop/definitions/mars/mars.wavelength.def
         if isinstance(_wavelength, (int, float)):
@@ -66,11 +84,14 @@ class GribParameterBuilder:
             # expected format is "<wlen1>-<wlen2>"
             try:
                 wlen1, wlen2 = _wavelength.split("-")
-                wavelength = round(float(wlen1)), round(float(wlen2))
+                wavelength_bounds = round(float(wlen1)), round(float(wlen2))
+                wavelength = round((wavelength_bounds[1] + wavelength_bounds[0]) / 2)
             except Exception:
-                wavelength = None
-        else:
-            wavelength = None
+                pass
+
+        if wavelength is not None:
+            d["wavelength"] = wavelength
+            d["wavelength_bounds"] = wavelength_bounds
 
         _grib_edition = _get("edition", None)
 
@@ -81,35 +102,70 @@ class GribParameterBuilder:
                 return float(v * 10 ** (-scaling_factor))
             raise ValueError(f"Unsupported GRIB edition: {_grib_edition}")
 
-        # Wave direction
+        # 2D wave spectra: direction
         try:
-            scaled_directions = _get("scaledDirections", None)
             direction_number = _get("directionNumber", None)
-            direction_scaling_factor = _get("directionScalingFactor", None)
-            wave_direction = _scale_value(scaled_directions[direction_number - 1], direction_scaling_factor)
-        except Exception:
-            wave_direction = None
+            if direction_number is not None:
+                direction_index = direction_number - 1  # convert to 0-based index
+                number_of_directions = _get("numberOfDirections", None)
+                direction_scaling_factor = _get("directionScalingFactor", None)
+                scaled_directions = _get("scaledDirections", None)
+                wave_direction = _scale_value(scaled_directions[direction_index], direction_scaling_factor)
 
-        # Wave frequency
+                d["wave_direction"] = wave_direction
+                d["wave_direction_index"] = direction_index
+
+                # wave direction bounds
+                if number_of_directions > 1:
+                    if direction_index > 0:
+                        prev_wave_direction = _scale_value(
+                            scaled_directions[direction_index - 1], direction_scaling_factor
+                        )
+                        delta = (wave_direction - prev_wave_direction) / 2
+                    else:
+                        next_wave_direction = _scale_value(
+                            scaled_directions[direction_index + 1], direction_scaling_factor
+                        )
+                        delta = (next_wave_direction - wave_direction) / 2
+                    d["wave_direction_bounds"] = (wave_direction - delta, wave_direction + delta)
+                else:
+                    d["wave_direction_bounds"] = None
+        except Exception:
+            pass
+
+        # 2D wave spectra: frequency
         try:
-            scaled_frequencies = _get("scaledFrequencies", None)
             frequency_number = _get("frequencyNumber", None)
-            frequency_scaling_factor = _get("frequencyScalingFactor", None)
-            wave_frequency = _scale_value(scaled_frequencies[frequency_number - 1], frequency_scaling_factor)
-        except Exception:
-            wave_frequency = None
+            if frequency_number is not None:
+                frequency_index = frequency_number - 1  # convert to 0-based index
+                number_of_frequencies = _get("numberOfFrequencies", None)
+                frequency_scaling_factor = _get("frequencyScalingFactor", None)
+                scaled_frequencies = _get("scaledFrequencies", None)
+                wave_frequency = _scale_value(scaled_frequencies[frequency_index], frequency_scaling_factor)
 
-        return dict(
-            variable=variable,
-            standard_name=standard_name,
-            long_name=long_name,
-            units=units,
-            chem=chem_name,
-            chem_long_name=chem_long_name,
-            wavelength=wavelength,
-            wave_direction=wave_direction,
-            wave_frequency=wave_frequency,
-        )
+                d["wave_frequency"] = wave_frequency
+                d["wave_frequency_index"] = frequency_index
+
+                # wave frequency bounds: frequencies are equally spaced on the log scale
+                if number_of_frequencies > 1:
+                    if frequency_index > 0:
+                        prev_wave_frequency = _scale_value(
+                            scaled_frequencies[frequency_index - 1], frequency_scaling_factor
+                        )
+                        factor = (wave_frequency / prev_wave_frequency) ** 0.5
+                    else:
+                        next_wave_frequency = _scale_value(
+                            scaled_frequencies[frequency_index + 1], frequency_scaling_factor
+                        )
+                        factor = (next_wave_frequency / wave_frequency) ** 0.5
+                    d["wave_frequency_bounds"] = (round(wave_frequency / factor, 6), round(wave_frequency * factor, 6))
+                else:
+                    d["wave_frequency_bounds"] = None
+
+        except Exception:
+            pass
+
+        return d
 
 
 class GribParameterContextCollector(GribContextCollector):
