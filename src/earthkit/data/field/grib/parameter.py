@@ -92,6 +92,7 @@ class GribParameterBuilder:
         if wavelength is not None:
             d["wavelength"] = wavelength
             d["wavelength_bounds"] = wavelength_bounds
+            d["wavelength_units"] = "nm"
 
         _grib_edition = _get("edition", None)
 
@@ -114,6 +115,7 @@ class GribParameterBuilder:
 
                 d["wave_direction"] = wave_direction
                 d["wave_direction_index"] = direction_index
+                d["wave_direction_units"] = "degree"
 
                 # wave direction bounds
                 if number_of_directions > 1:
@@ -145,6 +147,7 @@ class GribParameterBuilder:
 
                 d["wave_frequency"] = wave_frequency
                 d["wave_frequency_index"] = frequency_index
+                d["wave_frequency_units"] = "s ** -1"
 
                 # wave frequency bounds: frequencies are equally spaced on the log scale
                 if number_of_frequencies > 1:
@@ -169,6 +172,12 @@ class GribParameterBuilder:
 
 
 class GribParameterContextCollector(GribContextCollector):
+    """Collector for extracting GRIB context keys from parameter components.
+
+    Collects the "shortName" key from the parameter component's variable for use
+    in GRIB encoding context.
+    """
+
     @staticmethod
     def collect_keys(handler, context):
         component = handler.component
