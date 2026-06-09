@@ -9,7 +9,6 @@
 
 from __future__ import annotations
 
-import inspect
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -157,8 +156,41 @@ class ParameterBase(SimpleFieldComponent):
         """Return the wave frequency in Hz of the 2D spectra parameter."""
         pass
 
+    @classmethod
+    def from_dict(cls, d: dict) -> "ParameterBase":
+        """Create a parameter object from a dictionary.
 
-def create_parameter(d: dict) -> "ParameterBase":
+        The appropriate subclass is determined automatically based on the dictionary contents.
+
+        Parameters
+        ----------
+        d : dict
+            Dictionary containing parameter data.
+
+            The dictionary can contain the following keys:
+
+            - "variable": The parameter variable.
+            - "standard_name": The standard name of the parameter variable.
+            - "long_name": The long name of the parameter variable.
+            - "units": The parameter units, as a string or a Units object.
+            - "chem": The chemical constituent or aerosol type of the parameter.
+            - "chem_long_name": The long name of the chemical constituent or aerosol type of the parameter.
+            - "wavelength": The optical parameter wavelength in nanometers, or a wavelength range in nanometers,
+               as an int or a 2-tuple of ints.
+            - "wave_direction": The wave direction in degrees of the 2D spectra parameter.
+            - "wave_frequency": The wave frequency in Hz of the 2D spectra parameter.
+
+        Returns
+        -------
+        ParameterBase
+            The created parameter instance. The actual type depends on the dictionary contents:
+            :class:`ChemicalOpticalParameter`, :class:`ChemicalParameter`,
+            :class:`OpticalParameter`, :class:`WaveSpectraParameter`, or :class:`Parameter`.
+        """
+        return create_parameter(d)
+
+
+def create_parameter(d: dict) -> ParameterBase:
     """Create a ParameterBase object from a dictionary.
 
     The appropriate subclass is determined automatically based on the dictionary contents:
@@ -182,8 +214,7 @@ def create_parameter(d: dict) -> "ParameterBase":
     if not isinstance(d, dict):
         raise TypeError(f"Cannot create Parameter from {type(d)}, expected dict")
 
-    cls = Parameter
-    d1 = cls._normalise_create_kwargs(
+    d1 = ParameterBase._normalise_create_kwargs(
         d,
         allowed_keys=(
             "variable",
@@ -215,12 +246,7 @@ def create_parameter(d: dict) -> "ParameterBase":
     else:
         cls = Parameter
 
-    # Filter d1 to only include keys accepted by the chosen class's __init__
-    sig = inspect.signature(cls.__init__)
-    valid_params = set(sig.parameters.keys()) - {"self"}
-    filtered = {k: v for k, v in d1.items() if k in valid_params}
-
-    return cls(**filtered)
+    return cls._create_component(d1)
 
 
 class EmptyParameter(ParameterBase):
@@ -393,39 +419,6 @@ class Parameter(ParameterBase):
         A regular Parameter does not have wave spectra information, and this method returns None.
         """
         return None
-
-    @classmethod
-    def from_dict(cls, d: dict) -> "ParameterBase":
-        """Create a parameter object from a dictionary.
-
-        The appropriate subclass is determined automatically based on the dictionary contents.
-
-        Parameters
-        ----------
-        d : dict
-            Dictionary containing parameter data.
-
-            The dictionary can contain the following keys:
-
-            - "variable": The parameter variable.
-            - "standard_name": The standard name of the parameter variable.
-            - "long_name": The long name of the parameter variable.
-            - "units": The parameter units, as a string or a Units object.
-            - "chem": The chemical constituent or aerosol type of the parameter.
-            - "chem_long_name": The long name of the chemical constituent or aerosol type of the parameter.
-            - "wavelength": The optical parameter wavelength in nanometers, or a wavelength range in nanometers,
-               as an int or a 2-tuple of ints.
-            - "wave_direction": The wave direction in degrees of the 2D spectra parameter.
-            - "wave_frequency": The wave frequency in Hz of the 2D spectra parameter.
-
-        Returns
-        -------
-        ParameterBase
-            The created parameter instance. The actual type depends on the dictionary contents:
-            :class:`ChemicalOpticalParameter`, :class:`ChemicalParameter`,
-            :class:`OpticalParameter`, :class:`WaveSpectraParameter`, or :class:`Parameter`.
-        """
-        return create_parameter(d)
 
     def to_dict(self):
         """Return a dictionary representation of the parameter."""

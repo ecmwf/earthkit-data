@@ -6,8 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
-
-
+import inspect
 from abc import ABCMeta, abstractmethod
 from functools import wraps
 
@@ -223,6 +222,13 @@ class FieldComponent(metaclass=ABCMeta):
 class SimpleFieldComponent(FieldComponent):
     _KEYS = tuple()
     _ALIASES = dict()
+    # keys accepted by a class __init__(); set by __init_subclass__() for every subclass
+    _ALLOWED_CREATE_KEYS = None
+
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        sig = inspect.signature(cls.__init__)
+        cls._ALLOWED_CREATE_KEYS = tuple(key for key in sig.parameters.keys() if key not in {"self", "args", "kwargs"})
 
     def __contains__(self, name):
         """Check if the key is in the component."""
@@ -314,3 +320,19 @@ class SimpleFieldComponent(FieldComponent):
                 _kwargs[k] = v
 
         return _kwargs
+
+    @classmethod
+    def _create_component(cls, d: dict):
+        filtered_keys = {}
+        not_allowed_keys = {}
+        allowed_keys = cls._ALLOWED_CREATE_KEYS
+        for k, v in d.items():
+            if k in allowed_keys:
+                filtered_keys[k] = v
+            elif v is not None:
+                not_allowed_keys[k] = v
+
+        if not_allowed_keys:
+            raise ValueError(f"Cannot create {cls.__name__} with {not_allowed_keys}. Allowed keys are: {allowed_keys}")
+
+        return cls(**filtered_keys)
