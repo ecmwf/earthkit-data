@@ -72,6 +72,8 @@ class GribParameterBuilder:
             d["chem"] = chem
             d["chem_long_name"] = chem_long_name
 
+        # TODO: some of the logic below should be moved to ecCodes
+
         # Metadata for optical parameters
         _wavelength = _get("mars.wavelength", None)
         wavelength = None
@@ -183,8 +185,33 @@ class GribParameterContextCollector(GribContextCollector):
         component = handler.component
         r = {
             "shortName": component.variable(),
-            # "units": param.units,
         }
+
+        chem = component.chem()
+        if chem:
+            r["chemShortName"] = chem
+
+        # TODO: some of the logic below should be moved to ecCodes
+        wavelength_bounds = component.wavelength_bounds(units="m")
+        if wavelength_bounds is not None:
+            r["firstWavelength"] = wavelength_bounds[0]
+            r["secondWavelength"] = wavelength_bounds[1]
+            # see: https://codes.ecmwf.int/grib/format/grib2/ctables/4/91/
+            r["typeOfWavelengthInterval"] = 2  # Between first and second limit.
+            # The range includes the first limit but not the second limit
+        else:
+            wavelength = component.wavelength(units="m")
+            if wavelength is not None:
+                r["firstWavelength"] = wavelength
+
+        wave_direction_index = component.wave_direction_index()
+        if wave_direction_index is not None:
+            r["directionNumber"] = wave_direction_index + 1  # convert to 1-based index
+
+        wave_frequency_index = component.wave_frequency_index()
+        if wave_frequency_index is not None:
+            r["frequencyNumber"] = wave_frequency_index + 1  # convert to 1-based index
+
         context.update(r)
 
 
