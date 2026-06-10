@@ -680,16 +680,16 @@ class Parameter(ParameterBase):
             - "long_name": The long name of the parameter variable.
             - "chem": The chemical constituent or aerosol type of the parameter.
             - "chem_long_name": The long name of the chemical constituent or aerosol type of the parameter.
-            - "wavelength": The optical parameter wavelength in nanometers.
-            - "wavelength_bounds": The optical parameter wavelength bounds in nanometers, as a 2-tuple of ints.
+            - "wavelength": The optical parameter wavelength.
+            - "wavelength_bounds": The optical parameter wavelength bounds, as a 2-tuple.
             - "wavelength_units": The wavelength units, as a string or a Units object.
-            - "wave_direction": The wave direction in degrees of the 2D spectra parameter.
+            - "wave_direction": The wave direction of the 2D spectra parameter.
             - "wave_direction_index": The 0-based index of the wave direction bin.
-            - "wave_direction_bounds": The wave direction bounds in degrees, as a 2-tuple of floats.
+            - "wave_direction_bounds": The wave direction bounds, as a 2-tuple of floats.
             - "wave_direction_units": The wave direction units, as a string or a Units object.
-            - "wave_frequency": The wave frequency in Hz of the 2D spectra parameter.
+            - "wave_frequency": The wave frequency of the 2D spectra parameter.
             - "wave_frequency_index": The 0-based index of the wave frequency bin.
-            - "wave_frequency_bounds": The wave frequency bounds in Hz, as a 2-tuple of floats.
+            - "wave_frequency_bounds": The wave frequency bounds, as a 2-tuple of floats.
             - "wave_frequency_units": The wave frequency units, as a string or a Units object.
         """
         d = self._normalise_set_kwargs(
@@ -791,9 +791,9 @@ class OpticalParameter(Parameter):
     units : str or Units, optional
         The parameter units, by default None. Can be provided as a string or a Units object.
     wavelength : int, optional
-        The optical parameter wavelength in nanometers, by default None.
+        The optical parameter wavelength in native units (see ``wavelength_units``), by default None.
     wavelength_bounds : 2-tuple of ints, optional
-        The optical parameter wavelength bounds in nanometers, by default None.
+        The optical parameter wavelength bounds in native units, by default None.
     wavelength_units : str or Units, optional
         The wavelength units, by default None. Can be provided as a string or a Units object.
     """
@@ -835,7 +835,7 @@ class OpticalParameter(Parameter):
         ----------
         units : str or Units, optional
             If provided, convert the bounds to the specified units and return as tuple of floats.
-            If None, return the value in native units (tuple of ints in nanometers).
+            If None, return the value in native units.
         """
         if self._wavelength_bounds is None:
             return None
@@ -879,9 +879,9 @@ class ChemicalOpticalParameter(ChemicalParameter, OpticalParameter):
     chem_long_name : str, optional
         The long name of the parameter chemical constituent or aerosol type, by default None.
     wavelength : int, optional
-        The optical parameter wavelength in nanometers, by default None.
+        The optical parameter wavelength in native units (see ``wavelength_units``), by default None.
     wavelength_bounds : 2-tuple of ints, optional
-        The optical parameter wavelength bounds in nanometers, by default None.
+        The optical parameter wavelength bounds in native units, by default None.
     wavelength_units : str or Units, optional
         The wavelength units, by default None. Can be provided as a string or a Units object.
     """
@@ -933,19 +933,21 @@ class WaveSpectraParameter(Parameter):
     units : str or Units, optional
         The parameter units, by default None. Can be provided as a string or a Units object.
     wave_direction : float, optional
-        The wave direction in degrees of the 2D spectra parameter, by default None.
+        The wave direction of the 2D spectra parameter in native units (see ``wave_direction_units``),
+        by default None.
     wave_direction_index : int, optional
         The 0-based index of the wave direction bin, by default None.
     wave_direction_bounds : 2-tuple of floats, optional
-        The wave direction bounds in degrees of the 2D spectra parameter, by default None.
+        The wave direction bounds in native units, by default None.
     wave_direction_units : str or Units, optional
         The wave direction units, by default None. Can be provided as a string or a Units object.
     wave_frequency : float, optional
-        The wave frequency in Hz of the 2D spectra parameter, by default None.
+        The wave frequency of the 2D spectra parameter in native units (see ``wave_frequency_units``),
+        by default None.
     wave_frequency_index : int, optional
         The 0-based index of the wave frequency bin, by default None.
     wave_frequency_bounds : 2-tuple of floats, optional
-        The wave frequency bounds in Hz of the 2D spectra parameter, by default None.
+        The wave frequency bounds in native units, by default None.
     wave_frequency_units : str or Units, optional
         The wave frequency units, by default None. Can be provided as a string or a Units object.
     """
