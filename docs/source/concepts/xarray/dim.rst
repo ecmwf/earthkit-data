@@ -39,13 +39,13 @@ The predefined dimensions are based on the ``dim_roles``, which is a mapping bet
      - Aerosol type, or chemical or physical constituent type
      - "parameter.chem"
    * - "wavelength"
-     - Optical wavelength in nanometers (e.g. for aerosol optical depth)
+     - Optical wavelength (e.g. for aerosol optical depth)
      - "parameter.wavelength"
    * - "wave_direction"
-     - Wave direction in degrees (for 2D wave spectra)
+     - Wave direction (for 2D wave spectra)
      - "parameter.wave_direction"
    * - "wave_frequency"
-     - Wave frequency in Hz (for 2D wave spectra)
+     - Wave frequency (for 2D wave spectra)
      - "parameter.wave_frequency"
    * - "forecast_reference_time"
      - Forecast reference time (base datetime). Can be a single metadata key, or a list/tuple of two metadata keys representing the "date" and "time" parts of the forecast reference time. Alternatively, it can be a dict with "date" and "time" keys specifying the corresponding metadata keys. Used when ``"forecast_reference_time"`` is in ``time_dims``.
@@ -161,7 +161,7 @@ The following dimensions are applicable for chemical and optical parameters (see
 
 - ``"chem"``: Indicates an aerosol type, chemical specie, etc. (for example, for the parameter representing *mass mixing ratio*, the coordinates can be ``"CO"``, ``"O3"``, etc.).
 
-- ``"wavelength"`` (*nm*): Wavelength at which the optical parameter is measured, modelled or reported.
+- ``"wavelength"``: Wavelength at which the optical parameter is measured, modelled or reported.
 
 The following notebook illustrates the use of the above dimensions in a CAMS dataset containing chemical and optical parameters:
 
@@ -175,9 +175,9 @@ The following notebook illustrates the use of the above dimensions in a CAMS dat
 
 The following dimensions are applicable for 2D wave spectra parameters:
 
-- ``"wave_direction"`` (*degree*): Direction from which the waves propagate, expressed in degrees clockwise from true north.
+- ``"wave_direction"``: Direction from which the waves propagate, expressed in degrees clockwise from true north.
 
-- ``"wave_frequency"`` (*s-1*): Wave frequency corresponding to the spectral component.
+- ``"wave_frequency"``: Wave frequency corresponding to the spectral component.
 
 The following notebook presents an example 2D wave spectra dataset:
 
