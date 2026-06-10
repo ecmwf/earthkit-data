@@ -528,3 +528,127 @@ def test_parameter_component_to_dict_chemical_optical():
     assert d["wavelength"] == 550
     assert d["wavelength_bounds"] == (400, 700)
     assert d["wavelength_units"] == "nanometer"
+
+
+def test_parameter_component_wavelength_unit_conversion():
+    """Test wavelength conversion to different units."""
+    import math
+
+    p = OpticalParameter(variable="aod", wavelength=550, wavelength_bounds=(400, 700), wavelength_units="nm")
+
+    # Native units: int
+    assert p.wavelength() == 550
+    assert isinstance(p.wavelength(), int)
+    assert p.wavelength_bounds() == (400, 700)
+    assert isinstance(p.wavelength_bounds()[0], int)
+
+    # Convert to micrometers
+    wl = p.wavelength(units="um")
+    assert isinstance(wl, float)
+    assert math.isclose(wl, 0.55, rel_tol=1e-9)
+
+    wb = p.wavelength_bounds(units="um")
+    assert isinstance(wb[0], float)
+    assert isinstance(wb[1], float)
+    assert math.isclose(wb[0], 0.4, rel_tol=1e-9)
+    assert math.isclose(wb[1], 0.7, rel_tol=1e-9)
+
+    # Convert to meters
+    wl_m = p.wavelength(units="m")
+    assert math.isclose(wl_m, 550e-9, rel_tol=1e-9)
+
+    # None wavelength stays None
+    p2 = OpticalParameter(variable="aod", wavelength_units="nm")
+    assert p2.wavelength(units="um") is None
+    assert p2.wavelength_bounds(units="um") is None
+
+
+def test_parameter_component_wave_direction_unit_conversion():
+    """Test wave direction conversion to different units."""
+    import math
+
+    p = WaveSpectraParameter(
+        variable="2dfd",
+        wave_direction=180.0,
+        wave_direction_bounds=(170.0, 190.0),
+        wave_direction_units="degrees",
+    )
+
+    # Native units: float
+    assert p.wave_direction() == 180.0
+    assert isinstance(p.wave_direction(), float)
+    assert p.wave_direction_bounds() == (170.0, 190.0)
+
+    # Convert to radians
+    wd = p.wave_direction(units="radian")
+    assert isinstance(wd, float)
+    assert math.isclose(wd, math.pi, rel_tol=1e-6)
+
+    wdb = p.wave_direction_bounds(units="radian")
+    assert isinstance(wdb[0], float)
+    assert math.isclose(wdb[0], math.radians(170.0), rel_tol=1e-6)
+    assert math.isclose(wdb[1], math.radians(190.0), rel_tol=1e-6)
+
+    # None stays None
+    p2 = WaveSpectraParameter(variable="2dfd", wave_direction_units="degrees")
+    assert p2.wave_direction(units="radian") is None
+    assert p2.wave_direction_bounds(units="radian") is None
+
+
+def test_parameter_component_wave_frequency_unit_conversion():
+    """Test wave frequency conversion to different units."""
+    import math
+
+    p = WaveSpectraParameter(
+        variable="2dfd",
+        wave_frequency=0.05,
+        wave_frequency_bounds=(0.04, 0.06),
+        wave_frequency_units="s-1",
+    )
+
+    # Native units: float
+    assert p.wave_frequency() == 0.05
+    assert isinstance(p.wave_frequency(), float)
+    assert p.wave_frequency_bounds() == (0.04, 0.06)
+
+    # Convert to Hz (same dimensionality, should be identity)
+    wf = p.wave_frequency(units="Hz")
+    assert isinstance(wf, float)
+    assert math.isclose(wf, 0.05, rel_tol=1e-9)
+
+    # Convert bounds
+    wfb = p.wave_frequency_bounds(units="Hz")
+    assert isinstance(wfb[0], float)
+    assert math.isclose(wfb[0], 0.04, rel_tol=1e-9)
+    assert math.isclose(wfb[1], 0.06, rel_tol=1e-9)
+
+    # None stays None
+    p2 = WaveSpectraParameter(variable="2dfd", wave_frequency_units="s-1")
+    assert p2.wave_frequency(units="Hz") is None
+    assert p2.wave_frequency_bounds(units="Hz") is None
+
+
+def test_parameter_component_chemical_optical_wavelength_conversion():
+    """Test wavelength conversion works through ChemicalOpticalParameter."""
+    import math
+
+    p = ChemicalOpticalParameter(
+        variable="aod",
+        chem="aer_total",
+        wavelength=550,
+        wavelength_bounds=(400, 700),
+        wavelength_units="nm",
+    )
+
+    # Native: int
+    assert p.wavelength() == 550
+    assert isinstance(p.wavelength(), int)
+
+    # Converted: float
+    wl = p.wavelength(units="um")
+    assert isinstance(wl, float)
+    assert math.isclose(wl, 0.55, rel_tol=1e-9)
+
+    wb = p.wavelength_bounds(units="um")
+    assert math.isclose(wb[0], 0.4, rel_tol=1e-9)
+    assert math.isclose(wb[1], 0.7, rel_tol=1e-9)
