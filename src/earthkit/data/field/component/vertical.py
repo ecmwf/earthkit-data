@@ -83,7 +83,7 @@ class VerticalBase(SimpleFieldComponent):
 
     @mark_get_key
     @abstractmethod
-    def level(self) -> Union[int, float]:
+    def level(self, units=None) -> Union[int, float]:
         """Return the level."""
         pass
 
@@ -252,7 +252,7 @@ class EmptyVertical(VerticalBase):
         """
         return None
 
-    def units(self) -> None:
+    def units(self, units=None) -> None:
         """Return the units of  the level type.
 
         The units are not available for this vertical type, and this method returns None.
@@ -370,8 +370,13 @@ class Vertical(VerticalBase):
         self._type = get_level_type(level_type)
         self._check()
 
-    def level(self) -> Union[int, float]:
-        return self._level
+    def level(self, units=None) -> Union[int, float]:
+        if self._level is None or units is None:
+            return self._level
+        else:
+            from earthkit.utils.units import convert_array
+
+            return convert_array(self._level, source_units=self.units(), target_units=units)
 
     def layer(self) -> Optional[tuple[float, float]]:
         return self._layer
