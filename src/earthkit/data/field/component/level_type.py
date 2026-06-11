@@ -64,6 +64,8 @@ class LevelType:
         units: Union[str, Units],
         layer: bool,
         positive: str,
+        parametric: bool = False,
+        coefficient_names: tuple[str, ...] | None = None,
     ) -> None:
         """Initialise the LevelType object.
 
@@ -88,6 +90,10 @@ class LevelType:
             Whether the level type represents a layer or a single level.
         positive : str
             The positive direction of the level type. Can be either "up" or "down".
+        parametric : bool, optional
+            Whether the level type is parametric. Default is False.
+        coefficient_names : tuple[str, ...] | None, optional
+            The names of the coefficients for the level type, if parametric is True.
         """
         self.name = name
         self.abbreviation = abbreviation
@@ -96,6 +102,8 @@ class LevelType:
         self.units = Units.from_any(units)
         self.layer = layer
         self.positive = positive
+        self.parametric = parametric
+        self.coefficient_names = coefficient_names
         self.cf = {
             "standard_name": self.standard_name,
             "long_name": self.long_name,
@@ -114,6 +122,8 @@ class LevelType:
             return self.name == other.name
         if isinstance(other, str):
             return self.name == other
+        if isinstance(other, LevelTypes):
+            return self.name == other.value.name
         return False
 
     def __repr__(self):
@@ -141,7 +151,7 @@ _defs = {
     #     "layer": True,
     #     "positive": POSITIVE_DOWN,
     # },
-    "MODEL": {
+    "HYBRID": {
         "name": "hybrid",
         "abbreviation": "ml",
         "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate",
@@ -149,6 +159,8 @@ _defs = {
         "units": "1",
         "layer": False,
         "positive": POSITIVE_DOWN,
+        "parametric": True,
+        "coefficient_names": ("A", "B"),
     },
     "THETA": {
         "name": "potential_temperature",

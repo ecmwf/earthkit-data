@@ -293,7 +293,7 @@ class CodesHandle(eccodes.Message):
         try:
             assert self.path is None, "Only cloned handles can have values changed"
 
-            if isinstance(value, list):
+            if isinstance(value, (list, np.ndarray, tuple)):
                 return eccodes.codes_set_array(self._handle, name, value)
 
             return eccodes.codes_set(self._handle, name, value)

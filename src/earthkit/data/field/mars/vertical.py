@@ -66,7 +66,7 @@ class MarsLevelType(MarsVerticalType):
 
 _TYPES = [
     MarsLevelType("pl", LevelTypes.PRESSURE),
-    MarsLevelType("ml", LevelTypes.MODEL),
+    MarsLevelType("ml", LevelTypes.HYBRID),
     MarsLevelType("pt", LevelTypes.THETA),
     MarsLevelType("pv", LevelTypes.PV),
     MarsLevelType("sfc", LevelTypes.SURFACE),
