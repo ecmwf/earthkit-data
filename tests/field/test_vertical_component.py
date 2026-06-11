@@ -26,6 +26,19 @@ def test_vertical_component_alias_1():
     assert r.level_type() == "pressure"
 
 
+def test_vertical_component_convert_level_units():
+    r = Vertical(level=1000, level_type="pressure")
+    assert r.level() == 1000
+    assert r.level_type() == "pressure"
+
+    # convert to Pa
+    level_pa = r.level(units="Pa")
+    assert level_pa == 100000
+
+    level_hpa = r.level(units="hPa")
+    assert level_hpa == 1000
+
+
 @pytest.mark.parametrize(
     "input_d,ref",
     [
