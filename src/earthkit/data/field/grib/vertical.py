@@ -27,7 +27,7 @@ class GribHybridLevelParameters(HybridLevelParametersBase):
         return None
 
     def coefficients(self):
-        pv = self._handle.get("pv")
+        pv = self._handle.get("pv", default=None)
         if pv is not None:
             import numpy as np
 
@@ -37,6 +37,9 @@ class GribHybridLevelParameters(HybridLevelParametersBase):
             return A, B
 
         return None
+
+    def coefficient_size(self):
+        return 2 * (self.number_of_levels() + 1)
 
 
 class Converter:
@@ -86,7 +89,7 @@ class GribVerticalType(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def to_grib(self, component):
+    def to_grib(self, component, handle=None):
         pass
 
     @abstractmethod
@@ -108,7 +111,7 @@ class GribLevelType(GribVerticalType):
 
         return {"level": level, "layer": layer, "level_type": self.component_type}
 
-    def to_grib(self, component):
+    def to_grib(self, component, handle=None):
         level = self.converter.to_grib(component.level())
 
         return {
@@ -127,8 +130,19 @@ class HybridGribLevelType(GribLevelType):
         result["coefficients"] = level_parameters
         return result
 
-    def to_grib(self, component):
+    def to_grib(self, component, handle=None):
         r = super().to_grib(component)
+
+        # this tries to avoid writing the coefficients back to the handle if they are already
+        # present and correct, which can be expensive for large coefficient arrays. The check
+        # not robust enough and should be improved.
+        if handle is not None and hasattr(component, "level_parameters"):
+            level_parameters = component._level_parameters
+            if isinstance(level_parameters, GribFieldComponentHandler):
+                nv = handle.get("NV", default=None)
+                if level_parameters.coefficient_size() == nv:
+                    return r
+
         coefficients = component.coefficients()
         if coefficients is not None:
             import numpy as np
@@ -155,7 +169,7 @@ class GribLayerType(GribVerticalType):
 
         return {"level": level, "layer": layer, "level_type": self.component_type}
 
-    def to_grib(self, component):
+    def to_grib(self, component, handle=None):
         layer = self.converter.to_grib(component.layer())
         top, bottom = layer
 
@@ -293,6 +307,7 @@ class GribVerticalContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(handler, context):
         component = handler.component
+        handle = context.get("handle")
         grib_level_type = _COMPONENT_TYPES.get(component.level_type())
         if isinstance(grib_level_type, tuple):
             t = grib_level_type
@@ -305,7 +320,7 @@ class GribVerticalContextCollector(GribContextCollector):
         if grib_level_type is None:
             raise ValueError(f"Unknown level type: {component.level_type()}")
 
-        r = grib_level_type.to_grib(component)
+        r = grib_level_type.to_grib(component, handle)
         context.update(r)
 
 

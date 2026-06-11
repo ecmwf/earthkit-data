@@ -19,7 +19,7 @@ class LevelParameters(metaclass=ABCMeta):
 
     @abstractmethod
     def number_of_levels(self):
-        return self._number_of_levels
+        pass
 
     @abstractmethod
     def coefficients(self):
@@ -27,6 +27,10 @@ class LevelParameters(metaclass=ABCMeta):
 
     def coefficient_names(self):
         return self._LEVEL_TYPE.coefficient_names
+
+    @abstractmethod
+    def coefficient_size(self):
+        pass
 
 
 class HybridLevelParametersBase(LevelParameters):
@@ -45,6 +49,9 @@ class HybridLevelParameters(HybridLevelParametersBase):
 
     def coefficients(self):
         return self._A, self._B
+
+    def coefficient_size(self):
+        return 2 * (len(self._A))
 
 
 def create_level_parameters(level_type, coefficients) -> LevelParameters:

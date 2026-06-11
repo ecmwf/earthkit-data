@@ -13,10 +13,10 @@ import pytest
 
 from earthkit.data.field.component.level_parameters import HybridLevelParameters
 from earthkit.data.field.component.level_type import get_level_type
-from earthkit.data.field.component.vertical import Vertical
+from earthkit.data.field.component.vertical import ParametricVertical, Vertical
 
-A = [0.1, 0.2, 0.3, 0.4]
-B = [0.4, 0.5, 0.6, 0.7]
+A = (0.1, 0.2, 0.3, 0.4)
+B = (0.4, 0.5, 0.6, 0.7)
 hybrid_params = HybridLevelParameters(A=A, B=B)
 
 
@@ -157,8 +157,7 @@ def test_vertical_component_type():
         ),
     ],
 )
-def test_vertical_component_set(input_d, ref):
-
+def test_vertical_component_set_1(input_d, ref):
     r = Vertical(level=1000, level_type="pressure")
 
     if not isinstance(input_d, list):
@@ -174,3 +173,38 @@ def test_vertical_component_set(input_d, ref):
         # the original object is unchanged
         assert r.level() == 1000
         assert r.level_type() == "pressure"
+
+
+def test_vertical_component_set_hybrid_1():
+    r = ParametricVertical(level=1, level_type="hybrid", coefficients=(A, B))
+
+    r1 = r.set({"level": 2})
+
+    assert r1.level() == 2
+    assert r1.level_type() == "hybrid"
+    assert r1.number_of_levels() == 3
+    A1, B1 = r1.coefficients()
+    assert A1 == A
+    assert B1 == B
+
+
+def test_vertical_component_set_hybrid_2():
+    r = ParametricVertical(level=1, level_type="hybrid", coefficients=(A, B))
+
+    A_new = (0.15, 0.25, 0.35, 0.45, 0.55)
+    B_new = (0.45, 0.55, 0.65, 0.75, 0.85)
+    r1 = r.set({"level": 2}, coefficients=(A_new, B_new))
+
+    assert r1.level() == 2
+    assert r1.level_type() == "hybrid"
+    assert r1.number_of_levels() == 4
+    A1, B1 = r1.coefficients()
+    assert A1 == A_new
+    assert B1 == B_new
+
+
+def test_vertical_component_register():
+    r = Vertical(level=1000, level_type="_my_level_type")
+
+    assert r.level() == 1000
+    assert r.level_type() == "_my_level_type"

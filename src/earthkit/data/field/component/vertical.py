@@ -151,6 +151,16 @@ class VerticalBase(SimpleFieldComponent):
 
     @mark_get_key
     @abstractmethod
+    def parametric(self) -> bool:
+        """Return whether the vertical type is parametric.
+
+        A parametric vertical type is one that is defined by a set of parameters or coefficients
+        (e.g. "hybrid"). This method returns True for parametric vertical types and False for others.
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
     def number_of_levels(self) -> int | None:
         """Return the number of levels.
 
@@ -166,6 +176,17 @@ class VerticalBase(SimpleFieldComponent):
 
         The level definition coefficients are only applicable for certain vertical types (e.g. "hybrid"),
         and will return None for other types. The coefficients can be a single sequence or a tuple of sequences,
+        depending on the specific vertical type.
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def coefficient_names(self) -> tuple[str] | None:
+        """Return the names of the level definition coefficients.
+
+        The level definition coefficient names are only applicable for certain vertical types (e.g. "hybrid"),
+        and will return None for other types. The names can be a single sequence or a tuple of sequences,
         depending on the specific vertical type.
         """
         pass
