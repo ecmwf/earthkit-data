@@ -322,11 +322,11 @@ def create_parameter(d: dict) -> ParameterBase:
         d,
         allowed_keys=(
             "variable",
+            "standard_name",
+            "long_name",
             "units",
             "chem",
             "chem_long_name",
-            "standard_name",
-            "long_name",
             "wavelength",
             "wavelength_bounds",
             "wavelength_units",
@@ -343,9 +343,14 @@ def create_parameter(d: dict) -> ParameterBase:
     if "variable" not in d1:
         raise ValueError("Cannot create Parameter without variable")
 
-    has_chem = d1.get("chem") is not None
-    has_wavelength = d1.get("wavelength") is not None
-    has_wave_spectra = d1.get("wave_direction") is not None or d1.get("wave_frequency") is not None
+    has_chem = d1.get("chem") is not None or d1.get("chem_long_name") is not None
+    has_wavelength = d1.get("wavelength") is not None or d1.get("wavelength_bounds") is not None
+    has_wave_spectra = (
+        d1.get("wave_direction") is not None
+        or d1.get("wave_direction_index") is not None
+        or d1.get("wave_frequency") is not None
+        or d1.get("wave_frequency_index") is not None
+    )
 
     if has_chem and has_wavelength:
         cls = ChemicalOpticalParameter
@@ -358,7 +363,7 @@ def create_parameter(d: dict) -> ParameterBase:
     else:
         cls = Parameter
 
-    return cls._create_component(d1)
+    return cls(**d1)
 
 
 class EmptyParameter(ParameterBase):
@@ -753,7 +758,7 @@ class ChemicalParameter(Parameter):
         chem: str = None,
         chem_long_name: str = None,
     ) -> None:
-        Parameter.__init__(self, variable=variable, standard_name=standard_name, long_name=long_name, units=units)
+        super().__init__(variable=variable, standard_name=standard_name, long_name=long_name, units=units)
         self._chem = chem
         self._chem_long_name = chem_long_name
 
@@ -767,7 +772,7 @@ class ChemicalParameter(Parameter):
 
     def to_dict(self):
         """Return a dictionary representation of the chemical parameter."""
-        d = Parameter.to_dict(self)
+        d = super().to_dict()
         d["chem"] = self._chem
         d["chem_long_name"] = self._chem_long_name
         return d
@@ -808,7 +813,7 @@ class OpticalParameter(Parameter):
         wavelength_bounds: Optional[tuple[int, int]] = None,
         wavelength_units: Union[str, "Units"] = None,
     ) -> None:
-        Parameter.__init__(self, variable=variable, standard_name=standard_name, long_name=long_name, units=units)
+        super().__init__(variable=variable, standard_name=standard_name, long_name=long_name, units=units)
         self._wavelength = wavelength
         self._wavelength_bounds = wavelength_bounds
         self._wavelength_units = Units.from_any(wavelength_units)
@@ -850,7 +855,7 @@ class OpticalParameter(Parameter):
 
     def to_dict(self):
         """Return a dictionary representation of the optical parameter."""
-        d = Parameter.to_dict(self)
+        d = super().to_dict()
         d["wavelength"] = self._wavelength
         d["wavelength_bounds"] = self._wavelength_bounds
         d["wavelength_units"] = str(self._wavelength_units)
@@ -898,7 +903,7 @@ class ChemicalOpticalParameter(ChemicalParameter, OpticalParameter):
         wavelength_bounds: Optional[tuple[int, int]] = None,
         wavelength_units: Union[str, "Units"] = None,
     ) -> None:
-        Parameter.__init__(self, variable=variable, standard_name=standard_name, long_name=long_name, units=units)
+        super().__init__(variable=variable, standard_name=standard_name, long_name=long_name, units=units)
         self._chem = chem
         self._chem_long_name = chem_long_name
         self._wavelength = wavelength
@@ -907,7 +912,7 @@ class ChemicalOpticalParameter(ChemicalParameter, OpticalParameter):
 
     def to_dict(self):
         """Return a dictionary representation of the chemical-optical parameter."""
-        d = Parameter.to_dict(self)
+        d = super().to_dict()
         d["chem"] = self._chem
         d["chem_long_name"] = self._chem_long_name
         d["wavelength"] = self._wavelength
@@ -967,7 +972,7 @@ class WaveSpectraParameter(Parameter):
         wave_frequency_bounds: Optional[tuple[float, float]] = None,
         wave_frequency_units: Union[str, "Units"] = None,
     ) -> None:
-        Parameter.__init__(self, variable=variable, standard_name=standard_name, long_name=long_name, units=units)
+        super().__init__(variable=variable, standard_name=standard_name, long_name=long_name, units=units)
         self._wave_direction = wave_direction
         self._wave_direction_index = wave_direction_index
         self._wave_direction_bounds = wave_direction_bounds
@@ -1057,7 +1062,7 @@ class WaveSpectraParameter(Parameter):
 
     def to_dict(self):
         """Return a dictionary representation of the wave spectra parameter."""
-        d = Parameter.to_dict(self)
+        d = super().to_dict()
         d["wave_direction"] = self._wave_direction
         d["wave_direction_index"] = self._wave_direction_index
         d["wave_direction_bounds"] = self._wave_direction_bounds

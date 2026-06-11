@@ -71,14 +71,6 @@ def test_parameter_component_alias_1():
                 "wavelength": 550,
                 "wavelength_bounds": None,
                 "wavelength_units": "nm",
-                "wave_direction": None,
-                "wave_direction_index": None,
-                "wave_direction_bounds": None,
-                "wave_direction_units": None,
-                "wave_frequency": None,
-                "wave_frequency_index": None,
-                "wave_frequency_bounds": None,
-                "wave_frequency_units": None,
             },
             {
                 "variable": "aod",
@@ -110,7 +102,7 @@ def test_parameter_component_from_dict_ok(input_d, ref):
 
     if isinstance(input_d, list):
         for d in input_d:
-            r = Parameter.from_dict(d)
+            r = create_parameter(d)
 
             assert r.variable() == ref["variable"]
             assert r.param() == ref["param"]
@@ -273,10 +265,10 @@ def test_parameter_component_set(input_d, ref):
         assert r.units() == "Pa"
 
 
-def test_parameter_component_wavelength_tuple():
-    """Test wavelength as a tuple (wavelength range)."""
-    p = OpticalParameter(variable="aod", wavelength=(400, 700))
-    assert p.wavelength() == (400, 700)
+def test_parameter_component_wavelength():
+    """Test wavelength bounds (wavelength range)."""
+    p = create_parameter(dict(variable="aod", wavelength_bounds=(400, 700)))
+    assert p.wavelength_bounds() == (400, 700)
 
 
 def test_parameter_component_create_parameter_regular():
