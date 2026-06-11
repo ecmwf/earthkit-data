@@ -11,8 +11,13 @@
 
 import pytest
 
+from earthkit.data.field.component.level_parameters import HybridLevelParameters
 from earthkit.data.field.component.level_type import get_level_type
 from earthkit.data.field.component.vertical import Vertical
+
+A = [0.1, 0.2, 0.3, 0.4]
+B = [0.4, 0.5, 0.6, 0.7]
+hybrid_params = HybridLevelParameters(A=A, B=B)
 
 
 def test_vertical_component_alias_1():
@@ -29,19 +34,54 @@ def test_vertical_component_alias_1():
                 "level": 1000,
                 "level_type": "pressure",
             },
-            (1000, "pressure"),
+            {
+                "level": 1000,
+                "level_type": "pressure",
+                "number_of_levels": None,
+                "coefficients": None,
+            },
         ),
         (
             {
                 "level": 1000,
                 "level_type": "pressure",
             },
-            (1000, "pressure"),
+            {
+                "level": 1000,
+                "level_type": "pressure",
+                "number_of_levels": None,
+                "coefficients": None,
+            },
+        ),
+        (
+            {
+                "level": 2,
+                "level_type": "hybrid",
+                "coefficients": (A, B),
+            },
+            {
+                "level": 2,
+                "level_type": "hybrid",
+                "number_of_levels": 3,
+                "coefficients": (A, B),
+            },
+        ),
+        (
+            {
+                "level": 2,
+                "level_type": "hybrid",
+                "coefficients": hybrid_params,
+            },
+            {
+                "level": 2,
+                "level_type": "hybrid",
+                "number_of_levels": 3,
+                "coefficients": (A, B),
+            },
         ),
     ],
 )
 def test_vertical_component_from_dict_ok(input_d, ref):
-
     if not isinstance(input_d, list):
         input_d = [input_d]
 
@@ -49,8 +89,10 @@ def test_vertical_component_from_dict_ok(input_d, ref):
         for d in input_d:
             r = Vertical.from_dict(d)
 
-            assert r.level() == ref[0]
-            assert r.level_type() == "pressure"
+            assert r.level() == ref["level"]
+            assert r.level_type() == ref["level_type"]
+            assert r.number_of_levels() == ref.get("number_of_levels")
+            assert r.coefficients() == ref.get("coefficients")
 
 
 def test_vertical_component_type():
@@ -68,6 +110,8 @@ def test_vertical_component_type():
         "units": "hectopascal",
         "positive": "down",
     }
+    assert t.parametric is False
+    assert t.coefficient_names is None
 
     assert r.level() == 1000
     assert r.level_type() == "pressure"
@@ -80,6 +124,9 @@ def test_vertical_component_type():
         "units": "hectopascal",
         "positive": "down",
     }
+    assert r.parametric() is False
+    assert r.number_of_levels() is None
+    assert r.coefficient_names() is None
 
     p_type = get_level_type("pressure")
     assert p_type == t

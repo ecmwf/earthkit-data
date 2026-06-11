@@ -769,6 +769,10 @@ class GribEncoder(Encoder):
 
         self._update_metadata(handle, metadata, compulsory, can_infer_time)
 
+        # right now the encoder is only able to write pv for edition 2
+        if "pv" in metadata and metadata.get("edition", None) != 2:
+            metadata["edition"] = 2
+
         # eccodes keys are order dependent
         KEY_ORDER = ("edition", "stepType")
         r = {k: metadata.pop(k) for k in KEY_ORDER if k in metadata}

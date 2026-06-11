@@ -9,10 +9,34 @@
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
+from earthkit.data.field.component.level_parameters import HybridLevelParametersBase
 from earthkit.data.field.component.level_type import LevelTypes
 
 from .collector import GribContextCollector
 from .core import GribFieldComponentHandler
+
+
+class GribHybridLevelParameters(HybridLevelParametersBase):
+    def __init__(self, handle):
+        self._handle = handle
+
+    def number_of_levels(self):
+        coeff_num = self._handle.get("NV", default=None)
+        if coeff_num is not None:
+            return int(coeff_num / 2) - 1
+        return None
+
+    def coefficients(self):
+        pv = self._handle.get("pv")
+        if pv is not None:
+            import numpy as np
+
+            coeff_num = int(len(pv) / 2)
+            A = np.array(pv[:coeff_num])
+            B = np.array(pv[coeff_num:])
+            return A, B
+
+        return None
 
 
 class Converter:
@@ -82,7 +106,7 @@ class GribLevelType(GribVerticalType):
         level = self.converter.from_grib(level)
         layer = None
 
-        return level, layer, self.component_type
+        return {"level": level, "layer": layer, "level_type": self.component_type}
 
     def to_grib(self, component):
         level = self.converter.to_grib(component.level())
@@ -94,6 +118,26 @@ class GribLevelType(GribVerticalType):
 
     def match(self, component):
         return self.component_matcher.match(component)
+
+
+class HybridGribLevelType(GribLevelType):
+    def from_grib(self, handle):
+        result = super().from_grib(handle)
+        level_parameters = GribHybridLevelParameters(handle)
+        result["coefficients"] = level_parameters
+        return result
+
+    def to_grib(self, component):
+        r = super().to_grib(component)
+        coefficients = component.coefficients()
+        if coefficients is not None:
+            import numpy as np
+
+            A, B = coefficients
+            r["NV"] = len(A) + len(B)
+            r["pv"] = np.concatenate([A, B])
+
+        return r
 
 
 class GribLayerType(GribVerticalType):
@@ -109,7 +153,7 @@ class GribLayerType(GribVerticalType):
         level = top
         layer = (top, bottom)
 
-        return level, layer, self.component_type
+        return {"level": level, "layer": layer, "level_type": self.component_type}
 
     def to_grib(self, component):
         layer = self.converter.to_grib(component.layer())
@@ -154,7 +198,7 @@ _TYPES = [
     GribLevelType("generalVerticalLayer", LevelTypes.GENERAL),
     GribLevelType("heightAboveSea", LevelTypes.HEIGHT_AS_LEVEL),
     GribLevelType("heightAboveGround", LevelTypes.HEIGHT_AG_LEVEL),
-    GribLevelType("hybrid", LevelTypes.MODEL),
+    HybridGribLevelType("hybrid", LevelTypes.HYBRID),
     GribLevelType("iceLayerOnWater", LevelTypes.ICE_LAYER_ON_WATER),
     GribLayerType("isobaricLayer", LevelTypes.PRESSURE),  # hPa
     GribLevelType("isothermal", LevelTypes.TEMPERATURE),
@@ -218,7 +262,7 @@ class GribVerticalBuilder:
         if t is None:
             from earthkit.data.field.component.level_type import get_level_type
 
-            level, layer = from_grib(handle)
+            # level, layer = from_grib(handle)
             component = get_level_type(level_type)
             t = register_grib_level_type(
                 key=level_type,
@@ -228,13 +272,21 @@ class GribVerticalBuilder:
         if t is None:
             raise ValueError(f"Unsupported level type: {level_type}")
 
-        level, layer, level_type = t.from_grib(handle)
+        r = t.from_grib(handle)
+        return r
 
-        return dict(
-            level=level,
-            layer=layer,
-            level_type=level_type,
-        )
+        # level, layer, level_type = t.from_grib(handle)
+
+        # level_parameters = None
+        # if level_type  == LevelTypes.HYBRID:
+        #     level_parameters = GribHybridLevelParameters(handle)
+
+        # return dict(
+        #     level=level,
+        #     layer=layer,
+        #     level_type=level_type,
+        #      level_parameters=level_parameters,
+        #  )
 
 
 class GribVerticalContextCollector(GribContextCollector):

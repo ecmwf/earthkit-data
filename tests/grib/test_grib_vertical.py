@@ -29,6 +29,13 @@ def test_grib_vertical_1(fl_type):
     assert f.vertical.level() == 0
     assert f.vertical.layer() is None
     assert f.vertical.level_type() == "surface"
+    assert f.vertical.number_of_levels() is None
+    assert f.vertical.coefficients() is None
+    assert f.get("vertical.level") == 0
+    assert f.get("vertical.level_type") == "surface"
+    assert f.get("vertical.layer") is None
+    assert f.get("vertical.number_of_levels") is None
+    assert f.get("vertical.coefficients") is None
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -41,6 +48,8 @@ def test_grib_vertical_2(fl_type):
     assert f.vertical.units() == "hPa"
     assert f.vertical.abbreviation() == "pl"
     assert f.vertical.positive() == "down"
+    assert f.vertical.number_of_levels() is None
+    assert f.vertical.coefficients() is None
 
 
 @pytest.mark.cache
@@ -143,3 +152,49 @@ def test_grib_vertical_layer(fname, expected_values):
         assert np.isclose(f.vertical.layer()[0], bottom)
         assert np.isclose(f.vertical.layer()[1], top)
         assert f.vertical.level_type() == level_type
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+def test_grib_vertical_hybrid(fl_type):
+    ds, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
+    f = ds[0]
+
+    assert f.vertical.level() == 1
+    assert f.vertical.layer() is None
+    assert f.vertical.level_type() == "hybrid"
+    assert f.vertical.number_of_levels() == 137
+    A, B = f.vertical.coefficients()
+    assert len(A) == 138
+    assert len(B) == 138
+    assert np.allclose(
+        A[:4],
+        [
+            0.0,
+            2.000365,
+            3.102241,
+            4.666084,
+        ],
+    )
+    assert np.allclose(B[:4], [0.0, 0.0, 0.0, 0.0])
+    assert np.allclose(A[-4:], [22.835938, 3.757813, 0.0, 0.0])
+    assert np.allclose(B[-4:], [0.9919840097, 0.9950025082, 0.9976301193, 1.0])
+
+    assert f.vertical.coefficient_names() == ("A", "B")
+
+    assert f.get("vertical.level") == 1
+    assert f.get("vertical.level_type") == "hybrid"
+    assert f.get("vertical.layer") is None
+    assert f.get("vertical.number_of_levels") == 137
+    A_get, B_get = f.get("vertical.coefficients")
+    assert np.allclose(
+        A_get[:4],
+        [
+            0.0,
+            2.000365,
+            3.102241,
+            4.666084,
+        ],
+    )
+    assert np.allclose(B_get[:4], [0.0, 0.0, 0.0, 0.0])
+    assert np.allclose(A_get[-4:], [22.835938, 3.757813, 0.0, 0.0])
+    assert np.allclose(B_get[-4:], [0.9919840097, 0.9950025082, 0.9976301193, 1.0])

@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from earthkit.utils.units import Units
 
 from .component import SimpleFieldComponent, component_keys, mark_get_key
+from .level_parameters import LevelParameters
 from .level_type import LevelType, get_level_type
 
 
@@ -148,6 +149,27 @@ class VerticalBase(SimpleFieldComponent):
         """
         pass
 
+    @mark_get_key
+    @abstractmethod
+    def number_of_levels(self) -> int | None:
+        """Return the number of levels.
+
+        The number of levels is only applicable for certain vertical types (e.g. "hybrid"), and
+        will return None for other types.
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def coefficients(self) -> float | tuple[float, ...] | None:
+        """Return the level definition coefficients.
+
+        The level definition coefficients are only applicable for certain vertical types (e.g. "hybrid"),
+        and will return None for other types. The coefficients can be a single sequence or a tuple of sequences,
+        depending on the specific vertical type.
+        """
+        pass
+
 
 def create_vertical(d: dict) -> "Vertical":
     """Create a Vertical object from a dictionary.
@@ -165,9 +187,14 @@ def create_vertical(d: dict) -> "Vertical":
     if not isinstance(d, dict):
         raise TypeError(f"Cannot create Vertical from {type(d)}, expected dict")
 
-    cls = Vertical
-    d1 = cls._normalise_create_kwargs(d, allowed_keys=("level", "layer", "level_type"))
-    return cls(**d1)
+    allowed_keys = ("level", "layer", "level_type", "coefficients")
+    d = Vertical._normalise_create_kwargs(d, allowed_keys=allowed_keys)
+    coefficients = d.pop("coefficients", None)
+
+    if coefficients is None:
+        return Vertical(**d)
+    else:
+        return ParametricVertical(**d, coefficients=coefficients)
 
 
 class EmptyVertical(VerticalBase):
@@ -225,6 +252,34 @@ class EmptyVertical(VerticalBase):
         """
         return self._type.name
 
+    def parametric(self) -> bool:
+        """Return whether the level type is parametric.
+
+        The parametric information is not available for this vertical type, and this method returns None.
+        """
+        return False
+
+    def number_of_levels(self) -> None:
+        """Return the number of levels.
+
+        The number of levels is not applicable for this vertical type, and this method returns None.
+        """
+        return None
+
+    def coefficients(self) -> None:
+        """Return the level definition coefficients.
+
+        The level definition coefficients are not applicable for this vertical type, and this method returns None.
+        """
+        return None
+
+    def coefficient_names(self) -> None:
+        """Return the names of the level definition coefficients.
+
+        The coefficient names are not applicable for this vertical type, and this method returns None.
+        """
+        return None
+
     @classmethod
     def from_dict(cls, d: dict) -> "VerticalBase":
         """Create a Vertical object from a dictionary.
@@ -280,6 +335,8 @@ class Vertical(VerticalBase):
         metadata such as units and CF attributes.
     """
 
+    _level_parameters: Optional[LevelParameters] = None
+
     def __init__(
         self,
         level: Union[int, float] = None,
@@ -313,6 +370,18 @@ class Vertical(VerticalBase):
     def level_type(self) -> str:
         return self._type.name
 
+    def parametric(self) -> Optional[bool]:
+        return self._type.parametric
+
+    def number_of_levels(self) -> Optional[int]:
+        return None
+
+    def coefficients(self) -> Optional[int]:
+        return None
+
+    def coefficient_names(self) -> Optional[int]:
+        return None
+
     def __print__(self) -> str:
         return f"{self.level} {self.units} ({self.abbreviation})"
 
@@ -320,7 +389,7 @@ class Vertical(VerticalBase):
         return f"{self.__class__.__name__}(level={self.level()}, units={self.units()}, level_type={self._type.name})"
 
     @classmethod
-    def from_dict(cls, d: dict, allow_unused=False) -> "Vertical":
+    def from_dict(cls, d: dict) -> "Vertical":
         """Create a Vertical object from a dictionary.
 
         Parameters
@@ -394,12 +463,95 @@ class Vertical(VerticalBase):
         specified as a string, it will be converted to a LevelType object using
         the :func:`get_level_type` function.
         """
-        d = self._normalise_set_kwargs(*args, allowed_keys=("level", "layer", "level_type"), **kwargs)
+        d = self._normalise_set_kwargs(*args, allowed_keys=("level", "layer", "level_type", "coefficients"), **kwargs)
 
         current = {
             "level": self._level,
             "layer": self._layer,
             "level_type": self._type.name,
+        }
+
+        current.update(d)
+        return self.from_dict(current)
+
+
+class ParametricVertical(Vertical):
+    """Vertical component with additional parameters.
+
+    This class extends the Vertical class to include additional parameters that may be relevant for certain
+    vertical types. The additional parameters are represented as a LevelParameters object, which can
+    contain any number of parameters depending on the specific vertical type.
+
+    The additional parameters can be accessed using the :meth:`number_of_levels` and :meth:`coefficients`
+    methods, which return the number of levels and the level definition coefficients, respectively.
+    These methods will return None if the additional parameters are not defined for the vertical type.
+    """
+
+    def __init__(
+        self,
+        level: Union[int, float] = None,
+        layer: Optional[tuple[float, float]] = None,
+        level_type: Optional[Union[LevelType, str]] = None,
+        coefficients: tuple[float] | LevelParameters | None = None,
+    ) -> None:
+
+        super().__init__(level=level, layer=layer, level_type=level_type)
+        if not self._type.parametric:
+            raise ValueError(f"Level type {self._type.name} does not support parametric coefficients")
+
+        if coefficients is None:
+            raise ValueError("ParametricVertical requires a valid level_parameters to be provided, got None")
+        from earthkit.data.field.component.level_parameters import create_level_parameters
+
+        self._coefficients = create_level_parameters(level_type, coefficients)
+
+    def number_of_levels(self) -> int:
+        return self._coefficients.number_of_levels()
+
+    def coefficients(self) -> float | tuple[float, ...]:
+        return self._coefficients.coefficients()
+
+    def coefficient_names(self) -> str | tuple[str, ...]:
+        return self._coefficients.coefficient_names()
+
+    def to_dict(self):
+        d = super().to_dict()
+        d["number_of_levels"] = self.number_of_levels()
+        return d
+
+    def set(self, *args, **kwargs) -> "Vertical":
+        """Create a new instance with updated data.
+
+        Parameters
+        ----------
+        args : tuple
+            Positional arguments containing time data. Only dictionaries are allowed.
+        kwargs : dict
+            Keyword arguments containing time data.
+
+        Returns
+        -------
+        Vertical
+            The created Vertical instance.
+
+
+        The allowed keys in the dictionaries and keyword arguments are:
+
+        - "level"
+        - "layer"
+        - "level_type"
+
+        The "level_type" key can be specified as a LevelType object or as a string. If
+        specified as a string, it will be converted to a LevelType object using
+        the :func:`get_level_type` function.
+        """
+        d = self._normalise_set_kwargs(*args, allowed_keys=("level", "layer", "level_type", "coefficients"), **kwargs)
+
+        current = {
+            "level": self._level,
+            "layer": self._layer,
+            "level_type": self._type.name,
+            "coefficients": self.coefficients(),
         }
 
         current.update(d)
