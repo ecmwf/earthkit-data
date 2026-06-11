@@ -23,7 +23,7 @@ class XarrayLevelType:
 
 _TYPES = [
     XarrayLevelType("pl", LevelTypes.PRESSURE),
-    XarrayLevelType("ml", LevelTypes.MODEL),
+    XarrayLevelType("ml", LevelTypes.HYBRID),
     XarrayLevelType("sfc", LevelTypes.SURFACE),
 ]
 

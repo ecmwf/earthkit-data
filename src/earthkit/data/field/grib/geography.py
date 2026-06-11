@@ -86,11 +86,19 @@ class GribGeography(GeographyBase):
         """
         from earthkit.data.utils.bbox import BoundingBox
 
+        north = self.handle.get("latitudeOfFirstGridPointInDegrees", default=None)
+        south = self.handle.get("latitudeOfLastGridPointInDegrees", default=None)
+        if south is not None and north is not None and south > north:
+            # latitudes are in the wrong order, swap them
+            north, south = south, north
+        west = self.handle.get("longitudeOfFirstGridPointInDegrees", default=None)
+        east = self.handle.get("longitudeOfLastGridPointInDegrees", default=None)
+
         return BoundingBox(
-            north=self.handle.get("latitudeOfFirstGridPointInDegrees", default=None),
-            south=self.handle.get("latitudeOfLastGridPointInDegrees", default=None),
-            west=self.handle.get("longitudeOfFirstGridPointInDegrees", default=None),
-            east=self.handle.get("longitudeOfLastGridPointInDegrees", default=None),
+            north=north,
+            south=south,
+            west=west,
+            east=east,
         )
 
     def projection(self):
@@ -164,6 +172,9 @@ class GribGeography(GeographyBase):
     def area(self):
         north = self.handle.get("latitudeOfFirstGridPointInDegrees")
         south = self.handle.get("latitudeOfLastGridPointInDegrees")
+        if south is not None and north is not None and south > north:
+            # latitudes are in the wrong order, swap them
+            north, south = south, north
         west = self.handle.get("longitudeOfFirstGridPointInDegrees")
         east = self.handle.get("longitudeOfLastGridPointInDegrees")
         return tuple([north, west, south, east])

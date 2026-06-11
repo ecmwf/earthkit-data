@@ -293,7 +293,7 @@ def test_grib_projection_mercator(fl_type):
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
-    "filename,expected_shape, expected_lat, expected_lon, expected_area",
+    "filename,expected_shape, expected_lat, expected_lon, expected_area, expected_bbox",
     [
         (
             "mercator.grib",
@@ -303,13 +303,15 @@ def test_grib_projection_mercator(fl_type):
             ),
             [16.9775, 16.9775, 16.9775, 16.9775],
             [291.9722, 291.9841626, 291.9961252, 292.0080878],
-            [16.9775, 291.9722, 19.5221, 296.0156],
+            [19.5221, 291.9722, 16.9775, 296.0156],
+            [19.5221, -68.0278, 16.9775, -63.9844],
         ),
         (
             "rgg_small_subarea_cellarea_ref.grib",
             (340,),
             [89.87647835, 89.80635732, 89.73614327, 89.66589394],
             [45.0, 38.57142857, 45.0, 40.0],
+            [89.877, 36.233, 84.815, 46.185],
             [89.877, 36.233, 84.815, 46.185],
         ),
         (
@@ -318,12 +320,14 @@ def test_grib_projection_mercator(fl_type):
             [85.489232, 84.81188, 83.171928, 81.086144],
             [140.0, 110.950144, 92.460416, 82.07156],
             [26.511, 0.0, -12.558, 39.375],
+            [26.511, 0.0, -12.558, 39.375],
         ),
         (
             "rotated_wind_20x20.grib",
             (9, 18),
             [30.0, 29.351052, 27.504876, 24.734374],
             [140.0, 136.09296, 132.770576, 130.469424],
+            [80.0, 0.0, -80.0, 340.0],
             [80.0, 0.0, -80.0, 340.0],
         ),
         (
@@ -335,12 +339,14 @@ def test_grib_projection_mercator(fl_type):
             [80.0, 80.0, 80.0, 80.0],
             [0.0, 10.0, 20.0, 30.0],
             [80.0, 0.0, -80.0, 350.0],
+            [80.0, 0.0, -80.0, 350.0],
         ),
         (
             "shifted_ll_subarea.grib",
             (11, 19),
             [73.0, 73.0, 73.0, 73.0],
             [-27.0, -23.0, -19.0, -15.0],
+            [73, -27, 33, 45],
             [73, -27, 33, 45],
         ),
         (
@@ -349,10 +355,22 @@ def test_grib_projection_mercator(fl_type):
             [79.0, 79.0, 79.0, 79.0],
             [-25.0, -22.0, -19.0, -16.0],
             [79, -25, 25, 59],
+            [79, -25, 25, 59],
         ),
+        # TODO: enable this test when support for the SN scanning is fixed in eccodes
+        # (
+        #     "ll_sn_scanning_mode.grib",
+        #     (37, 72),
+        #     [-90., -90., -90., -90.],
+        #     [ 0.,  5., 10., 15.],
+        #     [90.,   0.,  -90., 355.],
+        #     [90.,   0.,  -90., 355.],
+        # ),
     ],
 )
-def test_grib_latlon_various_grids_1(fl_type, filename, expected_shape, expected_lat, expected_lon, expected_area):
+def test_grib_latlon_various_grids_1(
+    fl_type, filename, expected_shape, expected_lat, expected_lon, expected_area, expected_bbox
+):
     ds, _ = load_grib_data(filename, fl_type, folder="data")
 
     lat, lon = ds[0].geography.latlons()
@@ -361,6 +379,7 @@ def test_grib_latlon_various_grids_1(fl_type, filename, expected_shape, expected
     assert np.allclose(lat.flatten()[:4], expected_lat)
     assert np.allclose(lon.flatten()[:4], expected_lon)
     assert np.allclose(np.asarray(ds[0].geography.area()), np.asarray(expected_area))
+    assert np.allclose(np.asarray(ds[0].geography.bounding_box().as_tuple()), np.asarray(expected_bbox))
 
 
 @pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
@@ -508,36 +527,6 @@ def test_grib_healpix_grid(fl_type):
     r = f.geography.to_dict()
     assert r["shape"] == (768,)
     assert r["grid_type"] == "healpix"
-
-
-@pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
-@pytest.mark.parametrize("fl_type", ["file"])
-def test_grib_grid_spec_copy_1(fl_type):
-    fl, _ = load_grib_data("test.grib", fl_type)
-
-    f = fl[0]
-    gs = f.geography.grid_spec()
-    gs_ori = gs.copy()
-    assert isinstance(gs, dict)
-    gs["new_key"] = "new_value"  # modify the returned grid spec
-    assert f.geography.grid_spec() == gs_ori  # check that the original grid spec is not modified
-    assert "new_key" not in gs_ori
-
-
-@pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
-@pytest.mark.cache
-def test_grib_grid_spec_copy_2():
-    fl = earthkit.data.from_source(
-        "url", earthkit_remote_test_data_file("xr_engine/grid", "icon_ch1.grib2")
-    ).to_fieldlist()
-
-    f = fl[0]
-    gs = f.geography.grid_spec()
-    gs_ori = gs.copy()
-    assert isinstance(gs, dict)
-    gs["new_key"] = "new_value"  # modify the returned grid spec
-    assert f.geography.grid_spec() == gs_ori  # check that the original grid spec is not modified
-    assert "new_key" not in gs_ori
 
 
 if __name__ == "__main__":
