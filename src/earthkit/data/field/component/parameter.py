@@ -12,7 +12,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Optional, Union
 
-from earthkit.utils.units import Units
+from earthkit.utils.units import Units, convert_array
 
 from .component import SimpleFieldComponent, component_keys, mark_alias, mark_get_key
 
@@ -26,10 +26,10 @@ class ParameterBase(SimpleFieldComponent):
 
     This class defines the interface for parameter components, which can represent
     different types of parameter information. Some of the methods may not be applicable to all parameter
-    types (e.g. :meth:`chem_variable`), and may return None.
+    types (e.g. :meth:`chem`), and may return None.
 
     The parameter information can be accessed by methods like :meth:`variable`,
-    :meth:`units`, and :meth:`chem_variable`. Each of these methods has an associated key
+    :meth:`units`, and :meth:`chem`. Each of these methods has an associated key
     that can be used in the :meth:`get` method to retrieve the corresponding information. The list
     of supported keys are as follows:
 
@@ -38,11 +38,23 @@ class ParameterBase(SimpleFieldComponent):
        on the CF standard name
     - "long_name": string representing the long name of the parameter variable
     - "units": as a string or a :class:`Units` object representing the parameter units
-    - "chem_variable": string representing the parameter chemical variable
+    - "chem": string representing the parameter chemical constituent or aerosol type, or None
+    - "chem_long_name": string representing the long name of the parameter chemical constituent or aerosol type, or None
+    - "wavelength": int or float representing the optical parameter wavelength, or None
+    - "wavelength_bounds": 2-tuple of ints or floats representing the optical parameter wavelength bounds, or None
+    - "wavelength_units": :class:`Units` object representing the wavelength units (e.g. nanometers), or None
+    - "wave_direction": float representing the wave direction of the 2D spectra parameter, or None
+    - "wave_direction_index": int representing the 0-based index of the wave direction bin, or None
+    - "wave_direction_bounds": 2-tuple of floats representing the wave direction bounds, or None
+    - "wave_direction_units": :class:`Units` object representing the wave direction units (e.g. degrees), or None
+    - "wave_frequency": float representing the wave frequency of the 2D spectra parameter, or None
+    - "wave_frequency_index": int representing the 0-based index of the wave frequency bin, or None
+    - "wave_frequency_bounds": 2-tuple of floats representing the wave frequency bounds, or None
+    - "wave_frequency_units": :class:`Units` object representing the wave frequency units (e.g. 1/s), or None
     - "param": alias of "variable"
 
     Depending on the type of parameter information available, some of these keys may not be supported
-    and will return None in the subclasses. For example, the "chem_variable" key is only supported
+    and will return None in the subclasses. For example, the "chem" key is only supported
     for chemical parameters, and will return None for other parameter types.
 
     Typically, this object is used as a component of a field, and can be accessed via the :attr:`parameter`
@@ -93,15 +105,21 @@ class ParameterBase(SimpleFieldComponent):
     def units(self) -> Optional["Units"]:
         r"""Return the parameter units.
 
-        The parameter units are :class:`Units` objects. The units are are based on Pint (when possible)
+        The parameter units are :class:`Units` objects. The units are based on Pint (when possible)
         and are normalised to a standard form. They can be used for unit conversions and comparisons.
         """
         pass
 
     @mark_get_key
     @abstractmethod
-    def chem_variable(self) -> Optional[str]:
-        r"""Return the parameter chemical variable."""
+    def chem(self) -> Optional[str]:
+        r"""Return the parameter chemical constituent or aerosol type."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def chem_long_name(self) -> Optional[str]:
+        r"""Return the long name of the parameter chemical constituent or aerosol type."""
         pass
 
     @mark_alias("variable")
@@ -127,9 +145,165 @@ class ParameterBase(SimpleFieldComponent):
         """
         pass
 
+    @mark_get_key
+    @abstractmethod
+    def wavelength(self, units=None) -> Optional[Union[int, float]]:
+        """Return the optical parameter wavelength.
 
-def create_parameter(d: dict) -> "ParameterBase":
+        Parameters
+        ----------
+        units : str or Units, optional
+            If provided, convert the wavelength to the specified units and return as float.
+            If None, return the value in native units.
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wavelength_bounds(self, units=None) -> Optional[Union[tuple[int, int], tuple[float, float]]]:
+        """Return the optical parameter wavelength bounds.
+
+        Parameters
+        ----------
+        units : str or Units, optional
+            If provided, convert the bounds to the specified units and return as tuple of floats.
+            If None, return the value in native units.
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wavelength_units(self) -> Optional["Units"]:
+        """Return the units of the optical parameter wavelength."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wave_direction(self, units=None) -> Optional[float]:
+        """Return the wave direction of the 2D spectra parameter.
+
+        Parameters
+        ----------
+        units : str or Units, optional
+            If provided, convert the direction to the specified units and return as float.
+            If None, return the value in native units.
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wave_direction_index(self) -> Optional[int]:
+        """Return the 0-based index of the wave direction bin."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wave_direction_bounds(self, units=None) -> Optional[tuple[float, float]]:
+        """Return the wave direction bounds of the 2D spectra parameter.
+
+        Parameters
+        ----------
+        units : str or Units, optional
+            If provided, convert the bounds to the specified units and return as tuple of floats.
+            If None, return the value in native units.
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wave_direction_units(self) -> Optional["Units"]:
+        """Return the units of the wave direction."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wave_frequency(self, units=None) -> Optional[float]:
+        """Return the wave frequency of the 2D spectra parameter.
+
+        Parameters
+        ----------
+        units : str or Units, optional
+            If provided, convert the frequency to the specified units and return as float.
+            If None, return the value in native units.
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wave_frequency_index(self) -> Optional[int]:
+        """Return the 0-based index of the wave frequency bin."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wave_frequency_bounds(self, units=None) -> Optional[tuple[float, float]]:
+        """Return the wave frequency bounds of the 2D spectra parameter.
+
+        Parameters
+        ----------
+        units : str or Units, optional
+            If provided, convert the bounds to the specified units and return as tuple of floats.
+            If None, return the value in native units.
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def wave_frequency_units(self) -> Optional["Units"]:
+        """Return the units of the wave frequency."""
+        pass
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "ParameterBase":
+        """Create a parameter object from a dictionary.
+
+        The appropriate subclass is determined automatically based on the dictionary contents.
+
+        Parameters
+        ----------
+        d : dict
+            Dictionary containing parameter data.
+
+            The dictionary can contain the following keys:
+
+            - "variable": The parameter variable.
+            - "standard_name": The standard name of the parameter variable.
+            - "long_name": The long name of the parameter variable.
+            - "units": The parameter units, as a string or a Units object.
+            - "chem": The chemical constituent or aerosol type of the parameter.
+            - "chem_long_name": The long name of the chemical constituent or aerosol type of the parameter.
+            - "wavelength": The optical parameter wavelength, as an int or a float.
+            - "wavelength_bounds": The optical parameter wavelength bounds, as a 2-tuple of ints or floats.
+            - "wavelength_units": The wavelength units, as a string or a Units object.
+            - "wave_direction": The wave direction of the 2D spectra parameter, as a float.
+            - "wave_direction_index": The 0-based index of the wave direction bin.
+            - "wave_direction_bounds": The wave direction bounds, as a 2-tuple of floats.
+            - "wave_direction_units": The wave direction units, as a string or a Units object.
+            - "wave_frequency": The wave frequency of the 2D spectra parameter, as a float.
+            - "wave_frequency_index": The 0-based index of the wave frequency bin.
+            - "wave_frequency_bounds": The wave frequency bounds, as a 2-tuple of floats.
+            - "wave_frequency_units": The wave frequency units, as a string or a Units object.
+
+        Returns
+        -------
+        ParameterBase
+            The created parameter instance. The actual type depends on the dictionary contents:
+            :class:`ChemicalOpticalParameter`, :class:`ChemicalParameter`,
+            :class:`OpticalParameter`, :class:`WaveSpectraParameter`, or :class:`Parameter`.
+        """
+        return create_parameter(d)
+
+
+def create_parameter(d: dict) -> ParameterBase:
     """Create a ParameterBase object from a dictionary.
+
+    The appropriate subclass is determined automatically based on the dictionary contents:
+
+    - If both ``chem`` and ``wavelength`` are present, a :class:`ChemicalOpticalParameter` is created.
+    - If only ``chem`` is present, a :class:`ChemicalParameter` is created.
+    - If only ``wavelength`` is present, an :class:`OpticalParameter` is created.
+    - If ``wave_direction`` or ``wave_frequency`` is present, a :class:`WaveSpectraParameter` is created.
+    - Otherwise, a :class:`Parameter` is created.
 
     Parameters
     ----------
@@ -139,17 +313,55 @@ def create_parameter(d: dict) -> "ParameterBase":
     Returns
     -------
     ParameterBase
-        The created ParameterBase instance.
+        The created parameter instance. The actual type depends on the dictionary contents.
     """
     if not isinstance(d, dict):
         raise TypeError(f"Cannot create Parameter from {type(d)}, expected dict")
 
-    cls = Parameter
-    d1 = cls._normalise_create_kwargs(
-        d, allowed_keys=("variable", "units", "chem_variable", "standard_name", "long_name")
+    d1 = Parameter._normalise_create_kwargs(
+        d,
+        allowed_keys=(
+            "variable",
+            "standard_name",
+            "long_name",
+            "units",
+            "chem",
+            "chem_long_name",
+            "wavelength",
+            "wavelength_bounds",
+            "wavelength_units",
+            "wave_direction",
+            "wave_direction_index",
+            "wave_direction_bounds",
+            "wave_direction_units",
+            "wave_frequency",
+            "wave_frequency_index",
+            "wave_frequency_bounds",
+            "wave_frequency_units",
+        ),
     )
     if "variable" not in d1:
         raise ValueError("Cannot create Parameter without variable")
+
+    has_chem = d1.get("chem") is not None or d1.get("chem_long_name") is not None
+    has_wavelength = d1.get("wavelength") is not None or d1.get("wavelength_bounds") is not None
+    has_wave_spectra = (
+        d1.get("wave_direction") is not None
+        or d1.get("wave_direction_index") is not None
+        or d1.get("wave_frequency") is not None
+        or d1.get("wave_frequency_index") is not None
+    )
+
+    if has_chem and has_wavelength:
+        cls = ChemicalOpticalParameter
+    elif has_chem:
+        cls = ChemicalParameter
+    elif has_wavelength:
+        cls = OpticalParameter
+    elif has_wave_spectra:
+        cls = WaveSpectraParameter
+    else:
+        cls = Parameter
 
     return cls(**d1)
 
@@ -185,8 +397,92 @@ class EmptyParameter(ParameterBase):
         """
         return None
 
-    def chem_variable(self) -> None:
-        r"""Return the parameter chemical variable.
+    def chem(self) -> None:
+        r"""Return the parameter chemical constituent or aerosol type.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def chem_long_name(self) -> None:
+        r"""Return the long name of the parameter chemical constituent or aerosol type.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wavelength(self, units=None) -> None:
+        r"""Return the optical parameter wavelength.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wavelength_bounds(self, units=None) -> None:
+        r"""Return the optical parameter wavelength bounds.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wavelength_units(self) -> None:
+        r"""Return the units of the optical parameter wavelength.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wave_direction(self, units=None) -> None:
+        r"""Return the wave direction of the 2D spectra parameter.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wave_direction_index(self) -> None:
+        r"""Return the 0-based index of the wave direction bin.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wave_direction_bounds(self, units=None) -> None:
+        r"""Return the wave direction bounds of the 2D spectra parameter.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wave_direction_units(self) -> None:
+        r"""Return the units of the wave direction.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency(self, units=None) -> None:
+        r"""Return the wave frequency of the 2D spectra parameter.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency_index(self) -> None:
+        r"""Return the 0-based index of the wave frequency bin.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency_bounds(self, units=None) -> None:
+        r"""Return the wave frequency bounds of the 2D spectra parameter.
+
+        An EmptyParameter does not contain any parameter information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency_units(self) -> None:
+        r"""Return the units of the wave frequency.
 
         An EmptyParameter does not contain any parameter information, and this method returns None.
         """
@@ -218,19 +514,25 @@ class EmptyParameter(ParameterBase):
 
 
 class Parameter(ParameterBase):
-    """Parameter component representing parameter information.
+    """Parameter component representing a regular parameter.
+
+    A regular parameter is one that does not have any chemical, optical, or wave spectra
+    properties. For parameters with chemical constituents, use :class:`ChemicalParameter`.
+    For parameters with optical wavelength information, use :class:`OpticalParameter`.
+    For parameters with both chemical and optical properties, use :class:`ChemicalOpticalParameter`.
+    For parameters with wave spectra properties, use :class:`WaveSpectraParameter`.
 
     Parameters
     ----------
     variable : str, optional
         The parameter variable, by default None.
+    standard_name : str, optional
+        The standard name of the parameter variable, by default None.
+    long_name : str, optional
+        The long name of the parameter variable, by default None.
     units : str or Units, optional
         The parameter units, by default None. Can be provided as a string or a Units object.
-    chem_variable : str, optional
-        The parameter chemical variable, by default None.
     """
-
-    _chem_variable = None
 
     def __init__(
         self,
@@ -238,14 +540,11 @@ class Parameter(ParameterBase):
         standard_name: str = None,
         long_name: str = None,
         units: Union[str, "Units"] = None,
-        chem_variable: str = None,
     ) -> None:
         self._variable = variable
         self._standard_name = standard_name
         self._long_name = long_name
         self._units = Units.from_any(units)
-        if chem_variable is not None:
-            self._chem_variable = chem_variable
 
     def variable(self) -> Optional[str]:
         return self._variable
@@ -259,59 +558,117 @@ class Parameter(ParameterBase):
     def units(self) -> Optional["Units"]:
         return self._units
 
-    def chem_variable(self) -> Optional[str]:
-        return self._chem_variable
+    def chem(self) -> None:
+        r"""Return the parameter chemical constituent or aerosol type.
 
-    @classmethod
-    def from_dict(cls, d: dict) -> "Parameter":
-        """Create a Parameter object from a dictionary.
-
-        Parameters
-        ----------
-        d : dict
-            Dictionary containing parameter data.
-
-            The dictionary can contain the following keys:
-
-            - "variable": The parameter variable.
-            - "units": The parameter units, as a string or a Units object.
-
-        Returns
-        -------
-        Parameter
-            The created Parameter instance.
+        A regular Parameter does not have chemical information, and this method returns None.
         """
-        return create_parameter(d)
+        return None
+
+    def chem_long_name(self) -> None:
+        r"""Return the long name of the parameter chemical constituent or aerosol type.
+
+        A regular Parameter does not have chemical information, and this method returns None.
+        """
+        return None
+
+    def wavelength(self, units=None) -> None:
+        r"""Return the optical parameter wavelength.
+
+        A regular Parameter does not have optical information, and this method returns None.
+        """
+        return None
+
+    def wavelength_bounds(self, units=None) -> None:
+        r"""Return the optical parameter wavelength bounds.
+
+        A regular Parameter does not have optical information, and this method returns None.
+        """
+        return None
+
+    def wavelength_units(self) -> None:
+        r"""Return the units of the optical parameter wavelength.
+
+        A regular Parameter does not have optical information, and this method returns None.
+        """
+        return None
+
+    def wave_direction(self, units=None) -> None:
+        r"""Return the wave direction of the 2D spectra parameter.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
+
+    def wave_direction_index(self) -> None:
+        r"""Return the 0-based index of the wave direction bin.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
+
+    def wave_direction_bounds(self, units=None) -> None:
+        r"""Return the wave direction bounds of the 2D spectra parameter.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
+
+    def wave_direction_units(self) -> None:
+        r"""Return the units of the wave direction.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency(self, units=None) -> None:
+        r"""Return the wave frequency of the 2D spectra parameter.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency_index(self) -> None:
+        r"""Return the 0-based index of the wave frequency bin.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency_bounds(self, units=None) -> None:
+        r"""Return the wave frequency bounds of the 2D spectra parameter.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
+
+    def wave_frequency_units(self) -> None:
+        r"""Return the units of the wave frequency.
+
+        A regular Parameter does not have wave spectra information, and this method returns None.
+        """
+        return None
 
     def to_dict(self):
+        """Return a dictionary representation of the parameter."""
         return {
             "variable": self._variable,
             "standard_name": self._standard_name,
             "long_name": self._long_name,
             "units": str(self._units),
-            "chem_variable": self._chem_variable,
         }
 
     def __getstate__(self):
-        state = {}
-        state["variable"] = self._variable
-        state["standard_name"] = self._standard_name
-        state["long_name"] = self._long_name
-        state["units"] = str(self._units)
-        state["chem_variable"] = self._chem_variable
-        return state
+        return self.to_dict()
 
     def __setstate__(self, state):
-        self.__init__(
-            variable=state["variable"],
-            standard_name=state["standard_name"],
-            long_name=state["long_name"],
-            units=state["units"],
-            chem_variable=state["chem_variable"],
-        )
+        self.__init__(**state)
 
     def set(self, *args, **kwargs):
         """Create a new instance with updated data.
+
+        The returned instance type is determined by the resulting dictionary contents,
+        which may differ from the current instance type.
 
         Parameters
         ----------
@@ -326,19 +683,392 @@ class Parameter(ParameterBase):
             - "units": The parameter units, as a string or a Units object.
             - "standard_name": The standard name of the parameter variable.
             - "long_name": The long name of the parameter variable.
-            - "chem_variable": The chemical variable of the parameter.
+            - "chem": The chemical constituent or aerosol type of the parameter.
+            - "chem_long_name": The long name of the chemical constituent or aerosol type of the parameter.
+            - "wavelength": The optical parameter wavelength.
+            - "wavelength_bounds": The optical parameter wavelength bounds, as a 2-tuple.
+            - "wavelength_units": The wavelength units, as a string or a Units object.
+            - "wave_direction": The wave direction of the 2D spectra parameter.
+            - "wave_direction_index": The 0-based index of the wave direction bin.
+            - "wave_direction_bounds": The wave direction bounds, as a 2-tuple of floats.
+            - "wave_direction_units": The wave direction units, as a string or a Units object.
+            - "wave_frequency": The wave frequency of the 2D spectra parameter.
+            - "wave_frequency_index": The 0-based index of the wave frequency bin.
+            - "wave_frequency_bounds": The wave frequency bounds, as a 2-tuple of floats.
+            - "wave_frequency_units": The wave frequency units, as a string or a Units object.
         """
         d = self._normalise_set_kwargs(
-            *args, allowed_keys=("variable", "units", "chem_variable", "standard_name", "long_name"), **kwargs
+            *args,
+            allowed_keys=(
+                "variable",
+                "units",
+                "chem",
+                "chem_long_name",
+                "standard_name",
+                "long_name",
+                "wavelength",
+                "wavelength_bounds",
+                "wavelength_units",
+                "wave_direction",
+                "wave_direction_index",
+                "wave_direction_bounds",
+                "wave_direction_units",
+                "wave_frequency",
+                "wave_frequency_index",
+                "wave_frequency_bounds",
+                "wave_frequency_units",
+            ),
+            **kwargs,
         )
 
-        current = {
-            "variable": self._variable,
-            "standard_name": self._standard_name,
-            "long_name": self._long_name,
-            "units": self._units,
-            "chem_variable": self._chem_variable,
-        }
-
+        current = self.to_dict()
         current.update(d)
-        return self.from_dict(current)
+        return create_parameter(current)
+
+
+class ChemicalParameter(Parameter):
+    """Parameter component representing a chemical parameter.
+
+    A chemical parameter includes a chemical constituent or aerosol type identifier.
+    For parameters that also have optical wavelength information, use
+    :class:`ChemicalOpticalParameter`.
+
+    Parameters
+    ----------
+    variable : str, optional
+        The parameter variable, by default None.
+    standard_name : str, optional
+        The standard name of the parameter variable, by default None.
+    long_name : str, optional
+        The long name of the parameter variable, by default None.
+    units : str or Units, optional
+        The parameter units, by default None. Can be provided as a string or a Units object.
+    chem : str, optional
+        The parameter chemical constituent or aerosol type, by default None.
+    chem_long_name : str, optional
+        The long name of the parameter chemical constituent or aerosol type, by default None.
+    """
+
+    def __init__(
+        self,
+        variable: str = None,
+        standard_name: str = None,
+        long_name: str = None,
+        units: Union[str, "Units"] = None,
+        chem: str = None,
+        chem_long_name: str = None,
+    ) -> None:
+        super().__init__(variable=variable, standard_name=standard_name, long_name=long_name, units=units)
+        self._chem = chem
+        self._chem_long_name = chem_long_name
+
+    def chem(self) -> Optional[str]:
+        r"""Return the parameter chemical constituent or aerosol type."""
+        return self._chem
+
+    def chem_long_name(self) -> Optional[str]:
+        r"""Return the long name of the parameter chemical constituent or aerosol type."""
+        return self._chem_long_name
+
+    def to_dict(self):
+        """Return a dictionary representation of the chemical parameter."""
+        d = super().to_dict()
+        d["chem"] = self._chem
+        d["chem_long_name"] = self._chem_long_name
+        return d
+
+
+class OpticalParameter(Parameter):
+    """Parameter component representing an optical parameter.
+
+    An optical parameter includes a wavelength but no chemical constituent.
+    For parameters that have both chemical and optical properties, use
+    :class:`ChemicalOpticalParameter`.
+
+    Parameters
+    ----------
+    variable : str, optional
+        The parameter variable, by default None.
+    standard_name : str, optional
+        The standard name of the parameter variable, by default None.
+    long_name : str, optional
+        The long name of the parameter variable, by default None.
+    units : str or Units, optional
+        The parameter units, by default None. Can be provided as a string or a Units object.
+    wavelength : int, optional
+        The optical parameter wavelength in native units (see ``wavelength_units``), by default None.
+    wavelength_bounds : 2-tuple of ints, optional
+        The optical parameter wavelength bounds in native units, by default None.
+    wavelength_units : str or Units, optional
+        The wavelength units, by default None. Can be provided as a string or a Units object.
+    """
+
+    def __init__(
+        self,
+        variable: str = None,
+        standard_name: str = None,
+        long_name: str = None,
+        units: Union[str, "Units"] = None,
+        wavelength: Optional[int] = None,
+        wavelength_bounds: Optional[tuple[int, int]] = None,
+        wavelength_units: Union[str, "Units"] = None,
+    ) -> None:
+        super().__init__(variable=variable, standard_name=standard_name, long_name=long_name, units=units)
+        self._wavelength = wavelength
+        self._wavelength_bounds = wavelength_bounds
+        self._wavelength_units = Units.from_any(wavelength_units)
+
+    def wavelength(self, units=None) -> Optional[Union[int, float]]:
+        r"""Return the optical parameter wavelength.
+
+        Parameters
+        ----------
+        units : str or Units, optional
+            If provided, convert the wavelength to the specified units and return as float.
+            If None, return the value in native units.
+        """
+        if self._wavelength is None:
+            return None
+        if units is None:
+            return self._wavelength
+        return convert_array(self._wavelength, units, self._wavelength_units)
+
+    def wavelength_bounds(self, units=None) -> Optional[Union[tuple[int, int], tuple[float, float]]]:
+        r"""Return the optical parameter wavelength bounds.
+
+        Parameters
+        ----------
+        units : str or Units, optional
+            If provided, convert the bounds to the specified units and return as tuple of floats.
+            If None, return the value in native units.
+        """
+        if self._wavelength_bounds is None:
+            return None
+        if units is None:
+            return self._wavelength_bounds
+        a, b = convert_array(self._wavelength_bounds, units, self._wavelength_units)
+        return float(a), float(b)
+
+    def wavelength_units(self) -> Optional["Units"]:
+        r"""Return the units of the optical parameter wavelength."""
+        return self._wavelength_units
+
+    def to_dict(self):
+        """Return a dictionary representation of the optical parameter."""
+        d = super().to_dict()
+        d["wavelength"] = self._wavelength
+        d["wavelength_bounds"] = self._wavelength_bounds
+        d["wavelength_units"] = str(self._wavelength_units)
+        return d
+
+
+class ChemicalOpticalParameter(ChemicalParameter, OpticalParameter):
+    """Parameter component representing a chemical-optical parameter.
+
+    A chemical-optical parameter includes both a chemical constituent or aerosol type
+    and an optical wavelength. It inherits chemical properties from
+    :class:`ChemicalParameter` and optical properties from :class:`OpticalParameter`.
+
+    Parameters
+    ----------
+    variable : str, optional
+        The parameter variable, by default None.
+    standard_name : str, optional
+        The standard name of the parameter variable, by default None.
+    long_name : str, optional
+        The long name of the parameter variable, by default None.
+    units : str or Units, optional
+        The parameter units, by default None. Can be provided as a string or a Units object.
+    chem : str, optional
+        The parameter chemical constituent or aerosol type, by default None.
+    chem_long_name : str, optional
+        The long name of the parameter chemical constituent or aerosol type, by default None.
+    wavelength : int, optional
+        The optical parameter wavelength in native units (see ``wavelength_units``), by default None.
+    wavelength_bounds : 2-tuple of ints, optional
+        The optical parameter wavelength bounds in native units, by default None.
+    wavelength_units : str or Units, optional
+        The wavelength units, by default None. Can be provided as a string or a Units object.
+    """
+
+    def __init__(
+        self,
+        variable: str = None,
+        standard_name: str = None,
+        long_name: str = None,
+        units: Union[str, "Units"] = None,
+        chem: str = None,
+        chem_long_name: str = None,
+        wavelength: Optional[int] = None,
+        wavelength_bounds: Optional[tuple[int, int]] = None,
+        wavelength_units: Union[str, "Units"] = None,
+    ) -> None:
+        super().__init__(variable=variable, standard_name=standard_name, long_name=long_name, units=units)
+        self._chem = chem
+        self._chem_long_name = chem_long_name
+        self._wavelength = wavelength
+        self._wavelength_bounds = wavelength_bounds
+        self._wavelength_units = Units.from_any(wavelength_units)
+
+    def to_dict(self):
+        """Return a dictionary representation of the chemical-optical parameter."""
+        d = super().to_dict()
+        d["chem"] = self._chem
+        d["chem_long_name"] = self._chem_long_name
+        d["wavelength"] = self._wavelength
+        d["wavelength_bounds"] = self._wavelength_bounds
+        d["wavelength_units"] = str(self._wavelength_units)
+        return d
+
+
+class WaveSpectraParameter(Parameter):
+    """Parameter component representing a wave spectra parameter.
+
+    A wave spectra parameter includes wave direction and/or wave frequency information
+    from 2D wave spectra fields.
+
+    Parameters
+    ----------
+    variable : str, optional
+        The parameter variable, by default None.
+    standard_name : str, optional
+        The standard name of the parameter variable, by default None.
+    long_name : str, optional
+        The long name of the parameter variable, by default None.
+    units : str or Units, optional
+        The parameter units, by default None. Can be provided as a string or a Units object.
+    wave_direction : float, optional
+        The wave direction of the 2D spectra parameter in native units (see ``wave_direction_units``),
+        by default None.
+    wave_direction_index : int, optional
+        The 0-based index of the wave direction bin, by default None.
+    wave_direction_bounds : 2-tuple of floats, optional
+        The wave direction bounds in native units, by default None.
+    wave_direction_units : str or Units, optional
+        The wave direction units, by default None. Can be provided as a string or a Units object.
+    wave_frequency : float, optional
+        The wave frequency of the 2D spectra parameter in native units (see ``wave_frequency_units``),
+        by default None.
+    wave_frequency_index : int, optional
+        The 0-based index of the wave frequency bin, by default None.
+    wave_frequency_bounds : 2-tuple of floats, optional
+        The wave frequency bounds in native units, by default None.
+    wave_frequency_units : str or Units, optional
+        The wave frequency units, by default None. Can be provided as a string or a Units object.
+    """
+
+    def __init__(
+        self,
+        variable: str = None,
+        standard_name: str = None,
+        long_name: str = None,
+        units: Union[str, "Units"] = None,
+        wave_direction: float = None,
+        wave_direction_index: Optional[int] = None,
+        wave_direction_bounds: Optional[tuple[float, float]] = None,
+        wave_direction_units: Union[str, "Units"] = None,
+        wave_frequency: float = None,
+        wave_frequency_index: Optional[int] = None,
+        wave_frequency_bounds: Optional[tuple[float, float]] = None,
+        wave_frequency_units: Union[str, "Units"] = None,
+    ) -> None:
+        super().__init__(variable=variable, standard_name=standard_name, long_name=long_name, units=units)
+        self._wave_direction = wave_direction
+        self._wave_direction_index = wave_direction_index
+        self._wave_direction_bounds = wave_direction_bounds
+        self._wave_direction_units = Units.from_any(wave_direction_units)
+        self._wave_frequency = wave_frequency
+        self._wave_frequency_index = wave_frequency_index
+        self._wave_frequency_bounds = wave_frequency_bounds
+        self._wave_frequency_units = Units.from_any(wave_frequency_units)
+
+    def wave_direction(self, units=None) -> Optional[float]:
+        r"""Return the wave direction of the 2D spectra parameter.
+
+        Parameters
+        ----------
+        units : str or Units, optional
+            If provided, convert the direction to the specified units and return as float.
+            If None, return the value in native units.
+        """
+        if self._wave_direction is None:
+            return None
+        if units is None:
+            return self._wave_direction
+        return convert_array(self._wave_direction, units, self._wave_direction_units)
+
+    def wave_direction_index(self) -> Optional[int]:
+        r"""Return the 0-based index of the wave direction bin."""
+        return self._wave_direction_index
+
+    def wave_direction_bounds(self, units=None) -> Optional[tuple[float, float]]:
+        r"""Return the wave direction bounds of the 2D spectra parameter.
+
+        Parameters
+        ----------
+        units : str or Units, optional
+            If provided, convert the bounds to the specified units and return as tuple of floats.
+            If None, return the value in native units.
+        """
+        if self._wave_direction_bounds is None:
+            return None
+        if units is None:
+            return self._wave_direction_bounds
+        a, b = convert_array(self._wave_direction_bounds, units, self._wave_direction_units)
+        return float(a), float(b)
+
+    def wave_direction_units(self) -> Optional["Units"]:
+        r"""Return the units of the wave direction."""
+        return self._wave_direction_units
+
+    def wave_frequency(self, units=None) -> Optional[float]:
+        r"""Return the wave frequency of the 2D spectra parameter.
+
+        Parameters
+        ----------
+        units : str or Units, optional
+            If provided, convert the frequency to the specified units and return as float.
+            If None, return the value in native units.
+        """
+        if self._wave_frequency is None:
+            return None
+        if units is None:
+            return self._wave_frequency
+        return convert_array(self._wave_frequency, units, self._wave_frequency_units)
+
+    def wave_frequency_index(self) -> Optional[int]:
+        r"""Return the 0-based index of the wave frequency bin."""
+        return self._wave_frequency_index
+
+    def wave_frequency_bounds(self, units=None) -> Optional[tuple[float, float]]:
+        r"""Return the wave frequency bounds of the 2D spectra parameter.
+
+        Parameters
+        ----------
+        units : str or Units, optional
+            If provided, convert the bounds to the specified units and return as tuple of floats.
+            If None, return the value in native units.
+        """
+        if self._wave_frequency_bounds is None:
+            return None
+        if units is None:
+            return self._wave_frequency_bounds
+        a, b = convert_array(self._wave_frequency_bounds, units, self._wave_frequency_units)
+        return float(a), float(b)
+
+    def wave_frequency_units(self) -> Optional["Units"]:
+        r"""Return the units of the wave frequency."""
+        return self._wave_frequency_units
+
+    def to_dict(self):
+        """Return a dictionary representation of the wave spectra parameter."""
+        d = super().to_dict()
+        d["wave_direction"] = self._wave_direction
+        d["wave_direction_index"] = self._wave_direction_index
+        d["wave_direction_bounds"] = self._wave_direction_bounds
+        d["wave_direction_units"] = str(self._wave_direction_units)
+        d["wave_frequency"] = self._wave_frequency
+        d["wave_frequency_index"] = self._wave_frequency_index
+        d["wave_frequency_bounds"] = self._wave_frequency_bounds
+        d["wave_frequency_units"] = str(self._wave_frequency_units)
+        return d

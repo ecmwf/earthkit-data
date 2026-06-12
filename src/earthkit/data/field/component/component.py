@@ -282,12 +282,13 @@ class SimpleFieldComponent(FieldComponent):
         _kwargs = {}
         for k_in, v in data.items():
             k = cls._ALIASES.get(k_in, k_in)
-            if k in allowed_keys:
-                if remove_nones and v is None:
-                    continue
-                _kwargs[k] = v
-            else:
-                raise ValueError(f"Cannot use key={k} to create object={cls}")
+            if allowed_keys is not None:
+                if k in allowed_keys:
+                    if remove_nones and v is None:
+                        continue
+                    _kwargs[k] = v
+                else:
+                    raise ValueError(f"Cannot use key={k} to create object={cls}")
         return _kwargs
 
     @classmethod

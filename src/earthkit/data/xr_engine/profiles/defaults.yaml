@@ -47,11 +47,29 @@ dim_roles:
   time: time.base_time
   level: vertical.level
   level_type: vertical.level_type
+  chem: parameter.chem
+  wavelength: parameter.wavelength
+  wave_direction: parameter.wave_direction
+  wave_frequency: parameter.wave_frequency
 dim_name_from_role_name: true
 coord_attrs:
   member:
     standard_name: realization
     long_name: ensemble member id
+  chem:
+    long_name: atmospheric chemical or physical constituent type
+  wavelength:
+    standard_name: radiation_wavelength
+    units: nm
+    long_name: wavelength
+  wave_direction: # see: https://github.com/wavespectra/wavespectra/blob/main/wavespectra/core/attributes.yml
+    standard_name: sea_surface_wave_from_direction
+    units: degrees
+    long_name: wave direction
+  wave_frequency:
+    standard_name: sea_surface_wave_frequency
+    units: s-1
+    long_name: wave frequency
   latitude:
     units: degrees_north
     standard_name: latitude

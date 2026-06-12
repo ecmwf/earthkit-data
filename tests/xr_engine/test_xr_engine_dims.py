@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import datetime
 
 # (C) Copyright 2020 ECMWF.
 #
@@ -8,8 +9,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
-
-
 import pandas as pd
 import pytest
 from xr_engine_fixtures import (
@@ -20,6 +19,86 @@ from xr_engine_fixtures import (
 
 from earthkit.data import from_source
 from earthkit.data.utils.testing import earthkit_remote_test_data_file
+
+
+@pytest.fixture(scope="module")
+def pl_grib_source():
+    return from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+
+
+@pytest.fixture(scope="module")
+def pl_small_grib_source():
+    return from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
+
+
+@pytest.fixture(scope="module")
+def pl_sfc_grib_source():
+    return from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_sfc.grib1"))
+
+
+@pytest.fixture(scope="module")
+def quantiles_pd_grib_source():
+    return from_source("url", earthkit_remote_test_data_file("xr_engine/ens/quantiles_pd.grib"))
+
+
+@pytest.fixture(scope="module")
+def wave_spectra_grib_source():
+    return from_source("url", earthkit_remote_test_data_file("xr_engine/wave_spectra.grib"))
+
+
+@pytest.fixture(scope="module")
+def aifs_sfc_grib_source():
+    return from_source("url", earthkit_remote_test_data_file("xr_engine/level/aifs-sfc.grib"))
+
+
+@pytest.fixture(scope="module")
+def aifs_pl_sfc_grib_source():
+    return from_source("url", earthkit_remote_test_data_file("xr_engine/level/aifs-pl_sfc.grib"))
+
+
+@pytest.fixture(scope="module")
+def chem_cams_grib_source():
+    return from_source("sample", "chem-cams.grib")
+
+
+@pytest.fixture(scope="module")
+def optical_cams_grib_source():
+    return from_source("sample", "optical-cams.grib")
+
+
+@pytest.fixture(scope="module")
+def source(
+    request,
+    pl_grib_source,
+    pl_small_grib_source,
+    pl_sfc_grib_source,
+    quantiles_pd_grib_source,
+    wave_spectra_grib_source,
+    aifs_sfc_grib_source,
+    aifs_pl_sfc_grib_source,
+    chem_cams_grib_source,
+    optical_cams_grib_source,
+):
+    if request.param == "pl.grib":
+        return pl_grib_source
+    elif request.param == "pl_small.grib":
+        return pl_small_grib_source
+    elif request.param == "pl_sfc.grib1":
+        return pl_sfc_grib_source
+    elif request.param == "quantiles_pd.grib":
+        return quantiles_pd_grib_source
+    elif request.param == "wave_spectra.grib":
+        return wave_spectra_grib_source
+    elif request.param == "aifs-sfc.grib":
+        return aifs_sfc_grib_source
+    elif request.param == "aifs-pl_sfc.grib":
+        return aifs_pl_sfc_grib_source
+    elif request.param == "chem-cams.grib":
+        return chem_cams_grib_source
+    elif request.param == "optical-cams.grib":
+        return optical_cams_grib_source
+    else:
+        raise ValueError(f"No fixture for {request.param}")
 
 
 @pytest.mark.cache
@@ -47,8 +126,8 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         ),
     ],
 )
-def test_xr_rename_dims(allow_holes, lazy_load, kwargs, dim_keys):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
+def test_xr_rename_dims(pl_grib_source, allow_holes, lazy_load, kwargs, dim_keys):
+    ds_ek = pl_grib_source.to_fieldlist()
     ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     num = len(ds)
 
@@ -111,8 +190,8 @@ def test_xr_rename_dims(allow_holes, lazy_load, kwargs, dim_keys):
         ),
     ],
 )
-def test_xr_fixed_dims(allow_holes, lazy_load, kwargs, dim_keys):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
+def test_xr_fixed_dims(pl_grib_source, allow_holes, lazy_load, kwargs, dim_keys):
+    ds_ek = pl_grib_source.to_fieldlist()
     ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     num = len(ds)
 
@@ -171,8 +250,8 @@ def test_xr_fixed_dims(allow_holes, lazy_load, kwargs, dim_keys):
         ),
     ],
 )
-def test_xr_drop_dims(allow_holes, lazy_load, kwargs, dim_keys):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
+def test_xr_drop_dims(pl_grib_source, allow_holes, lazy_load, kwargs, dim_keys):
+    ds_ek = pl_grib_source.to_fieldlist()
     ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     num = len(ds)
 
@@ -187,10 +266,9 @@ def test_xr_drop_dims(allow_holes, lazy_load, kwargs, dim_keys):
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
-    "path,sel,kwargs,coords,dims,var_attrs,global_attrs",
+    "sel,kwargs,coords,dims,var_attrs,global_attrs",
     [
         (
-            "level/pl_small.grib",
             {
                 "metadata.shortName": "t",
                 "metadata.dataDate": 20240603,
@@ -228,7 +306,6 @@ def test_xr_drop_dims(allow_holes, lazy_load, kwargs, dim_keys):
             {"Conventions": "CF-1.8", "institution": "ECMWF"},
         ),
         (
-            "level/pl_small.grib",
             {
                 "metadata.shortName": "t",
                 "metadata.dataDate": 20240603,
@@ -263,8 +340,10 @@ def test_xr_drop_dims(allow_holes, lazy_load, kwargs, dim_keys):
         ),
     ],
 )
-def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, var_attrs, global_attrs):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path)).to_fieldlist()
+def test_xr_ensure_dims(
+    pl_small_grib_source, allow_holes, lazy_load, sel, kwargs, coords, dims, var_attrs, global_attrs
+):
+    ds0 = pl_small_grib_source.to_fieldlist()
     if sel:
         ds0 = ds0.sel(**sel)
     ds = ds0.to_xarray(lazy_load=lazy_load, allow_holes=allow_holes, **kwargs)
@@ -282,10 +361,10 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
-    "path,sel,kwargs,coords,dims,var_attrs,global_attrs",
+    "source,sel,kwargs,coords,dims,var_attrs,global_attrs",
     [
         (
-            "level/pl_small.grib",
+            "pl_small.grib",
             None,
             {
                 "profile": "grib",
@@ -331,7 +410,7 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
             {"Conventions": "CF-1.8", "institution": "ECMWF"},
         ),
         (
-            "level/pl_small.grib",
+            "pl_small.grib",
             None,
             {
                 "profile": "grib",
@@ -369,7 +448,7 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
             {"Conventions": "CF-1.8", "institution": "ECMWF"},
         ),
         (
-            "level/pl_small.grib",
+            "pl_small.grib",
             None,
             {
                 "profile": "grib",
@@ -408,7 +487,7 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
             {"Conventions": "CF-1.8", "institution": "ECMWF"},
         ),
         (
-            "ens/quantiles_pd.grib",
+            "quantiles_pd.grib",
             None,
             {
                 "profile": "grib",
@@ -459,6 +538,7 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
                 "profile": "grib",
                 "time_dims": "valid_time",
                 "extra_dims": ["metadata.directionNumber", "metadata.frequencyNumber"],
+                "drop_dims": ["wave_direction", "wave_frequency"],
                 "squeeze": False,
                 "add_earthkit_attrs": False,
             },
@@ -489,9 +569,180 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
             {"Conventions": "CF-1.8", "institution": "ECMWF"},
         ),
     ],
+    indirect=["source"],
 )
-def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, var_attrs, global_attrs):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path)).to_fieldlist()
+def test_xr_extra_dims(source, allow_holes, lazy_load, sel, kwargs, coords, dims, var_attrs, global_attrs):
+    ds0 = source.to_fieldlist()
+    if sel:
+        ds0 = ds0.sel(**sel)
+    ds = ds0.to_xarray(lazy_load=lazy_load, allow_holes=allow_holes, **kwargs)
+    compare_coords(ds, coords)
+    compare_dims(ds, dims, sizes=True)
+
+    for v in var_attrs:
+        v_attrs = dict(ds[v].attrs)
+        v_attrs.pop("_earthkit", None)
+        assert v_attrs == var_attrs[v]
+    assert ds.attrs == global_attrs
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+@pytest.mark.parametrize(
+    "source,sel,kwargs,coords,dims,var_attrs,global_attrs",
+    [
+        (
+            "wave_spectra.grib",
+            None,
+            {
+                "profile": "grib",
+                "time_dims": "valid_time",
+                "squeeze": False,
+                "add_earthkit_attrs": False,
+            },
+            {
+                "wave_direction": [55.0, 115.0, 175.0, 235.0, 295.0, 355.0],
+                "wave_frequency": [0.034523, 0.1311, 0.497852],
+                "member": [0],
+                "valid_time": [pd.Timestamp("2025-12-10 00:00:00")],
+                "level": [0],
+                "level_type": ["meanSea"],
+            },
+            {
+                "wave_direction": 6,
+                "wave_frequency": 3,
+                "member": 1,
+                "valid_time": 1,
+                "level": 1,
+                "level_type": 1,
+            },
+            {
+                "2dfd": {
+                    "standard_name": "unknown",
+                    "long_name": "2D wave spectra (single)",
+                    "units": "meter ** 2 * second / radian",
+                    "typeOfLevel": "meanSea",
+                },
+                "wave_direction": {
+                    "standard_name": "sea_surface_wave_from_direction",
+                    "long_name": "wave direction",
+                    "units": "degrees",
+                },
+                "wave_frequency": {
+                    "standard_name": "sea_surface_wave_frequency",
+                    "long_name": "wave frequency",
+                    "units": "s-1",
+                },
+            },
+            {"Conventions": "CF-1.8", "institution": "ECMWF"},
+        ),
+    ],
+    indirect=["source"],
+)
+def test_xr_wave_dims(source, allow_holes, lazy_load, sel, kwargs, coords, dims, var_attrs, global_attrs):
+    ds0 = source.to_fieldlist()
+    if sel:
+        ds0 = ds0.sel(**sel)
+    ds = ds0.to_xarray(lazy_load=lazy_load, allow_holes=allow_holes, **kwargs)
+    compare_coords(ds, coords)
+    compare_dims(ds, dims, sizes=True)
+
+    for v in var_attrs:
+        v_attrs = dict(ds[v].attrs)
+        v_attrs.pop("_earthkit", None)
+        assert v_attrs == var_attrs[v]
+    assert ds.attrs == global_attrs
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+@pytest.mark.parametrize(
+    "source,sel,kwargs,coords,dims,var_attrs,global_attrs",
+    [
+        (
+            "chem-cams.grib",
+            None,
+            {
+                "profile": "earthkit",
+                "squeeze": False,
+                "add_earthkit_attrs": False,
+            },
+            {
+                "forecast_reference_time": [datetime.datetime(2011, 9, 29, 0, 0)],
+                "step": [datetime.timedelta(0)],
+                "level": [1],
+                "level_type": ["hybrid"],
+                "chem": ["CO", "HCHO", "O3"],
+            },
+            {
+                "forecast_reference_time": 1,
+                "step": 1,
+                "level": 1,
+                "level_type": 1,
+                "chem": 3,
+            },
+            {
+                "mass_mixrat": {
+                    "standard_name": "mass_fraction_of_carbon_monoxide_in_air",
+                    "long_name": "Mass mixing ratio",
+                    "units": "dimensionless",
+                    "level_type": "hybrid",
+                },
+                "chem": {
+                    "long_name": "atmospheric chemical or physical constituent type",
+                },
+            },
+            {"Conventions": "CF-1.8", "institution": "ECMWF"},
+        ),
+        (
+            "optical-cams.grib",
+            None,
+            {
+                "profile": "earthkit",
+                "squeeze": False,
+                "add_earthkit_attrs": False,
+            },
+            {
+                "forecast_reference_time": [datetime.datetime(2011, 9, 29, 0, 0)],
+                "step": [datetime.timedelta(0)],
+                "level": [0],
+                "level_type": ["surface"],
+                "chem": ["aer_sm", "aer_total"],
+                "wavelength": [550, 800],
+            },
+            {
+                "forecast_reference_time": 1,
+                "step": 1,
+                "level": 1,
+                "level_type": 1,
+                "chem": 2,
+                "wavelength": 2,
+            },
+            {
+                "aod": {
+                    "standard_name": "unknown",
+                    "long_name": "Aerosol optical depth",
+                    "units": "Numeric",
+                    "level_type": "surface",
+                },
+                "chem": {
+                    "long_name": "atmospheric chemical or physical constituent type",
+                },
+                "wavelength": {
+                    "standard_name": "radiation_wavelength",
+                    "long_name": "wavelength",
+                    "units": "nm",
+                },
+            },
+            {"Conventions": "CF-1.8", "institution": "ECMWF"},
+        ),
+    ],
+    indirect=["source"],
+)
+def test_xr_chem_dims(source, allow_holes, lazy_load, sel, kwargs, coords, dims, var_attrs, global_attrs):
+    ds0 = source.to_fieldlist()
     if sel:
         ds0 = ds0.sel(**sel)
     ds = ds0.to_xarray(lazy_load=lazy_load, allow_holes=allow_holes, **kwargs)
@@ -508,10 +759,10 @@ def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, 
 @pytest.mark.cache
 @pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
-    "path,sel,kwargs,coords,dims,var_attrs,global_attrs",
+    "source,sel,kwargs,coords,dims,var_attrs,global_attrs",
     [
         (
-            "level/pl_sfc.grib1",
+            "pl_sfc.grib1",
             {
                 "metadata.dataDate": 20240603,
                 "metadata.dataTime": 0,
@@ -538,7 +789,7 @@ def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, 
             {},
         ),
         (
-            "level/pl_sfc.grib1",
+            "pl_sfc.grib1",
             None,
             {
                 "profile": "grib",
@@ -575,7 +826,7 @@ def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, 
             {"gridType": "regular_ll"},
         ),
         (
-            "level/pl_sfc.grib1",
+            "pl_sfc.grib1",
             {
                 "metadata.dataDate": 20240603,
                 "metadata.dataTime": 0,
@@ -608,7 +859,7 @@ def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, 
             {},
         ),
         (
-            "level/pl_sfc.grib1",
+            "pl_sfc.grib1",
             {
                 "metadata.dataDate": 20240603,
                 "metadata.dataTime": 0,
@@ -646,9 +897,10 @@ def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, 
             {},
         ),
     ],
+    indirect=["source"],
 )
-def test_xr_engine_level_per_type_dim(lazy_load, path, sel, kwargs, coords, dims, var_attrs, global_attrs):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path)).to_fieldlist()
+def test_xr_engine_level_per_type_dim(source, lazy_load, sel, kwargs, coords, dims, var_attrs, global_attrs):
+    ds0 = source.to_fieldlist()
     if sel:
         ds0 = ds0.sel(**sel)
     ds = ds0.to_xarray(lazy_load=lazy_load, **kwargs)
@@ -666,10 +918,10 @@ def test_xr_engine_level_per_type_dim(lazy_load, path, sel, kwargs, coords, dims
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
-    "path,sel,idx,kwargs,coords,dims,var_attrs,global_attrs",
+    "source,sel,idx,kwargs,coords,dims,var_attrs,global_attrs",
     [
         (
-            "level/pl_small.grib",
+            "pl_small.grib",
             {
                 "metadata.shortName": ["t", "r"],
                 "metadata.dataDate": 20240603,
@@ -707,7 +959,7 @@ def test_xr_engine_level_per_type_dim(lazy_load, path, sel, kwargs, coords, dims
             {"Conventions": "CF-1.8", "institution": "ECMWF"},
         ),
         (
-            "level/pl_small.grib",
+            "pl_small.grib",
             {
                 "metadata.shortName": ["t", "r"],
                 "metadata.dataDate": 20240603,
@@ -747,11 +999,12 @@ def test_xr_engine_level_per_type_dim(lazy_load, path, sel, kwargs, coords, dims
             {"Conventions": "CF-1.8", "institution": "ECMWF"},
         ),
     ],
+    indirect=["source"],
 )
 def test_xr_engine_dims_as_attrs_1(
-    allow_holes, lazy_load, path, sel, idx, kwargs, coords, dims, var_attrs, global_attrs
+    source, allow_holes, lazy_load, sel, idx, kwargs, coords, dims, var_attrs, global_attrs
 ):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path)).to_fieldlist()
+    ds0 = source.to_fieldlist()
     if sel:
         ds0 = ds0.sel(**sel)
     if idx:
@@ -770,10 +1023,10 @@ def test_xr_engine_dims_as_attrs_1(
 @pytest.mark.cache
 @pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
-    "path,sel,idx,kwargs,coords,dims,var_attrs,global_attrs",
+    "source,sel,idx,kwargs,coords,dims,var_attrs,global_attrs",
     [
         (
-            "level/aifs-sfc.grib",
+            "aifs-sfc.grib",
             None,
             None,
             {
@@ -800,7 +1053,7 @@ def test_xr_engine_dims_as_attrs_1(
             {},
         ),
         (
-            "level/aifs-pl_sfc.grib",
+            "aifs-pl_sfc.grib",
             None,
             None,
             {
@@ -829,7 +1082,7 @@ def test_xr_engine_dims_as_attrs_1(
             {},
         ),
         (
-            "level/aifs-sfc.grib",
+            "aifs-sfc.grib",
             None,
             None,
             {
@@ -856,7 +1109,7 @@ def test_xr_engine_dims_as_attrs_1(
             {},
         ),
         (
-            "level/aifs-pl_sfc.grib",
+            "aifs-pl_sfc.grib",
             None,
             None,
             {
@@ -885,7 +1138,7 @@ def test_xr_engine_dims_as_attrs_1(
             {},
         ),
         (
-            "level/aifs-sfc.grib",
+            "aifs-sfc.grib",
             None,
             None,
             {
@@ -912,7 +1165,7 @@ def test_xr_engine_dims_as_attrs_1(
             {},
         ),
         (
-            "level/aifs-pl_sfc.grib",
+            "aifs-pl_sfc.grib",
             None,
             None,
             {
@@ -941,9 +1194,10 @@ def test_xr_engine_dims_as_attrs_1(
             {},
         ),
     ],
+    indirect=["source"],
 )
-def test_xr_engine_dims_as_attrs2(lazy_load, path, sel, idx, kwargs, coords, dims, var_attrs, global_attrs):
-    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path)).to_fieldlist()
+def test_xr_engine_dims_as_attrs2(source, lazy_load, sel, idx, kwargs, coords, dims, var_attrs, global_attrs):
+    ds0 = source.to_fieldlist()
     if sel:
         ds0 = ds0.sel(**sel)
     if idx:

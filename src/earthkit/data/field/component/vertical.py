@@ -408,8 +408,8 @@ class Vertical(VerticalBase):
     def coefficient_names(self) -> Optional[int]:
         return None
 
-    def __print__(self) -> str:
-        return f"{self.level} {self.units} ({self.abbreviation})"
+    def __str__(self) -> str:
+        return f"{self.level()} {self.units()} ({self.abbreviation()})"
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(level={self.level()}, units={self.units()}, level_type={self._type.name})"

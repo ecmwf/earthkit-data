@@ -48,6 +48,11 @@ _GRIB_ENS_KEYS = ["number", "perturbationNumber", "realization"]
 _ENS_KEYS = ["member", "realisation", "realization"]
 ENS_KEYS = ["member"] + _get_component_keys("ensemble", _ENS_KEYS) + _get_metadata_keys(_GRIB_ENS_KEYS)
 
+CHEM_KEYS = ["chem"] + _get_component_keys("parameter", ["chem"])
+WAVELENGTH_KEYS = ["wavelength"] + _get_component_keys("parameter", ["wavelength"])
+WAVE_DIRECTION_KEYS = ["wave_direction"] + _get_component_keys("parameter", ["wave_direction"])
+WAVE_FREQUENCY_KEYS = ["wave_frequency"] + _get_component_keys("parameter", ["wave_frequency"])
+
 _GRIB_LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels"]
 _VERTICAL_LEVEL_KEYS = ["level", "layer"]
 LEVEL_KEYS = ["level"] + _get_component_keys("vertical", _VERTICAL_LEVEL_KEYS) + _get_metadata_keys(_GRIB_LEVEL_KEYS)
@@ -102,6 +107,10 @@ _TIME_RELATED_KEYS = set(DATE_KEYS + TIME_KEYS + STEP_KEYS + MONTH_KEYS + VALID_
 
 KEYS = (
     ENS_KEYS,
+    CHEM_KEYS,
+    WAVELENGTH_KEYS,
+    WAVE_DIRECTION_KEYS,
+    WAVE_FREQUENCY_KEYS,
     LEVEL_KEYS,
     LEVEL_TYPE_KEYS,
     DATE_KEYS,
@@ -295,6 +304,22 @@ class MemberDim(Dim):
     alias = get_keys(ENS_KEYS)
 
 
+class ChemDim(Dim):
+    alias = get_keys(CHEM_KEYS)
+
+
+class WavelengthDim(Dim):
+    alias = get_keys(WAVELENGTH_KEYS)
+
+
+class WaveDirectionDim(Dim):
+    alias = get_keys(WAVE_DIRECTION_KEYS)
+
+
+class WaveFrequencyDim(Dim):
+    alias = get_keys(WAVE_FREQUENCY_KEYS)
+
+
 class DateDim(Dim):
     name = "date"
     drop = get_keys(DATE_KEYS + DATETIME_KEYS, drop="date")
@@ -449,7 +474,20 @@ class OtherDim(Dim):
 
 
 class DimRole:
-    NAMES = ("member", "date", "time", "step", "level", "level_type", "forecast_reference_time", "valid_time")
+    NAMES = (
+        "member",
+        "date",
+        "time",
+        "step",
+        "level",
+        "level_type",
+        "forecast_reference_time",
+        "valid_time",
+        "chem",
+        "wavelength",
+        "wave_direction",
+        "wave_frequency",
+    )
 
     def __init__(self, d, name_as_key=True):
         self.d = d
@@ -564,8 +602,16 @@ LEVEL_DIM_MODES = {v.name: v for v in [LevelDimMode, LevelPerTypeDimMode, LevelA
 
 
 class DimBuilder:
+    name = None
+    dim_class = None
     used = {}
     ignored = {}
+
+    def __init__(self, profile, owner):
+        key, name = owner.dim_roles.role(self.name)
+
+        dim = self.dim_class(owner, name=name, key=key)
+        self.used = {dim.name: dim}
 
     def dims(self):
         return self.used, self.ignored
@@ -573,12 +619,27 @@ class DimBuilder:
 
 class MemberDimBuilder(DimBuilder):
     name = "member"
+    dim_class = MemberDim
 
-    def __init__(self, profile, owner):
-        key, name = owner.dim_roles.role("member")
 
-        dim = MemberDim(owner, name=name, key=key)
-        self.used = {dim.name: dim}
+class ChemDimBuilder(DimBuilder):
+    name = "chem"
+    dim_class = ChemDim
+
+
+class WavelengthDimBuilder(DimBuilder):
+    name = "wavelength"
+    dim_class = WavelengthDim
+
+
+class WaveDirectionDimBuilder(DimBuilder):
+    name = "wave_direction"
+    dim_class = WaveDirectionDim
+
+
+class WaveFrequencyDimBuilder(DimBuilder):
+    name = "wave_frequency"
+    dim_class = WaveFrequencyDim
 
 
 class TimeDimBuilder(DimBuilder):
@@ -685,7 +746,18 @@ class LevelDimBuilder(DimBuilder):
                 self.ignored.update(_ignored)
 
 
-DIM_BUILDERS = {v.name: v for v in [MemberDimBuilder, TimeDimBuilder, LevelDimBuilder]}
+DIM_BUILDERS = {
+    v.name: v
+    for v in [
+        MemberDimBuilder,
+        ChemDimBuilder,
+        WavelengthDimBuilder,
+        WaveDirectionDimBuilder,
+        WaveFrequencyDimBuilder,
+        TimeDimBuilder,
+        LevelDimBuilder,
+    ]
+}
 
 
 def ensure_dim_map(d):
@@ -1074,6 +1146,10 @@ class DimHandler:
 PREDEFINED_DIMS = {}
 for i, d in enumerate([
     MemberDim,
+    ChemDim,
+    WavelengthDim,
+    WaveDirectionDim,
+    WaveFrequencyDim,
     ForecastRefTimeDim,
     DateDim,
     TimeDim,

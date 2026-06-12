@@ -13,21 +13,29 @@ _UNITS = {"t": "K", "r": "%"}
 
 
 class MarsParameterBuilder:
+    """Builder for creating parameter components from MARS requests.
+
+    This builder extracts parameter metadata from MARS request dictionaries and creates
+    the appropriate parameter component subclass using :func:`create_parameter`.
+    """
+
     @staticmethod
     def build(request, build_empty=False):
-        from earthkit.data.field.component.parameter import Parameter
+        from earthkit.data.field.component.parameter import create_parameter
         from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
 
         d = MarsParameterBuilder._build_dict(request)
         if not d and not build_empty:
             return None
 
-        component = Parameter.from_dict(d)
+        component = create_parameter(d)
         handler = ParameterFieldComponentHandler.from_component(component)
         return handler
 
     @staticmethod
     def _build_dict(request):
+        # TODO: add chem and wavelength?
+        # TODO: chem would require an unaliasing table "grib-chemid.csv"
         param = request.get("param", None)
 
         if param is None:

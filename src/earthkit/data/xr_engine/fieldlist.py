@@ -172,7 +172,12 @@ class XArrayInputFieldList(IndexFieldListBase):
 
             for k, v in vals.items():
                 v = [x for x in v if x is not None]
-                if all(isinstance(x, (int, datetime.timedelta)) for x in v):
+                if (
+                    all(isinstance(x, (int, float)) for x in v)
+                    or all(isinstance(x, datetime.date) for x in v)
+                    or all(isinstance(x, datetime.time) for x in v)
+                    or all(isinstance(x, datetime.timedelta) for x in v)
+                ):
                     vals[k] = sorted(v)
                 else:
                     vals[k] = sorted(v, key=str)
