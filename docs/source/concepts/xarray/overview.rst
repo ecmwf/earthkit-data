@@ -156,7 +156,7 @@ The earthkit Xarray engine attaches some special attributes (``_earthkit``) to e
 Using the earthkit accessor
 ++++++++++++++++++++++++++++
 
-It is also possible to call ``to_netcdf()`` on the ``earthkit`` accessor. This is equivalent to calling it directly on the dataset.
+It is also possible to call ``to_netcdf()`` on the ``earthkit`` accessor. With default options, this is equivalent to calling it directly on the dataset.
 
 .. code-block:: python
 
@@ -198,7 +198,7 @@ We can also use the :func:`to_target` method to convert GRIB directly to NetCDF.
     ds_fl.to_target("file", "_from_grib.nc")
 
 
-To control the Xarray conversion we can pass options to the earthkit Xarray engine with ``earthkit_to_xarray_kwargs``. In this case ``add_earthkit_attrs=False`` is always enforced.
+To control the Xarray conversion we can pass options to the earthkit Xarray engine with ``earthkit_to_xarray_kwargs``.
 
 .. code-block:: python
 

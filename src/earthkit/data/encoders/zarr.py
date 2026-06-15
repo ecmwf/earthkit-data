@@ -74,7 +74,6 @@ class ZarrEncoder(Encoder):
     def _encode_fieldlist(self, data, *, target=None, **kwargs):
         earthkit_to_xarray_kwargs = kwargs.pop("earthkit_to_xarray_kwargs", {})
         # earthkit_to_xarray_kwargs.update(kwargs)
-        earthkit_to_xarray_kwargs["add_earthkit_attrs"] = False
         kwargs = earthkit_to_xarray_kwargs
 
         ds = data.to_xarray(**kwargs)

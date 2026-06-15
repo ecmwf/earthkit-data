@@ -94,7 +94,6 @@ class NetCDFEncoder(Encoder):
             # TODO: find better way to check if the earthkit engine is used
             if hasattr(data, "_default_encoder") and data._default_encoder() != "netcdf":
                 earthkit_to_xarray_kwargs = _kwargs.pop("earthkit_to_xarray_kwargs", {})
-                earthkit_to_xarray_kwargs["add_earthkit_attrs"] = False
                 _kwargs = earthkit_to_xarray_kwargs
         else:
             _kwargs = {}
@@ -118,7 +117,7 @@ class NetCDFEncoder(Encoder):
         if (
             path_info is not None
             and path_info.path is not None
-            and path_info.default_encoder == "betcdf"
+            and path_info.default_encoder == "netcdf"
             and target is not None
             and target._name == "file"
         ):
