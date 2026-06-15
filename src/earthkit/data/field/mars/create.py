@@ -22,7 +22,7 @@ def create_mars_field(request, data=None, values=None, geography=None, reference
     if values is not None:
         data = ArrayDataFieldComponentHandler(values)
 
-    ensemble = MarsEnsembleBuilder.build(request)
+    ensemble = MarsEnsembleBuilder.build(request, reference_field=reference_field)
     parameter = MarsParameterBuilder.build(request)
     time = MarsTimeBuilder.build(request)
     vertical = MarsVerticalBuilder.build(request)

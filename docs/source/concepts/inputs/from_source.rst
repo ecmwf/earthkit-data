@@ -718,7 +718,7 @@ fdb
 .. py:function:: from_source("fdb", *args, config=None, userconfig=None, request=None, stream=True, lazy=False, **kwargs)
   :noindex:
 
-  The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
+  The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. Earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
 
   :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries, but current only one request is supported.
@@ -802,6 +802,7 @@ fdb
 
       - :ref:`/how-tos/source/fdb.ipynb`
       - :ref:`/how-tos/grib/grib_fdb_write.ipynb`
+      - :ref:`/how-tos/grib/grib_fdb_lazy.ipynb`
 
 
 

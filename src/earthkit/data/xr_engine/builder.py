@@ -216,7 +216,6 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
             # LOG.debug(f"TensorBackendArray._raw_indexing_method var={self._var_name}")
             # LOG.debug(f"   dims={self.dims} key={key} shape={self.shape}")
             # LOG.debug(f"   tensor.user_coords={self.tensor.user_coords}")
-
             r = self.tensor[key]
             # LOG.debug(f"   cubelet user_shape={r.user_shape}")
 
@@ -226,7 +225,6 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
                 field_index = None
 
             # LOG.debug(f"   {field_index=}")
-
             try:
                 result = r.to_array(index=field_index, array_namespace=self.array_namespace, dtype=self.dtype)
             except Exception as e:

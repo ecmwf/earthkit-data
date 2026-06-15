@@ -20,4 +20,5 @@ GRIB
     grib_nearest_gridpoint.ipynb
     grib_time_series.ipynb
     grib_fdb_write.ipynb
+    grib_fdb_lazy.ipynb
     grib_to_netcdf.ipynb
