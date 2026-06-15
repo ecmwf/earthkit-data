@@ -475,23 +475,6 @@ class XarrayEarthkit:
 
         to_target(target, *args, data=self._obj, **kwargs)
 
-    def to_netcdf(self, *args, remove_earthkit_attrs=False, **kwargs):
-        """A thin wrapper around the `xarray.Dataset|DataArray.to_netcdf()` methods.
-
-        Parameters
-        ----------
-        args, kwargs: passed to the method `to_netcdf()` on the underlying xarray object.
-
-        remove_earthkit_attrs: bool, optional
-            If True, remove attribute `_earthkit` before writing to NetCDF. Default is `False`.
-        """
-        if remove_earthkit_attrs:
-            ds = self._remove_earthkit_attrs()
-        else:
-            ds = self._obj
-
-        return ds.to_netcdf(*args, **kwargs)
-
     def _generator(self):
         from earthkit.data.indexing.simple import SimpleFieldList
 
@@ -600,6 +583,23 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
             da = da.copy()
             del da.attrs[ACCESSOR_KEY]
         return da
+
+    def to_netcdf(self, *args, remove_earthkit_attrs=False, **kwargs):
+        """A thin wrapper around the `xarray.DataArray.to_netcdf()` method.
+
+        Parameters
+        ----------
+        args, kwargs: passed to the method `to_netcdf()` on the underlying xarray object.
+
+        remove_earthkit_attrs: bool, optional
+            If True, remove attribute `_earthkit` before writing to NetCDF. Default is `False`.
+        """
+        if remove_earthkit_attrs:
+            ds = self._remove_earthkit_attrs()
+        else:
+            ds = self._obj
+
+        return ds.to_netcdf(*args, **kwargs)
 
     def _to_fields(self):
         from .grib import data_array_to_fields
@@ -712,6 +712,23 @@ class XarrayEarthkitDataset(XarrayEarthkit):
                 del ds[var].attrs[ACCESSOR_KEY]
 
         return ds
+
+    def to_netcdf(self, *args, remove_earthkit_attrs=False, **kwargs):
+        """A thin wrapper around the `xarray.Dataset.to_netcdf()` method.
+
+        Parameters
+        ----------
+        args, kwargs: passed to the method `to_netcdf()` on the underlying xarray object.
+
+        remove_earthkit_attrs: bool, optional
+            If True, remove attribute `_earthkit` before writing to NetCDF. Default is `False`.
+        """
+        if remove_earthkit_attrs:
+            ds = self._remove_earthkit_attrs()
+        else:
+            ds = self._obj
+
+        return ds.to_netcdf(*args, **kwargs)
 
     def to_device(self, device, *, array_backend=None, array_namespace=None, **kwargs):
         """Return a new Dataset with every data variable on the specified ``device``."""
