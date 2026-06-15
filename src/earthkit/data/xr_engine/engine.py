@@ -12,8 +12,6 @@ import logging
 import xarray
 from xarray.backends import BackendEntrypoint
 
-from earthkit.data.xr_engine.accessor import ACCESSOR_KEY
-
 LOG = logging.getLogger(__name__)
 
 
@@ -501,7 +499,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 
     def _decoded_attrs(self):
         """Decode the _earthkit attribute to a dict."""
-        from .accessor import decode_earthkit_attrs
+        from .accessor import ACCESSOR_KEY, decode_earthkit_attrs
 
         raw = self._obj.attrs.get(ACCESSOR_KEY)
         return decode_earthkit_attrs(raw)
@@ -578,6 +576,8 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 
     def _remove_earthkit_attrs(self):
         """Create a copy of the DataArray and remove earthkit attributes."""
+        from .accessor import ACCESSOR_KEY
+
         da = self._obj
         if ACCESSOR_KEY in da.attrs:
             da = da.copy()
@@ -706,6 +706,8 @@ class XarrayEarthkitDataset(XarrayEarthkit):
 
     def _remove_earthkit_attrs(self):
         """Create a copy of the dataset and remove earthkit attributes."""
+        from .accessor import ACCESSOR_KEY
+
         ds = self._obj.copy()
         for var in ds.data_vars:
             if ACCESSOR_KEY in ds[var].attrs:
