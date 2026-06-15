@@ -457,6 +457,11 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         return ds
 
 
+# ---------------------------------------------------------------------------
+# Xarray accessor classes
+# ---------------------------------------------------------------------------
+
+
 class XarrayEarthkit:
     def to_fieldlist(self):
         from earthkit.data.indexing.simple import SimpleFieldList
@@ -492,6 +497,13 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
 
+    def _decoded_attrs(self):
+        """Decode the _earthkit attribute to a dict."""
+        from .accessor import ACCESSOR_KEY, decode_earthkit_attrs
+
+        raw = self._obj.attrs.get(ACCESSOR_KEY)
+        return decode_earthkit_attrs(raw)
+
     @property
     def reference_field(self):
         message = self._grib_message()
@@ -513,7 +525,9 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         return None
 
     def _grib_message(self, raise_error=True):
-        if "_earthkit" not in self._obj.attrs:
+        attrs = self._decoded_attrs()
+
+        if attrs is None:
             if raise_error:
                 raise ValueError(
                     (
@@ -523,52 +537,69 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
                 )
             return None
 
-        md = self._obj.attrs.get("_earthkit")
-
-        if not isinstance(md, dict):
+        if not isinstance(attrs, dict):
             if raise_error:
                 raise ValueError(
                     (
                         "The '_earthkit' attribute must be a dictionary containing the metadata of the"
-                        f" reference field. Found: {type(md)}"
+                        f" reference field. Found: {type(attrs)}"
                     )
                 )
             return None
 
-        if "message" not in md:
+        if "message" not in attrs:
             if raise_error:
                 raise ValueError(
                     "The '_earthkit' attribute must contain the 'message' key with the metadata of the reference field."
                 )
             return None
 
-        message = md.get("message")
+        message = attrs.get("message")
 
         if not message:
             if raise_error:
                 raise ValueError(
                     "The 'message' key in the '_earthkit' attribute must contain the metadata of the reference field."
                 )
-                return None
+            return None
 
         return message
 
     def _extra_grib_metadata(self):
-        if "_earthkit" in self._obj.attrs:
-            md = self._obj.attrs.get("_earthkit")
-            bvp = md.get("bitsPerValue", None) if isinstance(md, dict) else None
+        attrs = self._decoded_attrs()
+        if isinstance(attrs, dict):
+            bvp = attrs.get("bitsPerValue", None)
             if bvp is not None and bvp != 0:
                 return {"bitsPerValue": bvp}
 
         return dict()
 
     def _remove_earthkit_attrs(self):
-        """Create a copy of the dataarray and remove earthkit attributes."""
+        """Create a copy of the DataArray and remove earthkit attributes."""
+        from .accessor import ACCESSOR_KEY
+
         da = self._obj
-        if "_earthkit" in da.attrs:
+        if ACCESSOR_KEY in da.attrs:
             da = da.copy()
-            del da.attrs["_earthkit"]
+            del da.attrs[ACCESSOR_KEY]
         return da
+
+    def to_netcdf(self, *args, remove_earthkit_attrs=False, **kwargs):
+        """A thin wrapper around the `xarray.DataArray.to_netcdf()` method.
+
+        Parameters
+        ----------
+        args, kwargs: passed to the method `to_netcdf()` on the underlying xarray object.
+
+        remove_earthkit_attrs: bool, optional
+            If True, remove attribute `_earthkit` before writing to NetCDF. Default is `False`.
+        """
+        if remove_earthkit_attrs:
+            ds = self._remove_earthkit_attrs()
+        else:
+            ds = self._obj
+
+        return ds.to_netcdf(*args, **kwargs)
 
     def _to_fields(self):
         from .grib import data_array_to_fields
@@ -577,14 +608,6 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
             self._obj, reference_field=self.reference_field, metadata=self._extra_grib_metadata()
         ):
             yield f
-
-    def to_netcdf(self, *args, **kwargs):
-        """Remove earthkit attributes before writing to netcdf."""
-        ds = self._obj
-        if "_earthkit" in self._obj.attrs:
-            ds = self._remove_earthkit_attrs()
-
-        return ds.to_netcdf(*args, **kwargs)
 
     def to_device(self, device, *, array_backend=None, array_namespace=None, **kwargs):
         """Return a **new** DataArray whose data live on *device*."""
@@ -601,7 +624,13 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         return da
 
     def set(self, *args, **kwargs):
-        """Return a new DataArray with updated attributes."""
+        """Return a new DataArray with updated attributes on the reference field.
+
+        Accepts the same arguments as ``field.set()``.  When the reference
+        field is available, applies the metadata changes to it and rebuilds
+        the ``_earthkit`` attribute.  When it is not available, only
+        ``"geography.grid_spec"`` is accepted as a standalone update.
+        """
         if not args and not kwargs:
             return self._obj
 
@@ -648,12 +677,10 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
     def grid_spec(self) -> dict | None:
         """Return the grid specification of the DataArray."""
         try:
-            if "_earthkit" in self._obj.attrs:
-                from earthkit.data.utils import to_dict
-
-                v = self._obj.attrs["_earthkit"].get("grid_spec", None)
-                v = to_dict(v)
-                if v is not None:
+            attrs = self._decoded_attrs()
+            if attrs is not None:
+                v = attrs.get("grid_spec", None)
+                if isinstance(v, dict):
                     return v.copy()  # return a copy to avoid accidental modifications
         except Exception:
             pass
@@ -666,7 +693,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 
 
 @xarray.register_dataset_accessor("earthkit")
-class XarrayEarthkitDataSet(XarrayEarthkit):
+class XarrayEarthkitDataset(XarrayEarthkit):
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
 
@@ -679,20 +706,29 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
 
     def _remove_earthkit_attrs(self):
         """Create a copy of the dataset and remove earthkit attributes."""
+        from .accessor import ACCESSOR_KEY
+
         ds = self._obj.copy()
         for var in ds.data_vars:
-            if "_earthkit" in ds[var].attrs:
-                del ds[var].attrs["_earthkit"]
+            if ACCESSOR_KEY in ds[var].attrs:
+                del ds[var].attrs[ACCESSOR_KEY]
 
         return ds
 
-    def to_netcdf(self, *args, **kwargs):
-        """Remove earthkit attributes before writing to netcdf."""
-        ds = self._obj
-        for var in self._obj.data_vars:
-            if "_earthkit" in self._obj[var].attrs:
-                ds = self._remove_earthkit_attrs()
-                break
+    def to_netcdf(self, *args, remove_earthkit_attrs=False, **kwargs):
+        """A thin wrapper around the `xarray.Dataset.to_netcdf()` method.
+
+        Parameters
+        ----------
+        args, kwargs: passed to the method `to_netcdf()` on the underlying xarray object.
+
+        remove_earthkit_attrs: bool, optional
+            If True, remove attribute `_earthkit` before writing to NetCDF. Default is `False`.
+        """
+        if remove_earthkit_attrs:
+            ds = self._remove_earthkit_attrs()
+        else:
+            ds = self._obj
 
         return ds.to_netcdf(*args, **kwargs)
 
@@ -711,7 +747,7 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
         return ds
 
     def set(self, *args, **kwargs):
-        """Return a new DataArray with updated attributes."""
+        """Return a new Dataset with updated attributes on the reference field of each variable."""
         if not args and not kwargs:
             return self._obj
 

@@ -95,7 +95,6 @@ optional-dependencies.test = [
   "pytest",
   "pytest-cov",
   "pytest-forked",
-  "pytest-notebook",
   "pytest-reraise",
   "pytest-timeout"
 ]
