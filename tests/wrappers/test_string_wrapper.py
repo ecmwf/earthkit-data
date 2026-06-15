@@ -41,7 +41,7 @@ def test_string_wrapper_datetime(date_format, expected_value):
     assert ds.to_datetime() == dt
 
 
-@pytest.mark.parametrize("date_format,", ["%Y-%m-%d"])
+@pytest.mark.parametrize("date_format", ["%Y-%m-%d"])
 def test_string_wrapper_datetime_list(date_format):
     dt = [datetime.datetime(2000, 1, i) for i in range(1, 30)]
 
@@ -56,7 +56,7 @@ def test_string_wrapper_datetime_list(date_format):
     assert ds.to_datetime_list() == dt
 
 
-@pytest.mark.parametrize("date_format,", ["%Y-%m-%d"])
+@pytest.mark.parametrize("date_format", ["%Y-%m-%d"])
 def test_string_wrapper_datetime_list_by(date_format):
     dt = [datetime.datetime(2000, 1, i) for i in range(1, 30, 2)]
 
