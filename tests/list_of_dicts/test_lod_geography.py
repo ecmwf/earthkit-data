@@ -153,6 +153,34 @@ def test_lod_no_latlon(
     assert ds[0].geography.latlons() == (None, None)
 
 
+def test_lod_geo_set_on_nongeo_1():
+    from earthkit.data import Field
+
+    f = Field.from_dict({"parameter": {"variable": "t", "units": "K"}, "values": np.array([1.0, 2.0, 3.0])})
+
+    lats = np.array([10.0, 20.0, 30.0])
+    lons = np.array([100.0, 110.0, 120.0])
+
+    f_new = f.set({"geography.latitudes": lats, "geography.longitudes": lons})
+
+    assert np.allclose(f_new.geography.latitudes(), lats)
+    assert np.allclose(f_new.geography.longitudes(), lons)
+
+
+def test_lod_geo_set_on_nongeo_2():
+    from earthkit.data import Field
+
+    f = Field.from_dict({"parameter": {"variable": "t", "units": "K"}, "values": np.array([1.0, 2.0, 3.0])})
+
+    lats = np.array([10.0, 20.0, 30.0])
+    lons = np.array([100.0, 110.0, 120.0])
+
+    f_new = f.set(geography={"latitudes": np.array([10.0, 20.0, 30.0]), "longitudes": np.array([100.0, 110.0, 120.0])})
+
+    assert np.allclose(f_new.geography.latitudes(), lats)
+    assert np.allclose(f_new.geography.longitudes(), lons)
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

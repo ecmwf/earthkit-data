@@ -659,6 +659,19 @@ class EmptyGeography(GeographyBase):
     def grid_type(self) -> str | None:
         return None
 
+    def set(self, *args, shape_hint=None, **kwargs) -> "GeographyBase":
+        """Return a new GeographyBase object with updated values."""
+        kwargs = self._normalise_set_kwargs(*args, **kwargs)
+        keys = set(kwargs.keys())
+
+        if keys == {"shape"}:
+            return self.from_dict(**kwargs)
+
+        if keys == {"grid_spec"} or keys == {"latitudes", "longitudes"}:
+            return super().from_dict(kwargs, shape_hint=shape_hint)
+
+        raise ValueError(f"Invalid {keys=} for Geography specification")
+
     @classmethod
     def from_dict(cls, d) -> "EmptyGeography":
         if not isinstance(d, dict):
