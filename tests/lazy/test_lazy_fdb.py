@@ -292,7 +292,7 @@ def test_lazy_fdb():
             ],
         }
 
-        assert fl.get(ref_keys) == ref_vals
+        assert fl.get(ref_keys, output=dict, group_by_key=True) == ref_vals
 
         # compare all the fields between fl_in and fl
         fl_in_sorted = fl_in.order_by(["parameter.variable", "time.base_datetime", "time.step", "vertical.level"])
