@@ -29,6 +29,7 @@ SKIP = [
     "demo_source_plugin.ipynb",
     "ecmwf_open_data.ipynb",
     "fdb.ipynb",
+    "grib_fdb_lazy.ipynb",
     "grib_fdb_write.ipynb",
     "grib_to_fdb_target.ipynb",
     "grib_to_xarray.ipynb",

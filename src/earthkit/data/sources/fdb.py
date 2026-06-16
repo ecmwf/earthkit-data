@@ -43,7 +43,7 @@ class FDBSource(Source):
         self._stream_kwargs = dict()
         for k in ["read_all"]:
             if k in kwargs:
-                self._stream_kwargs[k] = kwargs.pop(k)
+                raise ValueError(f"Invalid argument '{k}' for FDBSource. Removed since 1.0.0.")
 
         self.stream = stream
 
