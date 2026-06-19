@@ -79,6 +79,11 @@ climate science. It is the data handling component of :xref:`earthkit`.
 Have a feature request or found a bug? Feel free to open an
 `issue <https://github.com/ecmwf/earthkit-data/issues/new/choose>`_.
 
+ .. toctree::
+   :maxdepth: 2
+   :hidden:
+
+   why
 
 .. toctree::
    :caption: User guide

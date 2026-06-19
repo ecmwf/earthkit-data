@@ -160,7 +160,7 @@ Changes in the Field API
 ++++++++++++++++++++++++
 
 
-The Field API has been redesigned and many methods have been removed or changed. The following table gives an overview of the changes in the Field API:
+The Field API has been redesigned and many methods have been removed or changed. The following table gives an overview of the changes in the Field API (the ``f`` in the table below is a :py:class:`~earthkit.data.core.field.Field` object):
 
 .. list-table::
    :header-rows: 1
@@ -170,46 +170,46 @@ The Field API has been redesigned and many methods have been removed or changed.
      - New API
      - Notes
    * - to_numpy()
-     - to_numpy()
-     - New kwarg: ``copy=True``
+     - :py:meth:`~earthkit.data.core.field.Field.to_numpy`
+     - New kwarg added: ``copy=True``. By default returns a copy of the data array.
    * - to_array()
-     - to_array()
-     - New kwarg: ``copy=True``
+     - :py:meth:`~earthkit.data.core.field.Field.to_array`
+     - New kwarg added: ``copy=True``. By default returns a copy of the data array.
    * - to_latlon()
-     - N/A
-     - Use :func:`f.geography.latlons`. This returns a tuple of arrays (lats, lons).
+     - :func:`f.geography.latlons`
+     - The new function returns a tuple of arrays (lats, lons)
    * - to_points()
-     - N/A
-     - Use: :func:`f.geography.points`, :func:`f.geography.xys`. These functions return a tuple of arrays (x, y)
+     - :func:`f.geography.points` or :func:`f.geography.xys`
+     - The new functions return a tuple of arrays (x, y)
    * - grid_points()
-     - N/A
-     - Use: :func:`f.geography.latlons`.  This returns a tuple of arrays (lats, lons).
+     - :func:`f.geography.latlons`
+     - The new function returns a tuple of arrays (lats, lons).
    * - projection()
-     - N/A
-     - Use: :func:`f.geography.projection`
+     - :func:`f.geography.projection`
+     -
    * - bounding_box()
-     - N/A
-     - Use: :func:`f.geography.bounding_box`
+     - :func:`f.geography.bounding_box`
+     -
    * - clone()
      - N/A
-     - Functionality not needed. Use :func:`f.set` instead
+     - Functionality not needed. Use :py:meth:`~earthkit.data.core.field.Field.set` instead
    * - copy()
      - N/A
-     - Functionality not needed. Use :func:`f.set` instead
+     - Functionality not needed. Use :py:meth:`~earthkit.data.core.field.Field.set` instead
    * - as_namespace()
-     - N/A
-     -
+     - :py:meth:`~earthkit.data.core.field.Field.get` with the ``collections`` kwarg
+     - Use e.g. ``f.get(collections="metadata.mars")`` to get the "mars" ecCodes namespace. Only available for GRIB data.
    * - datetime()
      - N/A
      - Use :func:`f.time.base_datetime` and :func:`f.time.valid_datetime` instead.
    * - valid_datetime()
-     - N/A
-     - Use :func:`f.time.valid_datetime`
+     - :func:`f.time.valid_datetime`
+     - The new function returns a `datetime.datetime` object.
    * - base_datetime()
-     - N/A
-     - Use :func:`f.time.base_datetime`
+     - :func:`f.time.base_datetime`
+     - The new function returns a `datetime.datetime` object.
    * - metadata()
-     - metadata()
+     - :py:meth:`~earthkit.data.core.field.Field.metadata`
      - Has limited scope now. Can only access keys in the raw metadata belonging to the object the field was created from. E.g. for GRIB this works:
 
         .. code-block:: python
@@ -221,37 +221,37 @@ The Field API has been redesigned and many methods have been removed or changed.
         When the key does not exist in the raw metadata, it raises a KeyError.
    * - MetaData object accessed by calling metadata() without args/kwargs
      - N/A
-     -
+     - This object is no longer available.
    * - dump()
      - N/A
-     - Use: :func:`f.describe`
+     - Use :py:meth:`~earthkit.data.core.field.Field.describe` instead.
    * - describe()
      - Still exists but functionality changed.
      -
    * - handle
      - N/A
-     -
+     - The handle is no longer available. Use :py:meth:`~earthkit.data.core.field.Field.get` or :py:meth:`~earthkit.data.core.field.Field.metadata` to access the raw metadata keys.
    * - mars_area
      - N/A
      - Use: :func:`f.geography.area`
    * - mars_grid
      - N/A
-     -
+     - Use: :func:`f.geography.grid`
    * - resolution
      - N/A
-     -
+     - This is no longer available.
    * - rotation
      - N/A
-     - N/A
+     - This is no longer available.
    * - grid_points_unrotated()
      - N/A
-     - N/A
+     - This is no longer available.
    * - save()
-     - N/A
-     - Use: :func:`f.to_target`
+     - :py:meth:`~earthkit.data.core.field.Field.to_target`
+     -
    * - write()
-     - N/A
-     - Use: :func:`f.to_target`
+     - :py:meth:`~earthkit.data.core.field.Field.to_target`
+     -
 
 
 Fieldlist
@@ -274,7 +274,7 @@ Added :py:class:`~earthkit.data.fieldlist.FieldList` arithmetic. The basic maths
 Changes in the FieldList API
 ++++++++++++++++++++++++++++++
 
-The following table gives an overview of the changes in the Fieldlist API:
+The following table gives an overview of the changes in the Fieldlist API (the ``fl`` in the table below is a :py:class:`~earthkit.data.fieldlist.FieldList` object):
 
 .. list-table::
    :header-rows: 1
@@ -284,28 +284,34 @@ The following table gives an overview of the changes in the Fieldlist API:
      - New API
      - Notes
    * - to_numpy()
-     - to_numpy()
-     - New kwarg: ``copy=True``
+     - :py:meth:`~earthkit.data.fieldlist.FieldList.to_numpy`
+     - New kwarg added: ``copy=True``. By default returns a copy of the data array.
    * - to_array()
-     - to_array()
-     - New kwarg: ``copy=True``
+     - :py:meth:`~earthkit.data.fieldlist.FieldList.to_array`
+     - New kwarg added: ``copy=True``. By default returns a copy of the data array.
    * - to_latlon()
-     - N/A
-     - Use :func:`fl.geography.latlons`. This returns a tuple of arrays (lats, lons)
+     - :func:`fl.geography.latlons`
+     - The new function returns a tuple of arrays (lats, lons)
    * - to_points()
-     - N/A
-     - Use: :func:`fl.geography.points`, :func:`fl.geography.xys`. These functions return a tuple of arrays (x, y)
+     - :func:`fl.geography.points` or :func:`fl.geography.xys`
+     - These functions return a tuple of arrays (x, y)
    * - projection()
-     - N/A
-     - Use: :func:`fl.geography.projection`
+     - :func:`fl.geography.projection`
+     -
    * - bounding_box()
-     - N/A
-     - Use: :func:`fl.geography.bounding_box`
+     - :func:`fl.geography.bounding_box`
+     -
    * - datetime()
      - N/A
-     - Use :func:`fl.time.base_datetime` and :func:`fl.time.valid_datetime` instead.
+     - This method is no longer available. Use the following instead:
+
+        .. code-block:: python
+
+           f.get("time.base_datetime")
+           f.get("time.valid_datetime")
+
    * - metadata()
-     - metadata()
+     - :py:meth:`~earthkit.data.fieldlist.FieldList.metadata`
      - Has limited scope now. Can only access keys in the raw metadata belonging to the object the field was created from. E.g. for GRIB this works:
 
         .. code-block:: python
@@ -316,11 +322,11 @@ The following table gives an overview of the changes in the Fieldlist API:
 
         When the key does not exist in the raw metadata, it raises a KeyError.
    * - save()
-     - N/A
-     - Use: :func:`f.to_target`
+     - :py:meth:`~earthkit.data.fieldlist.FieldList.to_target`
+     -
    * - write()
-     - N/A
-     - Use: :func:`f.to_target`
+     - :py:meth:`~earthkit.data.fieldlist.FieldList.to_target`
+     -
 
 
 Xarray engine
