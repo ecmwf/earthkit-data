@@ -58,7 +58,8 @@ class GribParameterBuilder:
         )
 
         # Metadata for chemical parameters
-        if _get("chemId", None) is not None:
+        chem_id = _get("chemId", None)
+        if chem_id is not None and chem_id != -1:
             # "chemId" is defined for chemical parameters
             chem = _get("parameter.chemShortName", None)
             # using "parameter.chemShortName" instead of "chemShortName"
