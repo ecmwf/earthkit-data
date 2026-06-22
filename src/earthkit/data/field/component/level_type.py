@@ -336,7 +336,7 @@ def _register_level_type(name: str, metadata: dict | None = None) -> LevelType:
         long_name=metadata.get("long_name", name),
         units=metadata.get("units", ""),
         layer=metadata.get("layer", False),
-        positive=metadata.get("positive", None),
+        positive=metadata.get("positive", ""),
     )
 
     _LEVEL_TYPES[name] = level_type
