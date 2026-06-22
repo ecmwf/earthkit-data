@@ -76,6 +76,8 @@ class FDBSource(Source):
             fdb = pyfdb.FDB(**self._fdb_kwargs)
             if self.stream:
                 stream = fdb.retrieve(self.request)
+                if hasattr(stream, "open") and callable(stream.open):
+                    stream.open()
                 return StreamSource(stream, **self._stream_kwargs)
             else:
                 return FDBFileSource(fdb, self.request)
@@ -136,10 +138,18 @@ class FDBRequestMapper(RequestMapper):
 
     def _build(self):
         r = []
+        # check for pyfdb >=5
+        has_new_api = hasattr(pyfdb, "ListElement")
         fdb = pyfdb.FDB(**self.fdb_kwargs)
-        for el in fdb.list(self.request, True, True):
-            data = el["keys"]
-            r.append(self._convert(data))
+        if has_new_api:
+            for el in fdb.list(self.request, level=3):
+                data = el.combined_key()
+                r.append(self._convert(data))
+        else:
+            for el in fdb.list(self.request, True, True):
+                data = el["keys"]
+                r.append(self._convert(data))
+
         return r
 
     @staticmethod

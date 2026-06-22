@@ -96,6 +96,16 @@ def test_lazy_fdb():
         # fl_in is the original fieldlist from the sample grib file, fl is the fieldlist retrieved from FDB
         fl_in, config = make_fdb(os.path.join(tmpdir, "_fdb"))
 
+        # import pyfdb
+        # fdb = pyfdb.FDB(config=config)
+        # stream = fdb.retrieve(TEST_GRIB_REQUEST)
+
+        # from eccodes.highlevel.reader import codes_new_from_stream
+        # h = codes_new_from_stream(stream)
+
+        # print(h)
+        # return
+
         # fl is the virtual fieldlist retrieved from FDB
         fl = from_source("fdb", TEST_GRIB_REQUEST, config=config, stream=False, lazy=True).to_fieldlist()
         assert len(fl) == 32
