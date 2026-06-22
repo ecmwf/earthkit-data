@@ -45,7 +45,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 name = "earthkit-data"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 entry-points."xarray.backends".earthkit = "earthkit.data.xr_engine.engine:EarthkitBackendEntrypoint"
 optional-dependencies.all = [
   "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geopandas,gribjump,iris,mars,odb,polytope,projection,s3,wekeo]"
