@@ -83,7 +83,11 @@ def test_grib_vertical_2(fl_type):
         ),
         (
             "soil_7.grib1",
-            (7, "depth_below_ground_level"),
+            (7, "depth_below_land_layer"),
+        ),
+        (
+            "soil_7.grib2",
+            (7, "depth_below_land_layer"),
         ),
         (
             "sol_3.grib2",
@@ -116,7 +120,22 @@ def test_grib_vertical_2(fl_type):
         ("depth_below_sea_layer.grib2", (0, "depth_below_sea_layer")),
         ("mixed_layer_depth_by_density.grib2", (0, "mixed_layer_depth_by_density")),
         ("isothermal.grib2", (287, "temperature")),
-        ("ice_layer_on_water.grib2", (1, "ice_layer_on_water")),
+        ("medium_cloud_layer.grib2", (800, "medium_cloud_layer")),
+        ("mixing_layer.grib2", (0, "mixing_layer")),
+        ("water_surface_to_isothermal_ocean_layer.grib2", (0, "water_surface_to_isothermal_ocean_layer")),
+        ("entire_lake.grib2", (0, "entire_lake")),
+        ("sea_ice_layer.grib2", (1, "sea_ice_layer")),
+        ("ice_top_on_water.grib2", (0, "ice_top_on_water")),
+        ("entire_melt_pond.grib2", (0, "entire_melt_pond")),
+        ("low_cloud_layer.grib2", (0, "low_cloud_layer")),
+        ("most_unstable_parcel.grib2", (0, "most_unstable_parcel")),
+        ("snow_layer_over_ice_on_water.grib2", (0, "snow_layer_over_ice_on_water")),
+        ("stratosphere.grib2", (0, "stratosphere")),
+        ("high_cloud_layer.grib2", (450, "high_cloud_layer")),
+        ("soil_layer.grib2", (1, "soil_layer")),
+        ("ocean_surface_to_bottom.grib2", (0, "ocean_surface_to_bottom")),
+        ("lake_bottom.grib2", (0, "lake_bottom")),
+        ("troposphere.grib2", (0, "troposphere")),
     ],
 )
 def test_grib_vertical_core(fname, expected_values):
