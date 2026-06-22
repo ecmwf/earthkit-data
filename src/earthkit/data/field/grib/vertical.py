@@ -123,6 +123,26 @@ class GribLevelType(GribVerticalType):
         return self.component_matcher.match(component)
 
 
+class GribSurfLevelType(GribVerticalType):
+    def from_grib(self, handle):
+        def _get(key, default=None):
+            return handle.get(key, default=default)
+
+        level = 0
+        layer = None
+
+        return {"level": level, "layer": layer, "level_type": self.component_type}
+
+    def to_grib(self, component, handle=None):
+        return {
+            "level": 0,
+            "typeOfLevel": self.key,
+        }
+
+    def match(self, component):
+        return self.component_matcher.match(component)
+
+
 class HybridGribLevelType(GribLevelType):
     def from_grib(self, handle):
         result = super().from_grib(handle)
@@ -135,7 +155,7 @@ class HybridGribLevelType(GribLevelType):
 
         # this tries to avoid writing the coefficients back to the handle if they are already
         # present and correct, which can be expensive for large coefficient arrays. The check
-        # not robust enough and should be improved.
+        # is not robust enough and should be improved.
         if handle is not None and hasattr(component, "level_parameters"):
             level_parameters = component._level_parameters
             if isinstance(level_parameters, GribFieldComponentHandler):
@@ -164,8 +184,15 @@ class GribLayerType(GribVerticalType):
 
         top = self.converter.from_grib(top)
         bottom = self.converter.from_grib(bottom)
-        level = top
         layer = (top, bottom)
+
+        level = _get("level")
+
+        if level is None:
+            if self.component_type.value.level == "top":
+                level = top
+            else:
+                level = bottom
 
         return {"level": level, "layer": layer, "level_type": self.component_type}
 
@@ -205,8 +232,8 @@ _TYPES = [
         converter=PressurePaConverter(),
         component_matcher=NonIntComponentMatcher(),
     ),
-    GribLevelType("depthBelowLand", LevelTypes.DEPTH_BG_LEVEL),
-    GribLayerType("depthBelowLandLayer", LevelTypes.DEPTH_BG_LEVEL),
+    GribLevelType("depthBelowLand", LevelTypes.DEPTH_BL_LEVEL),
+    GribLayerType("depthBelowLandLayer", LevelTypes.DEPTH_BL_LAYER),
     GribLayerType("depthBelowSeaLayer", LevelTypes.DEPTH_BS_LAYER),
     GribLevelType("entireAtmosphere", LevelTypes.ENTIRE_ATMOSPHERE),
     GribLevelType("generalVerticalLayer", LevelTypes.GENERAL),
@@ -220,9 +247,25 @@ _TYPES = [
     GribLevelType("mixedLayerDepthByDensity", LevelTypes.MIXED_LAYER_DEPTH_BY_DENSITY),
     GribLevelType("oceanSurface", LevelTypes.OCEAN_SURFACE),
     GribLevelType("potentialVorticity", LevelTypes.PV),
-    GribLevelType("snowLayer", LevelTypes.SNOW),
+    GribLayerType("snowLayer", LevelTypes.SNOW),
     GribLevelType("surface", LevelTypes.SURFACE),
     GribLevelType("theta", LevelTypes.THETA),
+    GribSurfLevelType("mixingLayer", LevelTypes.MIXING_LAYER),
+    GribSurfLevelType("waterSurfaceToIsothermalOceanLayer", LevelTypes.WATER_SURFACE_TO_ISOTHERMAL_OCEAN_LAYER),
+    GribSurfLevelType("entireLake", LevelTypes.ENTIRE_LAKE),
+    GribLayerType("seaIceLayer", LevelTypes.SEA_ICE_LAYER),
+    GribSurfLevelType("iceTopOnWater", LevelTypes.ICE_TOP_ON_WATER),
+    GribSurfLevelType("entireMeltPond", LevelTypes.ENTIRE_MELT_POND),
+    GribLayerType("lowCloudLayer", LevelTypes.LOW_CLOUD_LAYER),
+    GribSurfLevelType("mostUnstableParcel", LevelTypes.MOST_UNSTABLE_PARCEL),
+    GribSurfLevelType("snowLayerOverIceOnWater", LevelTypes.SNOW_LAYER_OVER_ICE_ON_WATER),
+    GribSurfLevelType("stratosphere", LevelTypes.STRATOSPHERE),
+    GribLayerType("highCloudLayer", LevelTypes.HIGH_CLOUD_LAYER),
+    GribLayerType("soilLayer", LevelTypes.SOIL_LAYER),
+    GribSurfLevelType("oceanSurfaceToBottom", LevelTypes.OCEAN_SURFACE_TO_BOTTOM),
+    GribSurfLevelType("lakeBottom", LevelTypes.LAKE_BOTTOM),
+    GribSurfLevelType("troposphere", LevelTypes.TROPOSPHERE),
+    GribLayerType("mediumCloudLayer", LevelTypes.MEDIUM_CLOUD_LAYER),
 ]
 
 # mapping from GRIB typeOfLevel key to GribLevelType
