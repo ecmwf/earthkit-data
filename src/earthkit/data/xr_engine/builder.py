@@ -318,9 +318,18 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 if d.name in dims_set:
                     dims_set.remove(d.name)
                     dim_objs.append(d)
-            assert len(dims_set) == 0, (
-                f"Auxiliary coordinate '{coord_label}' has unknown dimension(s): {tuple(dims_set)}"
-            )
+            if dims_set:
+                if strict:
+                    raise ValueError(
+                        f"Auxiliary coordinate '{coord_label}' references unknown dimension(s): {tuple(dims_set)}. "
+                        f"These dimensions are not defined in the dataset. "
+                        f"Update the coordinate's declared dimensions or use strict=False "
+                        f"to ignore invalid auxiliary coordinates."
+                    )
+                else:
+                    # ignore this invalid auxiliary coordinate
+                    continue
+
             coords = {d.key: self.tensor_coords[d.key].vals for d in dim_objs if d.key in self.tensor_coords}
 
             dim_keys = tuple(coords)

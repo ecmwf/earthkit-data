@@ -12,7 +12,7 @@
 import numpy as np
 import pytest
 
-from earthkit.data import from_source
+from earthkit.data import concat, from_source
 from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
@@ -100,13 +100,47 @@ def test_xr_engine_aux_coords_multiple_coords(lazy_load, allow_holes):
 @pytest.mark.cache
 @pytest.mark.parametrize("allow_holes", [False, True])
 def test_xr_engine_aux_coords_unknown_dim(allow_holes):
-    """aux_coords referencing a non-existent dimension should raise."""
+    """aux_coords referencing a non-existent dimension should raise when `strict=True` and ignore otherwise."""
     fl = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib")).to_fieldlist()
-    with pytest.raises(AssertionError, match="unknown dimension"):
+
+    with pytest.raises(ValueError, match="unknown dimension"):
         fl.to_xarray(
-            aux_coords={"centre": ("metadata.centre", "nonexistent_dim")},
-            allow_holes=allow_holes,
+            aux_coords={"centre": ("metadata.centre", "nonexistent_dim")}, allow_holes=allow_holes, strict=True
         )
+
+    # strict=False is default
+    ds = fl.to_xarray(
+        aux_coords={"centre": ("metadata.centre", "nonexistent_dim")},
+        allow_holes=allow_holes,
+    )
+    assert "centre" not in ds.coords and "centre" not in ds
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+def test_xr_engine_aux_coords_unknown_dim2(allow_holes):
+    """aux_coords referencing a non-existent dimension should raise when `strict=True` and ignore otherwise."""
+    fl1 = from_source("sample", "chem-cams.grib").to_fieldlist()
+    fl2 = from_source("sample", "optical-cams.grib").to_fieldlist()
+    fl = concat(fl1, fl2)
+
+    with pytest.raises(ValueError, match="unknown dimension"):
+        fl.to_xarray(
+            split_dims="parameter.variable",
+            aux_coords={"wavelength_units": ("parameter.wavelength_units", "wavelength")},
+            strict=True,
+        )
+
+    # strict=False is default
+    dss, d = fl.to_xarray(
+        split_dims="parameter.variable",
+        aux_coords={"wavelength_units": ("parameter.wavelength_units", "wavelength")},
+    )
+    for _ds, _d in zip(dss, d):
+        if _d["parameter.variable"] == "aod":
+            assert "wavelength_units" in _ds.coords
+        else:
+            assert "wavelength_units" not in _ds.coords and "wavelength_units" not in _ds
 
 
 def test_xr_engine_aux_coords_invalid_spec():
