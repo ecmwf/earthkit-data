@@ -58,7 +58,10 @@ class GribParameterBuilder:
         )
 
         # Metadata for chemical parameters
-        if _get("chemId", None) is not None:
+        chem_id = _get("chemId", None)
+        # chem_id == -1 is used to indicate "not a chemical parameter"
+        # cf. https://github.com/ecmwf/eccodes/blob/fa764a8a644633fdcb6fbf9af857f35fdcee7875/definitions/grib2/parameters.def#L25
+        if chem_id is not None and chem_id >= 0:
             # "chemId" is defined for chemical parameters
             chem = _get("parameter.chemShortName", None)
             # using "parameter.chemShortName" instead of "chemShortName"
