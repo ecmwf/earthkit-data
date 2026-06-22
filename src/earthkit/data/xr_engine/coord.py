@@ -178,13 +178,8 @@ class LevelCoord(Coord):
         self._default = None
         if ds is not None:
             # TODO: this is a bit hacky, need to find a better way to get the level type information
-            t = ds[0].vertical._type
-            self._default = {
-                "standard_name": t.standard_name,
-                "long_name": t.long_name,
-                "units": str(t.units),
-                "positive": t.positive,
-            }
+            _cf_attrs = ds[0].vertical.cf()  # can be None
+            self._default = dict(_cf_attrs) if _cf_attrs else {}
 
             # TODO; try to avoid getting the metadata upfront
             for k in ["vertical.level_type", "metadata.typeOfLevel", "metadata.levtype"]:

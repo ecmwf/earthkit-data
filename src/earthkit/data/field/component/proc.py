@@ -225,7 +225,7 @@ class Proc(ProcBase):
     @mark_get_key
     def time_value(self) -> Optional[Any]:
         r"""Return the time processing value."""
-        time = self.time
+        time = self.time()
         if time is not None:
             return time.value
         return None
@@ -233,7 +233,7 @@ class Proc(ProcBase):
     @mark_get_key
     def time_method(self) -> Optional[TimeMethod]:
         r"""Return the time processing method."""
-        time = self.time
+        time = self.time()
         if time is not None:
             return time.method
         return None
