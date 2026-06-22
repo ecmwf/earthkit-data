@@ -17,7 +17,7 @@ from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.encoders.grib import GribEncoder
 from earthkit.data.targets import to_target
-from earthkit.data.utils.testing import NO_RIOXARRAY, NO_ODC, earthkit_examples_file, earthkit_test_data_file
+from earthkit.data.utils.testing import NO_ODC, NO_RIOXARRAY, earthkit_examples_file, earthkit_test_data_file
 
 
 @pytest.mark.parametrize(

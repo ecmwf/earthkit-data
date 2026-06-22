@@ -46,6 +46,7 @@ def test_pd_dataframe_translator():
 @pytest.mark.skipif(NO_GEOPANDAS, reason="geopandas is not installed")
 def test_gpd_dataframe_translator():
     import geopandas as gpd
+
     val = gpd.GeoDataFrame()
     ds = from_object(val)
 
