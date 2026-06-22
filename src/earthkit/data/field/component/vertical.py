@@ -379,7 +379,7 @@ class Vertical(VerticalBase):
             return convert_array(self._level, source_units=self.units(), target_units=units)
 
     def layer(self) -> Optional[tuple[float, float]]:
-        return None
+        return self._layer
 
     def cf(self) -> Optional[dict]:
         return self._type.cf
@@ -499,24 +499,6 @@ class Vertical(VerticalBase):
 
         current.update(d)
         return self.from_dict(current)
-
-
-class VerticalLayer(Vertical):
-    """Vertical component with layer information.
-
-    This class extends the Vertical class to include layer information, which is represented as a tuple of two
-    values (bottom, top). The layer information is only applicable for certain vertical types, and may be None
-    for other types.
-    """
-
-    def __init__(
-        self,
-        level: Union[int, float] = None,
-        layer: Optional[tuple[float, float]] = None,
-        level_type: Optional[Union[LevelType, str]] = None,
-    ) -> None:
-        super().__init__(level=level, layer=layer, level_type=level_type)
-        self._layer = layer
 
 
 class ParametricVertical(Vertical):

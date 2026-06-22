@@ -187,6 +187,7 @@ class GribLayerType(GribVerticalType):
         layer = (top, bottom)
 
         level = _get("level")
+
         if level is None:
             if self.component_type.value.level == "top":
                 level = top
