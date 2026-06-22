@@ -10,6 +10,7 @@ import datetime
 import json
 import os
 import sys
+import urllib.request
 
 import yaml
 
@@ -234,11 +235,22 @@ intersphinx_mapping = {
 }
 
 
+_EARTHKIT_PACKAGES_URL = (
+    "https://raw.githubusercontent.com/ecmwf/earthkit/refs/heads/develop/docs/earthkit-packages.yml"
+)
+
 def _write_earthkit_packages_js(app):
-    """Read earthkit-packages.yml and write a JS data file into the output _static dir."""
-    config_path = os.path.join(os.path.dirname(__file__), "earthkit-packages.yml")
-    with open(config_path, encoding="utf-8") as fh:
-        config = yaml.safe_load(fh)
+    """Fetch earthkit-packages.yml from remote and write a JS data file into the output _static dir.
+
+    Falls back to the local copy if the remote fetch fails.
+    """
+    try:
+        with urllib.request.urlopen(_EARTHKIT_PACKAGES_URL, timeout=10) as response:
+            config = yaml.safe_load(response.read())
+    except Exception:
+        config_path = os.path.join(os.path.dirname(__file__), "earthkit-packages.yml")
+        with open(config_path, encoding="utf-8") as fh:
+            config = yaml.safe_load(fh)
     packages = config.get("packages", [])
     static_dir = os.path.join(app.outdir, "_static")
     os.makedirs(static_dir, exist_ok=True)
