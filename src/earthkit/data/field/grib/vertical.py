@@ -155,7 +155,7 @@ class HybridGribLevelType(GribLevelType):
 
         # this tries to avoid writing the coefficients back to the handle if they are already
         # present and correct, which can be expensive for large coefficient arrays. The check
-        # not robust enough and should be improved.
+        # is not robust enough and should be improved.
         if handle is not None and hasattr(component, "level_parameters"):
             level_parameters = component._level_parameters
             if isinstance(level_parameters, GribFieldComponentHandler):
@@ -255,16 +255,16 @@ _TYPES = [
     GribLayerType("seaIceLayer", LevelTypes.SEA_ICE_LAYER),
     GribSurfLevelType("iceTopOnWater", LevelTypes.ICE_TOP_ON_WATER),
     GribSurfLevelType("entireMeltPond", LevelTypes.ENTIRE_MELT_POND),
-    GribSurfLevelType("lowCloudLayer", LevelTypes.LOW_CLOUD_LAYER),
+    GribLayerType("lowCloudLayer", LevelTypes.LOW_CLOUD_LAYER),
     GribSurfLevelType("mostUnstableParcel", LevelTypes.MOST_UNSTABLE_PARCEL),
     GribSurfLevelType("snowLayerOverIceOnWater", LevelTypes.SNOW_LAYER_OVER_ICE_ON_WATER),
     GribSurfLevelType("stratosphere", LevelTypes.STRATOSPHERE),
-    GribSurfLevelType("highCloudLayer", LevelTypes.HIGH_CLOUD_LAYER),
+    GribLayerType("highCloudLayer", LevelTypes.HIGH_CLOUD_LAYER),
     GribLayerType("soilLayer", LevelTypes.SOIL_LAYER),
     GribSurfLevelType("oceanSurfaceToBottom", LevelTypes.OCEAN_SURFACE_TO_BOTTOM),
     GribSurfLevelType("lakeBottom", LevelTypes.LAKE_BOTTOM),
     GribSurfLevelType("troposphere", LevelTypes.TROPOSPHERE),
-    GribSurfLevelType("mediumCloudLayer", LevelTypes.MEDIUM_CLOUD_LAYER),
+    GribLayerType("mediumCloudLayer", LevelTypes.MEDIUM_CLOUD_LAYER),
 ]
 
 # mapping from GRIB typeOfLevel key to GribLevelType
