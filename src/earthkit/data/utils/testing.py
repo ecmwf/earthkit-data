@@ -134,6 +134,7 @@ if not NO_PROD_FDB:
     fdb_home = os.environ.get("FDB_HOME", None)
     NO_PROD_FDB = fdb_home is None
 
+NO_ODC = not modules_installed("pyodc")
 NO_GRIBJUMP = NO_FDB or not modules_installed("pygribjump")
 NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
 NO_COVJSONKIT = not modules_installed("covjsonkit")
@@ -141,6 +142,8 @@ NO_RIOXARRAY = not modules_installed("rioxarray")
 
 NO_S3_AUTH = not modules_installed("aws_requests_auth")
 NO_GEO = not modules_installed("earthkit-geo")
+NO_GEOPANDAS = not modules_installed("geopandas")
+
 try:
     NO_ECFS = not os.path.exists(shutil.which("ecp"))
 except Exception:

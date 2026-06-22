@@ -9,8 +9,13 @@
 # nor does it submit to any jurisdiction.
 #
 
+import pytest
+
 from earthkit.data import from_source
-from earthkit.data.utils.testing import earthkit_remote_examples_file
+from earthkit.data.utils.testing import NO_ODC, earthkit_remote_examples_file
+
+if NO_ODC:
+    pytest.skip("pyodc is not installed", allow_module_level=True)
 
 
 def test_odb_url():

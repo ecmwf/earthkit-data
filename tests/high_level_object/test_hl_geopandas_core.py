@@ -9,6 +9,10 @@
 # nor does it submit to any jurisdiction.
 #
 
+import pytest
+
+pytest.importorskip("geopandas")
+
 from earthkit.data import from_object
 from earthkit.data.utils.testing import earthkit_test_data_file
 

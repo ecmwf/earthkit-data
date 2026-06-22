@@ -9,10 +9,13 @@
 # nor does it submit to any jurisdiction.
 #
 
+import pytest
+
 from earthkit.data import from_source
-from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import NO_GEOPANDAS, earthkit_test_data_file
 
 
+@pytest.mark.skipif(NO_GEOPANDAS, reason="geopandas is not installed")
 def test_hl_shapefile_single_core():
     d = from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.shp.zip"))
 
