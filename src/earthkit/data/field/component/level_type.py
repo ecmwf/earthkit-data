@@ -403,14 +403,6 @@ _defs = {
         "layer": False,
         "positive": "",
     },
-    # "PRESSURE_LAYER": {
-    #     "name": "p_layer",
-    #     "standard_name": "air_pressure",
-    #     "long_name": "pressure",
-    #     "units": "hPa",
-    #     "layer": True,
-    #     "positive": POSITIVE_DOWN,
-    # },
     "PRESSURE": {
         "name": "pressure",
         "abbreviation": "pl",
@@ -418,6 +410,16 @@ _defs = {
         "long_name": "pressure",
         "units": "hPa",
         "layer": False,
+        "positive": POSITIVE_DOWN,
+    },
+    "PRESSURE_LAYER": {
+        "name": "pressure_layer",
+        "abbreviation": "p_layer",
+        "standard_name": "air_pressure",
+        "long_name": "pressure",
+        "units": "hPa",
+        "layer": True,
+        "level": TOP_LEVEL,
         "positive": POSITIVE_DOWN,
     },
     "PV": {

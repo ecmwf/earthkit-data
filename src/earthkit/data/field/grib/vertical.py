@@ -240,7 +240,7 @@ _TYPES = [
     HybridGribLevelType("hybrid", LevelTypes.HYBRID),
     GribLevelType("iceLayerOnWater", LevelTypes.ICE_LAYER_ON_WATER),
     GribSurfLevelType("iceTopOnWater", LevelTypes.ICE_TOP_ON_WATER),
-    GribLayerType("isobaricLayer", LevelTypes.PRESSURE),  # hPa
+    GribLayerType("isobaricLayer", LevelTypes.PRESSURE_LAYER),  # hPa
     GribLevelType("isobaricInhPa", LevelTypes.PRESSURE, component_matcher=IntComponentMatcher()),
     GribLevelType(
         "isobaricInPa",
