@@ -238,6 +238,7 @@ intersphinx_mapping = {
     "ncdata": ("https://ncdata.readthedocs.io/en/latest/", None),
     "iris": ("https://scitools-iris.readthedocs.io/en/latest/", None),
     "pyodc": ("https://pyodc.readthedocs.io/en/latest/", None),
+    "earthkit-utils": ("https://earthkit-utils.readthedocs.io/en/latest/", None),
 }
 
 
