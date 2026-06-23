@@ -3,9 +3,7 @@ Earthkit-data's documentation
 
 .. important::
 
-    This software is in **release candidate** stage. It is not yet considered stable and may still undergo significant changes before the final 1.0 release. We welcome feedback and contributions as we approach that milestone.
-
-    Please see the :ref:`migration_1.0.0` guide for details on the changes in this release candidate and how to update your code to be compatible with 1.0.0.
+    The latest major version 1.0 introduces significant breaking changes. Please read the :ref:`migration_1.0.0` guide before upgrading.
 
 **earthkit-data** is a format-agnostic Python interface for geospatial data with a focus on meteorology and
 climate science. It is the data handling component of :xref:`earthkit`.
