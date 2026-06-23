@@ -24,7 +24,6 @@ Version updates
     :maxdepth: 1
 
     version_1.0_updates
-    version_1.0.0rc_updates
     version_0.20_updates
     version_0.19_updates
     version_0.18_updates
