@@ -67,7 +67,7 @@ class LevelType:
         units: Union[str, Units],
         layer: bool,
         positive: str,
-        level: str = TOP_LEVEL,
+        level: str = str(),
         parametric: bool = False,
         coefficient_names: tuple[str, ...] | None = None,
     ) -> None:
@@ -118,6 +118,12 @@ class LevelType:
             "units": str(self.units),
             "positive": self.positive,
         }
+
+        if layer and level not in (TOP_LEVEL, BOTTOM_LEVEL, ""):
+            raise ValueError(
+                f"Invalid level value for layer type {name}: {level}. Must be "
+                f"one of: {TOP_LEVEL}, {BOTTOM_LEVEL}, or empty string."
+            )
 
     def __eq__(self, other) -> bool:
         """Check if this LevelType is equal to another LevelType or a string.
