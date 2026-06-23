@@ -329,6 +329,23 @@ The following table gives an overview of the changes in the Fieldlist API (the `
      -
 
 
+Indexed mode removed
++++++++++++++++++++++
+
+The GRIB indexed mode, previously available via the ``indexing=True`` kwarg in
+:py:func:`~earthkit.data.from_source`, has been removed:
+
+.. code-block:: python
+
+    # No longer supported
+    fl = ekd.from_source("file", "data.grib", indexing=True)
+
+In indexed mode the GRIB file was pre-scanned and all field metadata was stored in an
+in-memory index, making repeated :meth:`sel` and :meth:`order_by` calls faster for large
+files at the cost of upfront indexing time and additional memory. This feature will be
+reimplemented in a future release, potentially with a different interface.
+
+
 Xarray engine
 ------------------
 

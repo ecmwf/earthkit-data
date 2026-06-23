@@ -1,0 +1,148 @@
+Version 1.0.0 Updates
+///////////////////////
+
+.. note::
+
+    This release contains breaking changes. Please refer to the
+    :ref:`migration guide <migration_1.0.0>` for a full description of what has changed
+    and how to update your code.
+
+
+Version 1.0.0
+==============
+
+New features
+++++++++++++
+
+Data object returned by ``from_source``
+----------------------------------------
+
+:py:func:`~earthkit.data.from_source` now returns a lightweight *data object* instead of
+a format-specific fieldlist. The data object defers actual loading until it is converted
+to a concrete representation via one of the ``to_*`` methods (e.g.
+:meth:`~earthkit.data.Data.to_fieldlist`, :meth:`~earthkit.data.Data.to_xarray`,
+:meth:`~earthkit.data.Data.to_numpy`). The available conversions for a given source can be
+inspected via :py:attr:`~earthkit.data.Data.available_types`.
+
+See :ref:`migration_1.0.0` for migration details.
+
+Notebook examples:
+
+- :ref:`/how-tos/source/data.ipynb`
+
+
+Component-based Field metadata
+-------------------------------
+
+:py:class:`~earthkit.data.core.field.Field` has been redesigned around a set of
+format-independent, polymorphic *components*, each responsible for a distinct aspect of
+the field's metadata:
+
+- :py:class:`~earthkit.data.field.component.parameter.ParameterBase` — physical quantity,
+  units, CF names; extended with chemical, optical, and wave-spectra sub-types.
+- :py:class:`~earthkit.data.field.component.time.TimeBase` — base datetime, forecast step,
+  valid datetime.
+- :py:class:`~earthkit.data.field.component.vertical.VerticalBase` — level value, level
+  type, layer bounds, parametric (hybrid) level coefficients.
+- :py:class:`~earthkit.data.field.component.geography.GeographyBase` — lat/lon arrays,
+  bounding box, projection, grid type.
+- :py:class:`~earthkit.data.field.component.ensemble.EnsembleBase` — ensemble member
+  identifier.
+- :py:class:`~earthkit.data.field.component.proc.ProcBase` — post-processing operations
+  (e.g. accumulation type and time span).
+
+Components are accessed via field attributes (e.g. ``field.time``) or through the generic
+:meth:`~earthkit.data.core.field.Field.get` method using ``"component.key"`` strings. Raw
+source-native keys (e.g. GRIB ``shortName``) remain accessible via
+:meth:`~earthkit.data.core.field.Field.metadata` or with the ``"metadata."`` prefix in
+:meth:`~earthkit.data.core.field.Field.get`.
+
+See the :ref:`field_concept` and the component concept pages for full details.
+
+Notebook examples:
+
+- :ref:`/how-tos/field/field_overview.ipynb`
+- :ref:`/how-tos/grib/grib_overview.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_chem.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_wave_spectra.ipynb`
+
+
+Field modification via ``set()``
+---------------------------------
+
+Fields can now be modified in a non-destructive way using
+:py:meth:`~earthkit.data.core.field.Field.set`. The method accepts a dictionary of
+``"component.key": value`` pairs (and/or a ``"values"`` entry) and returns a **new** field
+with the requested changes applied, leaving the original unchanged.
+
+See the how-to notebooks:
+
+- :ref:`/how-tos/grib/grib_modify_metadata.ipynb`
+- :ref:`/how-tos/grib/grib_modify_values.ipynb`
+
+
+Field and FieldList arithmetic
+--------------------------------
+
+Element-wise arithmetic operators (``+``, ``-``, ``*``, ``/``) are now supported directly
+on both :py:class:`~earthkit.data.core.field.Field` and
+:py:class:`~earthkit.data.core.fieldlist.FieldList` objects. Each operation returns a new
+object with the computed values; the metadata of the left-hand operand is preserved in the
+result.
+
+.. note::
+
+    The ``+`` operator no longer concatenates fieldlists. Use
+    :py:func:`~earthkit.data.concat` for concatenation instead.
+
+Notebook examples:
+
+- :ref:`/how-tos/field/field_overview.ipynb`
+- :ref:`/how-tos/grib/grib_overview.ipynb`
+
+
+Xarray engine — new ``earthkit`` profile
+-----------------------------------------
+
+The Xarray engine has been refactored and a new default profile ``earthkit`` has been
+added. This profile uses the format-independent component metadata keys to build dataset
+dimensions and coordinates, making it consistent across GRIB, NetCDF, and other sources.
+The legacy ``mars`` and ``grib`` profiles are retained.
+
+Other notable Xarray engine changes:
+
+- Four new built-in dimensions were added to support the extended parameter component
+  metadata:
+
+  - ``chem_variable`` — chemical constituent or aerosol type
+  - ``wavelength`` — central wavelength for optical parameters
+  - ``wave_direction`` — wave propagation direction for 2-D wave spectra
+  - ``wave_frequency`` — wave frequency for 2-D wave spectra
+
+  CF-compliant attributes are set on the corresponding coordinate variables automatically.
+
+- The ``"number"`` dimension role has been renamed to ``"member"``.
+- The ``time_dim_mode`` kwarg has been replaced by ``time_dims``.
+- The ``_earthkit`` dataset attribute is now serialised as a JSON string, enabling
+  round-trip NetCDF serialisation without removing it.
+
+See :ref:`xr_engine` for full documentation.
+
+Notebook examples:
+
+- :ref:`/how-tos/xr_engine/xarray_engine_overview.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_temporal.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_ensemble.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_chem.ipynb`
+- :ref:`/how-tos/xr_engine/xarray_engine_wave_spectra.ipynb`
+
+
+Dependencies
++++++++++++++++
+
+Geography support for GRIB data — including access to latitudes, longitudes, grid
+specification, and other grid properties via the
+:py:class:`~earthkit.data.field.component.geography.GeographyBase` component — requires
+an `eccodes <https://github.com/ecmwf/eccodes>`_ library built with
+`eckit <https://github.com/ecmwf/eckit>`_ grid support. Without it, geography keys will
+return ``None`` or raise an error.
