@@ -15,4 +15,6 @@ Concepts
    xarray/index.rst
    plugins/index.rst
    misc/index.rst
-   field
+   field/index.rst
+   fieldlist
+   vertical
