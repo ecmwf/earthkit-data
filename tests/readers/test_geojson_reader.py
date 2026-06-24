@@ -11,7 +11,10 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import NO_GEOPANDAS, earthkit_test_data_file
+
+if NO_GEOPANDAS:
+    pytest.skip("geopandas is not installed", allow_module_level=True)
 
 
 def test_geojson():

@@ -12,10 +12,11 @@
 
 import logging
 
-import geopandas as gpd
 import pandas as pd
+import pytest
 
 from earthkit.data import from_object, transform
+from earthkit.data.utils.testing import NO_GEOPANDAS
 
 LOG = logging.getLogger(__name__)
 
@@ -42,7 +43,10 @@ def test_pd_dataframe_translator():
     assert isinstance(transform(ds, pd.DataFrame), pd.DataFrame)
 
 
+@pytest.mark.skipif(NO_GEOPANDAS, reason="geopandas is not installed")
 def test_gpd_dataframe_translator():
+    import geopandas as gpd
+
     val = gpd.GeoDataFrame()
     ds = from_object(val)
 
