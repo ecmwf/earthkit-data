@@ -10,7 +10,14 @@ from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
 from earthkit.data.field.component.level_parameters import HybridLevelParametersBase
-from earthkit.data.field.component.level_type import BOTTOM_LEVEL, POSITIVE_DOWN, POSITIVE_UP, TOP_LEVEL, LevelTypes
+from earthkit.data.field.component.level_type import (
+    BOTTOM_LEVEL,
+    POSITIVE_DOWN,
+    POSITIVE_UP,
+    TOP_LEVEL,
+    LevelType,
+    LevelTypes,
+)
 
 from .collector import GribContextCollector
 from .core import GribFieldComponentHandler
@@ -80,7 +87,7 @@ class NonIntComponentMatcher(ComponentMatcher):
 class GribVerticalType(metaclass=ABCMeta):
     def __init__(self, key, component_type, converter=Converter(), component_matcher=ComponentMatcher()):
         self.key = key
-        self.component_type = component_type
+        self.component_type = component_type if isinstance(component_type, LevelType) else component_type.value
         self.component_matcher = component_matcher
         self.converter = converter
 
@@ -102,8 +109,7 @@ class GribLevelType(GribVerticalType):
         def _get(key, default=None):
             return handle.get(key, default=default)
 
-        level = _get("level")
-        top_or_bottom = self.component_type.value.level
+        top_or_bottom = self.component_type.level
         if top_or_bottom == TOP_LEVEL:
             level = _get("topLevel")
         elif top_or_bottom == BOTTOM_LEVEL:
@@ -198,10 +204,10 @@ class GribLayerType(GribVerticalType):
         if top is not None and bottom is not None:
             # if `positive` is set, try to order `(bottom, top)` according to the `positive` value
             try:
-                if self.component_type.value.positive == POSITIVE_UP:
+                if self.component_type.positive == POSITIVE_UP:
                     if bottom > top:
                         bottom, top = top, bottom
-                elif self.component_type.value.positive == POSITIVE_DOWN:
+                elif self.component_type.positive == POSITIVE_DOWN:
                     if bottom < top:
                         bottom, top = top, bottom
             except Exception:
@@ -213,7 +219,7 @@ class GribLayerType(GribVerticalType):
         level = self.converter.from_grib(level)
 
         if level is None:
-            if self.component_type.value.level == TOP_LEVEL:
+            if self.component_type.level == TOP_LEVEL:
                 level = top
             else:
                 level = bottom
@@ -311,7 +317,7 @@ assert len(_GRIB_TYPES) == len(_TYPES), "Duplicate level type keys"
 # mapping from LevelType to GribLevelType
 _COMPONENT_TYPES = defaultdict(list)
 for k, v in _GRIB_TYPES.items():
-    _COMPONENT_TYPES[v.component_type.value.name].append(v)
+    _COMPONENT_TYPES[v.component_type.name].append(v)
 
 for k in list(_COMPONENT_TYPES.keys()):
     if len(_COMPONENT_TYPES[k]) == 1:
@@ -323,7 +329,7 @@ for k in list(_COMPONENT_TYPES.keys()):
 # TODO: make it thread safe
 def register_grib_level_type(
     key: str,
-    component_type: LevelTypes,
+    component_type: LevelType,
     converter: Converter = Converter(),
     component_matcher: ComponentMatcher = ComponentMatcher(),
 ):
