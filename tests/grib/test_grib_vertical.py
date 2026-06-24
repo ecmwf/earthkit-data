@@ -136,6 +136,13 @@ def test_grib_vertical_2(fl_type):
         ("ocean_surface_to_bottom.grib2", (0, "ocean_surface_to_bottom")),
         ("lake_bottom.grib2", (0, "lake_bottom")),
         ("troposphere.grib2", (0, "troposphere")),
+        ("ocean_model.grib2", (1, "ocean_model")),
+        ("ocean_model_layer.grib2", (1, "ocean_model_layer")),
+        ("tropopause.grib2", (0, "tropopause")),
+        ("mixed_layer_parcel.grib2", (10000, "mixed_layer_parcel")),
+        ("nominal_top_of_atmosphere.grib2", (0, "nominal_top_of_atmosphere")),
+        ("abstract_single_level.grib2", (0, "abstract_single_level")),
+        ("cloud_base.grib2", (0, "cloud_base")),
     ],
 )
 def test_grib_vertical_core(fname, expected_values):
