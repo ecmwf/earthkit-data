@@ -21,6 +21,8 @@ from earthkit.data.core.plugins import register as register_plugin
 if TYPE_CHECKING:
     from earthkit.data.data import Data  # type: ignore[import]
 
+from typing import Callable, Literal, Union, overload
+
 
 class Source(Loader):
     """Base class for all sources."""
@@ -106,6 +108,37 @@ class SourceMaker:
 
 
 get_source = SourceMaker()
+
+
+@overload
+def from_source(
+    name: Literal["file"],
+    path: str,
+    expand_user: Union[bool, list, tuple] = True,
+    expand_vars: bool = False,
+    unix_glob: bool = True,
+    recursive_glob: bool = True,
+    filter: Union[str, Callable] = None,
+    parts: list = None,
+    stream: bool = False,
+) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["file-pattern"], pattern: str, *args, hive_partitioning: bool = False, **kwargs
+) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["url"],
+    url: str,
+    unpack: bool = True,
+    parts: Union[list, tuple] = None,
+    stream: bool = False,
+    **kwargs,
+) -> "Data": ...
 
 
 def from_source(name: str, *args, lazily=False, **kwargs) -> "Data":
