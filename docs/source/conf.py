@@ -170,7 +170,7 @@ html_theme_options = {
         "color-sidebar-item-background--hover": "#001F3F",
         "color-sidebar-item-expander-background--hover": "#001F3F",
     },
-    "light_logo": "earthkit-data-light.svg",
+    "light_logo": "earthkit-data-dark.svg",
     "dark_logo": "earthkit-data-dark.svg",
     "source_repository": "https://github.com/ecmwf/earthkit-data/",
     "source_branch": source_branch,
