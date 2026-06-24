@@ -59,3 +59,15 @@ When calling :func:`to_xarray` for NetCDF data it calls :py:func:`xarray.open_mf
     r = d.to_xarray(
         xarray_open_mfdataset_kwargs=dict(decode_cf=False, decode_times=False)
     )
+
+How to use ls() in a script?
+--------------------------------------------------------------
+
+The FieldList :py:meth:`~earthkit.data.core.fieldlist.FieldList.ls` method (also available on a Field) provides a convenient way to list the contents of a FieldList, designed to be used in an interactive session. It returns a pandas dataframe, which renders nicely in a Jupyter notebook or IPython session. If you want to use it in a script you need to print the result, for example:
+
+.. code-block:: python
+
+    import earthkit.data as ekd
+
+    ds = ekd.from_source("sample", "test.grib").to_fieldlist()
+    print(ds.ls())
