@@ -117,6 +117,16 @@ def test_grib_set_vertical_hybrid_1(fl_type):
     assert len(A) == 138
     assert len(B) == 138
 
+    with temp_file() as tmp:
+        f.to_target("file", tmp)
+        f_saved = from_source("file", tmp).to_fieldlist()[0]
+        assert f_saved.vertical.level() == 2
+        assert f_saved.vertical.level_type() == "hybrid"
+        assert f_saved.vertical.number_of_levels() == 137
+        A1, B1 = f_saved.vertical.coefficients()
+        assert np.allclose(A, A1)
+        assert np.allclose(B, B1)
+
 
 @pytest.mark.parametrize("fl_type", ["file"])
 @pytest.mark.parametrize("coeff_mode", ["object", "tuple"])

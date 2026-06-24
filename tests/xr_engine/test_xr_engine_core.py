@@ -129,7 +129,7 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
     assert ds.coords["levelist"].attrs == {
         "standard_name": "air_pressure",
         "long_name": "pressure",
-        "units": "hectopascal",
+        "units": "hPa",
         "positive": "down",
     }
 

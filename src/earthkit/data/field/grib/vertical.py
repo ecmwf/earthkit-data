@@ -10,7 +10,14 @@ from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
 from earthkit.data.field.component.level_parameters import HybridLevelParametersBase
-from earthkit.data.field.component.level_type import LevelTypes
+from earthkit.data.field.component.level_type import (
+    BOTTOM_LEVEL,
+    POSITIVE_DOWN,
+    POSITIVE_UP,
+    TOP_LEVEL,
+    LevelType,
+    LevelTypes,
+)
 
 from .collector import GribContextCollector
 from .core import GribFieldComponentHandler
@@ -20,6 +27,7 @@ class GribHybridLevelParameters(HybridLevelParametersBase):
     def __init__(self, handle):
         self._handle = handle
 
+    # TODO: this method should be cached
     def number_of_levels(self):
         coeff_num = self._handle.get("NV", default=None)
         if coeff_num is not None:
@@ -80,7 +88,7 @@ class NonIntComponentMatcher(ComponentMatcher):
 class GribVerticalType(metaclass=ABCMeta):
     def __init__(self, key, component_type, converter=Converter(), component_matcher=ComponentMatcher()):
         self.key = key
-        self.component_type = component_type
+        self.component_type = component_type if isinstance(component_type, LevelType) else component_type.value
         self.component_matcher = component_matcher
         self.converter = converter
 
@@ -102,7 +110,15 @@ class GribLevelType(GribVerticalType):
         def _get(key, default=None):
             return handle.get(key, default=default)
 
-        level = _get("level")
+        top_or_bottom = self.component_type.level
+        if top_or_bottom == TOP_LEVEL:
+            level = _get("topLevel")
+        elif top_or_bottom == BOTTOM_LEVEL:
+            level = _get("bottomLevel")
+        else:
+            level = _get("level")
+
+        # last resort: if level is still None, try to get topLevel, regardless top_or_bottom
         if level is None:
             level = _get("topLevel")
 
@@ -155,10 +171,10 @@ class HybridGribLevelType(GribLevelType):
 
         # this tries to avoid writing the coefficients back to the handle if they are already
         # present and correct, which can be expensive for large coefficient arrays. The check
-        # is not robust enough and should be improved.
-        if handle is not None and hasattr(component, "level_parameters"):
-            level_parameters = component._level_parameters
-            if isinstance(level_parameters, GribFieldComponentHandler):
+        # is not robust enough, and should be improved.
+        if handle is not None and hasattr(component, "_coefficients"):
+            level_parameters = component._coefficients
+            if isinstance(level_parameters, GribHybridLevelParameters):
                 nv = handle.get("NV", default=None)
                 if level_parameters.coefficient_size() == nv:
                     return r
@@ -184,12 +200,26 @@ class GribLayerType(GribVerticalType):
 
         top = self.converter.from_grib(top)
         bottom = self.converter.from_grib(bottom)
-        layer = (top, bottom)
+
+        if top is not None and bottom is not None:
+            # if `positive` is set, try to order `(bottom, top)` according to the `positive` value
+            try:
+                if self.component_type.positive == POSITIVE_UP:
+                    if bottom > top:
+                        bottom, top = top, bottom
+                elif self.component_type.positive == POSITIVE_DOWN:
+                    if bottom < top:
+                        bottom, top = top, bottom
+            except Exception:
+                pass
+
+        layer = (bottom, top)
 
         level = _get("level")
+        level = self.converter.from_grib(level)
 
         if level is None:
-            if self.component_type.value.level == "top":
+            if self.component_type.level == TOP_LEVEL:
                 level = top
             else:
                 level = bottom
@@ -198,7 +228,10 @@ class GribLayerType(GribVerticalType):
 
     def to_grib(self, component, handle=None):
         layer = self.converter.to_grib(component.layer())
-        top, bottom = layer
+
+        # TODO: a possible swap of `bottom` and `top` in `self.from_grib()` is not reflected here,
+        #  which may lead to inconsistencies when writing back to GRIB
+        bottom, top = layer
 
         return {
             "topLevel": top,
@@ -210,6 +243,7 @@ class GribLayerType(GribVerticalType):
         return component.layer is not None and self.component_matcher.match(component)
 
 
+# TODO: dead code?
 def from_grib(handle):
     def _get(key, default=None):
         return handle.get(key, default=default)
@@ -230,15 +264,15 @@ _TYPES = [
     GribLevelType("depthBelowLand", LevelTypes.DEPTH_BL_LEVEL),
     GribLayerType("depthBelowLandLayer", LevelTypes.DEPTH_BL_LAYER),
     GribLayerType("depthBelowSeaLayer", LevelTypes.DEPTH_BS_LAYER),
-    GribLevelType("entireAtmosphere", LevelTypes.ENTIRE_ATMOSPHERE),
+    GribSurfLevelType("entireAtmosphere", LevelTypes.ENTIRE_ATMOSPHERE),
     GribSurfLevelType("entireLake", LevelTypes.ENTIRE_LAKE),
     GribSurfLevelType("entireMeltPond", LevelTypes.ENTIRE_MELT_POND),
     GribLevelType("generalVerticalLayer", LevelTypes.GENERAL),
     GribLevelType("heightAboveGround", LevelTypes.HEIGHT_AG_LEVEL),
     GribLevelType("heightAboveSea", LevelTypes.HEIGHT_AS_LEVEL),
-    GribLayerType("highCloudLayer", LevelTypes.HIGH_CLOUD_LAYER),
+    GribLevelType("highCloudLayer", LevelTypes.HIGH_CLOUD_LAYER),
     HybridGribLevelType("hybrid", LevelTypes.HYBRID),
-    GribLevelType("iceLayerOnWater", LevelTypes.ICE_LAYER_ON_WATER),
+    GribSurfLevelType("iceLayerOnWater", LevelTypes.ICE_LAYER_ON_WATER),
     GribSurfLevelType("iceTopOnWater", LevelTypes.ICE_TOP_ON_WATER),
     GribLayerType("isobaricLayer", LevelTypes.PRESSURE_LAYER),  # hPa
     GribLevelType("isobaricInhPa", LevelTypes.PRESSURE, component_matcher=IntComponentMatcher()),
@@ -250,8 +284,8 @@ _TYPES = [
     ),
     GribLevelType("isothermal", LevelTypes.TEMPERATURE),
     GribSurfLevelType("lakeBottom", LevelTypes.LAKE_BOTTOM),
-    GribLayerType("lowCloudLayer", LevelTypes.LOW_CLOUD_LAYER),
-    GribLevelType("meanSea", LevelTypes.MEAN_SEA),
+    GribLevelType("lowCloudLayer", LevelTypes.LOW_CLOUD_LAYER),
+    GribSurfLevelType("meanSea", LevelTypes.MEAN_SEA),
     GribLayerType("mediumCloudLayer", LevelTypes.MEDIUM_CLOUD_LAYER),
     GribLevelType("mixedLayerDepthByDensity", LevelTypes.MIXED_LAYER_DEPTH_BY_DENSITY),
     GribLevelType("mixedLayerParcel", LevelTypes.MIXED_LAYER_PARCEL),
@@ -260,7 +294,7 @@ _TYPES = [
     GribSurfLevelType("nominalTop", LevelTypes.NOMINAL_TOP_OF_ATMOSPHERE),
     GribLevelType("oceanModel", LevelTypes.OCEAN_MODEL),
     GribLayerType("oceanModelLayer", LevelTypes.OCEAN_MODEL_LAYER),
-    GribLevelType("oceanSurface", LevelTypes.OCEAN_SURFACE),
+    GribSurfLevelType("oceanSurface", LevelTypes.OCEAN_SURFACE),
     GribSurfLevelType("oceanSurfaceToBottom", LevelTypes.OCEAN_SURFACE_TO_BOTTOM),
     GribLevelType("potentialVorticity", LevelTypes.PV),
     GribLayerType("seaIceLayer", LevelTypes.SEA_ICE_LAYER),
@@ -268,7 +302,7 @@ _TYPES = [
     GribSurfLevelType("snowLayerOverIceOnWater", LevelTypes.SNOW_LAYER_OVER_ICE_ON_WATER),
     GribLayerType("soilLayer", LevelTypes.SOIL_LAYER),
     GribSurfLevelType("stratosphere", LevelTypes.STRATOSPHERE),
-    GribLevelType("surface", LevelTypes.SURFACE),
+    GribSurfLevelType("surface", LevelTypes.SURFACE),
     GribLevelType("theta", LevelTypes.THETA),
     GribSurfLevelType("troposphere", LevelTypes.TROPOSPHERE),
     GribSurfLevelType("tropopause", LevelTypes.TROPOPAUSE),
@@ -284,7 +318,7 @@ assert len(_GRIB_TYPES) == len(_TYPES), "Duplicate level type keys"
 # mapping from LevelType to GribLevelType
 _COMPONENT_TYPES = defaultdict(list)
 for k, v in _GRIB_TYPES.items():
-    _COMPONENT_TYPES[v.component_type.value.name].append(v)
+    _COMPONENT_TYPES[v.component_type.name].append(v)
 
 for k in list(_COMPONENT_TYPES.keys()):
     if len(_COMPONENT_TYPES[k]) == 1:
@@ -296,7 +330,7 @@ for k in list(_COMPONENT_TYPES.keys()):
 # TODO: make it thread safe
 def register_grib_level_type(
     key: str,
-    component_type: LevelTypes,
+    component_type: LevelType,
     converter: Converter = Converter(),
     component_matcher: ComponentMatcher = ComponentMatcher(),
 ):

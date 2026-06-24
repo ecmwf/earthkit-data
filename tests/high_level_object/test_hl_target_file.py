@@ -17,7 +17,7 @@ from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.encoders.grib import GribEncoder
 from earthkit.data.targets import to_target
-from earthkit.data.utils.testing import NO_RIOXARRAY, earthkit_examples_file, earthkit_test_data_file
+from earthkit.data.utils.testing import NO_ODC, NO_RIOXARRAY, earthkit_examples_file, earthkit_test_data_file
 
 
 @pytest.mark.parametrize(
@@ -133,6 +133,7 @@ def test_hl_target_file_csv():
         assert list(df1.columns) == ["h1", "h2", "h3", "name"]
 
 
+@pytest.mark.skipif(NO_ODC, reason="pyodc is not installed")
 def test_hl_target_file_odb():
     ds = from_source("file", earthkit_examples_file("test.odb"))
     assert ds._TYPE_NAME == "ODB"
