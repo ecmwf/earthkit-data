@@ -3,7 +3,6 @@
 Targets
 ===============
 
-
 A **target** can represent a file, a database, a remote server etc. Data is written/added to a target by using a suitable :ref:`encoder <encoders>`.
 
 Details

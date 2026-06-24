@@ -153,7 +153,7 @@ Added :py:class:`~earthkit.data.core.field.Field` arithmetic. The basic maths op
 Notebook examples
 ++++++++++++++++++++++++
 
-- :ref:`/how-tos/field/overview.ipynb`
+- :ref:`/how-tos/field/field_overview.ipynb`
 
 
 Changes in the Field API

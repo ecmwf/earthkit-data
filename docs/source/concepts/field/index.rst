@@ -7,9 +7,9 @@ Field
    :maxdepth: 1
 
    field.rst
-   vertical.rst
    parameter.rst
    time.rst
+   vertical.rst
    ensemble.rst
    geography.rst
    proc.rst

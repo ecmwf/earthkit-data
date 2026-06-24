@@ -251,7 +251,7 @@ def target_kwargs(target_type):
     return v
 
 
-def to_target(target, *args, **kwargs):
+def to_target(target: str, *args, **kwargs):
     """Write data to a target.
 
     This is a top level function that writes data to a target.
