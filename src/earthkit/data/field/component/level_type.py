@@ -127,6 +127,11 @@ class LevelType:
             _cf["positive"] = self.positive
         self.cf = _cf
 
+        if layer and level not in (TOP_LEVEL, BOTTOM_LEVEL):
+            raise ValueError(
+                f"Invalid level value for layer type {name}: {level}. Must be one of: {TOP_LEVEL}, {BOTTOM_LEVEL}."
+            )
+
     def __eq__(self, other) -> bool:
         """Check if this LevelType is equal to another LevelType or a string.
 
