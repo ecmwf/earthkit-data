@@ -356,8 +356,6 @@ class Vertical(VerticalBase):
         metadata such as units and CF attributes.
     """
 
-    _level_parameters: Optional[LevelParameters] = None
-
     def __init__(
         self,
         level: Union[int, float] = None,

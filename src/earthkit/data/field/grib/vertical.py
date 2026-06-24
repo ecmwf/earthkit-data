@@ -27,6 +27,7 @@ class GribHybridLevelParameters(HybridLevelParametersBase):
     def __init__(self, handle):
         self._handle = handle
 
+    # TODO: this method should be cached
     def number_of_levels(self):
         coeff_num = self._handle.get("NV", default=None)
         if coeff_num is not None:
@@ -170,11 +171,10 @@ class HybridGribLevelType(GribLevelType):
 
         # this tries to avoid writing the coefficients back to the handle if they are already
         # present and correct, which can be expensive for large coefficient arrays. The check
-        # is not robust enough and should be improved.
-        # TODO: should be: if handle is not None and hasattr(component, "_level_parameters"): ?
-        if handle is not None and hasattr(component, "level_parameters"):
-            level_parameters = component._level_parameters  # it seems nobody sets it to other than None!
-            if isinstance(level_parameters, GribFieldComponentHandler):
+        # is not robust enough, and should be improved.
+        if handle is not None and hasattr(component, "_coefficients"):
+            level_parameters = component._coefficients
+            if isinstance(level_parameters, GribHybridLevelParameters):
                 nv = handle.get("NV", default=None)
                 if level_parameters.coefficient_size() == nv:
                     return r
