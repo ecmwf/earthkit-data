@@ -120,7 +120,7 @@ def test_vertical_component_type():
     assert t.cf == {
         "standard_name": "air_pressure",
         "long_name": "pressure",
-        "units": "hectopascal",
+        "units": "hPa",
         "positive": "down",
     }
     assert t.parametric is False
@@ -134,7 +134,7 @@ def test_vertical_component_type():
     assert r.cf() == {
         "standard_name": "air_pressure",
         "long_name": "pressure",
-        "units": "hectopascal",
+        "units": "hPa",
         "positive": "down",
     }
     assert r.parametric() is False

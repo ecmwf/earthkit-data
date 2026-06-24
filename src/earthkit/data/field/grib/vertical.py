@@ -171,9 +171,9 @@ class HybridGribLevelType(GribLevelType):
         # this tries to avoid writing the coefficients back to the handle if they are already
         # present and correct, which can be expensive for large coefficient arrays. The check
         # is not robust enough and should be improved.
+        # TODO: should be: if handle is not None and hasattr(component, "_level_parameters"): ?
         if handle is not None and hasattr(component, "level_parameters"):
-            # PW: should be: if handle is not None and hasattr(component, "_level_parameters"): ???
-            level_parameters = component._level_parameters  # PW: nobody sets it other than None!!!
+            level_parameters = component._level_parameters  # it seems nobody sets it to other than None!
             if isinstance(level_parameters, GribFieldComponentHandler):
                 nv = handle.get("NV", default=None)
                 if level_parameters.coefficient_size() == nv:
@@ -243,6 +243,7 @@ class GribLayerType(GribVerticalType):
         return component.layer is not None and self.component_matcher.match(component)
 
 
+# TODO: dead code?
 def from_grib(handle):
     def _get(key, default=None):
         return handle.get(key, default=default)
@@ -266,7 +267,7 @@ _TYPES = [
     GribSurfLevelType("entireAtmosphere", LevelTypes.ENTIRE_ATMOSPHERE),
     GribSurfLevelType("entireLake", LevelTypes.ENTIRE_LAKE),
     GribSurfLevelType("entireMeltPond", LevelTypes.ENTIRE_MELT_POND),
-    GribSurfLevelType("generalVerticalLayer", LevelTypes.GENERAL),
+    GribLevelType("generalVerticalLayer", LevelTypes.GENERAL),
     GribLevelType("heightAboveGround", LevelTypes.HEIGHT_AG_LEVEL),
     GribLevelType("heightAboveSea", LevelTypes.HEIGHT_AS_LEVEL),
     GribLevelType("highCloudLayer", LevelTypes.HIGH_CLOUD_LAYER),

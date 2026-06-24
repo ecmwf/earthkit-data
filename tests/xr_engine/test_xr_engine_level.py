@@ -573,7 +573,7 @@ def test_xr_engine_level_attr_mars(fname, kwargs, dims, levtype):
                 "level_dim_mode": "level",
                 "ensure_dims": "level",
             },
-            {"level": [1]},
+            {"level": [0]},
             "ice_layer_on_water",
         ),
         (
@@ -611,7 +611,7 @@ def test_xr_engine_level_attr_mars(fname, kwargs, dims, levtype):
         (
             "low_cloud_layer.grib2",
             {"level_dim_mode": "level", "ensure_dims": "level"},
-            {"level": [0]},
+            {"level": [800]},
             "low_cloud_layer",
         ),
         (

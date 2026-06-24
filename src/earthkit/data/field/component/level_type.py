@@ -154,6 +154,7 @@ class LevelType:
         return hash(self.name)
 
 
+# units `None` parse to dimensionless in pint and maps to "1" in CF
 _defs = {
     "ABSTRACT_SINGLE_LEVEL": {
         "name": "abstract_single_level",
@@ -231,6 +232,7 @@ _defs = {
         "long_name": "general",
         "units": None,
         "layer": False,
+        "positive": POSITIVE_DOWN,
     },
     "HEIGHT_AG_LEVEL": {
         "name": "height_above_ground_level",
