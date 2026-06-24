@@ -19,9 +19,13 @@ from earthkit.data.core.plugins import find_plugin
 from earthkit.data.core.plugins import register as register_plugin
 
 if TYPE_CHECKING:
-    from earthkit.data.data import Data  # type: ignore[import]
+    import numpy.array
 
-from typing import Callable, Literal, Union, overload
+    from earthkit.data.core.fieldlist import FieldList
+    from earthkit.data.data import Data  # type: ignore[import]
+    from earthkit.data.sources import Source
+
+from typing import Any, Callable, Literal, Union, overload
 
 
 class Source(Loader):
@@ -138,6 +142,167 @@ def from_source(
     parts: Union[list, tuple] = None,
     stream: bool = False,
     **kwargs,
+) -> "Data": ...
+
+
+@overload
+def from_source(name: Literal["url-pattern"], url: str, unpack: bool = True, **kwargs) -> "Data": ...
+
+
+@overload
+def from_source(name: Literal["sample"], name_or_path: str) -> "Data": ...
+
+
+@overload
+def from_source(name: Literal["stream"], stream: Union[list, tuple]) -> "Data": ...
+
+
+@overload
+def from_source(name: Literal["memory"], buffer) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["forcings"], source_or_dataset=Union["Source", "FieldList"], *, request: dict = {}, **kwargs
+) -> "Data": ...
+
+
+@overload
+def from_source(name: Literal["list-of-dicts"], list_of_dicts: list[dict]) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["multi"], *sources, merger: Union[str, Callable, tuple[str, dict], Any], **kwargs
+) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["ads"], dataset: str, *args, request: Union[dict, list[dict], tuple[dict]] = None, **kwargs
+) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["cds"],
+    dataset: str,
+    *args,
+    request: Union[dict, list[dict], tuple[dict]] = None,
+    prompt: bool = True,
+    **kwargs,
+) -> "Data": ...
+
+
+@overload
+def from_source(name: Literal["ecfs"], path: str) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["ecmwf-open-data"],
+    *args,
+    source: Literal["azure", "ecmwf"] = "ecmwf",
+    model: Literal["ifs", "aifs"] = "ifs",
+    request: Union[dict, list[dict], tuple[dict]] = None,
+    **kwargs,
+) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["fdb"],
+    *args,
+    config: Union[dict, str] = None,
+    userconfig: Union[dict, str] = None,
+    request: Union[dict, list[dict], tuple[dict]] = None,
+    stream: bool = True,
+    lazy: bool = False,
+    **kwargs,
+) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["gribjump"],
+    request: Union[dict, list[dict], tuple[dict]] = None,
+    *,
+    ranges: list[tuple[int, int]] = None,
+    mask: "numpy.array" = None,
+    indices: "numpy.array" = None,
+    fetch_coords_from_fdb: bool = False,
+    fdb_kwargs: dict = None,
+    **kwargs,
+) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["mars"],
+    *args,
+    request: Union[dict, list[dict], tuple[dict]] = None,
+    prompt: bool = True,
+    log: Union[str, Callable, dict, None] = "default",
+    **kwargs,
+) -> "Data": ...
+
+
+@overload
+def from_source(name: Literal["opendap"], url: str) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["polytope"],
+    collection: str,
+    *args,
+    address: str = None,
+    user_email: str = None,
+    user_key: str = None,
+    request: Union[dict, list[dict], tuple[dict]] = None,
+    stream: bool = True,
+    **kwargs,
+) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["s3"],
+    *args,
+    anon: bool = True,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_token: str = None,
+    stream: bool = True,
+) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["wekeo"],
+    dataset: str,
+    *args,
+    request: Union[dict, list[dict], tuple[dict]] = None,
+    prompt: bool = True,
+    **kwargs,
+) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["wekeocds"],
+    dataset: str,
+    *args,
+    request: Union[dict, list[dict], tuple[dict]] = None,
+    prompt: bool = True,
+    **kwargs,
+) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["zarr"],
+    path: str,
 ) -> "Data": ...
 
 
