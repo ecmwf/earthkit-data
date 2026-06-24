@@ -127,7 +127,7 @@ def test_grib_vertical_2(fl_type):
         ("sea_ice_layer.grib2", (1, "sea_ice_layer")),
         ("ice_top_on_water.grib2", (0, "ice_top_on_water")),
         ("entire_melt_pond.grib2", (0, "entire_melt_pond")),
-        ("low_cloud_layer.grib2", (0, "low_cloud_layer")),
+        ("low_cloud_layer.grib2", (800, "low_cloud_layer")),
         ("most_unstable_parcel.grib2", (0, "most_unstable_parcel")),
         ("snow_layer_over_ice_on_water.grib2", (0, "snow_layer_over_ice_on_water")),
         ("stratosphere.grib2", (0, "stratosphere")),
@@ -162,7 +162,7 @@ def test_grib_vertical_core(fname, expected_values):
 @pytest.mark.parametrize(
     "fname,expected_values",
     [
-        ("depth_below_sea_layer.grib2", (0, 0, 300, "depth_below_sea_layer")),
+        ("depth_below_sea_layer.grib2", (0, 300, 0, "depth_below_sea_layer")),
     ],
 )
 def test_grib_vertical_layer(fname, expected_values):

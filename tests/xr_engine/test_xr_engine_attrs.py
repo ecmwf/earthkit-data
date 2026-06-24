@@ -594,5 +594,5 @@ def test_xr_engine_level_coord_attrs_grib_profile(lazy_load):
     assert "units" in level_attrs, f"Missing 'units' in level coord attrs: {level_attrs}"
     assert "long_name" in level_attrs, f"Missing 'long_name' in level coord attrs: {level_attrs}"
     assert "positive" in level_attrs, f"Missing 'positive' in level coord attrs: {level_attrs}"
-    assert level_attrs["units"] == "hectopascal"
+    assert level_attrs["units"] == "hPa"
     assert level_attrs["positive"] == "down"

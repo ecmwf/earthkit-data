@@ -20,13 +20,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 def _get_level_type_attr(level_dim, levtype):
     from earthkit.data.field.component.level_type import get_level_type
 
-    t = get_level_type(levtype)
-    return {
-        "standard_name": t.standard_name,
-        "long_name": t.long_name,
-        "units": t.units,
-        "positive": t.positive,
-    }
+    return get_level_type(levtype).cf
 
 
 @pytest.mark.cache
@@ -579,7 +573,7 @@ def test_xr_engine_level_attr_mars(fname, kwargs, dims, levtype):
                 "level_dim_mode": "level",
                 "ensure_dims": "level",
             },
-            {"level": [1]},
+            {"level": [0]},
             "ice_layer_on_water",
         ),
         (
@@ -617,7 +611,7 @@ def test_xr_engine_level_attr_mars(fname, kwargs, dims, levtype):
         (
             "low_cloud_layer.grib2",
             {"level_dim_mode": "level", "ensure_dims": "level"},
-            {"level": [0]},
+            {"level": [800]},
             "low_cloud_layer",
         ),
         (

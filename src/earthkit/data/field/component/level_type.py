@@ -64,10 +64,10 @@ class LevelType:
         abbreviation: str,
         standard_name: str,
         long_name: str,
-        units: Union[str, Units],
+        units: Union[str, Units, None],
         layer: bool,
-        positive: str,
-        level: str = str(),
+        positive: str | None = None,
+        level: str | None = None,
         parametric: bool = False,
         coefficient_names: tuple[str, ...] | None = None,
     ) -> None:
@@ -88,15 +88,14 @@ class LevelType:
             The CF standard name of the level type.
         long_name : str
             The CF long name of the level type.
-        units : Union[str, Units]
+        units : str | Units | None
             The units of the level type.
         layer : bool
             Whether the level type represents a layer or a single level.
-        positive : str
+        positive : str | None
             The positive direction of the level type. Can be either "up" or "down".
         level : str, optional
-            Define how the levels is formed when the level type is a layer. Can be either "top" or "bottom".
-            Default is "top".
+            Define how the level is formed. Can be "top", "bottom" or `None`. Default is `None`.
         parametric : bool, optional
             Whether the level type is parametric. Default is False.
         coefficient_names : tuple[str, ...] | None, optional
@@ -112,17 +111,25 @@ class LevelType:
         self.positive = positive
         self.parametric = parametric
         self.coefficient_names = coefficient_names
-        self.cf = {
-            "standard_name": self.standard_name,
-            "long_name": self.long_name,
-            "units": str(self.units),
-            "positive": self.positive,
-        }
 
-        if layer and level not in (TOP_LEVEL, BOTTOM_LEVEL, ""):
+        _cf = {}
+        if self.standard_name:
+            _cf["standard_name"] = self.standard_name
+        if self.long_name:
+            _cf["long_name"] = self.long_name
+
+        if units is None or str(units) in ("", "dimensionless", "1"):
+            _cf["units"] = "1"
+        else:
+            _cf["units"] = str(units)
+
+        if self.positive:
+            _cf["positive"] = self.positive
+        self.cf = _cf
+
+        if layer and level not in (TOP_LEVEL, BOTTOM_LEVEL):
             raise ValueError(
-                f"Invalid level value for layer type {name}: {level}. Must be "
-                f"one of: {TOP_LEVEL}, {BOTTOM_LEVEL}, or empty string."
+                f"Invalid level value for layer type {name}: {level}. Must be one of: {TOP_LEVEL}, {BOTTOM_LEVEL}."
             )
 
     def __eq__(self, other) -> bool:
@@ -147,24 +154,23 @@ class LevelType:
         return hash(self.name)
 
 
+# units `None` parse to dimensionless in pint and maps to "1" in CF
 _defs = {
     "ABSTRACT_SINGLE_LEVEL": {
         "name": "abstract_single_level",
         "abbreviation": "abstractSingleLevel",
-        "standard_name": "abstract_single_level",
+        "standard_name": None,  # "abstract_single_level",  # is not a CF standard name
         "long_name": "abstract single level",
-        "units": "",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "CLOUD_BASE": {
         "name": "cloud_base",
         "abbreviation": "cloudBase",
-        "standard_name": "cloud_base",
+        "standard_name": None,  # "cloud_base",  # is not a CF standard name
         "long_name": "cloud base",
-        "units": "",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "DEPTH_BL_LAYER": {
         "name": "depth_below_land_layer",
@@ -192,42 +198,39 @@ _defs = {
         "long_name": "depth",
         "units": "m",
         "layer": True,
-        "level": TOP_LEVEL,
+        "level": BOTTOM_LEVEL,
         "positive": POSITIVE_DOWN,
     },
     "ENTIRE_ATMOSPHERE": {
         "name": "entire_atmosphere",
         "abbreviation": "entire_atmosphere",
-        "standard_name": "entire_atmosphere",
+        "standard_name": None,  # "entire_atmosphere",  # is not a CF standard name
         "long_name": "entire atmosphere",
-        "units": "",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "ENTIRE_LAKE": {
         "name": "entire_lake",
         "abbreviation": "entireLake",
-        "standard_name": "entire_lake",
+        "standard_name": None,  # "entire_lake",  # is not a CF standard name
         "long_name": "entire lake",
-        "units": "",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "ENTIRE_MELT_POND": {
         "name": "entire_melt_pond",
         "abbreviation": "entireMeltPond",
-        "standard_name": "entire_melt_pond",
+        "standard_name": None,  # "entire_melt_pond",  # is not a CF standard name
         "long_name": "entire melt pond",
-        "units": "",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "GENERAL": {
         "name": "general",
         "abbreviation": "gen",
-        "standard_name": "general",
+        "standard_name": None,  # "general",  # is not a CF standard name
         "long_name": "general",
-        "units": "1",
+        "units": None,
         "layer": False,
         "positive": POSITIVE_DOWN,
     },
@@ -252,19 +255,18 @@ _defs = {
     "HIGH_CLOUD_LAYER": {
         "name": "high_cloud_layer",
         "abbreviation": "highCloudLayer",
-        "standard_name": "high_cloud_layer",
+        "standard_name": None,  # "high_cloud_layer",  # is not a CF standard name
         "long_name": "high cloud layer",
         "units": "hPa",
-        "layer": True,
-        "level": TOP_LEVEL,
-        "positive": "",
+        "layer": False,
+        "positive": POSITIVE_DOWN,
     },
     "HYBRID": {
         "name": "hybrid",
         "abbreviation": "ml",
         "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate",
         "long_name": "hybrid level",
-        "units": "1",
+        "units": None,
         "layer": False,
         "positive": POSITIVE_DOWN,
         "parametric": True,
@@ -273,120 +275,115 @@ _defs = {
     "ICE_LAYER_ON_WATER": {
         "name": "ice_layer_on_water",
         "abbreviation": "iceLayerOnWater",
-        "standard_name": "ice_layer_on_water",
+        "standard_name": None,  # "ice_layer_on_water",  # is not a CF standard name
         "long_name": "ice layer on water",
-        "units": "1",
-        "layer": True,
-        "level": TOP_LEVEL,
-        "positive": POSITIVE_UP,
+        "units": None,
+        "layer": False,
     },
     "ICE_TOP_ON_WATER": {
         "name": "ice_top_on_water",
         "abbreviation": "iceTopOnWater",
-        "standard_name": "ice_top_on_water",
+        "standard_name": None,  # "ice_top_on_water",  # is not a CF standard name
         "long_name": "ice top on water",
-        "units": "1",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "LAKE_BOTTOM": {
         "name": "lake_bottom",
         "abbreviation": "lakeBottom",
-        "standard_name": "lake_bottom",
+        "standard_name": None,  # "lake_bottom",  # is not a CF standard name
         "long_name": "lake bottom",
-        "units": "1",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "LOW_CLOUD_LAYER": {
         "name": "low_cloud_layer",
         "abbreviation": "lowCloudLayer",
-        "standard_name": "low_cloud_layer",
+        "standard_name": None,  # "low_cloud_layer",  # is not a CF standard name
         "long_name": "low cloud layer",
         "units": "hPa",
-        "layer": True,
-        "level": TOP_LEVEL,
-        "positive": "",
+        "layer": False,
+        "positive": POSITIVE_DOWN,
+        "level": BOTTOM_LEVEL,
     },
     "MEAN_SEA": {
         "name": "mean_sea",
         "abbreviation": "mean_sea",
-        "standard_name": "mean_sea",
+        "standard_name": None,  # "mean_sea",  # is not a CF standard name
         "long_name": "mean sea level",
-        "units": "",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "MEDIUM_CLOUD_LAYER": {
         "name": "medium_cloud_layer",
         "abbreviation": "mediumCloudLayer",
-        "standard_name": "medium_cloud_layer",
+        "standard_name": None,  # "medium_cloud_layer",  # is not a CF standard name
         "long_name": "medium cloud layer",
         "units": "hPa",
         "layer": True,
-        "level": TOP_LEVEL,
-        "positive": "",
+        "level": BOTTOM_LEVEL,
+        "positive": POSITIVE_DOWN,
     },
     "MIXED_LAYER_DEPTH_BY_DENSITY": {
+        # TODO: this seems to be a parametric level type, with density [kg m-3] as a parameter;
+        #  it is defined by the fixed surface type #169:
+        #  https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table4-5.shtml
         "name": "mixed_layer_depth_by_density",
         "abbreviation": "mixedLayerDepthByDensity",
-        "standard_name": "mixed_layer_depth_by_density",
+        "standard_name": None,  # "mixed_layer_depth_by_density",  # is not a CF standard name
         "long_name": "mixed layer depth by density",
-        "units": "m",
+        "units": "kg m-3",
         "layer": False,
         "positive": POSITIVE_DOWN,
     },
     "MIXED_LAYER_PARCEL": {
         "name": "mixed_layer_parcel",
         "abbreviation": "mixedLayerParcel",
-        "standard_name": "mixed_layer_parcel",
+        "standard_name": None,  # "mixed_layer_parcel",  # is not a CF standard name
         "long_name": "mixed layer parcel",
         "units": "Pa",
         "layer": False,
-        "positive": "",
+        "positive": POSITIVE_DOWN,
     },
     "MIXING_LAYER": {
         "name": "mixing_layer",
         "abbreviation": "mixingLayer",
         "standard_name": "mixing_layer",
         "long_name": "mixing layer",
-        "units": "",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "MOST_UNSTABLE_PARCEL": {
         "name": "most_unstable_parcel",
         "abbreviation": "mostUnstableParcel",
-        "standard_name": "most_unstable_parcel",
+        "standard_name": None,  # "most_unstable_parcel",  # is not a CF standard name
         "long_name": "most unstable parcel",
-        "units": "",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "NOMINAL_TOP_OF_ATMOSPHERE": {
         "name": "nominal_top_of_atmosphere",
         "abbreviation": "nominalTopOfAtmosphere",
-        "standard_name": "nominal_top_of_atmosphere",
+        "standard_name": None,  # "nominal_top_of_atmosphere",  # is not a CF standard name
         "long_name": "nominal top of atmosphere",
-        "units": "",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "OCEAN_MODEL": {
         "name": "ocean_model",
         "abbreviation": "oceanModel",
-        "standard_name": "ocean_model",
+        "standard_name": None,  # "ocean_model",  # is not a CF standard name
         "long_name": "ocean model",
-        "units": "1",
+        "units": None,
         "layer": False,
         "positive": POSITIVE_DOWN,
     },
     "OCEAN_MODEL_LAYER": {
         "name": "ocean_model_layer",
         "abbreviation": "oceanModelLayer",
-        "standard_name": "ocean_model_layer",
+        "standard_name": None,  # "ocean_model_layer",  # is not a CF standard name
         "long_name": "ocean model layer",
-        "units": "1",
+        "units": None,
         "layer": True,
         "level": BOTTOM_LEVEL,
         "positive": POSITIVE_DOWN,
@@ -394,20 +391,18 @@ _defs = {
     "OCEAN_SURFACE": {
         "name": "ocean_surface",
         "abbreviation": "ocean_surface",
-        "standard_name": "ocean_surface",
+        "standard_name": None,  # "ocean_surface",  # is not a CF standard name
         "long_name": "ocean surface",
-        "units": "",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "OCEAN_SURFACE_TO_BOTTOM": {
         "name": "ocean_surface_to_bottom",
         "abbreviation": "oceanSurfaceToBottom",
-        "standard_name": "ocean_surface_to_bottom",
+        "standard_name": None,  # "ocean_surface_to_bottom",  # is not a CF standard name
         "long_name": "ocean surface to bottom",
-        "units": "1",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "PRESSURE": {
         "name": "pressure",
@@ -433,16 +428,17 @@ _defs = {
         "abbreviation": "pv",
         "standard_name": "ertel_potential_vorticity",
         "long_name": "potential vorticity",
-        "units": "10E-9 K m2 kg-1 s-1",
+        "units": "nK m2 kg-1 s-1",
         "layer": False,
-        "positive": POSITIVE_DOWN,
+        # "positive": POSITIVE_DOWN,
     },
     "SEA_ICE_LAYER": {
+        # cf. level type #152 in https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_table4-5.shtml
         "name": "sea_ice_layer",
         "abbreviation": "seaIceLayer",
-        "standard_name": "sea_ice_layer",
+        "standard_name": None,  # "sea_ice_layer",  # is not a CF standard name
         "long_name": "sea ice layer",
-        "units": "1",
+        "units": None,
         "layer": True,
         "level": BOTTOM_LEVEL,
         "positive": POSITIVE_DOWN,
@@ -450,9 +446,9 @@ _defs = {
     "SNOW": {
         "name": "snow",
         "abbreviation": "snow",
-        "standard_name": "unknown",
+        "standard_name": None,  # "unknown",
         "long_name": "snow layer",
-        "units": "1",
+        "units": None,
         "layer": True,
         "level": BOTTOM_LEVEL,
         "positive": POSITIVE_DOWN,
@@ -460,18 +456,18 @@ _defs = {
     "SNOW_LAYER_OVER_ICE_ON_WATER": {
         "name": "snow_layer_over_ice_on_water",
         "abbreviation": "snowLayerOverIceOnWater",
-        "standard_name": "snow_layer_over_ice_on_water",
+        "standard_name": None,  # "snow_layer_over_ice_on_water",  # is not a CF standard name
         "long_name": "snow layer over ice on water",
-        "units": "1",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "SOIL_LAYER": {
+        # cf. level type #151 in https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_table4-5.shtml
         "name": "soil_layer",
         "abbreviation": "soilLayer",
-        "standard_name": "soil_layer",
+        "standard_name": None,  # "soil_layer",  # is not a CF standard name
         "long_name": "soil layer",
-        "units": "1",
+        "units": None,
         "layer": True,
         "level": BOTTOM_LEVEL,
         "positive": POSITIVE_DOWN,
@@ -479,29 +475,26 @@ _defs = {
     "STRATOSPHERE": {
         "name": "stratosphere",
         "abbreviation": "stratosphere",
-        "standard_name": "stratosphere",
+        "standard_name": None,  # "stratosphere",  # is not a CF standard name
         "long_name": "stratosphere",
-        "units": "1",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "SURFACE": {
         "name": "surface",
         "abbreviation": "sfc",
         "standard_name": "surface",
         "long_name": "surface",
-        "units": "",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "TEMPERATURE": {
         "name": "temperature",
         "abbreviation": "isothermal",
-        "standard_name": "temperature",
+        "standard_name": "air_temperature",
         "long_name": "temperature",
         "units": "K",
         "layer": False,
-        "positive": "",
     },
     "THETA": {
         "name": "potential_temperature",
@@ -510,43 +503,41 @@ _defs = {
         "long_name": "air_potential temperature",
         "units": "K",
         "layer": False,
-        "positive": POSITIVE_UP,
+        # "positive": POSITIVE_UP,
     },
     "TROPOSPHERE": {
         "name": "troposphere",
         "abbreviation": "troposphere",
-        "standard_name": "troposphere",
+        "standard_name": None,  # "troposphere",  # is not a CF standard name
         "long_name": "troposphere",
-        "units": "1",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "TROPOPAUSE": {
         "name": "tropopause",
         "abbreviation": "tropopause",
-        "standard_name": "tropopause",
+        "standard_name": None,  # "tropopause",  # is not a CF standard name
         "long_name": "tropopause",
-        "units": "",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "UNKNOWN": {
         "name": "unknown",
         "abbreviation": "unknown",
-        "standard_name": "unknown",
+        "standard_name": None,  # "unknown",
         "long_name": "unknown",
-        "units": "",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
     "WATER_SURFACE_TO_ISOTHERMAL_OCEAN_LAYER": {
+        # defined by two level types: #20 [m] and #160 [K]
+        # cf. https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_table4-5.shtml
         "name": "water_surface_to_isothermal_ocean_layer",
         "abbreviation": "waterSurfaceToIsothermalOceanLayer",
-        "standard_name": "water_surface_to_isothermal_ocean_layer",
+        "standard_name": None,  # "water_surface_to_isothermal_ocean_layer",  # is not a CF standard name
         "long_name": "water surface to isothermal ocean layer",
-        "units": "1",
+        "units": None,
         "layer": False,
-        "positive": "",
     },
 }
 
@@ -568,9 +559,9 @@ def _register_level_type(name: str, metadata: dict | None = None) -> LevelType:
         abbreviation=metadata.get("abbreviation", name),
         standard_name=metadata.get("standard_name", name),
         long_name=metadata.get("long_name", name),
-        units=metadata.get("units", ""),
+        units=metadata.get("units", None),
         layer=metadata.get("layer", False),
-        positive=metadata.get("positive", ""),
+        positive=metadata.get("positive", None),
     )
 
     _LEVEL_TYPES[name] = level_type
