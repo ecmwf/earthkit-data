@@ -10,7 +10,7 @@ from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
 from earthkit.data.field.component.level_parameters import HybridLevelParametersBase
-from earthkit.data.field.component.level_type import LevelTypes
+from earthkit.data.field.component.level_type import BOTTOM_LEVEL, POSITIVE_DOWN, POSITIVE_UP, TOP_LEVEL, LevelTypes
 
 from .collector import GribContextCollector
 from .core import GribFieldComponentHandler
@@ -103,6 +103,15 @@ class GribLevelType(GribVerticalType):
             return handle.get(key, default=default)
 
         level = _get("level")
+        top_or_bottom = self.component_type.value.level
+        if top_or_bottom == TOP_LEVEL:
+            level = _get("topLevel")
+        elif top_or_bottom == BOTTOM_LEVEL:
+            level = _get("bottomLevel")
+        else:
+            level = _get("level")
+
+        # last resort: if level is still None, try to get topLevel, regardless top_or_bottom
         if level is None:
             level = _get("topLevel")
 
@@ -157,7 +166,8 @@ class HybridGribLevelType(GribLevelType):
         # present and correct, which can be expensive for large coefficient arrays. The check
         # is not robust enough and should be improved.
         if handle is not None and hasattr(component, "level_parameters"):
-            level_parameters = component._level_parameters
+            # PW: should be: if handle is not None and hasattr(component, "_level_parameters"): ???
+            level_parameters = component._level_parameters  # PW: nobody sets it other than None!!!
             if isinstance(level_parameters, GribFieldComponentHandler):
                 nv = handle.get("NV", default=None)
                 if level_parameters.coefficient_size() == nv:
@@ -184,12 +194,26 @@ class GribLayerType(GribVerticalType):
 
         top = self.converter.from_grib(top)
         bottom = self.converter.from_grib(bottom)
-        layer = (top, bottom)
+
+        if top is not None and bottom is not None:
+            # if `positive` is set, try to order `(bottom, top)` according to the `positive` value
+            try:
+                if self.component_type.value.positive == POSITIVE_UP:
+                    if bottom > top:
+                        bottom, top = top, bottom
+                elif self.component_type.value.positive == POSITIVE_DOWN:
+                    if bottom < top:
+                        bottom, top = top, bottom
+            except Exception:
+                pass
+
+        layer = (bottom, top)
 
         level = _get("level")
+        level = self.converter.from_grib(level)
 
         if level is None:
-            if self.component_type.value.level == "top":
+            if self.component_type.value.level == TOP_LEVEL:
                 level = top
             else:
                 level = bottom
@@ -198,7 +222,10 @@ class GribLayerType(GribVerticalType):
 
     def to_grib(self, component, handle=None):
         layer = self.converter.to_grib(component.layer())
-        top, bottom = layer
+
+        # TODO: a possible swap of `bottom` and `top` in `self.from_grib()` is not reflected here,
+        #  which may lead to inconsistencies when writing back to GRIB
+        bottom, top = layer
 
         return {
             "topLevel": top,
@@ -230,15 +257,15 @@ _TYPES = [
     GribLevelType("depthBelowLand", LevelTypes.DEPTH_BL_LEVEL),
     GribLayerType("depthBelowLandLayer", LevelTypes.DEPTH_BL_LAYER),
     GribLayerType("depthBelowSeaLayer", LevelTypes.DEPTH_BS_LAYER),
-    GribLevelType("entireAtmosphere", LevelTypes.ENTIRE_ATMOSPHERE),
+    GribSurfLevelType("entireAtmosphere", LevelTypes.ENTIRE_ATMOSPHERE),
     GribSurfLevelType("entireLake", LevelTypes.ENTIRE_LAKE),
     GribSurfLevelType("entireMeltPond", LevelTypes.ENTIRE_MELT_POND),
-    GribLevelType("generalVerticalLayer", LevelTypes.GENERAL),
+    GribSurfLevelType("generalVerticalLayer", LevelTypes.GENERAL),
     GribLevelType("heightAboveGround", LevelTypes.HEIGHT_AG_LEVEL),
     GribLevelType("heightAboveSea", LevelTypes.HEIGHT_AS_LEVEL),
-    GribLayerType("highCloudLayer", LevelTypes.HIGH_CLOUD_LAYER),
+    GribLevelType("highCloudLayer", LevelTypes.HIGH_CLOUD_LAYER),
     HybridGribLevelType("hybrid", LevelTypes.HYBRID),
-    GribLevelType("iceLayerOnWater", LevelTypes.ICE_LAYER_ON_WATER),
+    GribSurfLevelType("iceLayerOnWater", LevelTypes.ICE_LAYER_ON_WATER),
     GribSurfLevelType("iceTopOnWater", LevelTypes.ICE_TOP_ON_WATER),
     GribLayerType("isobaricLayer", LevelTypes.PRESSURE_LAYER),  # hPa
     GribLevelType("isobaricInhPa", LevelTypes.PRESSURE, component_matcher=IntComponentMatcher()),
@@ -250,8 +277,8 @@ _TYPES = [
     ),
     GribLevelType("isothermal", LevelTypes.TEMPERATURE),
     GribSurfLevelType("lakeBottom", LevelTypes.LAKE_BOTTOM),
-    GribLayerType("lowCloudLayer", LevelTypes.LOW_CLOUD_LAYER),
-    GribLevelType("meanSea", LevelTypes.MEAN_SEA),
+    GribLevelType("lowCloudLayer", LevelTypes.LOW_CLOUD_LAYER),
+    GribSurfLevelType("meanSea", LevelTypes.MEAN_SEA),
     GribLayerType("mediumCloudLayer", LevelTypes.MEDIUM_CLOUD_LAYER),
     GribLevelType("mixedLayerDepthByDensity", LevelTypes.MIXED_LAYER_DEPTH_BY_DENSITY),
     GribLevelType("mixedLayerParcel", LevelTypes.MIXED_LAYER_PARCEL),
@@ -260,7 +287,7 @@ _TYPES = [
     GribSurfLevelType("nominalTop", LevelTypes.NOMINAL_TOP_OF_ATMOSPHERE),
     GribLevelType("oceanModel", LevelTypes.OCEAN_MODEL),
     GribLayerType("oceanModelLayer", LevelTypes.OCEAN_MODEL_LAYER),
-    GribLevelType("oceanSurface", LevelTypes.OCEAN_SURFACE),
+    GribSurfLevelType("oceanSurface", LevelTypes.OCEAN_SURFACE),
     GribSurfLevelType("oceanSurfaceToBottom", LevelTypes.OCEAN_SURFACE_TO_BOTTOM),
     GribLevelType("potentialVorticity", LevelTypes.PV),
     GribLayerType("seaIceLayer", LevelTypes.SEA_ICE_LAYER),
@@ -268,7 +295,7 @@ _TYPES = [
     GribSurfLevelType("snowLayerOverIceOnWater", LevelTypes.SNOW_LAYER_OVER_ICE_ON_WATER),
     GribLayerType("soilLayer", LevelTypes.SOIL_LAYER),
     GribSurfLevelType("stratosphere", LevelTypes.STRATOSPHERE),
-    GribLevelType("surface", LevelTypes.SURFACE),
+    GribSurfLevelType("surface", LevelTypes.SURFACE),
     GribLevelType("theta", LevelTypes.THETA),
     GribSurfLevelType("troposphere", LevelTypes.TROPOSPHERE),
     GribSurfLevelType("tropopause", LevelTypes.TROPOPAUSE),

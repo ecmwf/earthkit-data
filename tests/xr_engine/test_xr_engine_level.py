@@ -20,13 +20,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 def _get_level_type_attr(level_dim, levtype):
     from earthkit.data.field.component.level_type import get_level_type
 
-    t = get_level_type(levtype)
-    return {
-        "standard_name": t.standard_name,
-        "long_name": t.long_name,
-        "units": t.units,
-        "positive": t.positive,
-    }
+    return get_level_type(levtype).cf
 
 
 @pytest.mark.cache
