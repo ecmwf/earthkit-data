@@ -47,7 +47,6 @@ def create_grib_field(handle, data=None, cache=False, extra_keys=None, template_
         proc=proc,
         labels=labels,
     )
-
     r._set_private_data("metadata", grib)
     return r
 
@@ -71,10 +70,16 @@ def new_array_grib_field(field, handle, array_namespace=None, device=None, flatt
     return new_field
 
 
-def create_grib_field_from_message(buf, template_field=None):
+def create_grib_field_from_message(buf, template_field=None, no_values=False):
     from earthkit.data.readers.grib.handle import MemoryGribHandle
 
-    return create_grib_field(MemoryGribHandle.from_message(buf), template_field=template_field, cache=False)
+    data = None
+    if no_values:
+        from earthkit.data.field.handler.data import DataFieldComponentHandler
+
+        data = DataFieldComponentHandler.create_empty()
+
+    return create_grib_field(MemoryGribHandle.from_message(buf), data=data, template_field=template_field, cache=False)
 
 
 create_grib_field_from_buffer = create_grib_field_from_message

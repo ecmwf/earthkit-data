@@ -530,6 +530,29 @@ class Field(Base):
             components[_GEOGRAPHY] = _COMPONENT_MAKER.default_cls(_GEOGRAPHY).from_dict({}, shape_hint=shape_hint)
         return cls(**components)
 
+    @classmethod
+    def _tmp_field_from_metadata(cls, field):
+        """Create a new Field from an existing Field's metadata components.
+
+        Parameters
+        ----------
+        field : Field
+            The original field.
+
+        Returns
+        -------
+        Field
+            A new Field with the metadata components copied from the original field.
+        """
+        components = {}
+        for component_name in cls._COMPONENT_NAMES:
+            if component_name not in [_DATA, _LABELS]:
+                components[component_name] = field._components[component_name]
+
+        new_field = cls.from_components(**components)
+        new_field._private = field._private
+        return new_field
+
     @property
     def ensemble(self):
         """Ensemble: Return the ensemble component of the field."""
@@ -763,13 +786,13 @@ class Field(Base):
         --------
         How-to examples for the :meth:`data` method can be found in the following notebooks:
 
-        - :ref:`/how-tos/grib/grib_lat_lon_value_ll.ipynb`
-        - :ref:`/how-tos/grib/grib_lat_lon_value_rgg.ipynb`
+        - :ref:`/tutorials/grib/grib_lat_lon_value_ll.ipynb`
+        - :ref:`/tutorials/grib/grib_lat_lon_value_rgg.ipynb`
 
         Other examples:
 
         >>> import earthkit.data as ekd
-        >>> fl = ekd.from_source("file", "docs/how-tos/test6.grib").to_fieldlist()
+        >>> fl = ekd.from_source("file", "docs/tutorials/test6.grib").to_fieldlist()
         >>> d = fl[0].data()
         >>> d.shape
         (3, 7, 12)
@@ -1433,8 +1456,8 @@ class Field(Base):
         --------
         See the how-to examples for the :meth:`set` method in the following notebook:
 
-        - :ref:`/how-tos/grib/grib_modify_metadata.ipynb`
-        - :ref:`/how-tos/grib/grib_modify_values.ipynb`
+        - :ref:`/tutorials/grib/grib_modify_metadata.ipynb`
+        - :ref:`/tutorials/grib/grib_modify_values.ipynb`
 
         Further examples:
 
@@ -1578,8 +1601,8 @@ class Field(Base):
         --------
         How-to examples for the :meth:`to_target` method can be found in the following notebooks:
 
-        - :ref:`/how-tos/target/file_target.ipynb`
-        - :ref:`/how-tos/target/grib_to_file_target.ipynb`
+        - :ref:`/tutorials/target/file_target.ipynb`
+        - :ref:`/tutorials/target/grib_to_file_target.ipynb`
         """
         from earthkit.data.targets import to_target
 
@@ -1682,7 +1705,7 @@ class Field(Base):
 
         Examples
         --------
-        :ref:`/how-tos/grib/grib_contents.ipynb`
+        :ref:`/tutorials/grib/grib_contents.ipynb`
 
         """
         if component is None or component == "":
@@ -1740,7 +1763,7 @@ class Field(Base):
 
         Examples
         --------
-        :ref:`/how-tos/grib/grib_contents.ipynb`
+        :ref:`/tutorials/grib/grib_contents.ipynb`
 
         """
         from earthkit.data.utils.summary import format_namespace_dump
@@ -1910,6 +1933,10 @@ class Field(Base):
         #     m.check(self)
 
     def _get_grib_context(self, context):
+        """Helper method to get the GRIB context for the field and its components.
+
+        It is used by the encoders.
+        """
         grib = self._get_grib()
         if grib is not None:
             context["handle"] = grib.handle
@@ -1918,21 +1945,67 @@ class Field(Base):
             m.get_grib_context(context)
 
     def _set_metadata(self, md):
-        g = self._get_grib()
-        if g is not None:
-            from earthkit.data.encoders.grib import GribEncoder
+        """Helper method to set raw metadata in the field."""
+        grib = self._get_grib()
+        if grib is not None:
+            # when the data is not stored in the GRIB message but in the field's components (e.g.
+            # after calling set(values=...)) we need to ensure the values are not encoded into
+            # the new handle and also that the new field is created with the same data object
+            # as the original field. We use the encode_values flag to control this behaviour.
+            data = self._components[_DATA]
+            encode_values = "values" in md or (data is not None and hasattr(data, "handle"))
 
-            encoder = GribEncoder()
-            return encoder.encode(data=self, metadata=md).to_field()
+            # create a new field
+            return self._update_grib_handle(self, data, metadata=md, encode_values=encode_values)
+
         return self
 
     def _sync_metadata(self):
-        if self._get_grib() and self._private and "_metadata" in self._private:
-            from earthkit.data.encoders.grib import GribEncoder
+        """Helper method to synchronize the raw metadata in the field with the field's components."""
+        grib = self._get_grib()
+        if grib and self._private and "_metadata" in self._private:
+            # when the data is not stored in the GRIB message but in the field's components (e.g.
+            # after calling set(values=...)) we need to ensure the values are not encoded into
+            # the new handle and also that the new field is created with the same data object
+            # as the original field. We use the encode_values flag to control this behaviour.
+            data = self._components[_DATA]
+            encode_values = data is None or hasattr(data, "handle")
 
-            encoder = GribEncoder()
-            return encoder.encode(data=self).to_field()
+            # create a new field
+            return self._update_grib_handle(self, data, metadata=None, encode_values=encode_values)
+
         return self
+
+    @staticmethod
+    def _update_grib_handle(field, data, metadata=None, encode_values=False):
+        from earthkit.data.encoders.grib import GribEncoder
+
+        encoder = GribEncoder()
+
+        # the data values are encoded into the new handle. A new field will be created
+        # from the new handle.
+        if encode_values:
+            return encoder.encode(data=field, metadata=metadata).to_field()
+        # the values will not be encoded into the new handle. A new field will be created from
+        # the new handle but with the data component object of the the original field.
+        else:
+            from earthkit.data.field.grib.create import create_grib_field
+            from earthkit.data.readers.grib.handle import MemoryGribHandle
+
+            #  create a temporary field with the same metadata as the original field
+            #  but with the no data component.
+            data = field._components[_DATA]
+            tmp_field = Field._tmp_field_from_metadata(field)
+
+            # encode the temporary field with the new metadata and create a new handle
+            # Since the temporary field has no data component, the encoder will not set
+            # any data values in the new handle. The new field will be created with the same data values
+            d = encoder.encode(data=tmp_field, metadata=metadata)
+            handle = MemoryGribHandle(d.handle)
+
+            # The new field will be created with the updated handle and
+            # data values from the original field.
+            return create_grib_field(handle, data=data, template_field=field)
 
     @normalise("time.valid_datetime", "date")
     @normalise("time.base_datetime", "date")

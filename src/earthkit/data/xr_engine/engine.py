@@ -512,7 +512,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
             if message:
                 from earthkit.data.field.grib.create import create_grib_field_from_message
 
-                return create_grib_field_from_message(message)
+                return create_grib_field_from_message(message, no_values=True)
         except Exception as e:
             raise ValueError(
                 (

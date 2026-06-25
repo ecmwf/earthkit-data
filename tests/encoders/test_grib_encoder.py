@@ -127,7 +127,7 @@ def test_grib_encoder_field_data_and_template(init_encoder, template_arg):
     assert f_r.message() is not None
     assert f.message() != f_r.message()
     assert f_r.message() == r.to_bytes()
-    assert np.allclose(f.values, f_r.values)
+    np.testing.assert_allclose(f.values, f_r.values)
     assert f.get("parameter.variable") == "2t"
     assert f_r.get("parameter.variable") == "msl"
     if template_arg == "field_labels":
