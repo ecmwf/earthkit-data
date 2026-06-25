@@ -55,6 +55,8 @@ if NO_TORCH:
 def notebooks_list():
     notebooks = []
     for root, _, files in os.walk(EXAMPLES):
+        if root.endswith(".ipynb_checkpoints"):
+            continue
         for path in files:
             if re.match(r".+\.ipynb$", path):
                 # if re.match(r"^\d\d-.*\.ipynb$", path):

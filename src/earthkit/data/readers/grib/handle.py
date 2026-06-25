@@ -86,7 +86,12 @@ class GribCodesHandle(CodesHandle):
                     e_str = str(type(e))
                     if any(
                         err in e_str
-                        for err in ["FunctionNotImplementedError", "GeocalculusError", "BufferTooSmallError"]
+                        for err in [
+                            "FunctionNotImplementedError",
+                            "GeocalculusError",
+                            "BufferTooSmallError",
+                            "MissingKeyError",
+                        ]
                     ):
                         return kwargs.get("default", None)
 
