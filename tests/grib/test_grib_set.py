@@ -708,3 +708,57 @@ def test_grib_set_field_mixed_metadata(fl_type):
         assert f_saved.get("metadata.levelist") == 600
         assert f_saved.get("vertical.level_type") == "pressure"
         assert f_saved.get("metadata.typeOfLevel") == "isobaricInhPa"
+
+
+@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+def test_grib_set_field_raw_data_storage_1(fl_type):
+    ds_ori, _ = load_grib_data("test4.grib", fl_type)
+
+    f = ds_ori[0].set({
+        "metadata.shortName": "q",
+        "metadata.level": 600,
+    })
+
+    # TODO: avoid using private attributes in the following test
+    if fl_type == "array":
+        # After setting the raw keys an array field should stay an array field
+        assert hasattr(f._components["data"], "_values")
+        assert not hasattr(f._components["data"], "handle")
+    else:
+        # After setting the raw keys a file/memory GRIB field should not become an array field,
+        # but should have a handle to the original data
+        assert not hasattr(f._components["data"], "_values")
+        assert hasattr(f._components["data"], "handle")
+
+
+@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+def test_grib_set_field_raw_data_storage_2(fl_type):
+    ds_ori, _ = load_grib_data("test4.grib", fl_type)
+
+    f = ds_ori[0].set({
+        "parameter.variable": "q",
+    })
+
+    # TODO: avoid using private attributes in the following test
+
+    if fl_type == "array":
+        # After setting high-level keys an array field should stay an array field
+        assert hasattr(f._components["data"], "_values")
+        assert not hasattr(f._components["data"], "handle")
+    else:
+        # After setting high-level keys a file/memory GRIB field should not become an array field,
+        # but should have a handle to the original data
+        assert not hasattr(f._components["data"], "_values")
+        assert hasattr(f._components["data"], "handle")
+
+    f1 = f.sync()
+
+    if fl_type == "array":
+        # After sync an array field should stay an array field
+        assert hasattr(f1._components["data"], "_values")
+        assert not hasattr(f1._components["data"], "handle")
+    else:
+        # After sync a file/memory GRIB  field should not become an array field,
+        # but should have a handle to the original data
+        assert not hasattr(f1._components["data"], "_values")
+        assert hasattr(f1._components["data"], "handle")
