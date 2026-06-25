@@ -82,6 +82,11 @@ class BaseDataFieldComponentHandler(FieldComponentHandler):
                 "array_dtype": str(values.dtype),
             }
 
+    @classmethod
+    def create_empty(cls) -> "BaseDataFieldComponentHandler":
+        """Create an empty DataFieldComponentHandler."""
+        return EMPTY_DATA_HANDLER
+
 
 class DataFieldComponentHandler(BaseDataFieldComponentHandler):
     """Data component handler for Field that provides implementation
@@ -125,6 +130,8 @@ class DataFieldComponentHandler(BaseDataFieldComponentHandler):
         elif isinstance(data, dict):
             dict_kwargs = dict_kwargs or {}
             return cls.from_dict(data, **dict_kwargs)
+        elif isinstance(data, BaseDataFieldComponentHandler):
+            return data
 
         raise TypeError(f"Cannot create {cls.__name__} from {type(data)}")
 
@@ -186,9 +193,9 @@ class DataFieldComponentHandler(BaseDataFieldComponentHandler):
 
         COLLECTOR.collect(self, context)
 
-    @classmethod
-    def create_empty(cls) -> "DataFieldComponentHandler":
-        return EMPTY_DATA_HANDLER
+    # @classmethod
+    # def create_empty(cls) -> "DataFieldComponentHandler":
+    #     return EMPTY_DATA_HANDLER
 
 
 class ArrayCache:
