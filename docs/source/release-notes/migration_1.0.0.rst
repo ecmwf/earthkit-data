@@ -1,6 +1,6 @@
 .. _migration_1.0.0:
 
-Migration guide for 1.0.0
+Migration guide for 1.0
 ============================
 
 from_source
@@ -221,7 +221,7 @@ The Field API has been redesigned and many methods have been removed or changed.
         When the key does not exist in the raw metadata, it raises a KeyError.
    * - MetaData object accessed by calling metadata() without args/kwargs
      - N/A
-     - This object is no longer available.
+     - This object is no longer available. The field itself provides the same functionality through :py:meth:`~earthkit.data.core.field.Field.get` and :py:meth:`~earthkit.data.core.field.Field.set`.
    * - dump()
      - N/A
      - Use :py:meth:`~earthkit.data.core.field.Field.describe` instead.

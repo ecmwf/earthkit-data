@@ -1,6 +1,6 @@
 .. _release-notes-1.0:
 
-Version 1.0.0 Updates
+Version 1.0 Updates
 ///////////////////////
 
 .. note::
@@ -40,18 +40,12 @@ Component-based Field metadata
 format-independent, polymorphic *components*, each responsible for a distinct aspect of
 the field's metadata:
 
-- :py:class:`~earthkit.data.field.component.parameter.ParameterBase` — physical quantity,
-  units, CF names; extended with chemical, optical, and wave-spectra sub-types.
-- :py:class:`~earthkit.data.field.component.time.TimeBase` — base datetime, forecast step,
-  valid datetime.
-- :py:class:`~earthkit.data.field.component.vertical.VerticalBase` — level value, level
-  type, layer bounds, parametric (hybrid) level coefficients.
-- :py:class:`~earthkit.data.field.component.geography.GeographyBase` — lat/lon arrays,
-  bounding box, projection, grid type.
-- :py:class:`~earthkit.data.field.component.ensemble.EnsembleBase` — ensemble member
-  identifier.
-- :py:class:`~earthkit.data.field.component.proc.ProcBase` — post-processing operations
-  (e.g. accumulation type and time span).
+- :ref:`parameter_component`     — physical quantity, units, CF names; extended with chemical, optical, and wave-spectra sub-types.
+- :ref:`time_component`     — base datetime, forecast step, valid datetime.
+- :ref:`vertical_component` — level value, level type, layer bounds, parametric (hybrid) level coefficients.
+- :ref:`geography_component` — lat/lon arrays, bounding box, projection, grid type.
+- :ref:`ensemble_component` — ensemble member identifier.
+- :ref:`proc_component` — post-processing operations (e.g. accumulation type and time span).
 
 Components are accessed via field attributes (e.g. ``field.time``) or through the generic
 :meth:`~earthkit.data.core.field.Field.get` method using ``"component.key"`` strings. Raw
@@ -59,7 +53,7 @@ source-native keys (e.g. GRIB ``shortName``) remain accessible via
 :meth:`~earthkit.data.core.field.Field.metadata` or with the ``"metadata."`` prefix in
 :meth:`~earthkit.data.core.field.Field.get`.
 
-See the :ref:`field_concept` and the component concept pages for full details.
+See the :ref:`field_concept` page for full details.
 
 Notebook examples:
 
@@ -103,7 +97,7 @@ Notebook examples:
 - :ref:`/how-tos/grib/grib_overview.ipynb`
 
 
-Xarray engine — new ``earthkit`` profile
+Xarray engine
 -----------------------------------------
 
 The Xarray engine has been refactored and a new default profile ``earthkit`` has been
@@ -114,7 +108,7 @@ The legacy ``mars`` and ``grib`` profiles are retained.
 Other notable Xarray engine changes:
 
 - Four new built-in dimensions were added to support the extended parameter component
-  metadata:
+  metadata (:pr:`1008`):
 
   - ``chem_variable`` — chemical constituent or aerosol type
   - ``wavelength`` — central wavelength for optical parameters
@@ -126,7 +120,12 @@ Other notable Xarray engine changes:
 - The ``"number"`` dimension role has been renamed to ``"member"``.
 - The ``time_dim_mode`` kwarg has been replaced by ``time_dims``.
 - The ``_earthkit`` dataset attribute is now serialised as a JSON string, enabling
-  round-trip NetCDF serialisation without removing it.
+  round-trip NetCDF serialisation without removing it  (:pr:`1021`).
+- Added the ``aux_coords`` keyword argument to specify 1- or multi-dimensional auxiliary coordinate variables whose values are derived from any metadata key (:pr:`969`).
+- Added the ``reference_field`` property to the Xarray ``earthkit`` accessor to allow getting
+  the reference field of the dataarray. Also added the ``set`` method to allow setting the
+  reference field of the dataarray using a Field or any args/kwargs accepted by :func:`~earthkit.data.core.field.Field.set` (:pr:`990`).
+- Allowed using null values in datetime related objects (:pr:`999`).
 
 See :ref:`xr_engine` for full documentation.
 
@@ -145,6 +144,6 @@ Dependencies
 Geography support for GRIB data — including access to latitudes, longitudes, grid
 specification, and other grid properties via the
 :py:class:`~earthkit.data.field.component.geography.GeographyBase` component — requires
-an `eccodes <https://github.com/ecmwf/eccodes>`_ library built with
-`eckit <https://github.com/ecmwf/eckit>`_ grid support. Without it, geography keys will
+the `eccodes <https://github.com/ecmwf/eccodes>`_ binaries built with
+`eckit <https://github.com/ecmwf/eckit>`_ geo support. Without it, geography keys will
 return ``None`` or raise an error.
