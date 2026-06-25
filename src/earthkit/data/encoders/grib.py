@@ -418,9 +418,9 @@ class GribEncoder(Encoder):
     --------
     See the howto examples for more details and examples of encoding GRIB data with :class:`GribEncoder`.
 
-    - :ref:`/how-tos/target/grib_encoder.ipynb`
-    - :ref:`/how-tos/grib/grib_modify_metadata.ipynb`
-    - :ref:`/how-tos/grib/grib_modify_values.ipynb`
+    - :ref:`/tutorials/target/grib_encoder.ipynb`
+    - :ref:`/tutorials/grib/grib_modify_metadata.ipynb`
+    - :ref:`/tutorials/grib/grib_modify_values.ipynb`
 
     Using with a preset template and metadata:
 
@@ -571,7 +571,7 @@ class GribEncoder(Encoder):
         --------
         See the howto examples for more details and examples of encoding GRIB data with :class:`GribEncoder`.
 
-        - :ref:`/how-tos/target/grib_encoder.ipynb`
+        - :ref:`/tutorials/target/grib_encoder.ipynb`
         """
         template_field = None
         if template is None:

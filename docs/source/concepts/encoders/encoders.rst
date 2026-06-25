@@ -155,4 +155,4 @@ Available encoders
 Examples
 --------
 
-- :ref:`/how-tos/target/grib_encoder.ipynb`
+- :ref:`/tutorials/target/grib_encoder.ipynb`

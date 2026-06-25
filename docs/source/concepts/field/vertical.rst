@@ -492,7 +492,7 @@ Supported keys:
 How-tos
 -------
 
-- :ref:`/how-tos/field/field_overview.ipynb`
-- :ref:`/how-tos/grib/grib_overview.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_level.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_field_dims.ipynb`
+- :ref:`/tutorials/field/field_overview.ipynb`
+- :ref:`/tutorials/grib/grib_overview.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_level.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_field_dims.ipynb`

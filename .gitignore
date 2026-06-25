@@ -220,6 +220,13 @@ docs/source/experimental/*.pp*
 docs/source/experimental/*.png*
 docs/source/experimental/*.nc*
 docs/source/experimental/*.geojson*
+ocs/_build/
+docs/source/tutorials/*.tar
+docs/source/tutorials/*.zip
+docs/source/tutorials/_*
+docs/source/tutorials/earthkit_use_cases/*.grib
+docs/source/tutorials/*/_*
+
 
 autodocs/
 

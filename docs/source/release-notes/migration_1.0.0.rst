@@ -53,7 +53,7 @@ Then we can call any of the corresponding ``to_*`` methods to convert the data t
 
 Examples:
 
- -  :ref:`/how-tos/source/data.ipynb`
+ -  :ref:`/tutorials/source/data.ipynb`
 
 
 The ``read_all`` kwarg
@@ -68,7 +68,7 @@ Old way:
 
     import earthkit.data as ekd
 
-    url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test.grib"
+    url = "https://sites.ecmwf.int/repository/earthkit-data/tutorials/test.grib"
     fl = ekd.from_source("url", url, stream=True, read_all=True)
 
 New way:
@@ -77,7 +77,7 @@ New way:
 
     import earthkit.data as ekd
 
-    url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test.grib"
+    url = "https://sites.ecmwf.int/repository/earthkit-data/tutorials/test.grib"
     fl = ekd.from_source("url", url, stream=True).to_fieldlist(read_all=True)
 
 
@@ -134,8 +134,8 @@ Field modification
 
 Fields can be modified using the :py:meth:`~earthkit.data.core.field.Field.set` method. This method allows to set new data values and/or change  metadata keys. See the notebook examples:
 
-- :ref:`/how-tos/grib/grib_modify_metadata.ipynb`
-- :ref:`/how-tos/grib/grib_modify_values.ipynb`
+- :ref:`/tutorials/grib/grib_modify_metadata.ipynb`
+- :ref:`/tutorials/grib/grib_modify_values.ipynb`
 
 Field arithmetic
 ++++++++++++++++++++++++
@@ -153,7 +153,7 @@ Added :py:class:`~earthkit.data.core.field.Field` arithmetic. The basic maths op
 Notebook examples
 ++++++++++++++++++++++++
 
-- :ref:`/how-tos/field/field_overview.ipynb`
+- :ref:`/tutorials/field/field_overview.ipynb`
 
 
 Changes in the Field API

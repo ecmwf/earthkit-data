@@ -151,7 +151,7 @@ class IndexForFieldList(Index):
         --------
         How-to examples:
 
-        - :ref:`/how-tos/grib/grib_selection.ipynb`
+        - :ref:`/tutorials/grib/grib_selection.ipynb`
 
         More examples:
 
@@ -243,7 +243,7 @@ class IndexForFieldList(Index):
         --------
         How-to examples:
 
-        - :ref:`/how-tos/grib/grib_order_by.ipynb`
+        - :ref:`/tutorials/grib/grib_order_by.ipynb`
 
 
         Ordering by a single metadata key ("parameter.variable"). The default ordering direction

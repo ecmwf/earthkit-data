@@ -18,12 +18,12 @@ Details
 Examples
 ------------
 
-  - :ref:`/how-tos/target/file_target.ipynb`
-  - :ref:`/how-tos/target/grib_to_file_target.ipynb`
-  - :ref:`/how-tos/target/grib_to_file_pattern_target.ipynb`
-  - :ref:`/how-tos/target/grib_to_fdb_target.ipynb`
-  - :ref:`/how-tos/target/grib_to_geotiff.ipynb`
-  - :ref:`/how-tos/target/grib_to_zarr_target.ipynb`
+  - :ref:`/tutorials/target/file_target.ipynb`
+  - :ref:`/tutorials/target/grib_to_file_target.ipynb`
+  - :ref:`/tutorials/target/grib_to_file_pattern_target.ipynb`
+  - :ref:`/tutorials/target/grib_to_fdb_target.ipynb`
+  - :ref:`/tutorials/target/grib_to_geotiff.ipynb`
+  - :ref:`/tutorials/target/grib_to_zarr_target.ipynb`
 
 
 Overview
@@ -40,7 +40,7 @@ There are different ways to write/add data to a given target:
     import earthkit.data as ekd
 
     # read GRIB data into a fieldlist
-    ds = ekd.from_source("file", "docs/how-tos/test.grib").to_fieldlist()
+    ds = ekd.from_source("file", "docs/tutorials/test.grib").to_fieldlist()
 
     # write the fieldlist to a file in different ways
 

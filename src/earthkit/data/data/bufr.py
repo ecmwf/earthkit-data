@@ -87,8 +87,8 @@ class BUFRData(SourceData):
 
         Examples
         --------
-        - :ref:`/how-tos/bufr/bufr_temp.ipynb`
-        - :ref:`/how-tos/bufr/bufr_synop.ipynb`
+        - :ref:`/tutorials/bufr/bufr_temp.ipynb`
+        - :ref:`/tutorials/bufr/bufr_synop.ipynb`
 
         """
         return self._reader.to_pandas(**kwargs)

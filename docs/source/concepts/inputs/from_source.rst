@@ -141,15 +141,15 @@ file
 
   Further examples:
 
-    - :ref:`/how-tos/source/files.ipynb`
-    - :ref:`/how-tos/source/multi_files.ipynb`
-    - :ref:`/how-tos/source/file_parts.ipynb`
-    - :ref:`/how-tos/source/file_stream.ipynb`
-    - :ref:`/how-tos/source/tar_files.ipynb`
-    - :ref:`/how-tos/grib/grib_overview.ipynb`
-    - :ref:`/how-tos/bufr/bufr_temp.ipynb`
-    - :ref:`/how-tos/netcdf/netcdf.ipynb`
-    - :ref:`/how-tos/odb/odb.ipynb`
+    - :ref:`/tutorials/source/files.ipynb`
+    - :ref:`/tutorials/source/multi_files.ipynb`
+    - :ref:`/tutorials/source/file_parts.ipynb`
+    - :ref:`/tutorials/source/file_stream.ipynb`
+    - :ref:`/tutorials/source/tar_files.ipynb`
+    - :ref:`/tutorials/grib/grib_overview.ipynb`
+    - :ref:`/tutorials/bufr/bufr_temp.ipynb`
+    - :ref:`/tutorials/netcdf/netcdf.ipynb`
+    - :ref:`/tutorials/odb/odb.ipynb`
 
 .. _data-sources-file-pattern:
 
@@ -255,7 +255,7 @@ hive_partioning=True
 
     Further examples:
 
-    - :ref:`/how-tos/source/files.ipynb`
+    - :ref:`/tutorials/source/files.ipynb`
 
 
 .. _data-sources-url:
@@ -281,7 +281,7 @@ url
       >>> import earthkit.data as ekd
       >>> fl = ekd.from_source(
       ...     "url",
-      ...     "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test4.grib",
+      ...     "https://sites.ecmwf.int/repository/earthkit-data/tutorials/test4.grib",
       ... ).to_fieldlist()
       >>> fl.ls()
         centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
@@ -295,7 +295,7 @@ url
       >>> import earthkit.data as ekd
       >>> fl = ekd.from_source(
       ...     "url",
-      ...     "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test4.grib",
+      ...     "https://sites.ecmwf.int/repository/earthkit-data/tutorials/test4.grib",
       ...     parts=[(0, 130428), (260856, 130428)],
       ... ).to_fieldlist()
       >>> fl.ls()
@@ -305,9 +305,9 @@ url
 
   Further examples:
 
-    - :ref:`/how-tos/source/url.ipynb`
-    - :ref:`/how-tos/source/url_parts.ipynb`
-    - :ref:`/how-tos/source/url_stream.ipynb`
+    - :ref:`/tutorials/source/url.ipynb`
+    - :ref:`/tutorials/source/url_parts.ipynb`
+    - :ref:`/tutorials/source/url_stream.ipynb`
 
 
 .. _data-sources-url-pattern:
@@ -395,7 +395,7 @@ stream
   .. code-block:: python
 
       >>> import earthkit.data as ekd
-      >>> stream = open("docs/how-tos/test4.grib", "rb")
+      >>> stream = open("docs/tutorials/test4.grib", "rb")
       >>> fl = ekd.from_source("stream", stream).to_fieldlist()
 
       # f is a GribField
@@ -412,7 +412,7 @@ stream
     .. code-block:: python
 
       >>> import earthkit.data as ekd
-      >>> stream = open("docs/how-tos/test4.grib", "rb")
+      >>> stream = open("docs/tutorials/test4.grib", "rb")
       >>> fl = ekd.from_source("stream", stream).to_fieldlist()
 
        # f is a FieldList
@@ -428,7 +428,7 @@ stream
     .. code-block:: python
 
       >>> import earthkit.data as ekd
-      >>> stream = open("docs/how-tos/test4.grib", "rb")
+      >>> stream = open("docs/tutorials/test4.grib", "rb")
       >>> fl = ekd.from_source("stream", stream).to_fieldlist()
 
       # f is a FieldList
@@ -441,9 +441,9 @@ stream
 
   See the following notebook examples for further details:
 
-    - :ref:`/how-tos/source/data_from_stream.ipynb`
-    - :ref:`/how-tos/source/fdb.ipynb`
-    - :ref:`/how-tos/source/url_stream.ipynb`
+    - :ref:`/tutorials/source/data_from_stream.ipynb`
+    - :ref:`/tutorials/source/fdb.ipynb`
+    - :ref:`/tutorials/source/url_stream.ipynb`
 
 
 .. _data-sources-memory:
@@ -516,9 +516,9 @@ list-of-dicts
 
   Further examples:
 
-      - :ref:`/how-tos/dict/fields_from_dict_in_loop.ipynb`
-      - :ref:`/how-tos/dict/list_of_dicts_overview.ipynb`
-      - :ref:`/how-tos/dict/list_of_dicts_geography.ipynb`
+      - :ref:`/tutorials/dict/fields_from_dict_in_loop.ipynb`
+      - :ref:`/tutorials/dict/list_of_dicts_overview.ipynb`
+      - :ref:`/tutorials/dict/list_of_dicts_geography.ipynb`
 
 .. _data-sources-multi:
 
@@ -596,7 +596,7 @@ ads
 
   Further examples:
 
-      - :ref:`/how-tos/source/ads.ipynb`
+      - :ref:`/tutorials/source/ads.ipynb`
 
 
 .. _data-sources-cds:
@@ -651,7 +651,7 @@ cds
 
   Further examples:
 
-      - :ref:`/how-tos/source/cds.ipynb`
+      - :ref:`/tutorials/source/cds.ipynb`
 
 
 .. _data-sources-ecfs:
@@ -707,7 +707,7 @@ ecmwf-open-data
 
   Further examples:
 
-      - :ref:`/how-tos/source/ecmwf_open_data.ipynb`
+      - :ref:`/tutorials/source/ecmwf_open_data.ipynb`
 
 
 .. _data-sources-fdb:
@@ -800,9 +800,9 @@ fdb
 
   Further examples:
 
-      - :ref:`/how-tos/source/fdb.ipynb`
-      - :ref:`/how-tos/grib/grib_fdb_write.ipynb`
-      - :ref:`/how-tos/grib/grib_fdb_lazy.ipynb`
+      - :ref:`/tutorials/source/fdb.ipynb`
+      - :ref:`/tutorials/grib/grib_fdb_write.ipynb`
+      - :ref:`/tutorials/grib/grib_fdb_lazy.ipynb`
 
 
 
@@ -884,7 +884,7 @@ gribjump
 
   Further examples:
 
-      - :ref:`/how-tos/source/gribjump.ipynb`
+      - :ref:`/tutorials/source/gribjump.ipynb`
 
 
 .. _data-sources-mars:
@@ -967,7 +967,7 @@ mars
 
   Further examples:
 
-      - :ref:`/how-tos/source/mars.ipynb`
+      - :ref:`/tutorials/source/mars.ipynb`
 
 
 .. _data-sources-opendap:
@@ -984,7 +984,7 @@ opendap
 
   Examples:
 
-      - :ref:`/how-tos/source/netcdf_opendap.ipynb`
+      - :ref:`/tutorials/source/netcdf_opendap.ipynb`
 
 
 .. _data-sources-polytope:
@@ -1042,11 +1042,11 @@ polytope
 
   Further examples:
 
-      - :ref:`/how-tos/source/polytope.ipynb`
-      - :ref:`/how-tos/source/polytope_feature.ipynb`
-      - :ref:`/how-tos/covjson/polytope_time_series.ipynb`
-      - :ref:`/how-tos/covjson/polytope_polygon_coverage.ipynb`
-      - :ref:`/how-tos/covjson/polytope_vertical_profile.ipynb`
+      - :ref:`/tutorials/source/polytope.ipynb`
+      - :ref:`/tutorials/source/polytope_feature.ipynb`
+      - :ref:`/tutorials/covjson/polytope_time_series.ipynb`
+      - :ref:`/tutorials/covjson/polytope_polygon_coverage.ipynb`
+      - :ref:`/tutorials/covjson/polytope_vertical_profile.ipynb`
 
 .. _data-sources-s3:
 
@@ -1149,7 +1149,7 @@ s3
 
   Further examples:
 
-      - :ref:`/how-tos/source/s3.ipynb`
+      - :ref:`/tutorials/source/s3.ipynb`
 
 
 .. _data-sources-wekeo:
@@ -1199,7 +1199,7 @@ wekeo
 
   Further examples:
 
-      - :ref:`/how-tos/source/wekeo.ipynb`
+      - :ref:`/tutorials/source/wekeo.ipynb`
 
 
 .. _data-sources-wekeocds:
@@ -1252,7 +1252,7 @@ wekeocds
 
   Further examples:
 
-      - :ref:`/how-tos/source/wekeo.ipynb`
+      - :ref:`/tutorials/source/wekeo.ipynb`
 
 
 

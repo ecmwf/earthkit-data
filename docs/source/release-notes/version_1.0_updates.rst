@@ -30,7 +30,7 @@ See :ref:`migration_1.0.0` for migration details.
 
 Notebook examples:
 
-- :ref:`/how-tos/source/data.ipynb`
+- :ref:`/tutorials/source/data.ipynb`
 
 
 Component-based Field metadata
@@ -57,10 +57,10 @@ See the :ref:`field_concept` page for full details.
 
 Notebook examples:
 
-- :ref:`/how-tos/field/field_overview.ipynb`
-- :ref:`/how-tos/grib/grib_overview.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_chem.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_wave_spectra.ipynb`
+- :ref:`/tutorials/field/field_overview.ipynb`
+- :ref:`/tutorials/grib/grib_overview.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_chem.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_wave_spectra.ipynb`
 
 
 Field modification via ``set()``
@@ -73,8 +73,8 @@ with the requested changes applied, leaving the original unchanged.
 
 See the how-to notebooks:
 
-- :ref:`/how-tos/grib/grib_modify_metadata.ipynb`
-- :ref:`/how-tos/grib/grib_modify_values.ipynb`
+- :ref:`/tutorials/grib/grib_modify_metadata.ipynb`
+- :ref:`/tutorials/grib/grib_modify_values.ipynb`
 
 
 Field and FieldList arithmetic
@@ -93,8 +93,8 @@ result.
 
 Notebook examples:
 
-- :ref:`/how-tos/field/field_overview.ipynb`
-- :ref:`/how-tos/grib/grib_overview.ipynb`
+- :ref:`/tutorials/field/field_overview.ipynb`
+- :ref:`/tutorials/grib/grib_overview.ipynb`
 
 
 Xarray engine
@@ -131,11 +131,11 @@ See :ref:`xr_engine` for full documentation.
 
 Notebook examples:
 
-- :ref:`/how-tos/xr_engine/xarray_engine_overview.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_temporal.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_ensemble.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_chem.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_wave_spectra.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_overview.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_temporal.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_ensemble.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_chem.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_wave_spectra.ipynb`
 
 
 Dependencies

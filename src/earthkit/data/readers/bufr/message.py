@@ -291,7 +291,7 @@ class BUFRMessage(Base):
 
         Examples
         --------
-        :ref:`/how-tos/bufr/bufr_temp.ipynb`
+        :ref:`/tutorials/bufr/bufr_temp.ipynb`
 
         """
         from earthkit.data.core.temporary import temp_file

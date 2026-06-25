@@ -109,8 +109,8 @@ Each element of ``time_dims`` is a role name (e.g. ``"forecast_reference_time"``
 
 The following examples demonstrate the temporal dimensions modes:
 
-- :ref:`/how-tos/xr_engine/xarray_engine_temporal.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_seasonal.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_temporal.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_seasonal.ipynb`
 
 
 .. _xr_level_dim_modes:
@@ -149,7 +149,7 @@ while ``dim_roles`` (together with ``dim_name_from_role_name``) controls their n
 
 The following example demonstrates the vertical dimensions modes:
 
-- :ref:`/how-tos/xr_engine/xarray_engine_level.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_level.ipynb`
 
 
 .. _xr_chem_optical_dims:
@@ -165,7 +165,7 @@ The following dimensions are applicable for chemical and optical parameters (see
 
 The following notebook illustrates the use of the above dimensions in a CAMS dataset containing chemical and optical parameters:
 
-- :ref:`/how-tos/xr_engine/xarray_engine_chem.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_chem.ipynb`
 
 
 .. _xr_wave_spectra_dims:
@@ -181,7 +181,7 @@ The following dimensions are applicable for 2D wave spectra parameters:
 
 The following notebook presents an example 2D wave spectra dataset:
 
-- :ref:`/how-tos/xr_engine/xarray_engine_wave_spectra.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_wave_spectra.ipynb`
 
 
 .. _xr_squeeze_and_ensure_dims:
@@ -195,7 +195,7 @@ This can be controlled with the ``squeeze`` option. Alternatively, the ``ensure_
 
 See the following notebook for examples of how this works:
 
-- :ref:`/how-tos/xr_engine/xarray_engine_squeeze.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_squeeze.ipynb`
 
 
 .. _xr_dims_as_attrs:
@@ -221,7 +221,7 @@ exposed as a variable attribute.
 
 For a detailed discussion and examples, see the following notebook:
 
-- :ref:`/how-tos/xr_engine/xarray_engine_dims_as_attrs.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_dims_as_attrs.ipynb`
 
 
 Extra dimensions
@@ -274,7 +274,7 @@ This rule applies to all predefined dimension roles listed in the
 
 For a detailed discussion and examples, see the following notebook:
 
-- :ref:`/how-tos/xr_engine/xarray_engine_extra_dims.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_extra_dims.ipynb`
 
 
 Remapping
@@ -292,4 +292,4 @@ In particular, a virtual metadata key can be used:
 
 For a detailed discussion and examples, see the following notebook:
 
-- :ref:`/how-tos/xr_engine/xarray_engine_remapping.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_remapping.ipynb`

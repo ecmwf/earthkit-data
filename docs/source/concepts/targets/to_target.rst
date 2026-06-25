@@ -86,10 +86,10 @@ file
 
   Notebook examples:
 
-    - :ref:`/how-tos/target/file_target.ipynb`
-    - :ref:`/how-tos/target/grib_to_file_target.ipynb`
-    - :ref:`/how-tos/target/grib_to_file_pattern_target.ipynb`
-    - :ref:`/how-tos/target/grib_to_geotiff.ipynb`
+    - :ref:`/tutorials/target/file_target.ipynb`
+    - :ref:`/tutorials/target/grib_to_file_target.ipynb`
+    - :ref:`/tutorials/target/grib_to_file_pattern_target.ipynb`
+    - :ref:`/tutorials/target/grib_to_geotiff.ipynb`
 
 .. _targets-file-pattern:
 
@@ -128,7 +128,7 @@ file-pattern
 
   Notebook examples:
 
-    - :ref:`/how-tos/target/grib_to_file_pattern_target.ipynb`
+    - :ref:`/tutorials/target/grib_to_file_pattern_target.ipynb`
 
 
 .. _targets-fdb:
@@ -172,7 +172,7 @@ fdb
 
   Notebook examples:
 
-    - :ref:`/how-tos/target/grib_to_fdb_target.ipynb`
+    - :ref:`/tutorials/target/grib_to_fdb_target.ipynb`
 
 
 .. _targets-zarr:
@@ -193,7 +193,7 @@ zarr
 
   Notebook examples:
 
-    - :ref:`/how-tos/target/grib_to_zarr_target.ipynb`
+    - :ref:`/tutorials/target/grib_to_zarr_target.ipynb`
 
 
 .. .. _targets-multio:

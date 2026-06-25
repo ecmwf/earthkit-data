@@ -226,6 +226,6 @@ Encode a FieldList using the encoder directly and iterate over results:
 How-tos
 -------
 
-- :ref:`/how-tos/target/grib_encoder.ipynb`
-- :ref:`/how-tos/grib/grib_modify_metadata.ipynb`
-- :ref:`/how-tos/grib/grib_modify_values.ipynb`
+- :ref:`/tutorials/target/grib_encoder.ipynb`
+- :ref:`/tutorials/grib/grib_modify_metadata.ipynb`
+- :ref:`/tutorials/grib/grib_modify_values.ipynb`

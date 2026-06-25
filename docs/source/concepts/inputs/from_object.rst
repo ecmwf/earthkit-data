@@ -14,6 +14,6 @@ from_object
 
 Examples:
 
-    - :ref:`/how-tos/other/from_object.ipynb`
-    - :ref:`/how-tos/other/pandas.ipynb`
-    - :ref:`/how-tos/geojson/geojson_geopandas.ipynb`
+    - :ref:`/tutorials/other/from_object.ipynb`
+    - :ref:`/tutorials/other/pandas.ipynb`
+    - :ref:`/tutorials/geojson/geojson_geopandas.ipynb`

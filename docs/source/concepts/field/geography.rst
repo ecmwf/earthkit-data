@@ -165,9 +165,9 @@ All geography keys are accessible through :meth:`~earthkit.data.core.field.Field
 How-tos
 -------
 
-- :ref:`/how-tos/field/field_overview.ipynb`
-- :ref:`/how-tos/grib/grib_overview.ipynb`
-- :ref:`/how-tos/grib/grib_lat_lon_value_ll.ipynb`
-- :ref:`/how-tos/grib/grib_lat_lon_value_rgg.ipynb`
-- :ref:`/how-tos/grib/grib_nearest_gridpoint.ipynb`
-- :ref:`/how-tos/misc/projection.ipynb`
+- :ref:`/tutorials/field/field_overview.ipynb`
+- :ref:`/tutorials/grib/grib_overview.ipynb`
+- :ref:`/tutorials/grib/grib_lat_lon_value_ll.ipynb`
+- :ref:`/tutorials/grib/grib_lat_lon_value_rgg.ipynb`
+- :ref:`/tutorials/grib/grib_nearest_gridpoint.ipynb`
+- :ref:`/tutorials/misc/projection.ipynb`
