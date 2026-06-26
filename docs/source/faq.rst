@@ -1,6 +1,6 @@
 .. _faq:
 
-Frequently asked questions
+Frequently Asked Questions
 ============================
 
 
