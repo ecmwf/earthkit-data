@@ -54,9 +54,9 @@ following metadata:
 - **standard_name** – CF standard name (e.g. ``"air_pressure"``)
 - **long_name** – human-readable description
 - **units** – native units of the level value
-- **layer** – ``True`` when the type represents a layer (two bounding levels) rather than a single level
-- **level** – indicates which bound is the *representative* level: ``"top"``, ``"bottom"``, or None string when undefined
-- **positive** – vertical direction in which values increase: ``"up"``, ``"down"``, or None when undefined
+- **layer** – ``True`` only when both the bottom and top bounding surfaces are defined, i.e. the level type describes a proper layer between two bounds; ``False`` when only one or neither bounding surface is specified (see for example ``"low_cloud_layer"`` vs ``"medium_cloud_layer"``)
+- **level** – indicates which bound is the *representative* level: ``"top"``, ``"bottom"``, or ``None``  when undefined
+- **positive** – vertical direction in which values increase: ``"up"``, ``"down"``, or ``None`` when undefined
 
 When earthkit-data encounters a level type that is not in the predefined list below, it is
 automatically registered at runtime so that arbitrary model-specific level types are handled
@@ -79,7 +79,7 @@ Predefined level types
      - Level
      - Positive
    * - ``abstract_single_level``
-     - abstract_single_level
+     -
      - abstract single level
      - ``abstractSingleLevel``
      -
@@ -87,7 +87,7 @@ Predefined level types
      -
      -
    * - ``cloud_base``
-     - cloud_base
+     -
      - cloud base
      - ``cloudBase``
      -
@@ -119,7 +119,7 @@ Predefined level types
      - bottom
      - down
    * - ``entire_atmosphere``
-     - entire_atmosphere
+     -
      - entire atmosphere
      - ``entire_atmosphere``
      -
@@ -127,7 +127,7 @@ Predefined level types
      -
      -
    * - ``entire_lake``
-     - entire_lake
+     -
      - entire lake
      - ``entireLake``
      -
@@ -135,7 +135,7 @@ Predefined level types
      -
      -
    * - ``entire_melt_pond``
-     - entire_melt_pond
+     -
      - entire melt pond
      - ``entireMeltPond``
      -
@@ -143,10 +143,10 @@ Predefined level types
      -
      -
    * - ``general``
-     - general
+     -
      - general
      - ``gen``
-     -
+     - 1
      - No
      -
      - down
@@ -167,7 +167,7 @@ Predefined level types
      -
      - up
    * - ``high_cloud_layer``
-     - high_cloud_layer
+     -
      - high cloud layer
      - ``highCloudLayer``
      - hPa
@@ -179,11 +179,11 @@ Predefined level types
      - hybrid level
      - ``ml``
      - 1
-     - No (parametric)
+     - No
      -
      - down
    * - ``ice_layer_on_water``
-     - ice_layer_on_water
+     -
      - ice layer on water
      - ``iceLayerOnWater``
      -
@@ -191,7 +191,7 @@ Predefined level types
      -
      -
    * - ``ice_top_on_water``
-     - ice_top_on_water
+     -
      - ice top on water
      - ``iceTopOnWater``
      -
@@ -199,7 +199,7 @@ Predefined level types
      -
      -
    * - ``lake_bottom``
-     - lake_bottom
+     -
      - lake bottom
      - ``lakeBottom``
      -
@@ -207,7 +207,7 @@ Predefined level types
      -
      -
    * - ``low_cloud_layer``
-     - low_cloud_layer
+     -
      - low cloud layer
      - ``lowCloudLayer``
      - hPa
@@ -215,7 +215,7 @@ Predefined level types
      - bottom
      - down
    * - ``mean_sea``
-     - mean_sea
+     -
      - mean sea level
      - ``mean_sea``
      -
@@ -223,7 +223,7 @@ Predefined level types
      -
      -
    * - ``medium_cloud_layer``
-     - medium_cloud_layer
+     -
      - medium cloud layer
      - ``mediumCloudLayer``
      - hPa
@@ -231,7 +231,7 @@ Predefined level types
      - bottom
      - down
    * - ``mixed_layer_depth_by_density``
-     - mixed_layer_depth_by_density
+     -
      - mixed layer depth by density
      - ``mixedLayerDepthByDensity``
      - kg m-3
@@ -239,7 +239,7 @@ Predefined level types
      -
      - down
    * - ``mixed_layer_parcel``
-     - mixed_layer_parcel
+     -
      - mixed layer parcel
      - ``mixedLayerParcel``
      - Pa
@@ -255,7 +255,7 @@ Predefined level types
      -
      -
    * - ``most_unstable_parcel``
-     - most_unstable_parcel
+     -
      - most unstable parcel
      - ``mostUnstableParcel``
      -
@@ -263,7 +263,7 @@ Predefined level types
      -
      -
    * - ``nominal_top_of_atmosphere``
-     - nominal_top_of_atmosphere
+     -
      - nominal top of atmosphere
      - ``nominalTopOfAtmosphere``
      -
@@ -271,23 +271,23 @@ Predefined level types
      -
      -
    * - ``ocean_model``
-     - ocean_model
+     -
      - ocean model
      - ``oceanModel``
-     -
+     - 1
      - No
      -
      - down
    * - ``ocean_model_layer``
-     - ocean_model_layer
+     -
      - ocean model layer
      - ``oceanModelLayer``
-     -
+     - 1
      - Yes
      - bottom
      - down
    * - ``ocean_surface``
-     - ocean_surface
+     -
      - ocean surface
      - ``ocean_surface``
      -
@@ -295,7 +295,7 @@ Predefined level types
      -
      -
    * - ``ocean_surface_to_bottom``
-     - ocean_surface_to_bottom
+     -
      - ocean surface to bottom
      - ``oceanSurfaceToBottom``
      -
@@ -304,7 +304,7 @@ Predefined level types
      -
    * - ``potential_temperature``
      - air_potential_temperature
-     - air potential temperature
+     - air_potential temperature
      - ``pt``
      - K
      - No
@@ -335,10 +335,10 @@ Predefined level types
      - top
      - down
    * - ``sea_ice_layer``
-     - sea_ice_layer
+     -
      - sea ice layer
      - ``seaIceLayer``
-     -
+     - 1
      - Yes
      - bottom
      - down
@@ -346,12 +346,12 @@ Predefined level types
      -
      - snow layer
      - ``snow``
-     -
+     - 1
      - Yes
      - bottom
      - down
    * - ``snow_layer_over_ice_on_water``
-     - snow_layer_over_ice_on_water
+     -
      - snow layer over ice on water
      - ``snowLayerOverIceOnWater``
      -
@@ -359,15 +359,15 @@ Predefined level types
      -
      -
    * - ``soil_layer``
-     - soil_layer
+     -
      - soil layer
      - ``soilLayer``
-     -
+     - 1
      - Yes
      - bottom
      - down
    * - ``stratosphere``
-     - stratosphere
+     -
      - stratosphere
      - ``stratosphere``
      -
@@ -391,7 +391,7 @@ Predefined level types
      -
      -
    * - ``tropopause``
-     - tropopause
+     -
      - tropopause
      - ``tropopause``
      -
@@ -399,7 +399,7 @@ Predefined level types
      -
      -
    * - ``troposphere``
-     - troposphere
+     -
      - troposphere
      - ``troposphere``
      -
@@ -407,7 +407,7 @@ Predefined level types
      -
      -
    * - ``unknown``
-     - unknown
+     -
      - unknown
      - ``unknown``
      -
@@ -415,7 +415,7 @@ Predefined level types
      -
      -
    * - ``water_surface_to_isothermal_ocean_layer``
-     - water_surface_to_isothermal_ocean_layer
+     -
      - water surface to isothermal ocean layer
      - ``waterSurfaceToIsothermalOceanLayer``
      -
