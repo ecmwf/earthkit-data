@@ -94,6 +94,8 @@ result.
 Notebook examples:
 
 - :ref:`/tutorials/field/field_overview.ipynb`
+- :ref:`/tutorials/field/field_arithmetic.ipynb`
+- :ref:`/tutorials/field/field_assign_constant_value.ipynb`
 - :ref:`/tutorials/grib/grib_overview.ipynb`
 
 
