@@ -95,7 +95,6 @@ Have a feature request or found a bug? Feel free to open an
    how-tos/index
    concepts/index
    api-reference
-   faq
 
 .. toctree::
    :caption: Developer guide
