@@ -23,6 +23,7 @@ dependencies = [
   "dask",
   "deprecation",
   "earthkit-utils>=1.0.0rc2",
+  "eccodes>=2.47.0",
   "eccodeslib==2.47.3.21",
   "eckit==2.1.0.21",
   "entrypoints",
