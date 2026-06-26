@@ -23,7 +23,6 @@ import earthkit.data
 from earthkit.data import concat
 from earthkit.data.utils import projections
 from earthkit.data.utils.testing import (
-    IN_GITHUB,
     NO_ECCODES_GRID,
     NO_GEO,
     check_array,
@@ -382,7 +381,7 @@ def test_grib_latlon_various_grids_1(
     assert np.allclose(np.asarray(ds[0].geography.bounding_box().as_tuple()), np.asarray(expected_bbox))
 
 
-@pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
+# @pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
 @pytest.mark.parametrize(
     "filename,expected_shape, expected_lat, expected_lon, expected_area",
     [
