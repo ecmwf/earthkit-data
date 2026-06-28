@@ -3,7 +3,6 @@ Version 0.19 Updates
 /////////////////////////
 
 
-
 Version 0.19.4
 ===============
 
@@ -72,7 +71,7 @@ New features
 
 - Added support for reading UK Met Office PP binary files (:pr:`838`). See the notebook example:
 
-    - :ref:`/tutorials/pp/ukmo_pp.ipynb`
+    - :ref:`/how-tos/pp/ukmo_pp.ipynb`
 - Added the ``copy()`` method to CodesHandle (:pr:`882`).
 
 Changes
