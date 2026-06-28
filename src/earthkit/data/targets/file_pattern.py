@@ -20,8 +20,8 @@ class FilePatternTarget(SimpleTarget):
     """
     File target with a pattern for the output file names.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     path: str
         The file path to write to. The output file name defines a pattern containing metadata keys in the
         format of ``{key}``. Each data item (e.g. a field) will be written into a file
@@ -32,6 +32,8 @@ class FilePatternTarget(SimpleTarget):
     **kwargs:
         Additional keyword arguments passed to the parent class
     """
+
+    _name = "file-pattern"
 
     def __init__(self, path, *, append=False, **kwargs):
         super().__init__(**kwargs)
@@ -63,8 +65,8 @@ class FilePatternTarget(SimpleTarget):
 
         The target will not be able to write anymore.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         self._mark_closed()
@@ -83,7 +85,12 @@ class FilePatternTarget(SimpleTarget):
     def _f(self, data):
         self._raise_if_closed()
 
-        keys = [data.metadata(k.split(":")[0]) for k in self.split_output]
+        def _convert(v):
+            if v is None:
+                return "None"
+            return v
+
+        keys = [_convert(data.get(k.split(":")[0])) for k in self.split_output]
         path = self.filename.format(*keys)
 
         if path not in self._files:

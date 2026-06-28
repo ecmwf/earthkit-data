@@ -83,13 +83,6 @@ types:
       - dx
       - dy
     - *area
-  reduced_ll:
-    grid_type: reduced_ll
-    spec:
-    - *shared_keys
-    - grid:
-      - dy
-    - *area
   regular_gg:
     grid_type: regular_gg
     rotated_type: rotated_gg
@@ -111,56 +104,6 @@ types:
       octahedral:
         0: N
         1: O
-  # mercator:
-  #   grid_type: mercator
-  #   spec:
-  #   - *shared_keys
-  #   - grid:
-  #     - dx_in_metres
-  #     - dy_in_metres
-  #   - *area
-  #   - nx
-  #   - ny
-  #   - lad
-  #   - orientation
-  # polar_stereographic:
-  #   grid_type: polar_stereographic
-  #   spec:
-  #   - *shared_keys
-  #   - grid:
-  #     - dx_in_metres
-  #     - dy_in_metres
-  #   - *first_point
-  #   - nx
-  #   - ny
-  #   - lad
-  #   - orientation
-  # lambert:
-  #   grid_type: lambert
-  #   spec:
-  #   - *shared_keys
-  #   - grid:
-  #     - dx_in_metres
-  #     - dy_in_metres
-  #   - *first_point
-  #   - nx
-  #   - ny
-  #   - lad
-  #   - lov
-  #   - latin_1
-  #   - latin_2
-  # lambert_azimuthal_equal_area:
-  #   grid_type: lambert_azimuthal_equal_area
-  #   spec:
-  #   - *shared_keys
-  #   - grid:
-  #     - dx_in_metres
-  #     - dy_in_metres
-  #   - *first_point
-  #   - nx
-  #   - ny
-  #   - standard_parallel
-  #   - central_longitude
   healpix:
     grid_type: healpix
     spec:

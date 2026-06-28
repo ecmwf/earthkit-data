@@ -9,16 +9,15 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
 import numpy as np
 import pytest
+from grib_fixtures import (
+    FL_NUMPY,  # noqa: E402
+    load_grib_data,  # noqa: E402
+)
 
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from grib_fixtures import FL_NUMPY  # noqa: E402
-from grib_fixtures import load_grib_data  # noqa: E402
+from earthkit.data import concat
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
@@ -27,9 +26,10 @@ def test_icon_to_xarray(fl_type):
     g, _ = load_grib_data("test_icon.grib", fl_type, folder="data")
 
     ds = g.to_xarray(engine="cfgrib")
+
     assert len(ds.data_vars) == 1
     # Dataset contains 9 levels and 9 grid points per level
-    ref_levs = g.metadata("level")
+    ref_levs = g.get("vertical.level")
     assert ds["pres"].sizes["generalVerticalLayer"] == len(ref_levs)
     assert ds["pres"].sizes["values"] == 6
 
@@ -37,7 +37,7 @@ def test_icon_to_xarray(fl_type):
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 def test_to_xarray_filter_by_keys(fl_type):
     g, _ = load_grib_data("tuv_pl.grib", fl_type)
-    g = g.sel(param="t", level=500) + g.sel(param="u")
+    g = concat(g.sel({"parameter.variable": "t", "vertical.level": 500}), g.sel({"parameter.variable": "u"}))
     assert len(g) > 1
 
     # see github #250
@@ -61,16 +61,16 @@ def test_grib_to_pandas(fl_type):
         "lon",
         "value",
         "datetime",
-        "domain",
-        "levtype",
-        "date",
-        "time",
-        "step",
-        "param",
-        "class",
-        "type",
-        "stream",
-        "expver",
+        # "domain",
+        # "levtype",
+        # "date",
+        # "time",
+        # "step",
+        # "param",
+        # "class",
+        # "type",
+        # "stream",
+        # "expver",
     ]
     assert list(df.columns) == cols
     assert np.allclose(df["lat"][0:2], [90, 90])
@@ -87,6 +87,6 @@ def test_grib_to_pandas(fl_type):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

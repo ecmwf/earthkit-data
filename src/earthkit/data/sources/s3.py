@@ -161,17 +161,16 @@ class S3Resource:
             return f"{self.endpoint}"
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(url={self.url}, part={self.part})"
+        return f"{self.__class__.__name__}(url={self.url}, part={self.parts})"
 
 
 class S3Source(FileSource):
-    """Represent an AWS S3 bucket source"""
+    """Represent an AWS S3 bucket source."""
 
     def __init__(
         self,
         *args,
         stream=False,
-        read_all=False,
         anon=True,
         aws_access_key=None,
         aws_secret_access_key=None,
@@ -183,7 +182,7 @@ class S3Source(FileSource):
         self.anon = anon
 
         self.stream = stream
-        self._stream_kwargs = dict(read_all=read_all)
+        self._stream_kwargs = dict()
 
         def _collect(r):
             if isinstance(r, dict):

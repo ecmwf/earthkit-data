@@ -10,22 +10,26 @@
 #
 
 import datetime
+import math
 
 import numpy as np
+import pandas as pd
 import pytest
 
-from earthkit.data.utils.dates import date_to_grib
-from earthkit.data.utils.dates import datetime_to_grib
-from earthkit.data.utils.dates import mars_like_date_list
-from earthkit.data.utils.dates import numpy_datetime_to_datetime
-from earthkit.data.utils.dates import numpy_timedelta_to_timedelta
-from earthkit.data.utils.dates import step_to_grib
-from earthkit.data.utils.dates import time_to_grib
-from earthkit.data.utils.dates import timedeltas_to_int
-from earthkit.data.utils.dates import to_datetime
-from earthkit.data.utils.dates import to_datetime_list
-from earthkit.data.utils.dates import to_time
-from earthkit.data.utils.dates import to_timedelta
+from earthkit.data.utils.dates import (
+    date_to_grib,
+    datetime_to_grib,
+    mars_like_date_list,
+    numpy_datetime_to_datetime,
+    numpy_timedelta_to_timedelta,
+    step_to_grib,
+    time_to_grib,
+    timedeltas_to_int,
+    to_datetime,
+    to_datetime_list,
+    to_time,
+    to_timedelta,
+)
 
 # Change to utc once aware datetime objects will be used
 # tzinfo = datetime.timezone.utc
@@ -362,6 +366,70 @@ def test_time_to_grib(d, expected_value, error):
 
 
 @pytest.mark.parametrize(
+    "d",
+    [
+        None,
+        math.nan,
+        np.nan,
+        np.datetime64("NaT"),
+        np.timedelta64("NaT"),
+        pd.NaT,
+    ],
+)
+def test_to_datetime_null_like(d):
+    assert to_datetime(d) is None
+
+
+@pytest.mark.parametrize(
+    "d",
+    [
+        None,
+        math.nan,
+        np.nan,
+        np.datetime64("NaT"),
+        np.timedelta64("NaT"),
+        pd.NaT,
+    ],
+)
+def test_to_time_null_like(d):
+    assert to_time(d) is None
+
+
+@pytest.mark.parametrize(
+    "d",
+    [
+        None,
+        math.nan,
+        np.nan,
+        np.timedelta64("NaT"),
+        pd.NaT,
+    ],
+)
+def test_to_timedelta_null_like(d):
+    assert to_timedelta(d) is None
+
+
+@pytest.mark.parametrize(
+    "d",
+    [
+        np.datetime64("NaT"),
+    ],
+)
+def test_numpy_datetime_to_datetime_null_like(d):
+    assert numpy_datetime_to_datetime(d) is None
+
+
+@pytest.mark.parametrize(
+    "d",
+    [
+        np.timedelta64("NaT"),
+    ],
+)
+def test_numpy_timedelta_to_timedelta_null_like(d):
+    assert numpy_timedelta_to_timedelta(d) is None
+
+
+@pytest.mark.parametrize(
     "step,expected_value,error",
     [
         (0, 0, None),
@@ -423,6 +491,6 @@ def test_datetime_to_grib(d, expected_value, error):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

@@ -9,9 +9,8 @@
 
 import logging
 
-from earthkit.data.decorators import normalize
-from earthkit.data.utils.request import FileRequestRetriever
-from earthkit.data.utils.request import RequestBuilder
+from earthkit.data.decorators import normalise
+from earthkit.data.utils.request import FileRequestRetriever, RequestBuilder
 
 from .file import FileSource
 from .prompt import APIKeyPrompt
@@ -81,14 +80,14 @@ class ECMWFApi(FileSource):
         def retrieve(target, request):
             self.service().execute(request, target)
 
-        return self.cache_file(
+        return self._cache_file(
             retrieve,
             request,
         )
 
-    @normalize("param", "variable-list(mars)")
-    @normalize("date", "date-list(%Y-%m-%d)")
-    @normalize("area", "bounding-box(list)")
+    @normalise("param", "variable-list(mars)")
+    @normalise("date", "date-list(%Y-%m-%d)")
+    @normalise("area", "bounding-box(list)")
     def _normalise_request(self, **kwargs):
         kwargs.pop("accumulation_period", None)
         return kwargs

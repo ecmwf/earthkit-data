@@ -13,16 +13,11 @@ import os
 import re
 from pathlib import Path
 from typing import Any as TypingAny
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Dict, List, Optional, Tuple, Union
 
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.utils.decorators import thread_safe_cached_property
 
-from .dates import to_datetime
-from .dates import to_timedelta
+from .dates import to_datetime, to_timedelta
 
 LOG = logging.getLogger(__name__)
 
@@ -84,9 +79,7 @@ class Enum:
             If the value is not in the predefined set.
         """
         if self.enum and value not in self.enum:
-            raise ValueError(
-                "Invalid value '{}' for parameter '{}', expected one of {}".format(value, name, self.enum)
-            )
+            raise ValueError("Invalid value '{}' for parameter '{}', expected one of {}".format(value, name, self.enum))
         return value
 
 
@@ -218,9 +211,7 @@ class DatetimeDelta:
     def __init__(self, params: str) -> None:
         params_list = params.split(";")
         if len(params_list) != 2:
-            raise ValueError(
-                "Invalid parameters '{}' for class DatetimeDelta, expected (delta;format)".format(params)
-            )
+            raise ValueError("Invalid parameters '{}' for class DatetimeDelta, expected (delta;format)".format(params))
         self.delta = params_list[0].strip()
         self.format = params_list[1].strip()
 
@@ -249,9 +240,7 @@ class DatetimeDelta:
             delta = re.search(r"\d+[hms]?", self.delta).group(0)
         else:
             raise ValueError(
-                "Invalid value '{}' for delta, expected time in hour (h), minute (m) or second (s)".format(
-                    self.delta
-                )
+                "Invalid value '{}' for delta, expected time in hour (h), minute (m) or second (s)".format(self.delta)
             )
 
         valid_date = to_datetime(value) + sign * to_timedelta(delta)
@@ -412,6 +401,7 @@ class Variable:
         -------
         list
             List of substituted values.
+
         Raises
         ------
         ValueError
@@ -726,7 +716,7 @@ class HivePattern:
 
         pattern = pattern._subpattern(self.fixed_single_params)
 
-        # analyze path structure and turn each file path part into a
+        # analyse path structure and turn each file path part into a
         # pattern
         path = Path(pattern)
         self.root = ""

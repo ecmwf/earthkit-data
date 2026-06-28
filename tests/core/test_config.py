@@ -14,8 +14,7 @@ import os
 import pytest
 
 from earthkit.data import config
-from earthkit.data.core.temporary import temp_directory
-from earthkit.data.core.temporary import temp_file
+from earthkit.data.core.temporary import temp_directory, temp_file
 
 
 def read_config_yaml(path=os.path.expanduser("~/.config/earthkit/data/config.yaml")):
@@ -261,9 +260,7 @@ def test_config_temporary_autosave_2():
             config.autosave = v_ori
 
 
-@pytest.mark.parametrize(
-    "value,error", [("10000", None), (10000, None), ("1b", ValueError), ("A", ValueError)]
-)
+@pytest.mark.parametrize("value,error", [("10000", None), (10000, None), ("1b", ValueError), ("A", ValueError)])
 def test_config_env(monkeypatch, value, error):
     env_key = "EARTHKIT_DATA_URL_DOWNLOAD_TIMEOUT"
     monkeypatch.setenv(env_key, value)
@@ -282,6 +279,6 @@ def test_config_env(monkeypatch, value, error):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

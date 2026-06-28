@@ -11,11 +11,11 @@
 
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 def test_file_pattern_source_grib():
-    ds = from_source("file-pattern", earthkit_examples_file("test{id}.grib"), {"id": [4, 6]})
+    ds = from_source("file-pattern", earthkit_examples_file("test{id}.grib"), {"id": [4, 6]}).to_fieldlist()
 
     assert len(ds) == 10
     assert ds.metadata("param") == ["t", "z", "t", "z", "t", "u", "v", "t", "u", "v"]

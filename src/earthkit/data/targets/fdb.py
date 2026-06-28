@@ -15,6 +15,8 @@ LOG = logging.getLogger(__name__)
 
 
 class FDBTarget(SimpleTarget):
+    _name = "fdb"
+
     def __init__(self, fdb=None, config=None, userconfig=None, **kwargs):
         super().__init__(**kwargs)
         self._fdb = fdb
@@ -37,8 +39,8 @@ class FDBTarget(SimpleTarget):
 
         The target will not be able to write anymore.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         self.flush()
@@ -46,8 +48,8 @@ class FDBTarget(SimpleTarget):
     def flush(self):
         """Flush the fdb.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         self._raise_if_closed()

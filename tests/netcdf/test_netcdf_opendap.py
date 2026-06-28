@@ -13,16 +13,18 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.core.field import Field
+from earthkit.data.core.temporary import temp_file
 
 
 @pytest.mark.long_test
 @pytest.mark.download
 def test_netcdf_opendap():
     url = "https://psl.noaa.gov/thredds/dodsC/Datasets/noaa.oisst.v2/sst.mnmean.nc"
-    ds = from_source("opendap", url)
+    ds = from_source("opendap", url).to_fieldlist()
 
     assert len(ds) == 494
-    assert ds[0:2].metadata("variable") == ["sst", "sst"]
+    assert ds[0:2].get("parameter.variable") == ["sst", "sst"]
     v = ds[0].values
     assert v.shape == (64800,)
     assert np.isclose(v.mean(), 11.8082780)
@@ -35,8 +37,16 @@ def test_netcdf_opendap():
     assert list(x["sst"].dims) == ["time", "lat", "lon"]
     assert x["sst"].shape == (494, 180, 360)
 
+    with temp_file() as path:
+        ds.to_target("file", path)
+
+        ds1 = from_source("file", path).to_fieldlist()
+        assert len(ds1) == 494
+        assert isinstance(ds1[0], Field)
+        assert ds1[0:2].get("parameter.variable") == ["sst", "sst"]
+
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

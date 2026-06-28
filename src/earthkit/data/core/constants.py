@@ -6,6 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+import datetime
 
-DATETIME = "valid_datetime"
-GRIDSPEC = "grid_spec"
+ZERO_TIMEDELTA = datetime.timedelta(hours=0)

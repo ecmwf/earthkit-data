@@ -14,8 +14,7 @@ import os
 import pytest
 
 from earthkit.data import settings
-from earthkit.data.core.temporary import temp_directory
-from earthkit.data.core.temporary import temp_file
+from earthkit.data.core.temporary import temp_directory, temp_file
 
 # TODO: remove all these tests when settings are removed
 
@@ -238,9 +237,7 @@ def test_settings_temporary_autosave_2():
             settings.auto_save_settings = v_ori
 
 
-@pytest.mark.parametrize(
-    "value,error", [("10000", None), (10000, None), ("1b", ValueError), ("A", ValueError)]
-)
+@pytest.mark.parametrize("value,error", [("10000", None), (10000, None), ("1b", ValueError), ("A", ValueError)])
 def test_settings_env(monkeypatch, value, error):
     env_key = "EARTHKIT_DATA_NUMBER_OF_DOWNLOAD_THREADS"
     monkeypatch.setenv(env_key, value)
@@ -259,6 +256,6 @@ def test_settings_env(monkeypatch, value, error):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

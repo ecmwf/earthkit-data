@@ -17,7 +17,7 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.targets import to_target
-from earthkit.data.testing import NO_ZARR
+from earthkit.data.utils.testing import NO_ZARR
 
 
 @pytest.mark.skipif(NO_ZARR, reason="Zarr not installed")
@@ -60,6 +60,4 @@ def test_target_zarr_from_grib(direct_call):
 
         for k in ["t", "r", "forecast_reference_time", "step", "level", "latitude", "longitude"]:
             k in root, f"Key {k} not found in Zarr root"
-            assert (
-                root[k].shape == shapes[k]
-            ), f"Shape mismatch for {k}: expected {shapes[k]}, got {root[k].shape}"
+            assert root[k].shape == shapes[k], f"Shape mismatch for {k}: expected {shapes[k]}, got {root[k].shape}"

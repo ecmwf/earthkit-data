@@ -12,6 +12,7 @@ from collections import defaultdict
 
 from earthkit.data.readers.grib.index import FieldListInFilesWithSqlIndex
 from earthkit.data.sources.directory import DirectorySource
+
 from earthkit.data.utils.progbar import progress_bar
 
 LOG = logging.getLogger(__name__)
@@ -190,7 +191,7 @@ class VirtualFieldListInFilesWithSqlIndex(FieldListInFilesWithSqlIndex):
         return value
 
     def to_xarray(self, *args, **kwargs):
-        self.pbar = progress_bar(desc="to xarray()", total=len(self))
+        self.pbar = progress_bar(desc="to_xarray()", total=len(self))
         ds = super().to_xarray(*args, **kwargs)
         self.pbar = None
         return ds

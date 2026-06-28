@@ -49,7 +49,7 @@ class FieldCube:
         ds,
         *args,
         remapping=None,
-        patches=None,
+        patch=None,
         flatten_values=False,
     ):
         assert len(ds), f"No data in {ds}"
@@ -77,7 +77,7 @@ class FieldCube:
         # print(ds[1])
         # print(ds[2])
         # print(ds[3])
-        self.source = ds.order_by(*args, remapping=remapping, patches=patches)
+        self.source = ds.order_by(*args, remapping=remapping, patch=patch)
 
         del ds
         # print("after")
@@ -88,7 +88,15 @@ class FieldCube:
 
         # Get a mapping of user names to unique values
         # With possible reduce dimensionality if the user use 'level+param'
-        self.user_coords = self.source.unique_values(*names, remapping=remapping, patches=patches)
+        self.user_coords = self.source.unique(
+            names,
+            sort=False,
+            drop_none=False,
+            squeeze=False,
+            remapping=remapping,
+            patch=patch,
+            cache=False,
+        )
 
         self.user_shape = tuple(len(v) for k, v in self.user_coords.items())
 
@@ -98,7 +106,7 @@ class FieldCube:
                 details.append(f"{key=} ({len(v)}) {v}")
             assert not isinstance(self.source, str), f"Not expecting a str here ({self.source})"
             for i, f in enumerate(self.source):
-                details.append(f"{i}={f} {f.metadata('number', default=None)}")
+                details.append(f"{i}={f} {f.get('ensemble.member', default=None)}")
                 if i > 30:
                     details.append("...")
                     break
@@ -106,7 +114,7 @@ class FieldCube:
             msg = (
                 f"Shape {self.user_shape} [{math.prod(self.user_shape):,}]"
                 + f" does not match number of available fields {len(self.source):,}. "
-                + f"Difference: {len(self.source)-math.prod(self.user_shape):,}\n"
+                + f"Difference: {len(self.source) - math.prod(self.user_shape):,}\n"
                 + "\n".join(details)
             )
             raise ValueError(msg)
@@ -212,8 +220,7 @@ class FieldCube:
         indexes = list(range(0, len(lst)) for lst in names)
 
         return (
-            Cubelet(self, i, coords_names=n)
-            for n, i in zip(itertools.product(*names), itertools.product(*indexes))
+            Cubelet(self, i, coords_names=n) for n, i in zip(itertools.product(*names), itertools.product(*indexes))
         )
 
     def chunking(self, chunks):

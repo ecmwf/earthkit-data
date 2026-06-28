@@ -10,6 +10,8 @@
 import datetime
 import logging
 
+from earthkit.data.utils.dates import to_date_list
+
 LOG = logging.getLogger(__name__)
 
 
@@ -94,9 +96,7 @@ class _EnumType(Type):
             if same(value, v):
                 return v
 
-        raise ValueError(
-            f"Invalid value '{value}', possible values are {self.values} ({self.__class__.__name__})"
-        )
+        raise ValueError(f"Invalid value '{value}', possible values are {self.values} ({self.__class__.__name__})")
 
     def update(self, availability):
         # TODO: if value is none : use availability w
@@ -213,7 +213,6 @@ class _DateType(Type):
 
 class DateType(_DateType, NonListMixin):
     def cast(self, value):
-        from earthkit.data.utils.dates import to_date_list
 
         # TODO: change into to_datetime?
         lst = to_date_list(value)
@@ -226,7 +225,6 @@ class DateType(_DateType, NonListMixin):
 
 class DateListType(_DateType, ListMixin):
     def cast(self, value):
-        from earthkit.data.utils.dates import to_date_list
 
         lst = to_date_list(value)
         return lst
@@ -234,7 +232,6 @@ class DateListType(_DateType, ListMixin):
 
 class DateSingleOrListType(_DateType, SingleOrListMixin):
     def cast(self, value):
-        from earthkit.data.utils.dates import to_date_list
 
         if isinstance(value, list):
             return to_date_list(value)
@@ -243,6 +240,58 @@ class DateSingleOrListType(_DateType, SingleOrListMixin):
 
         # TODO: change into to_datetime?
         lst = to_date_list(value)
+        assert len(lst) == 1, lst
+        return lst[0]
+
+    def _cast(self, value):
+        return value
+
+
+class _TimeDeltaType(Type):
+    def _format(self, value, format):
+        if format == "datetime.timedelta":
+            return value
+        if format == datetime.timedelta:
+            return value
+        return value.strftime(format)
+
+    def include_args(self, decorator, args):
+        assert len(args) == 1, args
+        decorator.format = args[0]
+
+
+class TimeDeltaType(_TimeDeltaType, NonListMixin):
+    def cast(self, value):
+        from earthkit.data.utils.dates import to_timedelta_list
+
+        # TODO: change into to_timedelta?
+        lst = to_timedelta_list(value)
+        assert len(lst) == 1, lst
+        return lst[0]
+
+    def _cast(self, value):
+        return value
+
+
+class TimeDeltaListType(_TimeDeltaType, ListMixin):
+    def cast(self, value):
+        from earthkit.data.utils.dates import to_timedelta_list
+
+        lst = to_timedelta_list(value)
+        return lst
+
+
+class TimeDeltaSingleOrListType(_TimeDeltaType, SingleOrListMixin):
+    def cast(self, value):
+        from earthkit.data.utils.dates import to_timedelta_list
+
+        if isinstance(value, list):
+            return to_timedelta_list(value)
+        if isinstance(value, tuple):
+            return tuple(to_timedelta_list(value))
+
+        # TODO: change into to_timedelta?
+        lst = to_timedelta_list(value)
         assert len(lst) == 1, lst
         return lst[0]
 
@@ -314,6 +363,7 @@ NON_LIST_TYPES = {
     "str": StrType,
     "enum": EnumType,
     "date": DateType,
+    "timedelta": TimeDeltaType,
     "variable": VariableType,
     "bounding-box": BoundingBoxType,
     "bbox": BoundingBoxType,
@@ -324,6 +374,7 @@ LIST_TYPES = {
     "str-list": StrListType,
     "enum-list": EnumListType,
     "date-list": DateListType,
+    "timedelta-list": TimeDeltaListType,
     "variable-list": VariableListType,
 }
 
@@ -333,6 +384,7 @@ SINGLE_OR_LIST_TYPES = {
     "str": StrSingleOrListType,
     "enum": EnumSingleOrListType,
     "date": DateSingleOrListType,
+    "timedelta": TimeDeltaSingleOrListType,
     "variable": VariableSingleOrListType,
 }
 
@@ -361,7 +413,7 @@ def _infer_type(**kwargs):
             **kwargs,
         )
 
-    # normalize("name", ["a", "b", "c"]) and similar
+    # normalise("name", ["a", "b", "c"]) and similar
     if isinstance(values, (list, tuple)):  # and type is None:
         if type not in (None, "enum", "enum-list"):
             LOG.warning(f"Type ignored with enums, values={values}, type={type} and multiple={multiple}")

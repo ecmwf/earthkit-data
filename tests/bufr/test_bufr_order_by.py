@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 class _CustomOrder:
@@ -54,7 +54,7 @@ def test_bufr_order_by_single_file(
     params,
     expected_meta,
 ):
-    f = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    f = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
 
     g = f.order_by(params)
     assert len(g) == len(f)
@@ -155,9 +155,9 @@ def test_bufr_order_by_single_file(
     ],
 )
 def test_bufr_order_by_multi_file(params, expected_meta):
-    f1 = from_source("file", earthkit_examples_file("temp_10.bufr"))[:5]
-    f2 = from_source("file", earthkit_examples_file("synop_10.bufr"))[:5]
-    f = from_source("multi", [f1, f2])
+    f1 = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()[:5]
+    f2 = from_source("file", earthkit_examples_file("synop_10.bufr")).to_featurelist()[:5]
+    f = from_source("multi", [f1, f2]).to_featurelist()
 
     g = f.order_by(params)
     assert len(g) == len(f)
@@ -167,7 +167,7 @@ def test_bufr_order_by_multi_file(params, expected_meta):
 
 
 def test_bufr_order_by_with_sel():
-    f = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    f = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
 
     g = f.sel(ident=["01400", "01001", "11035"])
     assert len(g) == 3
@@ -183,6 +183,6 @@ def test_bufr_order_by_with_sel():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

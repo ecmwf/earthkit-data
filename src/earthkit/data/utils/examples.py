@@ -7,12 +7,18 @@
 # nor does it submit to any jurisdiction.
 #
 
+import os
+
+_REMOTE_ROOT_URL = "https://sites.ecmwf.int/repository/earthkit-data/"
+
+
+def earthkit_remote_file(*args):
+    return os.path.join(_REMOTE_ROOT_URL, *args)
+
 
 def download_example_file(file_names, remote_dir="examples", force=False):
     import os
     import urllib.request
-
-    from earthkit.data.testing import earthkit_remote_file
 
     if isinstance(file_names, str):
         file_names = [file_names]
@@ -23,8 +29,5 @@ def download_example_file(file_names, remote_dir="examples", force=False):
 
 
 def remote_example_file(file_name, remote_dir="examples"):
-    import os
-
-    from earthkit.data.testing import earthkit_remote_file
 
     return earthkit_remote_file(os.path.join(remote_dir, file_name))
