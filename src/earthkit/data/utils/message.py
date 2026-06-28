@@ -18,8 +18,7 @@ from contextlib import contextmanager
 import eccodes
 import numpy as np
 
-from earthkit.data.core.caching import CACHE
-from earthkit.data.core.caching import auxiliary_cache_file
+from earthkit.data.core.caching import CACHE, auxiliary_cache_file
 
 LOG = logging.getLogger(__name__)
 
@@ -83,11 +82,12 @@ class CodesMessagePositionIndex:
     VERSION = 1
     MAGIC = None
 
-    def __init__(self, path, parts=None):
+    def __init__(self, path, parts=None, max_count=None):
         self.path = path
         self.offsets = None
         self.lengths = None
         self.parts = parts
+        self.max_count = max_count
         self._cache_file = None
         self._load()
 
@@ -99,11 +99,11 @@ class CodesMessagePositionIndex:
 
         try:
             if parts is None:
-                yield from self._get_message_positions_part(fd, (0, -1))
+                yield from self._get_message_positions_part(fd, (0, -1), max_count=self.max_count)
             else:
                 for part in parts:
                     try:
-                        yield from self._get_message_positions_part(fd, part)
+                        yield from self._get_message_positions_part(fd, part, max_count=self.max_count)
                     except Exception:
                         pass
         except Exception:
@@ -111,7 +111,7 @@ class CodesMessagePositionIndex:
         finally:
             os.close(fd)
 
-    def _get_message_positions_part(self, path, part):
+    def _get_message_positions_part(self, path, part, max_count=None):
         raise NotImplementedError
 
     @staticmethod
@@ -198,12 +198,30 @@ class CodesHandle(eccodes.Message):
         return cls(eccodes.codes_new_from_samples(name, cls.PRODUCT_ID), None, None)
 
     @classmethod
-    def _from_raw_handle(cls, handle):
+    def _from_raw_handle(cls, handle, clone=False):
+        if clone:
+            handle = eccodes.codes_clone(handle)
         return cls(handle, None, None)
 
     @classmethod
     def from_message(cls, message):
         return cls(eccodes.codes_new_from_message(message), None, None)
+
+    @classmethod
+    def _raw_handle_from_file(cls, fp):
+        return eccodes.codes_new_from_file(fp, cls.PRODUCT_ID)
+
+    @classmethod
+    def _raw_handle_from_message(cls, message):
+        return eccodes.codes_new_from_message(message, cls.PRODUCT_ID)
+
+    def _raw_handle(self, clone=True):
+        # TODO: review if clone can be False at all. This object is managing the
+        # raw ecCodes handle and if clone is False, can cause issues.
+        if clone:
+            return eccodes.codes_clone(self._handle)
+        else:
+            return self._handle
 
     # TODO: just a wrapper around the base class implementation to handle the
     # s,l,d qualifiers. Once these are implemented in the base class this method can
@@ -275,7 +293,7 @@ class CodesHandle(eccodes.Message):
         try:
             assert self.path is None, "Only cloned handles can have values changed"
 
-            if isinstance(value, list):
+            if isinstance(value, (list, np.ndarray, tuple)):
                 return eccodes.codes_set_array(self._handle, name, value)
 
             return eccodes.codes_set(self._handle, name, value)
@@ -315,6 +333,12 @@ class CodesHandle(eccodes.Message):
             with open(self.path, "rb") as f:
                 f.seek(offset)
                 return f.read(length)
+
+    def is_defined(self, key):
+        try:
+            return bool(eccodes.codes_is_defined(self._handle, key))
+        except Exception:
+            return False
 
 
 class ReaderLRUCache(dict):

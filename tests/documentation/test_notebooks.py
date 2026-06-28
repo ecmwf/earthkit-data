@@ -16,13 +16,12 @@ import sys
 import pytest
 from earthkit.utils.array.testing.testing import NO_TORCH
 
-from earthkit.data.testing import MISSING
-from earthkit.data.testing import earthkit_file
+from earthkit.data.utils.testing import MISSING, earthkit_file
 
 # See https://www.blog.pythonlibrary.org/2018/10/16/testing-jupyter-notebooks/
 
 
-EXAMPLES = earthkit_file("docs", "examples")
+EXAMPLES = earthkit_file("docs", "source", "how-tos")
 
 SKIP = [
     "ads.ipynb",
@@ -30,6 +29,7 @@ SKIP = [
     "demo_source_plugin.ipynb",
     "ecmwf_open_data.ipynb",
     "fdb.ipynb",
+    "grib_fdb_lazy.ipynb",
     "grib_fdb_write.ipynb",
     "grib_to_fdb_target.ipynb",
     "grib_to_xarray.ipynb",
@@ -86,6 +86,6 @@ def test_notebook(path):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

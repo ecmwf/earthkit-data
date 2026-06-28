@@ -23,7 +23,7 @@ def test_thread_url_cache(tmpdir):
 
         def worker(n):
             # print(f"Thread {n}: loading data", flush=True)
-            ds = earthkit.data.from_source("sample", "test.grib")
+            ds = earthkit.data.from_source("sample", "test.grib").to_fieldlist()
             # print(f"Thread {n}: got {len(ds)} messages", flush=True)
             assert len(ds) == 2
 

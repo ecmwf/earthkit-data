@@ -5,51 +5,58 @@
 # In applying this licence, ECMWF does not waive the privileges and immunities
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
+#
 
-from earthkit.data.translators import Translator
+from . import Translator
 
 
-class PandasSeriesTranslator(Translator):
-    """Translator class for pandas `Series`"""
+class PandasTranslator(Translator):
+    """Translator class for pandas `DataFrame` and `Series`."""
 
     def __init__(self, data, *args, **kwargs):
-        self.data = data.to_pandas(*args, **kwargs)
+        super().__init__(data.to_pandas(*args, **kwargs))
+
+
+class PandasSeriesTranslator(PandasTranslator):
+    """Translator class for pandas `Series`."""
+
+    _name = "pandas.Series"
 
     def __call__(self):
-        """Series requested, if DataFrame return the first column"""
+        """Series requested, if DataFrame return the first column."""
         import pandas as pd
 
-        if isinstance(self.data, pd.DataFrame):
-            return self.data.iloc[:, 0]
+        if isinstance(self._data, pd.DataFrame):
+            return self._data.iloc[:, 0]
 
-        return self.data
+        return self._data
 
 
-class PandasDataFrameTranslator(PandasSeriesTranslator):
-    """Translator class for pandas `DataFrame`"""
+class PandasDataFrameTranslator(PandasTranslator):
+    """Translator class for pandas `DataFrame`."""
 
     def __call__(self):
         """Return DataFrame, if Series convert to DataFrame."""
         import pandas as pd
 
-        if isinstance(self.data, pd.Series):
-            return self.data.to_frame()
+        if isinstance(self._data, pd.Series):
+            return self._data.to_frame()
 
-        return self.data
+        return self._data
 
 
-class GeoPandasDataFrameTranslator(PandasSeriesTranslator):
-    """Translator class for geopandas `DataFrame`"""
+class GeoPandasDataFrameTranslator(PandasTranslator):
+    """Translator class for geopandas `DataFrame`."""
 
     def __call__(self):
         """Return GeoDataFrame, if normal pandas convert to geopandas."""
         import geopandas as gpd
         import pandas as pd
 
-        if isinstance(self.data, pd.DataFrame):
-            return gpd.GeoDataFrame(self.data)
+        if isinstance(self._data, pd.DataFrame):
+            return gpd.GeoDataFrame(self._data)
 
-        return self.data
+        return self._data
 
 
 def translator(data, cls, *args, **kwargs):

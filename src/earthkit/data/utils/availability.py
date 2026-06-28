@@ -18,11 +18,9 @@ import pickle
 import yaml
 
 from earthkit.data.utils import load_json_or_yaml
-from earthkit.data.utils.factorise import Tree
-from earthkit.data.utils.factorise import factorise
+from earthkit.data.utils.factorise import Tree, factorise
 
-from .humanize import dict_to_human
-from .humanize import list_to_human
+from .humanize import dict_to_human, list_to_human
 
 
 def _tidy_dict(query):

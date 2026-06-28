@@ -31,9 +31,7 @@ PROJ_PARAMS_TO_GLOBE_KWARGS = {
 
 
 def to_dict(proj_string):
-    proj_params = {
-        k.lstrip("+"): v for k, v in (p.split("=") if "=" in p else (p, None) for p in proj_string.split())
-    }
+    proj_params = {k.lstrip("+"): v for k, v in (p.split("=") if "=" in p else (p, None) for p in proj_string.split())}
 
     for key, value in proj_params.items():
         try:

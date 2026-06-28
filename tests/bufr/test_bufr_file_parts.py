@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 @pytest.mark.parametrize(
@@ -29,7 +29,7 @@ from earthkit.data.testing import earthkit_examples_file
     ],
 )
 def test_bufr_single_file_parts(parts, expected_meta):
-    ds = from_source("file", earthkit_examples_file("temp_10.bufr"), parts=parts)
+    ds = from_source("file", earthkit_examples_file("temp_10.bufr"), parts=parts).to_featurelist()
 
     assert len(ds) == len(expected_meta)
     if len(ds) > 0:
@@ -37,6 +37,6 @@ def test_bufr_single_file_parts(parts, expected_meta):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

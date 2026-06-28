@@ -19,8 +19,7 @@ from earthkit.data.utils.request import RequestBuilder
 from . import Source
 from .file import File
 from .prompt import APIKeyPrompt
-from .url import Url
-from .url import download_to_target
+from .url import Url, download_to_target
 
 LOG = logging.getLogger(__name__)
 
@@ -153,7 +152,7 @@ class Polytope(Source):
 
             # The cache file path/data is constructed by using the request only. We cannot simply base
             # it on the URL since the URL may change every time we ask for the pointers.
-            return self.cache_file(
+            return self._cache_file(
                 retrieve,
                 (dataset, request),
             )

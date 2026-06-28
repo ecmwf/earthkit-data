@@ -11,8 +11,7 @@
 
 import pytest
 
-from earthkit.data.utils import ensure_iterable
-from earthkit.data.utils import ensure_sequence
+from earthkit.data.utils import ensure_iterable, ensure_sequence
 
 
 @pytest.mark.parametrize(
@@ -39,6 +38,6 @@ def test_utils_ensure_sequence(data, expected):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

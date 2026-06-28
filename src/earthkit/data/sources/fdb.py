@@ -18,8 +18,7 @@ except ImportError:
 
 from earthkit.data.sources.file import FileSource
 from earthkit.data.sources.stream import StreamSource
-from earthkit.data.utils.request import RequestBuilder
-from earthkit.data.utils.request import RequestMapper
+from earthkit.data.utils.request import RequestBuilder, RequestMapper
 
 from . import Source
 
@@ -44,7 +43,7 @@ class FDBSource(Source):
         self._stream_kwargs = dict()
         for k in ["read_all"]:
             if k in kwargs:
-                self._stream_kwargs[k] = kwargs.pop(k)
+                raise ValueError(f"Invalid argument '{k}' for FDBSource. Removed since 1.0.0.")
 
         self.stream = stream
 
@@ -77,13 +76,15 @@ class FDBSource(Source):
             fdb = pyfdb.FDB(**self._fdb_kwargs)
             if self.stream:
                 stream = fdb.retrieve(self.request)
+                if hasattr(stream, "open") and callable(stream.open):
+                    stream.open()
                 return StreamSource(stream, **self._stream_kwargs)
             else:
                 return FDBFileSource(fdb, self.request)
         else:
             mapper = FDBRequestMapper(self.request, fdb_kwargs=self._fdb_kwargs)
             retriever = FDBRetriever(self._fdb_kwargs)
-            from earthkit.data.readers.grib.virtual import VirtualGribFieldList
+            from earthkit.data.field.grib.virtual import VirtualGribFieldList
 
             return VirtualGribFieldList(mapper, retriever)
 
@@ -99,7 +100,7 @@ class FDBFileSource(FileSource):
             with open(target, "wb") as o, self.fdb.retrieve(request) as i:
                 shutil.copyfileobj(i, o)
 
-        return self.cache_file(
+        return self._cache_file(
             retrieve,
             request,
         )
@@ -112,7 +113,7 @@ class FDBRetriever:
     def get(self, request):
         from . import from_source
 
-        return from_source("fdb", request, stream=True, read_all=True, **self.fdb_kwargs)
+        return from_source("fdb", request, stream=True, **self.fdb_kwargs).to_fieldlist(read_all=True)
 
 
 class FDBRequestMapper(RequestMapper):
@@ -137,10 +138,18 @@ class FDBRequestMapper(RequestMapper):
 
     def _build(self):
         r = []
+        # check for pyfdb >=5
+        has_new_api = hasattr(pyfdb, "ListElement")
         fdb = pyfdb.FDB(**self.fdb_kwargs)
-        for el in fdb.list(self.request, True, True):
-            data = el["keys"]
-            r.append(self._convert(data))
+        if has_new_api:
+            for el in fdb.list(self.request, level=3):
+                data = el.combined_key()
+                r.append(self._convert(data))
+        else:
+            for el in fdb.list(self.request, True, True):
+                data = el["keys"]
+                r.append(self._convert(data))
+
         return r
 
     @staticmethod

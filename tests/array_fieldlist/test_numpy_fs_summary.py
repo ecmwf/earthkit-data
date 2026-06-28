@@ -9,17 +9,15 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
-import sys
 
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
+import pytest
 from array_fl_fixtures import load_array_fl_file  # noqa: E402
 
 # Note: Almost all grib metadata tests are also run for numpyfs.
 # See grib/test_grib_summary.py
 
 
+@pytest.mark.migrate
 def test_array_fl_dump():
     f, _ = load_array_fl_file("test6.grib")
 
@@ -177,6 +175,6 @@ def test_array_fl_dump():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

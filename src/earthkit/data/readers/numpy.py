@@ -41,3 +41,6 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
         _, extension = os.path.splitext(path)
         if magic[:4] == b"PK\x03\x04" and extension == ".npz":
             return NumpyZipReader(source, path)
+
+
+READER = reader

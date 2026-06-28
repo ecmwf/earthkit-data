@@ -48,6 +48,6 @@ def test_demo_encoder_plugin_2():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

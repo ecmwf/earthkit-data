@@ -231,7 +231,7 @@ class DummySource(FileSource):
         def _generate(target, args):
             return generate(target, **args)
 
-        self.path = self.cache_file(
+        self.path = self._cache_file(
             _generate,
             request,
             hash_extra=kind,

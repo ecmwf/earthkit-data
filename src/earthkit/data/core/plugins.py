@@ -18,8 +18,7 @@ import os
 import sys
 from collections import defaultdict
 from importlib import import_module
-from typing import List
-from typing import Union
+from typing import List, Union
 
 import entrypoints
 

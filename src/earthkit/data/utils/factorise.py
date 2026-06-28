@@ -53,7 +53,7 @@ class Interval(object):
         return result
 
     def overlaps(self, other):
-        """Returns the union of two intervals if they overlap, else None"""
+        """Returns the union of two intervals if they overlap, else None."""
         s1, e1 = self.start, self.end + self.one
         s2, e2 = other.start, other.end + self.one
         s = max(s1, s2)
@@ -64,7 +64,7 @@ class Interval(object):
             return None
 
     def intersects(self, other):
-        """Returns the intersection of two intervals if they overlap, else None"""
+        """Returns the intersection of two intervals if they overlap, else None."""
         s1, e1 = self.start, self.end + self.one
         s2, e2 = other.start, other.end + self.one
         s = max(s1, s2)

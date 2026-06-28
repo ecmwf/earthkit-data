@@ -1,6 +1,6 @@
 # Test RequestIterStreamer object from sources/url.py
 
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 
 # (C) Copyright 2020 ECMWF.
 #
@@ -88,6 +88,6 @@ def test_request_iter_streamer_read_all_2(chunk_size):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

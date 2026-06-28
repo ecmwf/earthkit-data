@@ -172,8 +172,7 @@ class UrlBase(FileSource):
     ):
         super().__init__(filter=filter, merger=merger)
 
-        from earthkit.data.utils.url import UrlSpec
-        from earthkit.data.utils.url import UrlSpecItem
+        from earthkit.data.utils.url import UrlSpec, UrlSpecItem
 
         if isinstance(url, UrlSpecItem):
             self.url_spec = UrlSpec.from_urls(url)
@@ -268,10 +267,10 @@ class Url(UrlBase):
 
     def mutate(self):
         if self.other_source:
-            from earthkit.data import from_source
+            from earthkit.data.sources import _from_source_internal
 
             source, url, kwargs = self.other_source
-            return from_source(source, url, **kwargs)
+            return _from_source_internal(source, url, **kwargs)
 
         if self.stream:
             s = []
@@ -315,6 +314,7 @@ class Url(UrlBase):
             extension = self.downloader.extension()
 
         self.path = self.downloader.local_path()
+
         if self.path is not None:
             return
 
@@ -325,7 +325,7 @@ class Url(UrlBase):
             self.downloader.download(target)
             return self.downloader.cache_data()
 
-        self.path = self.cache_file(
+        self.path = self._cache_file(
             download,
             dict(url=self.url, parts=self.url_parts),
             extension=extension,
@@ -377,9 +377,9 @@ class SingleUrlStream(UrlBase):
             raise NotImplementedError(f"Streams are not supported for scheme={o.scheme} urls")
 
     def mutate(self):
-        from .stream import _from_source
+        from .stream import _from_source_internal
 
-        return _from_source(self, **self._kwargs)
+        return _from_source_internal(self, **self._kwargs)
 
     def to_stream(self):
         from earthkit.data.utils.stream import RequestIterStreamer
