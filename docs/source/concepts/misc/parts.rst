@@ -69,7 +69,7 @@ When we use this mode the ``parts`` kwarg cannot be used!
 
 Examples:
 
-    - :ref:`/how-tos/source/file_parts.ipynb`
+    - :ref:`/tutorials/source/file_parts.ipynb`
 
 
 Specifying the parts for S3
@@ -79,4 +79,4 @@ For the :ref:`data-sources-s3` source the parts have to be specified within the 
 
 Examples:
 
-    - :ref:`/how-tos/source/s3.ipynb`
+    - :ref:`/tutorials/source/s3.ipynb`

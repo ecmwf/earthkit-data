@@ -1,6 +1,6 @@
 .. _migration_1.0.0:
 
-Migration guide for 1.0.0
+Migration guide for 1.0
 ============================
 
 from_source
@@ -53,7 +53,7 @@ Then we can call any of the corresponding ``to_*`` methods to convert the data t
 
 Examples:
 
- -  :ref:`/how-tos/source/data.ipynb`
+ -  :ref:`/tutorials/source/data.ipynb`
 
 
 The ``read_all`` kwarg
@@ -68,7 +68,7 @@ Old way:
 
     import earthkit.data as ekd
 
-    url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test.grib"
+    url = "https://sites.ecmwf.int/repository/earthkit-data/tutorials/test.grib"
     fl = ekd.from_source("url", url, stream=True, read_all=True)
 
 New way:
@@ -77,7 +77,7 @@ New way:
 
     import earthkit.data as ekd
 
-    url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test.grib"
+    url = "https://sites.ecmwf.int/repository/earthkit-data/tutorials/test.grib"
     fl = ekd.from_source("url", url, stream=True).to_fieldlist(read_all=True)
 
 
@@ -134,8 +134,8 @@ Field modification
 
 Fields can be modified using the :py:meth:`~earthkit.data.core.field.Field.set` method. This method allows to set new data values and/or change  metadata keys. See the notebook examples:
 
-- :ref:`/how-tos/grib/grib_modify_metadata.ipynb`
-- :ref:`/how-tos/grib/grib_modify_values.ipynb`
+- :ref:`/tutorials/grib/grib_modify_metadata.ipynb`
+- :ref:`/tutorials/grib/grib_modify_values.ipynb`
 
 Field arithmetic
 ++++++++++++++++++++++++
@@ -153,7 +153,7 @@ Added :py:class:`~earthkit.data.core.field.Field` arithmetic. The basic maths op
 Notebook examples
 ++++++++++++++++++++++++
 
-- :ref:`/how-tos/field/overview.ipynb`
+- :ref:`/tutorials/field/field_overview.ipynb`
 
 
 Changes in the Field API
@@ -221,7 +221,7 @@ The Field API has been redesigned and many methods have been removed or changed.
         When the key does not exist in the raw metadata, it raises a KeyError.
    * - MetaData object accessed by calling metadata() without args/kwargs
      - N/A
-     - This object is no longer available.
+     - This object is no longer available. The field itself provides the same functionality through :py:meth:`~earthkit.data.core.field.Field.get` and :py:meth:`~earthkit.data.core.field.Field.set`.
    * - dump()
      - N/A
      - Use :py:meth:`~earthkit.data.core.field.Field.describe` instead.
@@ -327,6 +327,23 @@ The following table gives an overview of the changes in the Fieldlist API (the `
    * - write()
      - :py:meth:`~earthkit.data.fieldlist.FieldList.to_target`
      -
+
+
+Indexed mode removed
++++++++++++++++++++++
+
+The GRIB indexed mode, previously available via the ``indexing=True`` kwarg in
+:py:func:`~earthkit.data.from_source`, has been removed:
+
+.. code-block:: python
+
+    # No longer supported
+    fl = ekd.from_source("file", "data.grib", indexing=True)
+
+In indexed mode the GRIB file was pre-scanned and all field metadata was stored in an
+in-memory index, making repeated :meth:`sel` and :meth:`order_by` calls faster for large
+files at the cost of upfront indexing time and additional memory. This feature will be
+reimplemented in a future release, potentially with a different interface.
 
 
 Xarray engine

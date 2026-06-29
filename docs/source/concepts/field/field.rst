@@ -115,7 +115,7 @@ retained in the result without modification:
 How-tos
 -------
 
-- :ref:`/how-tos/field/field_overview.ipynb`
-- :ref:`/how-tos/grib/grib_overview.ipynb`
-- :ref:`/how-tos/grib/grib_modify_values.ipynb`
-- :ref:`/how-tos/grib/grib_modify_metadata.ipynb`
+- :ref:`/tutorials/field/field_overview.ipynb`
+- :ref:`/tutorials/grib/grib_overview.ipynb`
+- :ref:`/tutorials/grib/grib_modify_values.ipynb`
+- :ref:`/tutorials/grib/grib_modify_metadata.ipynb`

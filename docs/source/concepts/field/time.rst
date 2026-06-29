@@ -90,8 +90,8 @@ All time keys are accessible through :meth:`~earthkit.data.core.field.Field.get`
 How-tos
 -------
 
-- :ref:`/how-tos/field/field_overview.ipynb`
-- :ref:`/how-tos/grib/grib_overview.ipynb`
-- :ref:`/how-tos/grib/grib_time_series.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_temporal.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_step_ranges.ipynb`
+- :ref:`/tutorials/field/field_overview.ipynb`
+- :ref:`/tutorials/grib/grib_overview.ipynb`
+- :ref:`/tutorials/grib/grib_time_series.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_temporal.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_step_ranges.ipynb`

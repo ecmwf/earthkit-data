@@ -95,7 +95,7 @@ New features
 ++++++++++++++++
 
 - Refined :ref:`GRIB` data memory management when reading from a file (:pr:`428`). See :ref:`grib-memory` for an overview.
-- Refined how GRIB the metadata object manages the GRIB handle (:pr:`430`). See the :ref:`/how-tos/legacy/grib_metadata_object.ipynb` notebook example for details.
+- Refined how GRIB the metadata object manages the GRIB handle (:pr:`430`). See the :ref:`/tutorials/legacy/grib_metadata_object.ipynb` notebook example for details.
 - Added the ``index`` keyword argument for data subsetting to the following methods (:pr:`407`):
 
   -  field:  :meth:`~earthkit.data.core.fieldlist.Field.to_numpy`, :meth:`~earthkit.data.core.fieldlist.Field.to_array`, :meth:`~earthkit.data.core.fieldlist.Field.data`, :meth:`~earthkit.data.core.fieldlist.Field.to_latlon`, :meth:`~earthkit.data.core.fieldlist.Field.to_points`

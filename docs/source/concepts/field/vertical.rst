@@ -54,9 +54,9 @@ following metadata:
 - **standard_name** – CF standard name (e.g. ``"air_pressure"``)
 - **long_name** – human-readable description
 - **units** – native units of the level value
-- **layer** – ``True`` when the type represents a layer (two bounding levels) rather than a single level
-- **level** – indicates which bound is the *representative* level for layer types: ``"top"``, ``"bottom"``, or empty string when undefined
-- **positive** – vertical direction in which values increase: ``"up"``, ``"down"``, or empty string when undefined
+- **layer** – ``True`` only when both the bottom and top bounding surfaces are defined, i.e. the level type describes a proper layer between two bounds; ``False`` when only one or neither bounding surface is specified (see for example ``"low_cloud_layer"`` vs ``"medium_cloud_layer"``)
+- **level** – indicates which bound is the *representative* level: ``"top"``, ``"bottom"``, or ``None``  when undefined
+- **positive** – vertical direction in which values increase: ``"up"``, ``"down"``, or ``None`` when undefined
 
 When earthkit-data encounters a level type that is not in the predefined list below, it is
 automatically registered at runtime so that arbitrary model-specific level types are handled
@@ -79,7 +79,7 @@ Predefined level types
      - Level
      - Positive
    * - ``abstract_single_level``
-     - abstract_single_level
+     -
      - abstract single level
      - ``abstractSingleLevel``
      -
@@ -87,7 +87,7 @@ Predefined level types
      -
      -
    * - ``cloud_base``
-     - cloud_base
+     -
      - cloud base
      - ``cloudBase``
      -
@@ -116,10 +116,10 @@ Predefined level types
      - ``d_bsl_layer``
      - m
      - Yes
-     - top
+     - bottom
      - down
    * - ``entire_atmosphere``
-     - entire_atmosphere
+     -
      - entire atmosphere
      - ``entire_atmosphere``
      -
@@ -127,7 +127,7 @@ Predefined level types
      -
      -
    * - ``entire_lake``
-     - entire_lake
+     -
      - entire lake
      - ``entireLake``
      -
@@ -135,7 +135,7 @@ Predefined level types
      -
      -
    * - ``entire_melt_pond``
-     - entire_melt_pond
+     -
      - entire melt pond
      - ``entireMeltPond``
      -
@@ -143,7 +143,7 @@ Predefined level types
      -
      -
    * - ``general``
-     - general
+     -
      - general
      - ``gen``
      - 1
@@ -167,55 +167,55 @@ Predefined level types
      -
      - up
    * - ``high_cloud_layer``
-     - high_cloud_layer
+     -
      - high cloud layer
      - ``highCloudLayer``
      - hPa
-     - Yes
-     - top
+     - No
      -
+     - down
    * - ``hybrid``
      - atmosphere_hybrid_sigma_pressure_coordinate
      - hybrid level
      - ``ml``
      - 1
-     - No (parametric)
+     - No
      -
      - down
    * - ``ice_layer_on_water``
-     - ice_layer_on_water
+     -
      - ice layer on water
      - ``iceLayerOnWater``
-     - 1
-     - Yes
-     - top
-     - up
+     -
+     - No
+     -
+     -
    * - ``ice_top_on_water``
-     - ice_top_on_water
+     -
      - ice top on water
      - ``iceTopOnWater``
-     - 1
+     -
      - No
      -
      -
    * - ``lake_bottom``
-     - lake_bottom
+     -
      - lake bottom
      - ``lakeBottom``
-     - 1
+     -
      - No
      -
      -
    * - ``low_cloud_layer``
-     - low_cloud_layer
+     -
      - low cloud layer
      - ``lowCloudLayer``
      - hPa
-     - Yes
-     - top
-     -
+     - No
+     - bottom
+     - down
    * - ``mean_sea``
-     - mean_sea
+     -
      - mean sea level
      - ``mean_sea``
      -
@@ -223,29 +223,29 @@ Predefined level types
      -
      -
    * - ``medium_cloud_layer``
-     - medium_cloud_layer
+     -
      - medium cloud layer
      - ``mediumCloudLayer``
      - hPa
      - Yes
-     - top
-     -
+     - bottom
+     - down
    * - ``mixed_layer_depth_by_density``
-     - mixed_layer_depth_by_density
+     -
      - mixed layer depth by density
      - ``mixedLayerDepthByDensity``
-     - m
+     - kg m-3
      - No
      -
      - down
    * - ``mixed_layer_parcel``
-     - mixed_layer_parcel
+     -
      - mixed layer parcel
      - ``mixedLayerParcel``
      - Pa
      - No
      -
-     -
+     - down
    * - ``mixing_layer``
      - mixing_layer
      - mixing layer
@@ -255,7 +255,7 @@ Predefined level types
      -
      -
    * - ``most_unstable_parcel``
-     - most_unstable_parcel
+     -
      - most unstable parcel
      - ``mostUnstableParcel``
      -
@@ -263,7 +263,7 @@ Predefined level types
      -
      -
    * - ``nominal_top_of_atmosphere``
-     - nominal_top_of_atmosphere
+     -
      - nominal top of atmosphere
      - ``nominalTopOfAtmosphere``
      -
@@ -271,7 +271,7 @@ Predefined level types
      -
      -
    * - ``ocean_model``
-     - ocean_model
+     -
      - ocean model
      - ``oceanModel``
      - 1
@@ -279,7 +279,7 @@ Predefined level types
      -
      - down
    * - ``ocean_model_layer``
-     - ocean_model_layer
+     -
      - ocean model layer
      - ``oceanModelLayer``
      - 1
@@ -287,7 +287,7 @@ Predefined level types
      - bottom
      - down
    * - ``ocean_surface``
-     - ocean_surface
+     -
      - ocean surface
      - ``ocean_surface``
      -
@@ -295,29 +295,29 @@ Predefined level types
      -
      -
    * - ``ocean_surface_to_bottom``
-     - ocean_surface_to_bottom
+     -
      - ocean surface to bottom
      - ``oceanSurfaceToBottom``
-     - 1
+     -
      - No
      -
      -
    * - ``potential_temperature``
      - air_potential_temperature
-     - air potential temperature
+     - air_potential temperature
      - ``pt``
      - K
      - No
      -
-     - up
+     -
    * - ``potential_vorticity``
      - ertel_potential_vorticity
      - potential vorticity
      - ``pv``
-     - 10E-9 K m2 kg-1 s-1
+     - nK m2 kg-1 s-1
      - No
      -
-     - down
+     -
    * - ``pressure``
      - air_pressure
      - pressure
@@ -335,7 +335,7 @@ Predefined level types
      - top
      - down
    * - ``sea_ice_layer``
-     - sea_ice_layer
+     -
      - sea ice layer
      - ``seaIceLayer``
      - 1
@@ -343,7 +343,7 @@ Predefined level types
      - bottom
      - down
    * - ``snow``
-     - unknown
+     -
      - snow layer
      - ``snow``
      - 1
@@ -351,15 +351,15 @@ Predefined level types
      - bottom
      - down
    * - ``snow_layer_over_ice_on_water``
-     - snow_layer_over_ice_on_water
+     -
      - snow layer over ice on water
      - ``snowLayerOverIceOnWater``
-     - 1
+     -
      - No
      -
      -
    * - ``soil_layer``
-     - soil_layer
+     -
      - soil layer
      - ``soilLayer``
      - 1
@@ -367,10 +367,10 @@ Predefined level types
      - bottom
      - down
    * - ``stratosphere``
-     - stratosphere
+     -
      - stratosphere
      - ``stratosphere``
-     - 1
+     -
      - No
      -
      -
@@ -383,7 +383,7 @@ Predefined level types
      -
      -
    * - ``temperature``
-     - temperature
+     - air_temperature
      - temperature
      - ``isothermal``
      - K
@@ -391,7 +391,7 @@ Predefined level types
      -
      -
    * - ``tropopause``
-     - tropopause
+     -
      - tropopause
      - ``tropopause``
      -
@@ -399,15 +399,15 @@ Predefined level types
      -
      -
    * - ``troposphere``
-     - troposphere
+     -
      - troposphere
      - ``troposphere``
-     - 1
+     -
      - No
      -
      -
    * - ``unknown``
-     - unknown
+     -
      - unknown
      - ``unknown``
      -
@@ -415,10 +415,10 @@ Predefined level types
      -
      -
    * - ``water_surface_to_isothermal_ocean_layer``
-     - water_surface_to_isothermal_ocean_layer
+     -
      - water surface to isothermal ocean layer
      - ``waterSurfaceToIsothermalOceanLayer``
-     - 1
+     -
      - No
      -
      -
@@ -492,7 +492,7 @@ Supported keys:
 How-tos
 -------
 
-- :ref:`/how-tos/field/field_overview.ipynb`
-- :ref:`/how-tos/grib/grib_overview.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_level.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_field_dims.ipynb`
+- :ref:`/tutorials/field/field_overview.ipynb`
+- :ref:`/tutorials/grib/grib_overview.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_level.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_field_dims.ipynb`

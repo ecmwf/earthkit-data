@@ -6,7 +6,7 @@ authors = [
   {name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int"}
 ]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
@@ -22,9 +22,10 @@ dependencies = [
   "cfgrib>=0.9.10.1",
   "dask",
   "deprecation",
-  "earthkit-utils>=1.0.0rc2",
-  "eccodeslib==2.46.2.17",
-  "eckit==2.0.6.17",
+  "earthkit-utils~=1.0",
+  "eccodes>=2.47.0",
+  "eccodeslib==2.47.3.21",
+  "eckit==2.1.0.21",
   "entrypoints",
   "filelock",
   "jinja2",

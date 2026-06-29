@@ -60,6 +60,6 @@ Accessing ensemble information
 How-tos
 -------
 
-- :ref:`/how-tos/field/field_overview.ipynb`
-- :ref:`/how-tos/grib/grib_overview.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_ensemble.ipynb`
+- :ref:`/tutorials/field/field_overview.ipynb`
+- :ref:`/tutorials/grib/grib_overview.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_ensemble.ipynb`

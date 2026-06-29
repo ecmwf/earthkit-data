@@ -11,8 +11,8 @@ The configuration can be accessed and modified from Python. The configuration op
 
 See the following notebooks for examples:
 
-    - :ref:`/how-tos/misc/config.ipynb`
-    - :ref:`/how-tos/misc/config_env_vars.ipynb`
+    - :ref:`/tutorials/misc/config.ipynb`
+    - :ref:`/tutorials/misc/config_env_vars.ipynb`
 
 
 .. _config_get:
@@ -138,7 +138,7 @@ Finally, unset the environment variable and check the config value again, which 
 
 See also the following notebook:
 
-    - :ref:`/how-tos/misc/config_env_vars.ipynb`
+    - :ref:`/tutorials/misc/config_env_vars.ipynb`
 
 
 .. _config_table:

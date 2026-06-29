@@ -190,8 +190,8 @@ pattern:
 How-tos
 -------
 
-- :ref:`/how-tos/field/field_overview.ipynb`
-- :ref:`/how-tos/grib/grib_overview.ipynb`
-- :ref:`/how-tos/grib/grib_selection.ipynb`
-- :ref:`/how-tos/grib/grib_order_by.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_overview.ipynb`
+- :ref:`/tutorials/field/field_overview.ipynb`
+- :ref:`/tutorials/grib/grib_overview.ipynb`
+- :ref:`/tutorials/grib/grib_selection.ipynb`
+- :ref:`/tutorials/grib/grib_order_by.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_overview.ipynb`
