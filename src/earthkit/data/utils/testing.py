@@ -80,7 +80,7 @@ def earthkit_file(*args):
 
 
 def earthkit_examples_file(*args):
-    return os.path.join(_ROOT_DIR, "docs", "source", "how-tos", *args)
+    return os.path.join(_ROOT_DIR, "docs", "source", "tutorials", *args)
 
 
 def earthkit_test_data_file(*args):

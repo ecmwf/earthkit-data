@@ -111,7 +111,7 @@ class GribGeography(GeographyBase):
         Examplesa
         --------
         >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/how-tos/test.grib")
+        >>> ds = earthkit.data.from_source("file", "docs/tutorials/test.grib")
         >>> ds.projection()
         <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
         Name: unknown

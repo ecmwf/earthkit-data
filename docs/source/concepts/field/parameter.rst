@@ -114,7 +114,7 @@ All parameter keys are accessible through :meth:`~earthkit.data.core.field.Field
 How-tos
 -------
 
-- :ref:`/how-tos/field/field_overview.ipynb`
-- :ref:`/how-tos/grib/grib_overview.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_chem.ipynb`
-- :ref:`/how-tos/xr_engine/xarray_engine_wave_spectra.ipynb`
+- :ref:`/tutorials/field/field_overview.ipynb`
+- :ref:`/tutorials/grib/grib_overview.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_chem.ipynb`
+- :ref:`/tutorials/xr_engine/xarray_engine_wave_spectra.ipynb`

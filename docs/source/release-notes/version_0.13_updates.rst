@@ -115,12 +115,12 @@ New writer API
 
 See the notebook examples:
 
-  - :ref:`/how-tos/target/file_target.ipynb`
-  - :ref:`/how-tos/target/grib_to_file_target.ipynb`
-  - :ref:`/how-tos/target/grib_to_file_pattern_target.ipynb`
-  - :ref:`/how-tos/target/grib_to_fdb_target.ipynb`
-  - :ref:`/how-tos/target/grib_to_geotiff.ipynb`
-  - :ref:`/how-tos/target/grib_encoder.ipynb`
+  - :ref:`/tutorials/target/file_target.ipynb`
+  - :ref:`/tutorials/target/grib_to_file_target.ipynb`
+  - :ref:`/tutorials/target/grib_to_file_pattern_target.ipynb`
+  - :ref:`/tutorials/target/grib_to_fdb_target.ipynb`
+  - :ref:`/tutorials/target/grib_to_geotiff.ipynb`
+  - :ref:`/tutorials/target/grib_encoder.ipynb`
 
 New features
 +++++++++++++++++

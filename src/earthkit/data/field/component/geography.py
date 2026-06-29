@@ -199,20 +199,43 @@ class GeographyBase(SimpleFieldComponent):
         >>> field.get("geography.area")
         (70, -20, 35, 40)
 
-    The geography component is immutable. The :meth:`set` method to create a new
-    instance with updated values. For example, the following code creates a new geography
-    component with an updated step:
+    The geography component is immutable. Use the :meth:`set` method to create a new
+    instance with updated values. A new geography component can be created by providing
+    a new grid specification or new latitude and longitude arrays.
+
+    For example, the following code creates a new geography component with a new grid specification:
 
         >>> new_geography = field.geography.set(grid_spec= [10,10])
         >>> new_geography.area()
         (90.0, 0, -90.0, 360.0)
 
-    We can also call the Field's :meth:`set` method to create a new field with an updated time component.
-    This is typically done by also passing a new data array to match the new geography. For example,
-    the following code creates a new field with an updated geography component and data array:
+    The next example creates a new geography component by providing new latitude and longitude arrays:
+
+        >>> latitudes = np.linspace(90, -90, 19)  # new latitudes
+        >>> longitudes = np.linspace(0, 360, 36)  # new longitudes
+        >>> new_geography = field.geography.set(latitudes=latitudes, longitudes=longitudes)
+        >>> new_geography.area()
+        (90.0, 0, -90.0, 360.0)
+
+
+    We can also call the Field's :meth:`set` method to create a new field with an updated
+    geography component.This is typically done by also passing a new data array to match
+    the new geography. For example, the following code creates a new field with an updated
+    geography component and data array:
 
         >>> values = np.random.rand(19, 36)  # new values matching the new geography shape
         >>> new_field = field.set({"geography.grid_spec": [10,10], "values": values})
+        >>> new_field.geography.area()
+        (90.0, 0, -90.0, 360.0)
+
+    The new geography component can also be created by providing new latitude and longitude
+    arrays. For example, the following code creates a new field with an updated geography
+    component and data array:
+
+        >>> latitudes = np.linspace(90, -90, 19)  # new latitudes
+        >>> longitudes = np.linspace(0, 360, 36)  # new longitudes
+        >>> new_field = field.set({"geography.latitudes": latitudes,
+        ...                        "geography.longitudes": longitudes, "values": values})
         >>> new_field.geography.area()
         (90.0, 0, -90.0, 360.0)
 

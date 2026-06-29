@@ -21,7 +21,7 @@ from earthkit.data.utils.testing import MISSING, earthkit_file
 # See https://www.blog.pythonlibrary.org/2018/10/16/testing-jupyter-notebooks/
 
 
-EXAMPLES = earthkit_file("docs", "source", "how-tos")
+EXAMPLES = earthkit_file("docs", "source", "tutorials")
 
 SKIP = [
     "ads.ipynb",
@@ -54,11 +54,14 @@ if NO_TORCH:
 
 def notebooks_list():
     notebooks = []
-    for path in os.listdir(EXAMPLES):
-        if re.match(r".+\.ipynb$", path):
-            # if re.match(r"^\d\d-.*\.ipynb$", path):
-            if "Copy" not in path:
-                notebooks.append(path)
+    for root, _, files in os.walk(EXAMPLES):
+        if root.endswith(".ipynb_checkpoints"):
+            continue
+        for path in files:
+            if re.match(r".+\.ipynb$", path):
+                # if re.match(r"^\d\d-.*\.ipynb$", path):
+                if "Copy" not in path:
+                    notebooks.append(os.path.join(root, path))
 
     return sorted(notebooks)
 
@@ -75,14 +78,14 @@ def test_notebook(path):
     import nbformat
     from nbconvert.preprocessors import ExecutePreprocessor
 
-    if path in SKIP:
+    if os.path.basename(path) in SKIP:
         pytest.skip("Notebook marked as 'skip'")
 
-    with open(os.path.join(EXAMPLES, path)) as f:
+    with open(path) as f:
         nb = nbformat.read(f, as_version=4)
 
     proc = ExecutePreprocessor(timeout=60 * 60 * 5, kernel_name="python3")
-    proc.preprocess(nb, {"metadata": {"path": EXAMPLES}})
+    proc.preprocess(nb, {"metadata": {"path": os.path.dirname(path)}})
 
 
 if __name__ == "__main__":

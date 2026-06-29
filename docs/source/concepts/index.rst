@@ -7,7 +7,7 @@ Concepts
 
    inputs/index.rst
    data
-   encoders
+   encoders/index.rst
    targets/index.rst
    streams
    config

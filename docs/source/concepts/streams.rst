@@ -25,7 +25,7 @@ The example below shows how we iterate through a GRIB data stream field by field
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test6.grib"
+    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/tutorials/test6.grib"
     >>> fl = ekd.from_source("url", url, stream=True).to_fieldlist()
     >>> for f in fl:
     ...     print(f)
@@ -42,7 +42,7 @@ We can also use :meth:`~earthkit.data.core.fieldlist.FieldList.batched` to itera
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test6.grib"
+    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/tutorials/test6.grib"
     >>> fl = ekd.from_source("url", url, stream=True).to_fieldlist()
     >>> for f in fl.batched(2):
     ...     print(f"len={len(f)} {f.get(('parameter.variable', 'vertical.level'))}")
@@ -56,7 +56,7 @@ Another option is to use :meth:`~earthkit.data.core.fieldlist.FieldList.group_by
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test6.grib"
+    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/tutorials/test6.grib"
     >>> fl = ekd.from_source("url", url, stream=True).to_fieldlist()
     >>> for f in fl.group_by("vertical.level"):
     ...     print(f"len={len(f)} {f.get(('parameter.variable', 'vertical.level'))}")
@@ -75,7 +75,7 @@ We can load the whole stream into memory by using  ``read_all=True`` in :meth:`t
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/how-tos/test6.grib"
+    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/tutorials/test6.grib"
     >>> fl = ekd.from_source("url", url, stream=True).to_fieldlist(read_all=True)
     >>> len(fl)
     6
@@ -83,7 +83,7 @@ We can load the whole stream into memory by using  ``read_all=True`` in :meth:`t
 Further examples
 -----------------
 
-- :ref:`/how-tos/source/data_from_stream.ipynb`
-- :ref:`/how-tos/source/file_stream.ipynb`
-- :ref:`/how-tos/source/fdb.ipynb`
-- :ref:`/how-tos/source/url_stream.ipynb`
+- :ref:`/tutorials/source/data_from_stream.ipynb`
+- :ref:`/tutorials/source/file_stream.ipynb`
+- :ref:`/tutorials/source/fdb.ipynb`
+- :ref:`/tutorials/source/url_stream.ipynb`

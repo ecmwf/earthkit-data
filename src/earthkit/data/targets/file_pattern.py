@@ -35,7 +35,7 @@ class FilePatternTarget(SimpleTarget):
 
     _name = "file-pattern"
 
-    def __init__(self, path, *, append=False, **kwargs):
+    def __init__(self, path: str, *, append: bool = False, **kwargs):
         super().__init__(**kwargs)
 
         self._files = {}

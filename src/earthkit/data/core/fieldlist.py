@@ -176,7 +176,7 @@ class FieldList(Source, Encodable):
         --------
         How-to examples:
 
-        - :ref:`/how-tos/grib/grib_array_namespace.ipynb`
+        - :ref:`/tutorials/grib/grib_array_namespace.ipynb`
 
         """
         pass
@@ -223,7 +223,7 @@ class FieldList(Source, Encodable):
         --------
         How-to examples:
 
-        - :ref:`/how-tos/grib/grib_array_namespace.ipynb`
+        - :ref:`/tutorials/grib/grib_array_namespace.ipynb`
 
         """
         pass
@@ -282,8 +282,8 @@ class FieldList(Source, Encodable):
         --------
         How-to examples:
 
-        - :ref:`/how-tos/grib/grib_lat_lon_value_ll.ipynb`
-        - :ref:`/how-tos/grib/grib_lat_lon_value_rgg.ipynb`
+        - :ref:`/tutorials/grib/grib_lat_lon_value_ll.ipynb`
+        - :ref:`/tutorials/grib/grib_lat_lon_value_rgg.ipynb`
 
         More examples:
 
@@ -707,7 +707,7 @@ class FieldList(Source, Encodable):
         --------
         How-to examples:
 
-        - :ref:`/how-tos/grib/grib_selection.ipynb`
+        - :ref:`/tutorials/grib/grib_selection.ipynb`
 
         More examples:
 
@@ -800,7 +800,7 @@ class FieldList(Source, Encodable):
         --------
         How-to examples:
 
-        - :ref:`/how-tos/grib/grib_order_by.ipynb`
+        - :ref:`/tutorials/grib/grib_order_by.ipynb`
 
 
         Ordering by a single metadata key ("parameter.variable"). The default ordering direction
@@ -915,7 +915,7 @@ class FieldList(Source, Encodable):
         --------
         How-to examples:
 
-        - :ref:`/how-tos/grib/grib_array_namespace.ipynb`
+        - :ref:`/tutorials/grib/grib_array_namespace.ipynb`
 
         The following example will convert a fieldlist read from a GRIB file into a
         :class:`SimpleFieldList` storing data values as single precision arrays in each field.

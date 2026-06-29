@@ -9,11 +9,11 @@ Installing from PyPI
 Minimal installation
 +++++++++++++++++++++++++
 
-Install **earthkit-data** with python3 (>= 3.10 ) and ``pip`` as follows:
+Install the latest release with python3 (>= 3.10 ) and ``pip`` as follows:
 
 .. code-block:: bash
 
-    python3 -m pip install earthkit-data>=1.0.0rc0
+    python3 -m pip install earthkit-data
 
 The package installed like this is **minimal** supporting only GRIB and NetCDF data and cannot access remote services other than URLs. If you want to use more data types or remote services you need to install the optional Python packages.
 
@@ -24,13 +24,13 @@ You can install **earthkit-data** with all the optional packages (with the excep
 
 .. code-block:: bash
 
-    python3 -m pip install earthkit-data[all]>=1.0.0rc0
+    python3 -m pip install earthkit-data[all]
 
 Please note in **zsh** you need to use quotes around the square brackets:
 
 .. code-block:: bash
 
-    python3 -m pip install "earthkit-data[all]>=1.0.0rc0"
+    python3 -m pip install "earthkit-data[all]"
 
 
 Installing individual optional packages
@@ -58,13 +58,13 @@ E.g. to add :ref:`data-sources-mars`  support you can use:
 
 .. code-block:: bash
 
-    python3 -m pip install earthkit-data[mars]>=1.0.0rc0
+    python3 -m pip install earthkit-data[mars]
 
 List of optional dependencies can also be specified :
 
 .. code-block:: bash
 
-    python3 -m pip install earthkit-data[cds,mars]>=1.0.0rc0
+    python3 -m pip install earthkit-data[cds,mars]
 
 
 

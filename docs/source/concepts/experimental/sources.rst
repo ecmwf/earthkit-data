@@ -42,4 +42,4 @@ iris
 
   Further examples:
 
-    - :ref:`/how-tos/iris_pp.ipynb`
+    - :ref:`/tutorials/iris_pp.ipynb`
