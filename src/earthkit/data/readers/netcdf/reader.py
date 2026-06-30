@@ -70,11 +70,11 @@ class NetCDFReader(Source, NetCDFReaderBase):
         if not isinstance(path, str):
             raise ValueError("path must be a string")
 
-        if "xarray_open_mfdataset_kwargs" in kwargs:
-            raise ValueError("xarray_open_mfdataset_kwargs is not supported for single file")
-
         kwargs = kwargs.copy()  # Make a copy to avoid modifying the original dictionary
         xarray_open_dataset_kwargs = kwargs.pop("xarray_open_dataset_kwargs", None)
+        xarray_open_mfdataset_kwargs = kwargs.pop("xarray_open_mfdataset_kwargs", None)
+        if xarray_open_mfdataset_kwargs:
+            raise ValueError("xarray_open_mfdataset_kwargs is not supported for single file")
 
         options = dict()
         if xarray_open_dataset_kwargs is not None:
