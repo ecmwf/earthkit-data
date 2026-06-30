@@ -40,12 +40,6 @@ class NetCDFReader(Source, NetCDFReaderBase):
 
     def to_xarray(self, **kwargs):
         return type(self).to_xarray_single_from_path(self.path, **kwargs)
-        # if isinstance(self.path, str):
-        #     return type(self).to_xarray_single_from_path(self.path, **kwargs)
-
-        #     return NetCDFReader.to_xarray_multi_from_paths([self.path], **kwargs)
-
-        # return type(self).to_xarray_multi_from_paths([self.path], **kwargs)
 
     @classmethod
     def to_xarray_multi_from_paths(cls, paths, **kwargs):
@@ -54,8 +48,13 @@ class NetCDFReader(Source, NetCDFReaderBase):
         if not isinstance(paths, list):
             paths = [paths]
 
+        kwargs = kwargs.copy()  # Make a copy to avoid modifying the original dictionary
+        xarray_open_mfdataset_kwargs = kwargs.pop("xarray_open_mfdataset_kwargs", None)
+
         options = dict()
-        options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
+        if xarray_open_mfdataset_kwargs is not None:
+            options = dict(xarray_open_mfdataset_kwargs)
+
         if not options:
             options = dict(**kwargs)
 
@@ -74,8 +73,13 @@ class NetCDFReader(Source, NetCDFReaderBase):
         if "xarray_open_mfdataset_kwargs" in kwargs:
             raise ValueError("xarray_open_mfdataset_kwargs is not supported for single file")
 
+        kwargs = kwargs.copy()  # Make a copy to avoid modifying the original dictionary
+        xarray_open_dataset_kwargs = kwargs.pop("xarray_open_dataset_kwargs", None)
+
         options = dict()
-        options.update(kwargs.get("xarray_open_dataset_kwargs", {}))
+        if xarray_open_dataset_kwargs is not None:
+            options = dict(xarray_open_dataset_kwargs)
+
         if not options:
             options = dict(**kwargs)
 
