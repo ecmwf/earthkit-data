@@ -17,8 +17,8 @@ from earthkit.data import from_source
 from earthkit.data.utils.testing import earthkit_remote_test_data_file, earthkit_test_data_file
 
 
-# @pytest.mark.long_test
-# @pytest.mark.download
+@pytest.mark.long_test
+@pytest.mark.download
 def test_netcdf_fieldlist_to_xarray_args():
     # The JD variable in the NetCDF is defined as follows:
     #
@@ -56,8 +56,8 @@ def test_netcdf_fieldlist_to_xarray_args():
     r["JD"].shape == (1, 20880, 28440)
 
 
-# @pytest.mark.long_test
-# @pytest.mark.download
+@pytest.mark.long_test
+@pytest.mark.download
 def test_netcdf_single_to_xarray_args():
     # The JD variable in the NetCDF is defined as follows:
     #
