@@ -55,22 +55,37 @@ class NetCDFData(SourceData):
     def to_xarray(self, *args, xarray_open_mfdataset_kwargs=None, **kwargs):
         """Convert into an Xarray dataset.
 
-        The conversion is performed using :py:func:`xarray.open_mfdataset`.
+        The conversion is performed by using :py:func:`xarray.open_mfdataset` for a
+        single file and :py:func:`xarray.open_mfdataset` for multiple files.
 
         Parameters
         ----------
+        *args
+            Positional arguments to pass to the reader's to_xarray method.
+            Not used currently. It is there to allow for future extensions or
+            additional parameters that may be needed for specific use cases.
         xarray_open_mfdataset_kwargs: dict, None, optional
             Keyword arguments passed to :py:func:`xarray.open_mfdataset`.
+            Can only be used when converting multiple NetCDF files into a single
+            Xarray dataset. When specified, this argument takes precedence over
+            any other keyword arguments passed to the method.
         **kwargs
-            Keyword arguments passed to  :py:func:`xarray.open_mfdataset`
-            ``xarray_open_mfdataset_kwargs`` is not set.
+            Keyword arguments passed to :py:func:`xarray.open_dataset` for
+            single file conversion or to :py:func:`xarray.open_mfdataset` for
+            multiple file conversion. Ignored if `xarray_open_mfdataset_kwargs`
+            is specified.
 
         Returns
         -------
         :py:class:`xarray.Dataset`
             An Xarray dataset containing the NetCDF data.
         """
-        return self._reader.to_xarray(*args, **kwargs)
+        if xarray_open_mfdataset_kwargs:
+            options = dict(xarray_open_mfdataset_kwargs=xarray_open_mfdataset_kwargs)
+        else:
+            options = dict()
+
+        return self._reader.to_xarray(*args, **options, **kwargs)
 
     def to_pandas(self, *args, **kwargs):
         """Convert into a Pandas DataFrame.
