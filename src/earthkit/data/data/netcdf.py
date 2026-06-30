@@ -55,7 +55,8 @@ class NetCDFData(SourceData):
     def to_xarray(self, *args, xarray_open_mfdataset_kwargs=None, **kwargs):
         """Convert into an Xarray dataset.
 
-        The conversion is performed using :py:func:`xarray.open_mfdataset`.
+        The conversion is performed by using :py:func:`xarray.open_mfdataset` for a
+        single file and :py:func:`xarray.open_mfdataset` for multiple files.
 
         Parameters
         ----------
