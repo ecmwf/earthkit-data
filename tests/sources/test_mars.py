@@ -244,8 +244,8 @@ def test_mars_grib_save():
         assert len(ds1) == 1
 
 
-# @pytest.mark.long_test
-# @pytest.mark.download
+@pytest.mark.long_test
+@pytest.mark.download
 @pytest.mark.skipif(NO_MARS, reason="No access to MARS")
 def test_mars_grib_area_str():
     s = from_source(
