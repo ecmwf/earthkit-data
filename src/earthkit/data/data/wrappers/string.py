@@ -53,8 +53,8 @@ class StrData(ObjectWrapperData):
         return self.describe()._repr_html_()
 
     def bounding_box(self):
-        if "/" in self._data:
-            return tuple(float(x) for x in self._data.split("/"))
+        if "/" in self.data:
+            return tuple(float(x) for x in self.data.split("/"))
         else:
             raise ValueError(f"Invalid bounding box '{self.data}'")
 

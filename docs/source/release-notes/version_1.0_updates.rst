@@ -10,6 +10,17 @@ Version 1.0 Updates
     and how to update your code.
 
 
+
+Version 1.0.1
+==============
+
+Fixes
++++++++++++++
+
+- Fixed the issue when the ``NetCDFData.to_xarray()`` method did not pass the ``xarray_open_mfdataset_kwargs`` option to the underlying reader (:pr:`1048`). Also also improved the method's docstring.
+
+
+
 Version 1.0.0
 ==============
 
