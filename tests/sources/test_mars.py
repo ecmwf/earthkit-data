@@ -244,6 +244,22 @@ def test_mars_grib_save():
         assert len(ds1) == 1
 
 
+# @pytest.mark.long_test
+# @pytest.mark.download
+@pytest.mark.skipif(NO_MARS, reason="No access to MARS")
+def test_mars_grib_area_str():
+    s = from_source(
+        "mars",
+        param=["2t"],
+        levtype="sfc",
+        area="50/-50/20/50",
+        grid=[10, 10],
+        prompt=False,
+        date="2023-05-10",
+    ).to_fieldlist()
+    assert len(s) == 1
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

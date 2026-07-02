@@ -68,3 +68,12 @@ def test_string_wrapper_datetime_list_by(date_format):
     assert ds.to_value() == datetime_list_string + "/by/2"
     assert ds.to_string() == datetime_list_string + "/by/2"
     assert ds.to_datetime_list() == dt
+
+
+def test_string_wrapper_bbox():
+    v = "89/0/-89/360"
+    ds = from_object(v)
+    assert ds._TYPE_NAME == "str"
+    assert "bounding_box" in ds.available_types
+
+    assert ds.bounding_box() == (89.0, 0.0, -89.0, 360.0)
