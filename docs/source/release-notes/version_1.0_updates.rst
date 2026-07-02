@@ -11,6 +11,15 @@ Version 1.0 Updates
 
 
 
+Version 1.0.2
+==============
+
+Fixes
++++++++++++++
+
+- Fixed issue when the ``area`` could not be specified as a string for a MARS request in the :ref:`mars source <data-sources-mars>` (:pr:`1049` and :pr:`1053`).
+
+
 Version 1.0.1
 ==============
 
