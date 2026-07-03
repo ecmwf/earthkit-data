@@ -26,7 +26,7 @@ def _require_astropy():
         raise ImportError("`astropy` is required for this function.")
 
 
-def _get_body_xyz(body_name: str, time: Time, xp) -> Any:
+def _get_body_xyz(body_name: str, time: "Time", xp) -> Any:
     """Get the geocentric cartesian coordinates of a celestial body in km.
 
     Parameters
@@ -55,7 +55,7 @@ def _get_body_xyz(body_name: str, time: Time, xp) -> Any:
     return xyz
 
 
-def _get_observer_xyz(time: Time, latitudes, longitudes, xp) -> Any:
+def _get_observer_xyz(time: "Time", latitudes, longitudes, xp) -> Any:
     """Get the ITRS cartesian coordinates of surface observers on Earth at a given time.
 
     Parameters
