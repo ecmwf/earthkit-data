@@ -33,6 +33,8 @@ all_params = [
     "ecef_z",
     "toa_incident_solar_radiation",
     "cos_solar_zenith_angle",
+    "distance_to_moon",
+    "delta_distance_to_moon",
 ]
 
 
