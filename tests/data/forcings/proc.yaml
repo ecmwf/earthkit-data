@@ -66,3 +66,11 @@ toa_incident_solar_radiation:
   first: 2118960.0772719923
   last: 0.0
   mean: 1114965.3289838354
+distance_to_moon:
+  first: 397708.0
+  last: 398423.0
+  mean: 398647.0
+delta_distance_to_moon:
+  first: 508.20
+  last: 1223.54
+  mean: 1446.716
