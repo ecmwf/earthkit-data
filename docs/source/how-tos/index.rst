@@ -8,3 +8,4 @@ How-to Guides
     :maxdepth: 1
 
     field_latlons.rst
+    field_assign_constant_value.ipynb
