@@ -89,6 +89,7 @@ optional-dependencies.polytope = ["polytope-client>=0.7.6"]
 optional-dependencies.projection = ["cartopy"]
 optional-dependencies.s3 = ["aws-requests-auth", "botocore"]
 optional-dependencies.test = [
+  "astropy",
   "earthkit-data-demo-source",
   "nbconvert",
   "nbformat",

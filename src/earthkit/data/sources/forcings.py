@@ -193,6 +193,39 @@ class ForcingMaker:
         )
         return result.flatten()
 
+    def distance_to_moon(self, date, copy=True):
+        from earthkit.data.utils.lunar import distance_to_moon
+
+        date = to_datetime(date)
+        result = distance_to_moon(
+            date,
+            self._latitude(),
+            self._longitude(),
+        )
+        return result.flatten()
+
+    def delta_distance_to_moon(self, date, copy=True):
+        from earthkit.data.utils.lunar import delta_distance_to_moon
+
+        date = to_datetime(date)
+        result = delta_distance_to_moon(
+            date,
+            self._latitude(),
+            self._longitude(),
+        )
+        return result.flatten()
+
+    def singular_distance_to_moon(self, date, copy=True):
+        from earthkit.data.utils.lunar import singular_distance_to_moon
+
+        date = to_datetime(date)
+        result = singular_distance_to_moon(
+            date,
+            self._latitude(),
+            self._longitude(),
+        )
+        return result.flatten()
+
     def __getattr__(self, name):
         if "+" not in name and "-" not in name:
             # If we are here, we are looking for a method that does not exist,
