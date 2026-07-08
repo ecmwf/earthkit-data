@@ -3,6 +3,10 @@
 Processing (proc) component
 ============================
 
+.. warning::
+
+  This component is experimental and may be changed in future versions of earthkit-data.
+
 Every :py:class:`~earthkit.data.core.field.Field` may carry a *processing component* (``proc``)
 that describes post-processing operations applied to produce the field. The processing component
 is accessible via the :attr:`proc` attribute of a field and is represented by a subclass of
@@ -88,8 +92,8 @@ All proc keys are accessible through :meth:`~earthkit.data.core.field.Field.get`
        :py:class:`~earthkit.data.field.component.time_span.TimeMethod`, or ``None``.
 
 
-How-tos
--------
+Tutorials / How-tos
+-------------------
 
 - :ref:`/tutorials/field/field_overview.ipynb`
 - :ref:`/tutorials/grib/grib_overview.ipynb`

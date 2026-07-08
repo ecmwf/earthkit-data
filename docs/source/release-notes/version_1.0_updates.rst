@@ -66,6 +66,7 @@ the field's metadata:
 - :ref:`geography_component` — lat/lon arrays, bounding box, projection, grid type.
 - :ref:`ensemble_component` — ensemble member identifier.
 - :ref:`proc_component` — post-processing operations (e.g. accumulation type and time span).
+- :ref:`labels_component` — user-defined key-value pairs.
 
 Components are accessed via field attributes (e.g. ``field.time``) or through the generic
 :meth:`~earthkit.data.core.field.Field.get` method using ``"component.key"`` strings. Raw
@@ -115,7 +116,7 @@ Notebook examples:
 
 - :ref:`/tutorials/field/field_overview.ipynb`
 - :ref:`/tutorials/field/field_arithmetic.ipynb`
-- :ref:`/tutorials/field/field_assign_constant_value.ipynb`
+- :ref:`/how-tos/field_assign_constant_value.ipynb`
 - :ref:`/tutorials/grib/grib_overview.ipynb`
 
 

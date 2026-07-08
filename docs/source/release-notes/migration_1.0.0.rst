@@ -101,17 +101,22 @@ Please note that ``+`` operator is used an arithmetic operator for Fields and Fi
 Field
 -----------
 
-The :py:class:`~earthkit.data.core.field.Field` is now not polymorphic but is made up of polymorphic components using format independent metadata. So far the following components are implemented:
+The :py:class:`~earthkit.data.core.field.Field` is now not polymorphic but is made up of polymorphic components using format independent high-level metadata. See the :ref:`Field overview <field_concept>` for more details.
 
-- parameter (see: :py:class:`~earthkit.data.field.component.parameter.ParameterBase`)
-- time (see: :py:class:`~earthkit.data.field.component.time.TimeBase`)
-- vertical (see: :py:class:`~earthkit.data.field.component.vertical.VerticalBase`)
-- geography (see: :py:class:`~earthkit.data.field.component.geography.GeographyBase`)
-- ensemble (see: :py:class:`~earthkit.data.field.component.ensemble.EnsembleBase`)
-- proc (see: :py:class:`~earthkit.data.field.component.proc.ProcBase`)
-- labels (see: :py:class:`~earthkit.data.field.handler.labels.SimpleLabels`)
+Field components and metadata
++++++++++++++++++++++++++++++++
 
-Each component has its own set of metadata keys and methods. There are two ways to access the related values from the components:
+So far the following field components are implemented:
+
+- :ref:`parameter <parameter_component>`
+- :ref:`time <time_component>`
+- :ref:`vertical <vertical_component>`
+- :ref:`geography <geography_component>`
+- :ref:`ensemble <ensemble_component>`
+- :ref:`proc <proc_component>`  (experimental)
+- :ref:`labels <labels_component>`
+
+Each component has its own set of high-level metadata keys and methods. There are two ways to access the related values from the components:
 
 .. code-block:: python
 
@@ -121,13 +126,53 @@ Each component has its own set of metadata keys and methods. There are two ways 
     # use the key method on the component
     f.time.base_datetime()
 
-Raw metadata keys are still available but they are only accessible either by using the "metadata." prefix in :func:`get` or through the :func:`metadata` method. E.g. if the :py:class:`~earthkit.data.core.field.Field` was created from a GRIB message, we can access the "shortName" key from the raw metadata like this:
+These metadata keys can be used in :meth:`~earthkit.data.core.fieldlist.FieldList.sel` and :meth:`~earthkit.data.core.fieldlist.FieldList.order_by` to select and sort fields. See the :doc:`keys` page for a complete list of all available component metadata keys.
+
+.. code-block:: python
+
+    # select all fields with a base datetime of 2020-01-01 00:00:00
+    fl.sel({"time.base_datetime": "2020-01-01 00:00:00"})
+
+    # order fields by valid datetime
+    fl.order_by("time.valid_datetime")
+
+
+For the full list of available component (high-level) metadata keys, see :ref:`field_keys`.
+
+
+Field raw metadata
+++++++++++++++++++++
+
+Raw metadata keys are still available but they are only accessible either by using the "metadata." prefix in :func:`get` or through the :func:`metadata` method. E.g. if the :py:class:`~earthkit.data.core.field.Field` was created from a GRIB message, we can access the "shortName" ecCodes GRIB key from the raw metadata like this:
 
 .. code-block:: python
 
     f.get("metadata.shortName")
     f.metadata("shortName")
     f.metadata("metadata.shortName")
+
+The :func:`metadata` method will raise a :py:class:`KeyError` if the key is not found, while the :func:`get` method allows to specify a default value to return if the key is not found. For example, if the field does not have raw (GRIB) metadata:
+
+.. code-block:: python
+
+    f.get("metadata.shortName")
+    None
+
+    f.get("metadata.shortName", default="N/A")
+    'N/A'
+
+    f.metadata("shortName")
+    Traceback (most recent call last):
+        ...
+    KeyError: 'shortName'
+
+The raw metadata, when available, can also be used in methods such as  :meth:`~earthkit.data.core.fieldlist.FieldList.sel` and  :meth:`~earthkit.data.core.fieldlist.FieldList.order_by` by using the ``"metadata.<key>"`` prefix. For example, to select all fields with an ecCodes GRIB short name of ``"2t"``:
+
+.. code-block:: python
+
+    fl.sel({"metadata.shortName": "2t"})
+
+
 
 Field modification
 ++++++++++++++++++++++++
@@ -321,6 +366,24 @@ The following table gives an overview of the changes in the Fieldlist API (the `
 
 
         When the key does not exist in the raw metadata, it raises a KeyError.
+   * - sel()
+     - :py:meth:`~earthkit.data.fieldlist.FieldList.sel`
+     - Primarily, now works with high-level metadata keys. Raw metadata keys can also be used with the ``"metadata."`` prefix:
+
+        .. code-block:: python
+
+           fl.sel({"time.base_datetime": "2020-01-01 00:00:00"}) # high-level metadata key
+           fl.sel({"metadata.shortName": "2t"}) # raw GRIB metadata key
+
+   * - order_by()
+     - :py:meth:`~earthkit.data.fieldlist.FieldList.order_by`
+     - Primarily, now works with high-level metadata keys. Raw metadata keys can also be used with the ``"metadata."`` prefix:
+
+        .. code-block:: python
+
+            fl.order_by("time.valid_datetime") # high-level metadata key
+            fl.order_by("metadata.shortName") # raw GRIB metadata key
+
    * - save()
      - :py:meth:`~earthkit.data.fieldlist.FieldList.to_target`
      -

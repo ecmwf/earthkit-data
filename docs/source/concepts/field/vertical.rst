@@ -489,7 +489,7 @@ Supported keys:
      - Number of model levels for parametric level types, ``None`` otherwise
 
 
-How-tos
+Tutorials / How-tos
 -------
 
 - :ref:`/tutorials/field/field_overview.ipynb`
