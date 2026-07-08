@@ -1,7 +1,7 @@
 .. _geography_component:
 
-Geography component
-===================
+Geography component and metadata keys
+===========================================
 
 Every :py:class:`~earthkit.data.core.field.Field` carries a *geography component* that describes
 the horizontal spatial coordinate system of the field. The geography component is accessible via
@@ -116,15 +116,8 @@ The ``dtype`` argument controls the output array type:
     dtype('float32')
 
 
-
-Accessing geography information
+List of geography metadata keys
 --------------------------------
-
-All geography keys are accessible through :meth:`~earthkit.data.core.field.Field.get` with the
-``"geography."`` prefix, and can therefore be used in
-:meth:`~earthkit.data.core.fieldlist.FieldList.sel`,
-:meth:`~earthkit.data.core.fieldlist.FieldList.order_by`, and
-:meth:`~earthkit.data.core.fieldlist.FieldList.metadata`.
 
 .. list-table::
    :header-rows: 1

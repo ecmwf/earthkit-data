@@ -1,7 +1,7 @@
 .. _time_component:
 
-Time component
-==============
+Time component and metadata keys
+===========================================
 
 Every :py:class:`~earthkit.data.core.field.Field` carries a *time component* that describes the
 temporal coordinate of the field. The time component is accessible via the :attr:`time` attribute
@@ -52,14 +52,8 @@ The appropriate time subclass is determined automatically from the data:
   that also carries a ``forecast_month`` value.
 
 
-Accessing time information
---------------------------
-
-All time keys are accessible through :meth:`~earthkit.data.core.field.Field.get` with the
-``"time."`` prefix, and can therefore be used in
-:meth:`~earthkit.data.core.fieldlist.FieldList.sel`,
-:meth:`~earthkit.data.core.fieldlist.FieldList.order_by`, and
-:meth:`~earthkit.data.core.fieldlist.FieldList.metadata`.
+List of time metadata keys
+------------------------------
 
 .. list-table::
    :header-rows: 1

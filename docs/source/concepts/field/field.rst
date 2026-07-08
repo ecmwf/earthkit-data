@@ -180,8 +180,8 @@ retained in the result without modification:
     True
 
 
-How-tos
--------
+Tutorials / How-tos
+--------------------
 
 - :ref:`/tutorials/field/field_overview.ipynb`
 - :ref:`/tutorials/grib/grib_overview.ipynb`
