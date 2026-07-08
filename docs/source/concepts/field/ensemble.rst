@@ -1,7 +1,7 @@
 .. _ensemble_component:
 
-Ensemble component
-==================
+Ensemble component and metadata keys
+======================================
 
 Every :py:class:`~earthkit.data.core.field.Field` may carry an *ensemble component* that
 identifies which ensemble member the field belongs to. The ensemble component is accessible
@@ -40,7 +40,7 @@ or via :meth:`set` are converted automatically. ``None`` represents the absence 
 ensemble member (deterministic data).
 
 
-Accessing ensemble information
+List of ensemble metadata keys
 -------------------------------
 
 .. list-table::

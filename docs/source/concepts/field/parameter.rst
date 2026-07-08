@@ -1,7 +1,7 @@
 .. _parameter_component:
 
-Parameter component
-===================
+Parameter component and metadata keys
+=======================================
 
 Every :py:class:`~earthkit.data.core.field.Field` carries a *parameter component* that describes
 the physical quantity the field represents. The parameter component is accessible via the
@@ -58,14 +58,8 @@ The appropriate parameter subclass is determined automatically from the data:
   ``wave_frequency*`` keys).
 
 
-Accessing parameter information
+List of parameter metadata keys
 --------------------------------
-
-All parameter keys are accessible through :meth:`~earthkit.data.core.field.Field.get` with the
-``"parameter."`` prefix, and can therefore be used in
-:meth:`~earthkit.data.core.fieldlist.FieldList.sel`,
-:meth:`~earthkit.data.core.fieldlist.FieldList.order_by`, and
-:meth:`~earthkit.data.core.fieldlist.FieldList.metadata`.
 
 .. list-table::
    :header-rows: 1
