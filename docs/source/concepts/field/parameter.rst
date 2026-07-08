@@ -111,8 +111,8 @@ All parameter keys are accessible through :meth:`~earthkit.data.core.field.Field
      - Units of the wave frequency (e.g. 1/s), or ``None``.
 
 
-How-tos
--------
+Tutorials / How-tos
+-------------------
 
 - :ref:`/tutorials/field/field_overview.ipynb`
 - :ref:`/tutorials/grib/grib_overview.ipynb`

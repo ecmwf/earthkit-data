@@ -17,4 +17,3 @@ Concepts
    misc/index.rst
    field/index.rst
    fieldlist
-   vertical

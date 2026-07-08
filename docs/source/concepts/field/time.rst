@@ -87,8 +87,8 @@ All time keys are accessible through :meth:`~earthkit.data.core.field.Field.get`
      - The indexing datetime used for ordering within a dataset. Returns ``None`` for types that do not define it.
 
 
-How-tos
--------
+Tutorials / How-tos
+-------------------
 
 - :ref:`/tutorials/field/field_overview.ipynb`
 - :ref:`/tutorials/grib/grib_overview.ipynb`
