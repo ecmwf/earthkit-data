@@ -1,7 +1,7 @@
 .. _proc_component:
 
-Processing (proc) component
-============================
+Processing (proc) component and metadata keys
+===============================================
 
 .. warning::
 
@@ -66,14 +66,8 @@ Time processing methods
      - Field values represent the maximum over the time span.
 
 
-Accessing processing information
----------------------------------
-
-All proc keys are accessible through :meth:`~earthkit.data.core.field.Field.get` with the
-``"proc."`` prefix, and can therefore be used in
-:meth:`~earthkit.data.core.fieldlist.FieldList.sel`,
-:meth:`~earthkit.data.core.fieldlist.FieldList.order_by`, and
-:meth:`~earthkit.data.core.fieldlist.FieldList.metadata`.
+List of proc metadata keys
+-----------------------------
 
 .. list-table::
    :header-rows: 1

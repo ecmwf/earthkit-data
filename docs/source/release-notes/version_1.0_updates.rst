@@ -60,19 +60,21 @@ Component-based Field metadata
 format-independent, polymorphic *components*, each responsible for a distinct aspect of
 the field's metadata:
 
-- :ref:`parameter_component`     — physical quantity, units, CF names; extended with chemical, optical, and wave-spectra sub-types.
-- :ref:`time_component`     — base datetime, forecast step, valid datetime.
-- :ref:`vertical_component` — level value, level type, layer bounds, parametric (hybrid) level coefficients.
-- :ref:`geography_component` — lat/lon arrays, bounding box, projection, grid type.
-- :ref:`ensemble_component` — ensemble member identifier.
-- :ref:`proc_component` — post-processing operations (e.g. accumulation type and time span).
-- :ref:`labels_component` — user-defined key-value pairs.
+- :ref:`Parameter component <parameter_component>`     — physical quantity, units, CF names; extended with chemical, optical, and wave-spectra sub-types.
+- :ref:`Time component <time_component>`     — base datetime, forecast step, valid datetime.
+- :ref:`Vertical component <vertical_component>` — level value, level type, layer bounds, parametric (hybrid) level coefficients.
+- :ref:`Geography component <geography_component>` — lat/lon arrays, bounding box, projection, grid type.
+- :ref:`Ensemble component <ensemble_component>` — ensemble member identifier.
+- :ref:`Processing (proc) component <proc_component>` — post-processing operations (e.g. accumulation type and time span).
+- :ref:`Labels component <labels_component>` — user-defined key-value pairs.
 
 Components are accessed via field attributes (e.g. ``field.time``) or through the generic
 :meth:`~earthkit.data.core.field.Field.get` method using ``"component.key"`` strings. Raw
 source-native keys (e.g. GRIB ``shortName``) remain accessible via
 :meth:`~earthkit.data.core.field.Field.metadata` or with the ``"metadata."`` prefix in
 :meth:`~earthkit.data.core.field.Field.get`.
+
+The :ref:`field_keys` page provides a full list of all available component metadata keys.
 
 See the :ref:`field_concept` page for full details.
 

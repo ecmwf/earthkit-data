@@ -1,7 +1,7 @@
 .. _vertical_component:
 
-Vertical component
-==================
+Vertical component and metadata keys
+===========================================
 
 Every :py:class:`~earthkit.data.core.field.Field` carries a *vertical component* that describes
 where in the atmosphere, ocean, or land the field is defined. The vertical component is accessible
@@ -448,14 +448,8 @@ levels the vertical component exposes the following additional methods:
 - :meth:`~earthkit.data.field.component.vertical.VerticalBase.number_of_levels` – total number of
   model levels
 
-
-Accessing vertical information
--------------------------------
-
-All vertical keys are accessible through :meth:`~earthkit.data.core.field.Field.get` with the
-``"vertical."`` prefix, and can therefore be used in :meth:`~earthkit.data.core.fieldlist.FieldList.sel`,
-:meth:`~earthkit.data.core.fieldlist.FieldList.order_by`, and
-:meth:`~earthkit.data.core.fieldlist.FieldList.metadata`.
+List of vertical metadata keys
+--------------------------------
 
 Supported keys:
 
