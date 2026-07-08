@@ -13,8 +13,9 @@ structure in earthkit-data and bundles together:
 
 Fields are created automatically when reading data through
 :py:func:`~earthkit.data.from_source` and are normally accessed as members of a
-:py:class:`~earthkit.data.core.fieldlist.FieldList`. See :ref:`fieldlist_concept` for how to work
-with collections of fields.
+:py:class:`~earthkit.data.core.fieldlist.FieldList`. Refer to the
+:ref:`FieldList concept page <fieldlist_concept>` for a full description of how to
+select, iterate over, and manipulate collections of fields.
 
 .. _field_concept_component-metadata:
 
