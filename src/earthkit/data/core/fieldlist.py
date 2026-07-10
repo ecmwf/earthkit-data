@@ -654,11 +654,11 @@ class FieldList(Source, Encodable):
 
             - single value::
 
-                fl.sel({parameter.variable: "t"})
+                fl.sel({"parameter.variable": "t"})
 
             - list of values::
 
-                fl.sel({parameter.variable: ["u", "v"]})
+                fl.sel({"parameter.variable": ["u", "v"]})
 
             - slice of values (defines a closed interval, so treated as inclusive of both the start
             and stop values, unlike normal Python indexing). The following example filters the fields
@@ -718,7 +718,7 @@ class FieldList(Source, Encodable):
 
         Selecting by a single key ("parameter.variable") with a single value:
 
-        >>> fl1 = fl.sel({parameter.variable: "t"})
+        >>> fl1 = fl.sel({"parameter.variable": "t"})
         >>> for f in fl1:
         ...     print(f)
         ...
@@ -732,7 +732,7 @@ class FieldList(Source, Encodable):
         Selecting by multiple keys ("parameter.variable", "vertical.level") with a list and slice of values:
 
         >>> fl1 = fl.sel(
-        ...     {parameter.variable: ["u", "v"], vertical.level: slice(400, 700)}
+        ...     {"parameter.variable": ["u", "v"], "vertical.level": slice(400, 700)}
         ... )
         >>> for f in fl1:
         ...     print(f)
