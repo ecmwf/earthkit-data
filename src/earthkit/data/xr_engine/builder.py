@@ -287,7 +287,14 @@ class BackendDataBuilder(metaclass=ABCMeta):
             self.field_coords = self._make_field_coords()
 
     def coords(self):
-        r = {k: v.to_xr_var(self.profile) for k, v in self.tensor_coords.items()}
+        import xarray
+
+        r = {}
+        for k, v in self.tensor_coords.items():
+            if isinstance(v, xarray.Variable):
+                r[k] = v
+            else:
+                r[k] = v.to_xr_var(self.profile)
         r.update(self.field_coords)
         return r
 
@@ -370,6 +377,28 @@ class BackendDataBuilder(metaclass=ABCMeta):
             vals_reshaped = numpy.array(vals_flatten).reshape(tuple(len(c) for c in coords.values()))
             self.tensor_coords[coord_label] = Coord.make(coord_label, vals_reshaped, list(coords))
 
+    def _inject_climatology_bounds(self):
+        """Inject climatology bounds for any DayOfYearCoord dimensions.
+
+        When a DayOfYearCoord is present, this creates the CF-compliant
+        climatology bounds auxiliary coordinate variable referenced by the
+        ``climatology`` attribute on the time coordinate.
+        """
+        import xarray
+
+        from .coord import DayOfYearCoord
+
+        for key, coord in list(self.tensor_coords.items()):
+            if isinstance(coord, DayOfYearCoord):
+                bounds_name = coord.CLIMATOLOGY_BOUNDS_NAME
+                if bounds_name not in self.tensor_coords:
+                    bounds_data = coord.climatology_bounds()
+                    bounds_var = xarray.Variable(
+                        (coord.dims[0], "nv"),
+                        bounds_data,
+                    )
+                    self.tensor_coords[bounds_name] = bounds_var
+
     def build(self):
         if self.profile.allow_holes:
             global_tensor_dims, self.raw_global_tensor_coords, _ = self.prepare_tensor(
@@ -405,6 +434,9 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 self.profile.aux_coords.setdefault("valid_time", ("time.valid_datetime", time_dim_names))
 
         self.collect_aux_coords()
+
+        # Inject climatology bounds for DayOfYearCoord dimensions
+        self._inject_climatology_bounds()
 
         # build variable and global attributes
         xr_attrs = self.profile.attrs.builder.build(self.ds, var_builders, rename=True)
