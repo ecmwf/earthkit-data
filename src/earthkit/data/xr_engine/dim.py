@@ -103,7 +103,12 @@ BASE_DATETIME_KEYS = (
 
 DATETIME_KEYS = BASE_DATETIME_KEYS + VALID_DATETIME_KEYS
 
-_TIME_RELATED_KEYS = set(DATE_KEYS + TIME_KEYS + STEP_KEYS + MONTH_KEYS + VALID_DATETIME_KEYS + BASE_DATETIME_KEYS)
+_DAY_OF_YEAR_KEYS = ["day_of_year"]
+DAY_OF_YEAR_KEYS = ["day_of_year"] + _get_component_keys("time", _DAY_OF_YEAR_KEYS)
+
+_TIME_RELATED_KEYS = set(
+    DATE_KEYS + TIME_KEYS + STEP_KEYS + MONTH_KEYS + VALID_DATETIME_KEYS + BASE_DATETIME_KEYS + DAY_OF_YEAR_KEYS
+)
 
 KEYS = (
     ENS_KEYS,
@@ -119,6 +124,7 @@ KEYS = (
     MONTH_KEYS,
     VALID_DATETIME_KEYS,
     BASE_DATETIME_KEYS,
+    DAY_OF_YEAR_KEYS,
 )
 
 
@@ -361,6 +367,12 @@ class ReferenceTimeDim(Dim):
     drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop="reference_time")
 
 
+class DayOfYearDim(Dim):
+    name = "day_of_year"
+    drop = get_keys(DATE_KEYS + TIME_KEYS + STEP_KEYS + DATETIME_KEYS + VALID_DATETIME_KEYS)
+    alias = get_keys(DAY_OF_YEAR_KEYS)
+
+
 class CustomForecastRefDim(Dim):
     @staticmethod
     def _datetime(val):
@@ -483,6 +495,7 @@ class DimRole:
         "level_type",
         "forecast_reference_time",
         "valid_time",
+        "day_of_year",
         "chem",
         "wavelength",
         "wave_direction",
@@ -597,7 +610,7 @@ class LevelPerTypeDimMode(LevelAndTypeDimMode):
     dim = LevelPerTypeDim
 
 
-ALL_TIME_ROLES = ["forecast_reference_time", "step", "valid_time", "date", "time"]
+ALL_TIME_ROLES = ["forecast_reference_time", "step", "valid_time", "date", "time", "day_of_year"]
 LEVEL_DIM_MODES = {v.name: v for v in [LevelDimMode, LevelPerTypeDimMode, LevelAndTypeDimMode]}
 
 
@@ -1157,6 +1170,7 @@ for i, d in enumerate([
     ValidTimeDim,
     IndexingTimeDim,
     ReferenceTimeDim,
+    DayOfYearDim,
     LevelDim,
     LevelTypeDim,
     LevelPerTypeDim,

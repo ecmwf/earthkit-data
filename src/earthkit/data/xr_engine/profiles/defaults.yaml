@@ -45,6 +45,7 @@ dim_roles:
   valid_time: time.valid_datetime
   date: time.base_date
   time: time.base_time
+  day_of_year: time.day_of_year
   level: vertical.level
   level_type: vertical.level_type
   chem: parameter.chem
@@ -96,3 +97,7 @@ coord_attrs:
     # "calendar": "proleptic_gregorian",
     standard_name: time
     long_name: valid_time
+  day_of_year:
+    standard_name: time
+    long_name: climatological day of year
+    # calendar: proleptic_gregorian

@@ -7,12 +7,29 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime as dt_module
+
 from earthkit.data.utils.dates import datetime_from_grib, datetime_to_grib, step_to_grib, to_timedelta
 
 from .collector import GribContextCollector
 from .core import GribFieldComponentHandler
 
 ZERO_TIMEDELTA = to_timedelta(0)
+
+# Reference leap year for DOY <-> month/day conversions in daily climatology
+_CLIMATOLOGY_REFERENCE_YEAR = 2000
+
+
+def _day_of_year_from_month_day(month, day):
+    """Convert month and day to day of year using a reference leap year."""
+    ref_date = dt_module.date(_CLIMATOLOGY_REFERENCE_YEAR, int(month), int(day))
+    return ref_date.timetuple().tm_yday
+
+
+def _month_day_from_day_of_year(doy):
+    """Convert day of year to (month, day) using a reference leap year."""
+    ref_date = dt_module.date(_CLIMATOLOGY_REFERENCE_YEAR, 1, 1) + dt_module.timedelta(days=int(doy) - 1)
+    return ref_date.month, ref_date.day
 
 
 class GribTimeBuilder:
@@ -36,6 +53,15 @@ class GribTimeBuilder:
                 if time is not None:
                     return datetime_from_grib(date, time)
             return None
+
+        data_date = _get("dataDate", None)
+
+        # Daily climatology: dataDate is encoded as 100*month + day (e.g. 101 = Jan 1, 1231 = Dec 31)
+        if data_date is not None and int(data_date) < 10000:
+            month = int(data_date) // 100
+            day = int(data_date) % 100
+            doy = _day_of_year_from_month_day(month, day)
+            return dict(day_of_year=doy)
 
         base = _datetime("dataDate", "dataTime")
 
@@ -68,7 +94,22 @@ class GribTimeBuilder:
 class GribTimeContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(handler, context):
+        from earthkit.data.field.component.time import DailyClimatologyTime
+
         component = handler.component
+
+        if isinstance(component, DailyClimatologyTime):
+            # Convert DOY back to month/day encoded as 100*month + day for GRIB
+            doy = component.day_of_year()
+            if doy is not None:
+                month, day = _month_day_from_day_of_year(doy)
+                r = {}
+                r["date"] = month * 100 + day
+                r["time"] = 0
+                r["step"] = 0
+                context.update(r)
+            return
+
         r = {}
 
         date, time = datetime_to_grib(component.base_datetime())

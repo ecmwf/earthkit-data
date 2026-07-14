@@ -12,7 +12,7 @@ import logging
 
 import numpy as np
 
-from .dim import DATE_KEYS, DATETIME_KEYS, LEVEL_KEYS, MONTH_KEYS, STEP_KEYS, TIME_KEYS
+from .dim import DATE_KEYS, DATETIME_KEYS, DAY_OF_YEAR_KEYS, LEVEL_KEYS, MONTH_KEYS, STEP_KEYS, TIME_KEYS
 from .level import is_level_type
 
 LOG = logging.getLogger(__name__)
@@ -40,6 +40,8 @@ class Coord:
             return MonthCoord(name, *args, **kwargs)
         elif name in STEP_KEYS:
             return StepCoord(name, *args, **kwargs)
+        elif name in DAY_OF_YEAR_KEYS:
+            return DayOfYearCoord(name, *args, **kwargs)
         elif name in LEVEL_KEYS:
             return LevelCoord(name, *args, **kwargs)
         elif is_level_type(name):
@@ -170,6 +172,50 @@ class MonthCoord(Coord):
         attrs = super().attrs(profile)
         attrs["units"] = "months"
         return attrs
+
+
+class DayOfYearCoord(Coord):
+    """Coordinate for daily climatology day-of-year values.
+
+    Converts integer DOY values (1-366) to datetime64 values using a reference
+    leap year (2000). Adds CF-compliant ``climatology`` attribute pointing to
+    the climatology bounds variable.
+    """
+
+    CLIMATOLOGY_BOUNDS_NAME = "climatology_bounds"
+    _REFERENCE_YEAR = 2000  # Leap year to support 366 days
+
+    def convert(self, profile):
+        """Convert integer DOY values to datetime64."""
+        import datetime as dt_module
+
+        dates = []
+        for doy in self.vals:
+            ref_date = dt_module.date(self._REFERENCE_YEAR, 1, 1) + dt_module.timedelta(days=int(doy) - 1)
+            dates.append(np.datetime64(dt_module.datetime(ref_date.year, ref_date.month, ref_date.day)))
+        return np.array(dates, dtype="datetime64[ns]")
+
+    def attrs(self, profile):
+        attrs = super().attrs(profile)
+        attrs["climatology"] = self.CLIMATOLOGY_BOUNDS_NAME
+        return attrs
+
+    def climatology_bounds(self):
+        """Compute the climatology bounds array.
+
+        Returns a (N, 2) array of datetime64 values where bounds[i, 0] is
+        the start of the day and bounds[i, 1] is the start of the next day,
+        representing the full-day interval for each DOY.
+        """
+        import datetime as dt_module
+
+        bounds = []
+        for doy in self.vals:
+            ref_date = dt_module.date(self._REFERENCE_YEAR, 1, 1) + dt_module.timedelta(days=int(doy) - 1)
+            day_start = np.datetime64(dt_module.datetime(ref_date.year, ref_date.month, ref_date.day))
+            day_end = day_start + np.timedelta64(1, "D")
+            bounds.append([day_start, day_end])
+        return np.array(bounds, dtype="datetime64[ns]")
 
 
 class LevelCoord(Coord):

@@ -43,6 +43,7 @@ class TimeBase(SimpleFieldComponent):
     - "step"
     - "forecast_month"
     - "indexing_datetime"
+    - "day_of_year"
     - "forecast_reference_time" (alias of "base_datetime")
     - "forecast_period" (alias of "step")
 
@@ -177,6 +178,18 @@ class TimeBase(SimpleFieldComponent):
         """
         pass
 
+    @mark_get_key
+    @abstractmethod
+    def day_of_year(self) -> int:
+        """Return the day of year.
+
+        Returns
+        -------
+        int
+            The day of year (1-366). For non-climatology time types, this method returns None.
+        """
+        pass
+
 
 def create_time(d: dict) -> "TimeBase":
     """Create a TimeBase object from a dictionary.
@@ -195,7 +208,9 @@ def create_time(d: dict) -> "TimeBase":
         raise TypeError(f"Cannot create Time from {type(d)}, expected dict")
 
     # TODO: improve this logic
-    if "forecast_month" in d:
+    if "day_of_year" in d:
+        cls = DailyClimatologyTime
+    elif "forecast_month" in d:
         cls = MonthlyForecastTime
     else:
         cls = ForecastTime
@@ -225,6 +240,9 @@ class EmptyTime(TimeBase):
         return None
 
     def indexing_datetime(self):
+        return None
+
+    def day_of_year(self):
         return None
 
     @classmethod
@@ -301,6 +319,13 @@ class ForecastTime(TimeBase):
         """Return the indexing datetime.
 
         Indexing datetime is not defined for this time type, so return None.
+        """
+        return None
+
+    def day_of_year(self) -> None:
+        """Return the day of year.
+
+        Day of year is not defined for this time type, so return None.
         """
         return None
 
@@ -710,6 +735,13 @@ class AnalysisTime(TimeBase):
         """
         return None
 
+    def day_of_year(self) -> None:
+        """Return the day of year.
+
+        For analysis time, the day of year is not defined, so return None.
+        """
+        return None
+
     def to_dict(self) -> dict:
         """Return a dictionary representation of the time object."""
         return {
@@ -836,6 +868,13 @@ class MonthlyForecastTime(TimeBase):
     def indexing_datetime(self) -> "datetime.datetime":
         """Return the indexing datetime."""
         return self._indexing_datetime
+
+    def day_of_year(self) -> None:
+        """Return the day of year.
+
+        Day of year is not defined for this time type, so return None.
+        """
+        return None
 
     def to_dict(self) -> dict:
         """Return a dictionary representation of the time object."""
@@ -1068,3 +1107,166 @@ class MonthlyForecastTime(TimeBase):
             base_datetime=state["base_datetime"],
             step=state["step"],
         )
+
+
+class DailyClimatologyTime(TimeBase):
+    """Field time component for daily climatology data.
+
+    This time type represents a day-of-year (DOY) value without a specific year,
+    as used in daily climatology datasets (e.g., ERA5 daily climatology). The day
+    of year ranges from 1 (January 1) to 366 (December 31 in a leap year).
+
+    Parameters
+    ----------
+    day_of_year : int
+        Day of year (1-366).
+
+    """
+
+    _REFERENCE_YEAR = 2000  # Leap year to support 366 days
+
+    def __init__(self, day_of_year=None):
+        if day_of_year is not None:
+            self._day_of_year = int(day_of_year)
+            if not 1 <= self._day_of_year <= 366:
+                raise ValueError(f"day_of_year must be 1-366, got {self._day_of_year}")
+        else:
+            self._day_of_year = None
+
+    @property
+    def month(self):
+        """Return the month corresponding to the day of year."""
+        if self._day_of_year is None:
+            return None
+        ref_date = datetime.date(self._REFERENCE_YEAR, 1, 1) + datetime.timedelta(days=self._day_of_year - 1)
+        return ref_date.month
+
+    @property
+    def day(self):
+        """Return the day of month corresponding to the day of year."""
+        if self._day_of_year is None:
+            return None
+        ref_date = datetime.date(self._REFERENCE_YEAR, 1, 1) + datetime.timedelta(days=self._day_of_year - 1)
+        return ref_date.day
+
+    def day_of_year(self) -> int:
+        """Return the day of year (1-366)."""
+        return self._day_of_year
+
+    def base_datetime(self) -> None:
+        """Return None. Base datetime is not defined for daily climatology."""
+        return None
+
+    def base_date(self) -> None:
+        """Return None. Base date is not defined for daily climatology."""
+        return None
+
+    def base_time(self) -> None:
+        """Return None. Base time is not defined for daily climatology."""
+        return None
+
+    def valid_datetime(self) -> None:
+        """Return None. Valid datetime is not defined for daily climatology."""
+        return None
+
+    def step(self) -> None:
+        """Return None. Step is not defined for daily climatology."""
+        return None
+
+    def forecast_month(self) -> None:
+        """Return None. Forecast month is not defined for daily climatology."""
+        return None
+
+    def indexing_datetime(self) -> None:
+        """Return None. Indexing datetime is not defined for daily climatology."""
+        return None
+
+    def to_dict(self) -> dict:
+        """Return a dictionary representation of the time object."""
+        return {"day_of_year": self._day_of_year}
+
+    @classmethod
+    def from_day_of_year(cls, *, day_of_year):
+        """Create a DailyClimatologyTime object from a day of year value.
+
+        Parameters
+        ----------
+        day_of_year : int
+            Day of year (1-366).
+
+        Returns
+        -------
+        DailyClimatologyTime
+            The created DailyClimatologyTime instance.
+        """
+        return cls(day_of_year=day_of_year)
+
+    @classmethod
+    def from_month_day(cls, *, month, day):
+        """Create a DailyClimatologyTime object from month and day.
+
+        Parameters
+        ----------
+        month : int
+            Month (1-12).
+        day : int
+            Day of month.
+
+        Returns
+        -------
+        DailyClimatologyTime
+            The created DailyClimatologyTime instance.
+        """
+        ref_date = datetime.date(cls._REFERENCE_YEAR, int(month), int(day))
+        return cls(day_of_year=ref_date.timetuple().tm_yday)
+
+    @classmethod
+    def from_dict(cls, d):
+        """Create a DailyClimatologyTime object from a dictionary.
+
+        Parameters
+        ----------
+        d : dict
+            Dictionary containing time data. The allowed keys are:
+
+            - "day_of_year": int (1-366)
+
+        Returns
+        -------
+        DailyClimatologyTime
+            The created DailyClimatologyTime instance.
+        """
+        if not isinstance(d, dict):
+            raise TypeError("data must be a dictionary")
+
+        if "day_of_year" in d:
+            return cls.from_day_of_year(day_of_year=d["day_of_year"])
+
+        raise ValueError(f"Cannot create DailyClimatologyTime from keys: {list(d.keys())}.")
+
+    def set(self, *args, **kwargs):
+        """Create a new instance with updated data.
+
+        Parameters
+        ----------
+        args : tuple
+            Positional arguments containing time data. Only dictionaries are allowed.
+        kwargs : dict
+            Keyword arguments containing time data.
+
+        Returns
+        -------
+        DailyClimatologyTime
+            The created DailyClimatologyTime instance.
+        """
+        KEYS = {"day_of_year"}
+        d = self._normalise_set_kwargs(*args, allowed_keys=KEYS, **kwargs)
+        if not d:
+            return self
+        return self.from_dict(d)
+
+    def __getstate__(self):
+        return {"day_of_year": self._day_of_year}
+
+    def __setstate__(self, state):
+        self.__init__(day_of_year=state["day_of_year"])
