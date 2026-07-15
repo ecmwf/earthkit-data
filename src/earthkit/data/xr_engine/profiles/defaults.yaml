@@ -23,7 +23,7 @@ variable_attrs: []
 global_attrs: []
 add_earthkit_attrs: true
 rename_attrs: {}
-add_valid_time_coord: false
+add_valid_time_coord: true
 add_geo_coords: true
 decode_times: true
 decode_timedelta:

@@ -25,8 +25,12 @@ class Coord:
         self.name = simple_name if simple_name is not None else name
         self.vals = vals
         self.dims = dims
-        if not self.dims:
-            self.dims = (name,)
+        
+        if self.dims is None:
+            if np.ndim(vals) == 0:
+                self.dims = ()
+            else:
+                self.dims = (name,)
 
     @staticmethod
     def make(name, *args, **kwargs):
