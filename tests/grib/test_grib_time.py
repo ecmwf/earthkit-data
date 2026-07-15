@@ -151,3 +151,21 @@ def test_grib_time_hdate():
     assert f.time.step() == datetime.timedelta(hours=6)
     assert f.get("metadata.hdate") == 20210615
     assert f.get("metadata.step") == 6
+
+
+def test_grib_time_missing_year():
+    """Test that accessing time on a field with missing year raises AttributeError consistently."""
+    ds = from_source("file", earthkit_test_data_file("t_year_missing.grib")).to_fieldlist()
+    f = ds[0]
+
+    # First access should raise AttributeError with ValueError as cause
+    with pytest.raises(AttributeError) as exc_info:
+        f.time
+    assert isinstance(exc_info.value.__cause__, ValueError)
+    assert "year 0 is out of range" in str(exc_info.value.__cause__)
+
+    # Second access should raise the same exception type
+    with pytest.raises(AttributeError) as exc_info:
+        f.time
+    assert isinstance(exc_info.value.__cause__, ValueError)
+    assert "year 0 is out of range" in str(exc_info.value.__cause__)
