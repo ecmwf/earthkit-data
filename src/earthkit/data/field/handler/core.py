@@ -184,9 +184,11 @@ class LazyFieldComponentHandler(metaclass=ABCMeta):
     def __getattr__(self, name):
         if self._exception is not None:
             raise AttributeError(name) from self._exception
-        print(f"DEBUG THIS!!! LazyFieldComponentHandler.__getattr__: {name=}")
-        print(f"DEBUG THIS!!! LazyFieldComponentHandler.__getattr__: {type(self._handler)=}")
-        return getattr(self._handler, name)
+        try:
+            handler = self._handler
+        except Exception as e:
+            raise AttributeError(name) from e
+        return getattr(handler, name)
 
 
 class SimpleFieldComponentHandler(FieldComponentHandler):
