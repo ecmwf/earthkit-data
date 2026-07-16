@@ -179,6 +179,11 @@ class MultiNetCDFReader(Source, NetCDFReaderBase):
 
         return NetCDFData(self)
 
+    @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(s, MultiNetCDFReader) for s in sources)
+        return MultiNetCDFReader(sources)
+
     def _encode(self, encoder, hints=None, **kwargs):
         return encoder._encode_xarray(self.to_xarray(), **kwargs)
 
