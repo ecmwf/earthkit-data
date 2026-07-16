@@ -466,6 +466,32 @@ def test_cds_netcdf_to_pandas_xarray():
     # assert data_cds.to_pandas().equals(data_file.to_pandas())
 
 
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(300)
+def test_cds_multi_source_to_pandas():
+    dataset = "sis-european-wind-storm-reanalysis"
+    request = {
+        "product": "windstorm_track",
+        "variable": "all",
+        "tracking_algorithm": ["hodges"],
+        "event_aggregation": "single_event",
+        "year": ["2020"],
+        "month": ["01"],
+        "day": [f"{day:02}" for day in range(1, 32)],
+    }
+
+    data = from_source("cds", dataset, request)
+
+    df = data.to_pandas()
+
+    assert not df.empty
+    assert "time" in df.columns
+    assert "latitude" in df.columns
+    assert "longitude" in df.columns
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

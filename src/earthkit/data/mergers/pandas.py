@@ -18,4 +18,4 @@ def merge(
 
     options = dict(ignore_index=True)  # Renumber all indices
     options.update(kwargs)
-    return pd.concat([s.to_pandas(**kwargs) for s in sources], **options)
+    return pd.concat([s.to_data_object().to_pandas(**kwargs) for s in sources], **options)

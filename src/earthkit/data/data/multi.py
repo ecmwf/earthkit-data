@@ -105,7 +105,8 @@ class MultiData(SimpleData):
         :py:class:`pandas.DataFrame`
             A Pandas DataFrame containing data from all sources.
         """
-        pass
+        
+        return self.sources.to_pandas(*args, **kwargs)
 
     def to_geopandas(self, *args, **kwargs):
         """Convert into a GeoPandas GeoDataFrame.
