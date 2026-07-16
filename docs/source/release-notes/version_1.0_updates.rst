@@ -10,6 +10,14 @@ Version 1.0 Updates
     and how to update your code.
 
 
+Version 1.0.3
+==============
+
+Fixes
++++++++++++++
+
+- Fixed issue when could not convert multiple NetCDF files to Xarray or fieldlist (:pr:`1060`). This happened when the source contained multiple directories or archives (e.g. tar) each containing multiple NetCDF files. It also happened when data was retrieved from a remote source (e.g. "cds") and the source contained multiple archive files each with multiple NetCDF files.
+
 
 Version 1.0.2
 ==============
