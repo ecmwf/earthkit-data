@@ -13,12 +13,12 @@ from earthkit.data import from_source
 
 
 def test_sample_source_grib():
-    ds = from_source("sample", "storm_ophelia_wind_850.grib")
+    ds = from_source("sample", "storm_ophelia_wind_850.grib").to_fieldlist()
     assert len(ds) == 2
     assert ds.metadata(["param", "level"]) == [["u", 850], ["v", 850]]
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

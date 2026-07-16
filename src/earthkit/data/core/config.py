@@ -13,8 +13,7 @@ import logging
 import os
 import tempfile
 import warnings
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 from typing import Callable
 
@@ -23,11 +22,7 @@ import yaml
 
 from earthkit.data import __version__ as VERSION
 from earthkit.data.utils.html import css
-from earthkit.data.utils.humanize import as_bytes
-from earthkit.data.utils.humanize import as_percent
-from earthkit.data.utils.humanize import as_seconds
-from earthkit.data.utils.humanize import interval_to_human
-from earthkit.data.utils.humanize import list_to_human
+from earthkit.data.utils.humanize import as_bytes, as_percent, as_seconds, interval_to_human, list_to_human
 from earthkit.data.utils.interval import Interval
 
 LOG = logging.getLogger(__name__)
@@ -184,14 +179,19 @@ CONFIG_AND_HELP = {
     "maximum-cache-size": _(
         None,
         """Maximum disk space used by the earthkit-data cache (e.g.: 100G or 2T).
-        Can be set to None.""",
+        When exceeded, earthkit-data evicts older cached entries until the usage
+        is below the specified limit. Can be set to None.
+        Ignored when ``cache-policy`` is ``off``.
+        See :ref:`caching` for more information.""",
         getter="_as_bytes",
         none_ok=True,
     ),
     "maximum-cache-disk-usage": _(
         "95%",
-        """Disk usage threshold after which earthkit-data expires older cached
-        entries (% of the full disk capacity). Can be set to None.
+        """Specify maximum disk usage as a percentage of the full disk capacity on the filesystem the
+        cache is located (e.g.: 90%). When the total disk usage exceeds this limit (it's not limited to the
+        cache usage alone), earthkit-data evicts older cached entries until the usage is below the
+        specified limit. Can be set to None. Ignored when ``cache-policy`` is ``off``.
         See :ref:`caching` for more information.""",
         getter="_as_percent",
         none_ok=True,
@@ -220,12 +220,12 @@ CONFIG_AND_HELP = {
         getter="_as_int",
         validator=IntervalValidator(Interval(8, 4096)),
     ),
-    "grib-field-policy": _(
-        "persistent",
-        """GRIB field management policy for fieldlists with data on disk.  {validator}
-        See :doc:`/guide/misc/grib_memory` for more information.""",
-        validator=ListValidator(["persistent", "temporary"]),
-    ),
+    # "grib-field-policy": _(
+    #     "persistent",
+    #     """GRIB field management policy for fieldlists with data on disk.  {validator}
+    #     See :doc:`/guide/misc/grib_memory` for more information.""",
+    #     validator=ListValidator(["persistent", "temporary"]),
+    # ),
     "grib-handle-policy": _(
         "cache",
         """GRIB handle management policy for fieldlists with data on disk.  {validator}
@@ -262,7 +262,7 @@ for k, v in CONFIG_AND_HELP.items():
 
 @contextmanager
 def new_config(s):
-    """Context manager to create new config"""
+    """Context manager to create new config."""
     CONFIG._stack.append(s)
     CONFIG._notify()
     try:
@@ -329,12 +329,13 @@ class Config:
 
     @forward
     def get(self, name: str, default=NONE):
-        """[summary]
+        """Get the value of a configuration option.
 
         Parameters
         ----------
             name: str
-                [description]
+                The name of the configuration option.
+
             default: [type]
                 [description]. Defaults to NONE.
 
@@ -367,12 +368,13 @@ class Config:
 
     @forward
     def set(self, *args, **kwargs):
-        """[summary]
+        """Set the value of a configuration option.
 
         Parameters
         ----------
             name: str
-                [description]
+                The name of the configuration option.
+
             value: [type]
                 [description]
         """
@@ -390,7 +392,7 @@ class Config:
         self._changed()
 
     def _set(self, name: str, *args, **kwargs):
-        """[summary]
+        """Set the value of a configuration option.
 
         Parameters
         ----------
@@ -420,7 +422,12 @@ class Config:
             assert len(args) == 1
             assert len(kwargs) == 0
             value = args[0]
-            value = klass(value)
+            if value is not None:
+                if klass is bool:
+                    try:
+                        value = klass(value)
+                    except Exception as e:
+                        raise ValueError(f"Invalid value for config option '{name}': {value}") from e
 
         if klass is list:
             assert len(args) > 0

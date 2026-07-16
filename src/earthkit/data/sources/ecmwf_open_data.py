@@ -13,8 +13,7 @@ try:
 except ImportError:
     raise ImportError("ECMWF Open Data access requires 'ecmwf-opendata' to be installed")
 
-from earthkit.data.utils.request import FileRequestRetriever
-from earthkit.data.utils.request import RequestBuilder
+from earthkit.data.utils.request import FileRequestRetriever, RequestBuilder
 
 from .file import FileSource
 
@@ -45,7 +44,7 @@ class EODRetriever(FileSource):
         def retrieve(target, request):
             self.client.retrieve(request, target)
 
-        return self.cache_file(
+        return self._cache_file(
             retrieve,
             request,
         )

@@ -12,18 +12,28 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import NO_HDA
+from earthkit.data.utils.testing import NO_HDA
 
 REQ_1 = {
-    "dataset_id": "EO:CLMS:DAT:CLMS_GLOBAL_BA_300M_V3_MONTHLY_NETCDF",
-    "startdate": "2019-01-01T00:00:00.000Z",
-    "enddate": "2019-01-01T2:59:59.999Z",
+    "dataset_id": "EO:EEA:DAT:CLMS_HRVPP_VPP",
+    "productType": "TPROD",
+    "productGroupId": "s1",
+    "tileId": "32TQR",
+    "resolution": "10",
+    "startdate": "2023-01-01T00:00:00.000Z",
+    "enddate": "2023-01-01T23:59:59.999Z",
+    "bbox": [12.28091069558975, 45.40759897973081, 12.384715295944709, 45.45978517718846],
 }
 
 REQ_2 = {
-    "dataset_id": "EO:CLMS:DAT:CLMS_GLOBAL_BA_300M_V3_MONTHLY_NETCDF",
-    "startdate": "2019-01-01T03:00:00.000Z",
-    "enddate": "2019-01-01T06:59:59.999Z",
+    "dataset_id": "EO:EEA:DAT:CLMS_HRVPP_VPP",
+    "productType": "TPROD",
+    "productGroupId": ["s1", "s2"],
+    "tileId": "32TQR",
+    "resolution": "10",
+    "startdate": "2023-01-01T00:00:00.000Z",
+    "enddate": "2023-01-01T23:59:59.999Z",
+    "bbox": [12.28091069558975, 45.40759897973081, 12.384715295944709, 45.45978517718846],
 }
 
 
@@ -34,10 +44,10 @@ REQ_2 = {
 def test_wekeo_download_single_1(prompt):
     ds = from_source(
         "wekeo",
-        "EO:CLMS:DAT:CLMS_GLOBAL_BA_300M_V3_MONTHLY_NETCDF",
+        "EO:EEA:DAT:CLMS_HRVPP_VPP",
         prompt=prompt,
         request=REQ_1,
-    )
+    ).to_fieldlist()
     assert len(ds) == 1
 
 
@@ -57,12 +67,12 @@ def test_wekeo_download_single_1(prompt):
 def test_wekeo_download_single_2(_args, req, _kwargs):
     ds = from_source(
         "wekeo",
-        "EO:CLMS:DAT:CLMS_GLOBAL_BA_300M_V3_MONTHLY_NETCDF",
+        "EO:EEA:DAT:CLMS_HRVPP_VPP",
         *_args,
         prompt=False,
         request=req,
         **_kwargs,
-    )
+    ).to_fieldlist()
     assert len(ds) == 1
 
 
@@ -73,16 +83,16 @@ def test_wekeo_download_single_2(_args, req, _kwargs):
 def test_wekeo_download_multi(_args, req, _kwargs):
     ds = from_source(
         "wekeo",
-        "EO:CLMS:DAT:CLMS_GLOBAL_BA_300M_V3_MONTHLY_NETCDF",
+        "EO:EEA:DAT:CLMS_HRVPP_VPP",
         *_args,
         request=req,
         prompt=False,
         **_kwargs,
-    )
+    ).to_fieldlist()
     assert len(ds) == 2
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

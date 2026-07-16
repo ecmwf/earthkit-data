@@ -17,10 +17,8 @@ import pytest
 import yaml
 
 from earthkit.data import from_source
-from earthkit.data.core.temporary import temp_directory
-from earthkit.data.core.temporary import temp_env
-from earthkit.data.testing import NO_GRIBJUMP
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.core.temporary import temp_directory, temp_env
+from earthkit.data.utils.testing import NO_GRIBJUMP, earthkit_test_data_file
 
 
 @pytest.fixture
@@ -67,7 +65,7 @@ def setup_fdb_with_gribjump():
 
 @pytest.fixture
 def seed_fdb(setup_fdb_with_gribjump):
-    ds = from_source("file", earthkit_test_data_file("t_gribjump.grib"))
+    ds = from_source("file", earthkit_test_data_file("t_gribjump.grib")).to_fieldlist()
     for f in ds:
         setup_fdb_with_gribjump.archive(f.message())
     setup_fdb_with_gribjump.flush()
@@ -102,28 +100,26 @@ def mask():
 def arr_expected():
     import numpy as np
 
-    arr_expected = np.array(
+    arr_expected = np.array([
         [
-            [
-                1743.06591797,
-                1743.06591797,
-                1743.06591797,
-                1743.06591797,
-                1743.06591797,
-                1607.31591797,
-                1721.81591797,
-            ],
-            [
-                1641.43701172,
-                1641.43701172,
-                1641.43701172,
-                1641.43701172,
-                1641.43701172,
-                1702.31201172,
-                1887.18701172,
-            ],
-        ]
-    )
+            1743.06591797,
+            1743.06591797,
+            1743.06591797,
+            1743.06591797,
+            1743.06591797,
+            1607.31591797,
+            1721.81591797,
+        ],
+        [
+            1641.43701172,
+            1641.43701172,
+            1641.43701172,
+            1641.43701172,
+            1641.43701172,
+            1702.31201172,
+            1887.18701172,
+        ],
+    ])
     return arr_expected
 
 
@@ -132,52 +128,46 @@ def ds_expected_with_coords():
     import numpy as np
     import xarray as xr
 
-    arr_expected = np.array(
+    arr_expected = np.array([
         [
-            [
-                1743.06591797,
-                1743.06591797,
-                1743.06591797,
-                1743.06591797,
-                1743.06591797,
-                1607.31591797,
-                1721.81591797,
-            ],
-            [
-                1641.43701172,
-                1641.43701172,
-                1641.43701172,
-                1641.43701172,
-                1641.43701172,
-                1702.31201172,
-                1887.18701172,
-            ],
-        ]
-    )
-    latitude_expected = np.array(
+            1743.06591797,
+            1743.06591797,
+            1743.06591797,
+            1743.06591797,
+            1743.06591797,
+            1607.31591797,
+            1721.81591797,
+        ],
         [
-            90.0,
-            90.0,
-            90.0,
-            90.0,
-            90.0,
-            30.0,
-            30.0,
-        ]
-    )
-    longitude_expected = np.array(
-        [
-            0.0,
-            150.0,
-            180.0,
-            210.0,
-            240.0,
-            30.0,
-            60.0,
-        ]
-    )
+            1641.43701172,
+            1641.43701172,
+            1641.43701172,
+            1641.43701172,
+            1641.43701172,
+            1702.31201172,
+            1887.18701172,
+        ],
+    ])
+    latitude_expected = np.array([
+        90.0,
+        90.0,
+        90.0,
+        90.0,
+        90.0,
+        30.0,
+        30.0,
+    ])
+    longitude_expected = np.array([
+        0.0,
+        150.0,
+        180.0,
+        210.0,
+        240.0,
+        30.0,
+        60.0,
+    ])
     ds_expected = xr.Dataset(
-        {"129": (("step", "index"), arr_expected)},
+        {"z": (("step", "index"), arr_expected)},
         coords={
             "step": np.array([0, 21600000000000], dtype="timedelta64[ns]"),
             "index": np.array([0, 5, 6, 7, 8, 25, 26]),
@@ -185,15 +175,15 @@ def ds_expected_with_coords():
             "longitude": ("index", longitude_expected),
         },
         attrs={
-            "class": "od",
-            "date": "20201221",
-            "domain": "g",
-            "expver": "xxxx",
-            "levelist": "1000",
-            "levtype": "pl",
-            "stream": "oper",
-            "time": "1200",
-            "type": "fc",
+            # "class": "od",
+            # "date": "20201221",
+            # "domain": "g",
+            # "expver": "xxxx",
+            # "levelist": "1000",
+            # "levtype": "pl",
+            # "stream": "oper",
+            # "time": "1200",
+            # "type": "fc",
             "Conventions": "CF-1.8",
             "institution": "ECMWF",
         },
@@ -305,7 +295,7 @@ def test_gribjump_to_numpy(seed_fdb, arr_expected, method, request):
         "type": "fc",
     }
 
-    source = from_source("gribjump", mars_request, **kwargs)
+    source = from_source("gribjump", mars_request, **kwargs).to_fieldlist()
     arr = source.to_numpy()
 
     assert arr is not None and isinstance(arr, np.ndarray)
@@ -361,7 +351,7 @@ def test_gribjump_to_xarray_with_coords(seed_fdb, ds_expected_with_coords, metho
         "type": "fc",
     }
 
-    source = from_source("gribjump", mars_request, fetch_coords_from_fdb=True, **kwargs)
+    source = from_source("gribjump", mars_request, fetch_coords_from_fdb=True, **kwargs).to_fieldlist()
     ds = source.to_xarray()
 
     xr.testing.assert_allclose(ds, ds_expected_with_coords)
@@ -388,10 +378,10 @@ def test_gribjump_selection(seed_fdb):
     }
 
     indices = np.array([0, 7, 14, 21, 28, 35, 42])
-    source = from_source("gribjump", request, indices=indices)
+    source = from_source("gribjump", request, indices=indices).to_fieldlist()
 
     arr_orig = source.to_numpy()
-    arr_subset = source.sel(step=6).to_numpy()
+    arr_subset = source.sel({"time.step": 6}).to_numpy()
 
     assert arr_subset.shape == (1, 7)
     assert np.allclose(arr_orig[[1]], arr_subset)
@@ -413,7 +403,7 @@ def test_gribjump_to_xarray_with_coords_does_not_fail_for_grids(seed_fdb):
         "type": "fc",
     }
 
-    source = from_source("gribjump", mars_request, fetch_coords_from_fdb=True, indices=[0])
+    source = from_source("gribjump", mars_request, fetch_coords_from_fdb=True, indices=[0]).to_fieldlist()
     ds = source.to_xarray()
     assert set(ds.dims) == {"step", "index"}
     assert set(ds.coords) == {"step", "index", "latitude", "longitude"}
@@ -517,6 +507,6 @@ def test_gribjump_with_invalid_mask(seed_fdb):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

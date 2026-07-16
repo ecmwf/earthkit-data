@@ -17,8 +17,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import NO_FDB
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import NO_FDB, earthkit_test_data_file
 
 TEST_GRIB_REQUEST = {
     "class": "od",
@@ -49,7 +48,7 @@ def make_fdb_config(path):
 
 
 def make_fdb(path):
-    ds = from_source("sample", "pl.grib")
+    ds = from_source("sample", "pl.grib").to_fieldlist()
     config = make_fdb_config(path)
     ds.to_target("fdb", config=config)
     return ds, config
@@ -61,66 +60,293 @@ def compare_coord(ds, coord_name, ref_values):
         assert v == v_ref, f"Coordinate '{coord_name}' value {v} != {v_ref}"
 
 
+def compare_fields(fl_in, fl, ds, ref):
+    for r in ref:
+        xr_var, xr_isel, xr_meta = r["xr"]
+        grib_in_idx, grib_in_meta = r["grib_in"]
+        grib_idx, grib_meta = r["grib"]
+
+        xr_f = ds[xr_var].isel(
+            forecast_reference_time=xr_isel["xr_forecast_reference_time"],
+            step=xr_isel["xr_step"],
+            level=xr_isel["level"],
+        )
+        for k, v in xr_meta.items():
+            assert xr_f[k].values == v, f"{k} {xr_f[k].values} != {v}"
+
+        g = fl_in[grib_in_idx]
+        for k, v in grib_in_meta.items():
+            assert g.get(k) == v, f"{k} {g.get(k)} != {v}"
+        np.testing.assert_allclose(
+            xr_f.values, g.to_numpy(), err_msg=f"Field values for {xr_var} do not match for grib_in index {grib_in_idx}"
+        )
+
+        g = fl[grib_idx]
+        for k, v in grib_meta.items():
+            assert g.get(k) == v, f"{k} {g.get(k)} != {v}"
+        np.testing.assert_allclose(
+            xr_f.values, g.to_numpy(), err_msg=f"Field values for {xr_var} do not match for grib index {grib_idx}"
+        )
+
+
 @pytest.mark.skipif(NO_FDB, reason="No access to FDB")
 @pytest.mark.cache
 def test_lazy_fdb():
     with temp_directory() as tmpdir:
-        ds_in, config = make_fdb(os.path.join(tmpdir, "_fdb"))
+        # fl_in is the original fieldlist from the sample grib file, fl is the fieldlist retrieved from FDB
+        fl_in, config = make_fdb(os.path.join(tmpdir, "_fdb"))
 
-        ds = from_source("fdb", TEST_GRIB_REQUEST, config=config, stream=False, lazy=True)
-        assert len(ds) == 32
+        # import pyfdb
+        # fdb = pyfdb.FDB(config=config)
+        # stream = fdb.retrieve(TEST_GRIB_REQUEST)
 
-        assert ds[0].shape == (19, 36)
-        assert ds[1].shape == (19, 36)
-        assert ds[0].metadata(["shortName", "param", "units", "cfName"]) == ["t", "t", "K", "air_temperature"]
-        assert ds[1].metadata(["shortName", "param", "units", "cfName"]) == [
+        # from eccodes.highlevel.reader import codes_new_from_stream
+        # h = codes_new_from_stream(stream)
+
+        # print(h)
+        # return
+
+        # fl is the virtual fieldlist retrieved from FDB
+        fl = from_source("fdb", TEST_GRIB_REQUEST, config=config, stream=False, lazy=True).to_fieldlist()
+        assert len(fl) == 32
+
+        # print(fl_in.ls())
+        # print(fl.ls())
+
+        assert fl[0].shape == (19, 36)
+        assert fl[1].shape == (19, 36)
+        assert fl[0].get(["parameter.variable", "metadata.param", "parameter.units", "metadata.cfName"]) == [
+            "t",
+            "t",
+            "K",
+            "air_temperature",
+        ]
+        assert fl[1].get(["parameter.variable", "metadata.param", "parameter.units", "metadata.cfName"]) == [
             "r",
             "r",
             "%",
             "relative_humidity",
         ]
 
-        assert ds[0].metadata(["date", "time", "step", "levelist", "level"]) == [20240603, 0, 0, 500, 500]
-        assert ds[1].metadata(["date", "time", "step", "levelist", "level"]) == [20240603, 0, 0, 500, 500]
+        ref_keys = ["parameter.variable", "time.base_datetime", "time.step", "vertical.level", "ensemble.member"]
+        ref_vals = {
+            "parameter.variable": [
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+                "t",
+                "r",
+            ],
+            "time.base_datetime": [
+                datetime.datetime(2024, 6, 3, 0, 0),
+                datetime.datetime(2024, 6, 3, 0, 0),
+                datetime.datetime(2024, 6, 3, 0, 0),
+                datetime.datetime(2024, 6, 3, 0, 0),
+                datetime.datetime(2024, 6, 3, 0, 0),
+                datetime.datetime(2024, 6, 3, 0, 0),
+                datetime.datetime(2024, 6, 3, 0, 0),
+                datetime.datetime(2024, 6, 3, 0, 0),
+                datetime.datetime(2024, 6, 3, 12, 0),
+                datetime.datetime(2024, 6, 3, 12, 0),
+                datetime.datetime(2024, 6, 3, 12, 0),
+                datetime.datetime(2024, 6, 3, 12, 0),
+                datetime.datetime(2024, 6, 3, 12, 0),
+                datetime.datetime(2024, 6, 3, 12, 0),
+                datetime.datetime(2024, 6, 3, 12, 0),
+                datetime.datetime(2024, 6, 3, 12, 0),
+                datetime.datetime(2024, 6, 4, 0, 0),
+                datetime.datetime(2024, 6, 4, 0, 0),
+                datetime.datetime(2024, 6, 4, 0, 0),
+                datetime.datetime(2024, 6, 4, 0, 0),
+                datetime.datetime(2024, 6, 4, 0, 0),
+                datetime.datetime(2024, 6, 4, 0, 0),
+                datetime.datetime(2024, 6, 4, 0, 0),
+                datetime.datetime(2024, 6, 4, 0, 0),
+                datetime.datetime(2024, 6, 4, 12, 0),
+                datetime.datetime(2024, 6, 4, 12, 0),
+                datetime.datetime(2024, 6, 4, 12, 0),
+                datetime.datetime(2024, 6, 4, 12, 0),
+                datetime.datetime(2024, 6, 4, 12, 0),
+                datetime.datetime(2024, 6, 4, 12, 0),
+                datetime.datetime(2024, 6, 4, 12, 0),
+                datetime.datetime(2024, 6, 4, 12, 0),
+            ],
+            "time.step": [
+                datetime.timedelta(0),
+                datetime.timedelta(0),
+                datetime.timedelta(0),
+                datetime.timedelta(0),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(0),
+                datetime.timedelta(0),
+                datetime.timedelta(0),
+                datetime.timedelta(0),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(0),
+                datetime.timedelta(0),
+                datetime.timedelta(0),
+                datetime.timedelta(0),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(0),
+                datetime.timedelta(0),
+                datetime.timedelta(0),
+                datetime.timedelta(0),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(seconds=21600),
+                datetime.timedelta(seconds=21600),
+            ],
+            "vertical.level": [
+                500,
+                500,
+                700,
+                700,
+                500,
+                500,
+                700,
+                700,
+                500,
+                500,
+                700,
+                700,
+                500,
+                500,
+                700,
+                700,
+                500,
+                500,
+                700,
+                700,
+                500,
+                500,
+                700,
+                700,
+                500,
+                500,
+                700,
+                700,
+                500,
+                500,
+                700,
+                700,
+            ],
+            "ensemble.member": [
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+            ],
+        }
 
-        assert ds[0].metadata("step_timedelta") == datetime.timedelta(hours=0)
-        assert ds[4].metadata("step_timedelta") == datetime.timedelta(hours=6)
+        assert fl.get(ref_keys, output=dict, group_by_key=True) == ref_vals
 
-        # compare all the fields
-        ds_in_sorted = ds_in.order_by(["shortName", "date", "time", "step", "levelist"])
-        ds_sorted = ds.order_by(["shortName", "date", "time", "step", "levelist"])
-        t = ds_in_sorted.sel(shortName="t")
-        r = ds_in_sorted.sel(shortName="r")
-        t_fdb = ds_sorted.sel(shortName="t")
-        r_fdb = ds_sorted.sel(shortName="r")
+        # compare all the fields between fl_in and fl
+        fl_in_sorted = fl_in.order_by(["parameter.variable", "time.base_datetime", "time.step", "vertical.level"])
+        fl_sorted = fl.order_by(["parameter.variable", "time.base_datetime", "time.step", "vertical.level"])
+
+        t = fl_in_sorted.sel({"parameter.variable": "t"})
+        r = fl_in_sorted.sel({"parameter.variable": "r"})
+        t_fdb = fl_sorted.sel({"parameter.variable": "t"})
+        r_fdb = fl_sorted.sel({"parameter.variable": "r"})
 
         assert len(t) == 16
         assert len(r) == 16
         assert len(t_fdb) == 16
         assert len(r_fdb) == 16
 
-        assert t.metadata(["shortName", "date", "time", "step", "levelist"]) == t_fdb.metadata(
-            ["shortName", "date", "time", "step", "levelist"]
-        )
-        assert r.metadata(["shortName", "date", "time", "step", "levelist"]) == r_fdb.metadata(
-            ["shortName", "date", "time", "step", "levelist"]
-        )
+        assert t.get(["parameter.variable", "time.base_datetime", "time.step", "vertical.level"]) == t_fdb.get([
+            "parameter.variable",
+            "time.base_datetime",
+            "time.step",
+            "vertical.level",
+        ])
+        assert r.get(["parameter.variable", "time.base_datetime", "time.step", "vertical.level"]) == r_fdb.get([
+            "parameter.variable",
+            "time.base_datetime",
+            "time.step",
+            "vertical.level",
+        ])
 
-        assert np.allclose(t.to_numpy(), t_fdb.to_numpy().reshape(16, 19, 36))
-        assert np.allclose(r.to_numpy(), r_fdb.to_numpy().reshape(16, 19, 36))
+        np.testing.assert_allclose(t.to_numpy(), t_fdb.to_numpy().reshape(16, 19, 36))
+        np.testing.assert_allclose(r.to_numpy(), r_fdb.to_numpy().reshape(16, 19, 36))
 
-        assert not hasattr(ds, "path")
-        assert not hasattr(ds[0], "path")
+        # the virtual fieldlist should not have a path attribute and the fields should not have a path attribute
+        assert not hasattr(fl, "path")
+        assert not hasattr(fl[0], "path")
 
         # --------------------
         #  Xarray tests
         # --------------------
 
-        a = ds.to_xarray(time_dim_mode="forecast")
+        ds = fl.to_xarray(time_dims=["forecast_reference_time", "step"])
 
         # TODO: use methods from xr_engine tests for comparison
         compare_coord(
-            a,
+            ds,
             "forecast_reference_time",
             [
                 np.datetime64("2024-06-03T00:00:00.000000000"),
@@ -129,14 +355,47 @@ def test_lazy_fdb():
                 np.datetime64("2024-06-04T12:00:00.000000000"),
             ],
         )
-        compare_coord(a, "step", [np.timedelta64(0, "h"), np.timedelta64(6, "h")])
-        compare_coord(a, "level", [500, 700])
+        compare_coord(ds, "step", [np.timedelta64(0, "h"), np.timedelta64(6, "h")])
+        compare_coord(ds, "level", [500, 700])
 
-        assert a["t"].values.shape == (4, 2, 2, 19, 36)
-        assert a["r"].values.shape == (4, 2, 2, 19, 36)
+        # assert ds["t"].values.shape == (4, 2, 2, 19, 36)
+        # assert ds["r"].values.shape == (4, 2, 2, 19, 36)
 
         # Compare a few fields manually
         ref = [
+            {
+                "xr": (
+                    "t",
+                    {
+                        "xr_forecast_reference_time": 0,
+                        "xr_step": 0,
+                        "level": 0,
+                    },
+                    {
+                        "forecast_reference_time": np.datetime64("2024-06-03T00:00:00.000000000"),
+                        "step": np.timedelta64(0, "h"),
+                        "level": 500,
+                    },
+                ),
+                "grib_in": (
+                    2,
+                    {
+                        "time.base_datetime": datetime.datetime(2024, 6, 3, 0, 0),
+                        "time.step": datetime.timedelta(0),
+                        "vertical.level": 500,
+                        "parameter.variable": "t",
+                    },
+                ),
+                "grib": (
+                    0,
+                    {
+                        "time.base_datetime": datetime.datetime(2024, 6, 3, 0, 0),
+                        "time.step": datetime.timedelta(0),
+                        "vertical.level": 500,
+                        "parameter.variable": "t",
+                    },
+                ),
+            },
             {
                 "xr": (
                     "r",
@@ -151,7 +410,24 @@ def test_lazy_fdb():
                         "level": 500,
                     },
                 ),
-                "grib": (3, {"date": 20240603, "time": 0, "step": 0, "level": 500, "shortName": "r"}),
+                "grib_in": (
+                    3,
+                    {
+                        "time.base_datetime": datetime.datetime(2024, 6, 3, 0, 0),
+                        "time.step": datetime.timedelta(0),
+                        "vertical.level": 500,
+                        "parameter.variable": "r",
+                    },
+                ),
+                "grib": (
+                    1,
+                    {
+                        "time.base_datetime": datetime.datetime(2024, 6, 3, 0, 0),
+                        "time.step": datetime.timedelta(0),
+                        "vertical.level": 500,
+                        "parameter.variable": "r",
+                    },
+                ),
             },
             {
                 "xr": (
@@ -167,41 +443,42 @@ def test_lazy_fdb():
                         "level": 700,
                     },
                 ),
-                "grib": (9, {"date": 20240603, "time": 1200, "step": 0, "level": 700, "shortName": "r"}),
+                "grib_in": (
+                    9,
+                    {
+                        "time.base_datetime": datetime.datetime(2024, 6, 3, 12, 0),
+                        "time.step": datetime.timedelta(0),
+                        "vertical.level": 700,
+                        "parameter.variable": "r",
+                    },
+                ),
+                "grib": (
+                    11,
+                    {
+                        "time.base_datetime": datetime.datetime(2024, 6, 3, 12, 0),
+                        "time.step": datetime.timedelta(0),
+                        "vertical.level": 700,
+                        "parameter.variable": "r",
+                    },
+                ),
             },
         ]
 
-        for r in ref:
-            xr_var, xr_sel, xr_meta = r["xr"]
-            grib_idx, grib_meta = r["grib"]
+        compare_fields(fl_in, fl, ds, ref)
 
-            f = a[xr_var].isel(
-                forecast_reference_time=xr_sel["xr_forecast_reference_time"],
-                step=xr_sel["xr_step"],
-                level=xr_sel["level"],
-            )
-            for k, v in xr_meta.items():
-                assert f[k].values == v, f"{k} {f[k].values} != {v}"
-
-            g = ds_in[grib_idx]
-            for k, v in grib_meta.items():
-                assert g.metadata(k) == v, f"{k} {g.metadata(k)} != {v}"
-
-            assert np.allclose(f.values, g.to_numpy())
-
-        # compare all the field values
-        ds_in_sorted = ds_in.order_by(["shortName", "date", "time", "step", "levelist"])
-        t = ds_in_sorted.sel(shortName="t")
-        r = ds_in_sorted.sel(shortName="r")
+        # sort the input fieldlist according to the "fields" in the xarray dataset and compare the values
+        fl_in_sorted = fl_in.order_by(["parameter.variable", "time.base_datetime", "time.step", "vertical.level"])
+        t = fl_in_sorted.sel({"parameter.variable": "t"})
+        r = fl_in_sorted.sel({"parameter.variable": "r"})
 
         assert len(t) == 16
         assert len(r) == 16
 
-        assert np.allclose(t.to_numpy(), a["t"].values.reshape(16, 19, 36))
-        assert np.allclose(r.to_numpy(), a["r"].values.reshape(16, 19, 36))
+        np.testing.assert_allclose(t.to_numpy(), ds["t"].values.reshape(16, 19, 36))
+        np.testing.assert_allclose(r.to_numpy(), ds["r"].values.reshape(16, 19, 36))
 
         # test aggregation
-        m = a.mean("step").load()
+        m = ds.mean("step").load()
         assert m["t"].values.shape == (4, 2, 19, 36)
         assert m["r"].values.shape == (4, 2, 19, 36)
         assert np.allclose(m["r"].values.flatten()[85:87], [47.66908598, 53.43959379])

@@ -15,10 +15,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import NO_CDS
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import preserve_cwd
-from earthkit.data.testing import write_to_file
+from earthkit.data.utils.testing import NO_CDS, preserve_cwd
 
 CDS_TIMEOUT = pytest.CDS_TIMEOUT
 
@@ -38,7 +35,7 @@ def test_cds_grib_prompt(prompt):
         date="2012-12-12",
         prompt=prompt,
         time="12:00",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
     assert s.metadata("param") == ["2t", "msl"]
 
@@ -56,7 +53,7 @@ def test_cds_grib_kwargs():
         area=[50, -50, 20, 50],
         date="2012-12-12",
         time="12:00",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
     assert s.metadata("param") == ["2t", "msl"]
 
@@ -76,7 +73,7 @@ def test_cds_grib_dict_1():
             date="2012-12-12",
             time="12:00",
         ),
-    )
+    ).to_fieldlist()
     assert len(s) == 2
     assert s.metadata("param") == ["2t", "msl"]
 
@@ -96,7 +93,7 @@ def test_cds_grib_dict_2():
             date="2012-12-12",
         ),
         time="12:00",
-    )
+    ).to_fieldlist()
 
     assert len(s) == 2
     assert s.metadata("param") == ["2t", "msl"]
@@ -116,7 +113,7 @@ def test_cds_grib_split_on_var():
         date="2012-12-12",
         time="12:00",
         split_on="variable",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
     assert s.metadata("param") == ["2t", "msl"]
     assert not hasattr(s, "path")
@@ -165,7 +162,7 @@ def test_cds_grib_multi_var_date(date, expected_date):
         area=[50, -50, 20, 50],
         date=date,
         time="12:00",
-    )
+    ).to_fieldlist()
     assert len(s) == 6
     assert s.metadata("param") == ["2t", "msl"] * 3
     assert s.metadata("date") == expected_date
@@ -175,8 +172,7 @@ def test_cds_grib_multi_var_date(date, expected_date):
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 @pytest.mark.timeout(CDS_TIMEOUT)
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_cds_grib_save(write_method):
+def test_cds_grib_save():
     s = from_source(
         "cds",
         "reanalysis-era5-single-levels",
@@ -188,7 +184,7 @@ def test_cds_grib_save(write_method):
     )
     with temp_directory() as tmpdir:
         # Check file save to assigned filename
-        write_to_file(write_method, os.path.join(tmpdir, "test.grib"), s)
+        s.to_target("file", os.path.join(tmpdir, "test.grib"))
         assert os.path.isfile(os.path.join(tmpdir, "test.grib"))
 
     s = from_source(
@@ -199,12 +195,12 @@ def test_cds_grib_save(write_method):
         area=[50, -50, 20, 50],
         date="2012-12-12",
         time="12:00",
-    )
+    ).to_fieldlist()
     with temp_directory() as tmpdir:
         # Check file can be saved in current dir with detected filename:
         with preserve_cwd():
             os.chdir(tmpdir)
-            s.save()
+            s.to_target("file")
             assert os.path.isfile(os.path.basename(s.source_filename))
 
 
@@ -237,7 +233,7 @@ def test_cds_split_on(split_on, expected_file_num, expected_param, expected_time
         date="2012-12-12",
         time=["00:00", "12:00"],
         split_on=split_on,
-    )
+    ).to_fieldlist()
 
     if expected_file_num == 1:
         assert hasattr(s, "path")
@@ -275,7 +271,7 @@ def test_cds_multiple_requests(split_on1, split_on2, expected_file_num, expected
         "reanalysis-era5-single-levels",
         {**base_request, **{"variable": "2t", "split_on": split_on1}},
         {**base_request, **{"variable": "msl", "split_on": split_on2}},
-    )
+    ).to_fieldlist()
     assert len(s._indexes) == expected_file_num
     assert len(s) == 4
     assert s.metadata("param") == expected_param
@@ -286,8 +282,8 @@ def test_cds_multiple_requests(split_on1, split_on2, expected_file_num, expected
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 @pytest.mark.timeout(CDS_TIMEOUT)
-def test_cds_netcdf():
-    s = from_source(
+def test_cds_netcdf_1():
+    ds = from_source(
         "cds",
         "reanalysis-era5-single-levels",
         variable=["2t", "msl"],
@@ -296,9 +292,9 @@ def test_cds_netcdf():
         date="2012-12-12",
         time="12:00",
         format="netcdf",
-    )
-    assert len(s) == 2
-    assert s.metadata("variable") == ["t2m", "msl"]
+    ).to_fieldlist()
+    assert len(ds) == 2
+    assert ds.get("parameter.variable") == ["t2m", "msl"]
 
 
 @pytest.mark.long_test
@@ -306,7 +302,7 @@ def test_cds_netcdf():
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 @pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_netcdf_save():
-    s = from_source(
+    ds = from_source(
         "cds",
         "reanalysis-era5-single-levels",
         variable=["2t", "msl"],
@@ -315,14 +311,14 @@ def test_cds_netcdf_save():
         date="2012-12-12",
         time="12:00",
         format="netcdf",
-    )
+    ).to_fieldlist()
 
     with temp_directory() as tmpdir:
         # Check file can be saved in current dir with detected filename:
         with preserve_cwd():
             os.chdir(tmpdir)
-            s.save()
-            assert os.path.isfile(os.path.basename(s.source_filename))
+            ds.to_target("file")
+            assert os.path.isfile(os.path.basename(ds.source_filename))
 
 
 @pytest.mark.long_test
@@ -330,7 +326,7 @@ def test_cds_netcdf_save():
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 @pytest.mark.timeout(60)
 def test_cds_netcdf_selection_limited():
-    s = from_source(
+    ds = from_source(
         "cds",
         "satellite-albedo",
         {
@@ -343,9 +339,9 @@ def test_cds_netcdf_selection_limited():
             "month": "01",
             "nominal_day": "10",
         },
-    )
-    assert len(s) == 9
-    assert s.metadata("variable") == [
+    ).to_fieldlist()
+    assert len(ds) == 9
+    assert ds.get("parameter.variable") == [
         "AL_BH_BB",
         "AL_BH_BB_ERR",
         "AL_BH_NI",
@@ -371,8 +367,8 @@ def test_cds_observation_csv_file_to_pandas_xarray():
         "variable": ["air_temperature", "altitude"],
         "day": ["21", "22"],
     }
-    data_cds = from_source("cds", collection_id, **request)
-    data_file = from_source("file", data_cds.path)
+    data_cds = from_source("cds", collection_id, **request).to_fieldlist()
+    data_file = from_source("file", data_cds.path).to_fieldlist()
     assert "report_timestamp" in data_cds.to_pandas().columns
 
     # Assert consistent behaviour for local and CDS versions
@@ -419,12 +415,12 @@ def test_cds_grib_to_pandas_xarray():
         variable=["2t", "msl"],
         product_type="reanalysis",
         area=[50, -50, 20, 50],
-        date="2012-12-12/to/2012-12-15",
+        date="2012-12-12/2012-12-15",
         time="12:00",
     )
     data_cds = from_source("cds", collection_id, **request)
 
-    # Assert a consistent behviour for local and remote versions
+    # Assert a consistent behaviour for local and remote versions
     data_file = from_source("file", data_cds.path)
     assert data_cds.to_pandas().equals(data_file.to_pandas())
     assert data_cds.to_xarray().equals(data_file.to_xarray())
@@ -471,6 +467,6 @@ def test_cds_netcdf_to_pandas_xarray():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

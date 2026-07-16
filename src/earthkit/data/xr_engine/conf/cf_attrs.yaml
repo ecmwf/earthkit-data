@@ -1,0 +1,195 @@
+# Based on CF Conventions Appendix A
+# All CF attributes are listed here except for those that are used to describe grid mappings. See Appendix F for the grid mapping attributes.
+# The 'Type' values are S for string, N for numeric, and D for the type of the data variable.
+# The 'Use' values are G for global, C for variables containing coordinate data, and D for variables containing non-coordinate data
+Conventions:
+  type: S
+  use: G
+_FillValue:
+  type: D
+  use:
+  - C
+  - D
+actual_range:
+  type: N
+  use:
+  - C
+  - D
+add_offset:
+  type: N
+  use:
+  - C
+  - D
+ancillary_variables:
+  type: S
+  use: D
+axis:
+  type: S
+  use: C
+bounds:
+  type: S
+  use: C
+calendar:
+  type: S
+  use: C
+cell_measures:
+  type: S
+  use: D
+cell_methods:
+  type: S
+  use: D
+cf_role:
+  type: S
+  use: C
+climatology:
+  type: S
+  use: C
+comment:
+  type: S
+  use:
+  - G
+  - C
+  - D
+compress:
+  type: S
+  use: C
+computed_standard_name:
+  type: S
+  use: C
+coordinates:
+  type: S
+  use:
+  - D
+  - M
+external_variables:
+  type: S
+  use: G
+featureType:
+  type: S
+  use: G
+flag_masks:
+  type: D
+  use: D
+flag_meanings:
+  type: S
+  use: D
+flag_values:
+  type: D
+  use: D
+formula_terms:
+  type: S
+  use: C
+geometry:
+  type: S
+  use:
+  - C
+  - D
+geometry_type:
+  type: S
+  use: M
+grid_mapping:
+  type: S
+  use:
+  - D
+  - M
+history:
+  type: S
+  use:
+  - G
+  - Gr
+instance_dimension:
+  type: S
+  use: "-"
+institution:
+  type: S
+  use:
+  - G
+  - D
+interior_ring:
+  type: S
+  use: M
+leap_month:
+  type: N
+  use: C
+leap_year:
+  type: N
+  use: C
+long_name:
+  type: S
+  use:
+  - C
+  - D
+missing_value:
+  type: D
+  use:
+  - C
+  - D
+month_lengths:
+  type: N
+  use: C
+node_coordinates:
+  type: S
+  use: M
+node_count:
+  type: S
+  use: M
+nodes:
+  type: S
+  use: C
+part_node_count:
+  type: S
+  use: M
+positive:
+  type: S
+  use: C
+references:
+  type: S
+  use:
+  - G
+  - D
+sample_dimension:
+  type: S
+  use: "-"
+scale_factor:
+  type: N
+  use:
+  - C
+  - D
+source:
+  type: S
+  use:
+  - G
+  - D
+standard_error_multiplier:
+  type: N
+  use: D
+standard_name:
+  type: S
+  use:
+  - C
+  - D
+title:
+  type: S
+  use:
+  - G
+  - Gr
+units:
+  type: S
+  use:
+  - C
+  - D
+valid_max:
+  type: N
+  use:
+  - C
+  - D
+valid_min:
+  type: N
+  use:
+  - C
+  - D
+valid_range:
+  type: N
+  use:
+  - C
+  - D

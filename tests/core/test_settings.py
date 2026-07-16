@@ -14,8 +14,7 @@ import os
 import pytest
 
 from earthkit.data import settings
-from earthkit.data.core.temporary import temp_directory
-from earthkit.data.core.temporary import temp_file
+from earthkit.data.core.temporary import temp_directory, temp_file
 
 # TODO: remove all these tests when settings are removed
 
@@ -257,6 +256,6 @@ def test_settings_env(monkeypatch, value, error):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

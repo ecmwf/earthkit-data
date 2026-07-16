@@ -20,8 +20,8 @@ class FileTarget(SimpleTarget):
     """
     File target.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     file: str, file-like, None
         The file path or file-like object to write to. When None, tries to guess the file name
         from the ``data`` if it is passed as a kwarg.
@@ -34,10 +34,12 @@ class FileTarget(SimpleTarget):
     **kwargs:
         Additional keyword arguments passed to the parent class.
 
-    Raises:
-    -------
+    Raises
+    ------
     ValueError: If the file name is not specified and cannot be constructed.
     """
+
+    _name = "file"
 
     def __init__(self, file=None, *, append=False, **kwargs):
         super().__init__(**kwargs)
@@ -56,7 +58,7 @@ class FileTarget(SimpleTarget):
                 _, self.ext = os.path.splitext(self.filename)
 
             if self.filename is None:
-                self.filename = self._guess_filename(*kwargs)
+                self.filename = self._guess_filename(**kwargs)
 
             if not self.filename:
                 raise ValueError("Please provide an output filename")
@@ -67,8 +69,8 @@ class FileTarget(SimpleTarget):
         If :obj:`FileTarget` was created with a file object this call has no effect.
         The target will not be able to write anymore.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         self._mark_closed()
@@ -78,8 +80,8 @@ class FileTarget(SimpleTarget):
     def flush(self):
         """Flush the file.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         self._f().flush()
@@ -95,15 +97,15 @@ class FileTarget(SimpleTarget):
             self._tmp_fileobj = open(self.filename, flag)
         return self._tmp_fileobj
 
-    def _guess_filename(self, data=None):
-        """Try to guess filename from data when not provided"""
+    def _guess_filename(self, data=None, **kwargs):
+        """Try to guess filename from data when not provided."""
         if data is not None:
             for attr in ["source_filename", "path"]:
-                if hasattr(self, attr) and getattr(self, attr) is not None:
-                    return [os.path.basename(getattr(self, attr))]
+                if hasattr(data, attr) and getattr(data, attr) is not None:
+                    return os.path.basename(getattr(data, attr))
 
     def _check_overwrite(self, data):
-        """Ensure we do not overwrite file that is being read"""
+        """Ensure we do not overwrite file that is being read."""
         if (
             data is not None
             and self.filename is not None

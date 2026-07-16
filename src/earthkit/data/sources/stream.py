@@ -10,8 +10,11 @@
 import itertools
 import logging
 
-from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.utils.decorators import thread_safe_cached_property
+
+from earthkit.data.indexing.stream import StreamFieldList
+
+# from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.readers import stream_reader
 from earthkit.data.sources.memory import MemoryBaseSource
 
@@ -21,8 +24,9 @@ LOG = logging.getLogger(__name__)
 
 
 def parse_stream_kwargs(**kwargs):
-    read_all = kwargs.pop("read_all", False)
-    stream_kwargs = dict(read_all=read_all)
+    # read_all = kwargs.pop("read_all", False)
+    # stream_kwargs = dict(read_all=read_all)
+    stream_kwargs = dict()
     return (stream_kwargs, kwargs)
 
 
@@ -49,15 +53,13 @@ class StreamMemorySource(MemoryBaseSource):
 
 
 class StreamSource(Source):
-    def __init__(self, stream, *, read_all=False, **kwargs):
+    def __init__(self, stream, **kwargs):
         super().__init__()
         self._stream = self._wrap_stream(stream)
-        self.memory = read_all
+        # self.memory = read_all
 
-        # TODO: remove this check in a future release
-        for k in ["group_by", "batch_size"]:
-            if k in kwargs:
-                raise ValueError(f"Invalid argument '{k}' for StreamSource. Deprecated since 0.8.0.")
+        if "read_all" in kwargs:
+            raise ValueError("Invalid argument 'read_all' for StreamSource. Removed in 1.0.0.")
 
         self._kwargs = kwargs
 
@@ -66,12 +68,13 @@ class StreamSource(Source):
 
     def mutate(self):
         if isinstance(self._stream, (list, tuple)):
-            return MultiStreamSource(self._stream, read_all=self.memory)
-        else:
-            if self.memory:
-                return StreamMemorySource(self._stream, **self._kwargs)
-            elif hasattr(self._reader, "to_fieldlist"):
-                return StreamFieldList(self._reader, **self._kwargs)
+            return MultiStreamSource(self._stream)
+        elif hasattr(self._reader, "to_fieldlist"):
+            return StreamFieldList(self._reader, **self._kwargs)
+        # if self.memory:
+        #     return StreamMemorySource(self._stream, **self._kwargs)
+        # elif hasattr(self._reader, "to_fieldlist"):
+        #     return StreamFieldList(self._reader, **self._kwargs)
         return self
 
     @thread_safe_cached_property
@@ -132,26 +135,29 @@ class StreamSource(Source):
 
         return stream
 
+    def to_data_object(self):
+        return self._reader.to_data_object()
+
 
 class MultiStreamSource(Source):
-    def __init__(self, sources, read_all=False, **kwargs):
+    def __init__(self, sources, **kwargs):
         super().__init__(**kwargs)
-        self.memory = read_all
+        # self.memory = read_all
         sources = self._from_sources(sources)
         self.sources = [s.mutate() for s in sources if not s.ignore()]
 
     def mutate(self):
-        if self.memory:
-            from .multi import MultiSource
+        # if self.memory:
+        #     from .multi import MultiSource
 
-            return MultiSource([s.mutate() for s in self.sources])
-        else:
-            if not any(isinstance(s, StreamFieldList) for s in self.sources):
-                first = self.sources[0]
-                if hasattr(first._reader, "to_fieldlist"):
-                    return StreamFieldList(self, **self._kwargs)
-            if all(isinstance(s, StreamFieldList) for s in self.sources):
+        #     return MultiSource([s.mutate() for s in self.sources])
+        # else:
+        if not any(isinstance(s, StreamFieldList) for s in self.sources):
+            first = self.sources[0]
+            if hasattr(first._reader, "to_fieldlist"):
                 return StreamFieldList(self, **self._kwargs)
+        if all(isinstance(s, StreamFieldList) for s in self.sources):
+            return StreamFieldList(self, **self._kwargs)
 
         return self
 
@@ -174,7 +180,7 @@ class MultiStreamSource(Source):
             if isinstance(s, (StreamSource, StreamFieldList, StreamMemorySource)):
                 r.append(s)
             elif isinstance(s, Stream):
-                r.append(StreamSource(s, read_all=self.memory))
+                r.append(StreamSource(s))
             elif isinstance(s, MultiStreamSource):
                 r.extend(s.sources)
             else:
@@ -200,41 +206,46 @@ class MultiStreamSource(Source):
 
         return MultiStreamSource(s)
 
+    def to_data_object(self):
+        from earthkit.data.data.stream import StreamFieldListData
 
-class StreamFieldList(FieldList, Source):
-    def __init__(self, source, **kwargs):
-        FieldList.__init__(self, **kwargs)
-        self._source = source
+        return StreamFieldListData(self)
 
-    def mutate(self):
-        return self
 
-    def __iter__(self):
-        return iter(self._source)
+# class StreamFieldList(FieldList, Source):
+#     def __init__(self, source, **kwargs):
+#         FieldList.__init__(self, **kwargs)
+#         self._source = source
 
-    def batched(self, n):
-        return self._source.batched(n)
+#     def mutate(self):
+#         return self
 
-    def group_by(self, *keys, **kwargs):
-        return self._source.group_by(*keys)
+#     def __iter__(self):
+#         return iter(self._source)
 
-    def __getstate__(self):
-        raise NotImplementedError("StreamFieldList cannot be pickled")
+#     def batched(self, n):
+#         return self._source.batched(n)
 
-    def to_xarray(self, **kwargs):
-        from earthkit.data.core.fieldlist import FieldList
+#     def group_by(self, *keys, **kwargs):
+#         return self._source.group_by(*keys)
 
-        fields = [f for f in self]
-        return FieldList.from_fields(fields).to_xarray(**kwargs)
+#     def __getstate__(self):
+#         raise NotImplementedError("StreamFieldList cannot be pickled")
 
-    @classmethod
-    def merge(cls, sources):
-        assert all(isinstance(s, StreamFieldList) for s in sources), sources
-        assert len(sources) > 1
-        return MultiStreamSource.merge(sources)
+#     def to_xarray(self, **kwargs):
+#         from earthkit.data.core.fieldlist import FieldList
 
-    def default_encoder(self):
-        return None
+#         fields = [f for f in self]
+#         return FieldList.from_fields(fields).to_xarray(**kwargs)
+
+#     @classmethod
+#     def merge(cls, sources):
+#         assert all(isinstance(s, StreamFieldList) for s in sources), sources
+#         assert len(sources) > 1
+#         return MultiStreamSource.merge(sources)
+
+#     def _default_encoder(self):
+#         return None
 
 
 class Stream:

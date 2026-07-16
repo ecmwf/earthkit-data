@@ -15,6 +15,8 @@ LOG = logging.getLogger(__name__)
 
 
 class ZarrTarget(SimpleTarget):
+    _name = "zarr"
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._zarr_kwargs = kwargs
@@ -27,8 +29,8 @@ class ZarrTarget(SimpleTarget):
 
         The target will not be able to write anymore.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         pass
@@ -36,8 +38,8 @@ class ZarrTarget(SimpleTarget):
     def flush(self):
         """Flush the fdb.
 
-        Raises:
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         pass

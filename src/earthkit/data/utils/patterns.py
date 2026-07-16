@@ -13,16 +13,11 @@ import os
 import re
 from pathlib import Path
 from typing import Any as TypingAny
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Dict, List, Optional, Tuple, Union
 
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.utils.decorators import thread_safe_cached_property
 
-from .dates import to_datetime
-from .dates import to_timedelta
+from .dates import to_datetime, to_timedelta
 
 LOG = logging.getLogger(__name__)
 
@@ -406,6 +401,7 @@ class Variable:
         -------
         list
             List of substituted values.
+
         Raises
         ------
         ValueError
@@ -720,7 +716,7 @@ class HivePattern:
 
         pattern = pattern._subpattern(self.fixed_single_params)
 
-        # analyze path structure and turn each file path part into a
+        # analyse path structure and turn each file path part into a
         # pattern
         path = Path(pattern)
         self.root = ""

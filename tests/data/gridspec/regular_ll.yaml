@@ -1,13 +1,13 @@
 - file: regular_ll/wrf_swh_aegean_ll_jscanpos.grib1
   gridspec:
     area:
-      - 41.188
-      - 22.0
-      - 34.521
-      - 30.0
+    - 41.188
+    - 22.0
+    - 34.521
+    - 30.0
     grid:
-      - 0.083
-      - 0.083
+    - 0.083
+    - 0.083
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 1
@@ -30,13 +30,13 @@
 - file: regular_ll/t_global_0_360_5x5.grib2
   gridspec:
     area:
-      - 90.0
-      - 0.0
-      - -90.0
-      - 355.0
+    - 90.0
+    - 0.0
+    - -90.0
+    - 355.0
     grid:
-      - 5.0
-      - 5.0
+    - 5.0
+    - 5.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
@@ -59,13 +59,13 @@
 - file: regular_ll/t_75_-60_10_40_5x5.grib2
   gridspec:
     area:
-      - 75.0
-      - 300.0
-      - 10.0
-      - 40.0
+    - 75.0
+    - 300.0
+    - 10.0
+    - 40.0
     grid:
-      - 5.0
-      - 5.0
+    - 5.0
+    - 5.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
@@ -88,13 +88,13 @@
 - file: regular_ll/t_global_shifted_1x1.grib2
   gridspec:
     area:
-      - 89.5
-      - 0.5
-      - -89.5
-      - 359.5
+    - 89.5
+    - 0.5
+    - -89.5
+    - 359.5
     grid:
-      - 1.0
-      - 1.0
+    - 1.0
+    - 1.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
@@ -117,13 +117,13 @@
 - file: regular_ll/t_75_60_10_-20_5x5.grib1
   gridspec:
     area:
-      - 75.0
-      - 60.0
-      - 10.0
-      - 340.0
+    - 75.0
+    - 60.0
+    - 10.0
+    - 340.0
     grid:
-      - 5.0
-      - 5.0
+    - 5.0
+    - 5.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
@@ -146,13 +146,13 @@
 - file: regular_ll/t_global_-180_180_5x5.grib1
   gridspec:
     area:
-      - 90.0
-      - -180.0
-      - -90.0
-      - 175.0
+    - 90.0
+    - -180.0
+    - -90.0
+    - 175.0
     grid:
-      - 5.0
-      - 5.0
+    - 5.0
+    - 5.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
@@ -175,13 +175,13 @@
 - file: regular_ll/t_global_0_360_5x5.grib1
   gridspec:
     area:
-      - 90.0
-      - 0.0
-      - -90.0
-      - 355.0
+    - 90.0
+    - 0.0
+    - -90.0
+    - 355.0
     grid:
-      - 5.0
-      - 5.0
+    - 5.0
+    - 5.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
@@ -204,13 +204,13 @@
 - file: regular_ll/wind_uk_ll_jscanpos_jcons.grib1
   gridspec:
     area:
-      - 62.333
-      - -11.938
-      - 48.0
-      - 13.063
+    - 62.333
+    - -11.938
+    - 48.0
+    - 13.063
     grid:
-      - 0.125
-      - 0.083
+    - 0.125
+    - 0.083
     i_scans_negatively: 0
     j_points_consecutive: 1
     j_scans_positively: 1
@@ -233,13 +233,13 @@
 - file: regular_ll/t_global_shifted_1x1.grib1
   gridspec:
     area:
-      - 89.5
-      - 0.5
-      - -89.5
-      - 359.5
+    - 89.5
+    - 0.5
+    - -89.5
+    - 359.5
     grid:
-      - 1.0
-      - 1.0
+    - 1.0
+    - 1.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
@@ -262,13 +262,13 @@
 - file: regular_ll/t_75_-60_10_40_5x5.grib1
   gridspec:
     area:
-      - 75.0
-      - -60.0
-      - 10.0
-      - 40.0
+    - 75.0
+    - -60.0
+    - 10.0
+    - 40.0
     grid:
-      - 5.0
-      - 5.0
+    - 5.0
+    - 5.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
@@ -291,13 +291,13 @@
 - file: regular_ll/t_75_60_10_-20_5x5.grib2
   gridspec:
     area:
-      - 75.0
-      - 60.0
-      - 10.0
-      - 340.0
+    - 75.0
+    - 60.0
+    - 10.0
+    - 340.0
     grid:
-      - 5.0
-      - 5.0
+    - 5.0
+    - 5.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0
@@ -320,13 +320,13 @@
 - file: regular_ll/t_global_-180_180_5x5.grib2
   gridspec:
     area:
-      - 90.0
-      - 180.0
-      - -90.0
-      - 175.0
+    - 90.0
+    - 180.0
+    - -90.0
+    - 175.0
     grid:
-      - 5.0
-      - 5.0
+    - 5.0
+    - 5.0
     i_scans_negatively: 0
     j_points_consecutive: 0
     j_scans_positively: 0

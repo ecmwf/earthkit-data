@@ -12,8 +12,9 @@ import datetime
 import logging
 import threading
 
-import earthkit.data as cml
 from earthkit.data.readers.grib.index import GribFieldList
+
+from earthkit.data import from_source
 from earthkit.data.utils.serialise import register_serialisation
 
 LOG = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ class VirtualField:
         return source[self.index].shape
 
 
-class DictOveray(dict):
+class DictOverlay(dict):
     def __init__(self, field):
         self.field = field
 
@@ -85,8 +86,8 @@ class Virtual(GribFieldList):
         )
         self.request.update(kwargs)
 
-        self.reference = DictOveray(
-            cml.from_source(
+        self.reference = DictOverlay(
+            from_source(
                 "cds",
                 date=19590101,
                 time=0,
@@ -139,7 +140,7 @@ class Virtual(GribFieldList):
             yyyy = yyyymm // 100
             mm = yyyymm % 100
             last = calendar.monthrange(yyyy, mm)[1]
-            source = cml.from_source(
+            source = from_source(
                 "cds",
                 year=yyyy,
                 month=mm,

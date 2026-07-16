@@ -36,6 +36,14 @@ class UnknownReaderBase(Reader):
     def __len__(self):
         return 0
 
+    def to_data_object(self):
+        from earthkit.data.data.unknown import UnknownData
+
+        return UnknownData(self)
+
+    def _encode_default(self, encoder, *args, **kwargs):
+        return None
+
 
 class UnknownReader(UnknownReaderBase):
     def __init__(self, source, path, **kwargs):
@@ -54,10 +62,7 @@ class UnknownStreamReader(UnknownReaderBase):
         super().__init__(source, **kwargs)
         if not self.skip_warning:
             LOG.warning(
-                (
-                    f"Unknown stream data type, no reader available. "
-                    f"magic={self.magic} content_type={self.content_type}"
-                )
+                (f"Unknown stream data type, no reader available. magic={self.magic} content_type={self.content_type}")
             )
 
 
@@ -66,8 +71,5 @@ class UnknownMemoryReader(UnknownReaderBase):
         super().__init__(source, **kwargs)
         if not self.skip_warning:
             LOG.warning(
-                (
-                    f"Unknown memory data type, no reader available. "
-                    f"magic={self.magic} content_type={self.content_type}"
-                )
+                (f"Unknown memory data type, no reader available. magic={self.magic} content_type={self.content_type}")
             )

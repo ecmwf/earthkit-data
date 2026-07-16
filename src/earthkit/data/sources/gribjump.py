@@ -16,17 +16,15 @@ import dataclasses
 import itertools
 import os
 from collections import UserList
-from typing import Any
-from typing import Optional
+from typing import Any, Optional, Tuple
 
 import numpy as np
+from earthkit.utils.decorators import thread_safe_cached_property
 
-from earthkit.data.indexing.fieldlist import SimpleFieldList
-from earthkit.data.readers.grib.metadata import GribMetadata
+from earthkit.data.core.field import Field
+from earthkit.data.indexing.simple import SimpleFieldListBase
 from earthkit.data.sources import Source
-from earthkit.data.sources.array_list import ArrayField
 from earthkit.data.sources.fdb import FDBRetriever
-from earthkit.data.utils.metadata.dict import UserMetadata
 
 
 def split_mars_requests(request: dict[str, Any]) -> list[dict[str, Any]]:
@@ -79,11 +77,9 @@ def split_mars_requests(request: dict[str, Any]) -> list[dict[str, Any]]:
                 "Use Python lists to load from multiple fields."
             )
         elif isinstance(v, list) and len(v) == 0:
-            raise ValueError(f"Cannot expand dictionary with empty list. " f"Found empty list for key '{k}'.")
+            raise ValueError(f"Cannot expand dictionary with empty list. Found empty list for key '{k}'.")
         elif isinstance(v, list) and len({type(v_) for v_ in v}) != 1:
-            raise TypeError(
-                f"All list values must share the same type but found types {set(map(type, v))} " f"in {k}={v}"
-            )
+            raise TypeError(f"All list values must share the same type but found types {set(map(type, v))} in {k}={v}")
 
     list_keywords = sorted(k for k, v in request.items() if isinstance(v, list))
     lists = [request[k] for k in list_keywords]
@@ -185,7 +181,7 @@ def build_extraction_request(
 
     if sum(opt is not None for opt in (ranges, mask, indices)) != 1:
         raise ValueError(
-            "Exactly one of 'ranges', 'mask' or 'indices' must be set. " f"Got {ranges=}, {mask=}, {indices=}"
+            f"Exactly one of 'ranges', 'mask' or 'indices' must be set. Got {ranges=}, {mask=}, {indices=}"
         )
 
     if ranges is not None:
@@ -201,7 +197,6 @@ def build_extraction_request(
 
 
 class ExtractionRequestCollection(UserList):
-
     @classmethod
     def from_mars_requests(
         cls,
@@ -224,15 +219,15 @@ class ExtractionRequestCollection(UserList):
             The mask for the extraction requests, by default None.
         indices : Optional[np.ndarray], optional
             The indices for the extraction requests, by default None.
+
         Returns
         -------
         ExtractionRequestCollection
             A collection of ExtractionRequest objects created from the MARS requests.
         """
-
         if sum(opt is not None for opt in (ranges, mask, indices)) != 1:
             raise ValueError(
-                "Exactly one of 'ranges', 'mask' or 'indices' must be set. " f"Got {ranges=}, {mask=}, {indices=}"
+                f"Exactly one of 'ranges', 'mask' or 'indices' must be set. Got {ranges=}, {mask=}, {indices=}"
             )
 
         if mask is not None:
@@ -242,8 +237,8 @@ class ExtractionRequestCollection(UserList):
             mask = None
 
         if indices is not None:
-            # We do the same small optimization for indices. Optimally, we
-            # would do similar optimizations in pygribjump and remove this.
+            # We do the same small optimisation for indices. Optimally, we
+            # would do similar optimisations in pygribjump and remove this.
             ranges = [(i, i + 1) for i in indices]
             indices = None
 
@@ -251,12 +246,12 @@ class ExtractionRequestCollection(UserList):
         return cls(extraction_requests)
 
 
-class FieldExtractList(SimpleFieldList):
+class FieldExtractList(SimpleFieldListBase):
     """Lazily loaded representation of points extracted from multiple fields using GribJump.
 
     .. warning::
         This implementation is **not thread-safe**. Concurrent access from multiple threads
-        may result in race conditions during lazy loading. Use appropriate synchronization
+        may result in race conditions during lazy loading. Use appropriate synchronisation
         if accessing from multiple threads.
 
     .. note::
@@ -288,29 +283,16 @@ class FieldExtractList(SimpleFieldList):
         self._requests = requests
         self._fdb_retriever = fdb_retriever
 
-        # These attributes are set lazily after loading the data.
-        self._loaded = False
-        self._grid_indices = None
+    @thread_safe_cached_property
+    def _fields(self) -> list[Field]:
+        fields, self._grid_indices = self._load()
+        return fields
 
-        # Cached reference metadata for coordinates
-        self._reference_metadata: Optional[GribMetadata] = None
-        self._latitudes: Optional[np.ndarray] = None
-        self._longitudes: Optional[np.ndarray] = None
-
-        super().__init__(fields=None)
-
-    def __len__(self):
-        self._load()
-        return super().__len__()
-
-    def __getitem__(self, n):
-        self._load()
-        return super().__getitem__(n)
-
-    def _load(self):
-        if self._loaded:
-            return
-
+    def _load(self) -> tuple[list[Field], np.ndarray]:
+        r"""
+        Load the fields by executing the GribJump extraction requests.
+        Must be called from the _fields property to ensure thread-safe lazy loading.
+        """
         extraction_requests = [req.extraction_request for req in self._requests]
 
         context = {"origin": "earthkit-data"}
@@ -331,53 +313,65 @@ class FieldExtractList(SimpleFieldList):
             arr = result.values_flat
             shape = arr.shape
 
-            metadata = UserMetadata(request.request, shape=shape)
-            metadata = self._enrich_metadata_with_coordinates(indices, metadata)
+            from earthkit.data.field.mars.create import create_mars_field
 
-            field = ArrayField(arr, metadata)
+            geography = self._build_geography(indices, shape=shape)
+            field = create_mars_field(request.request, values=arr, geography=geography)
             fields.append(field)
 
-        self.fields = fields
-        self._loaded = True
-        self._grid_indices = indices
+        return fields, indices
 
-    def _load_reference_metadata(self):
-        """Loads the reference metadata from the FDB retriever if available."""
-        if self._reference_metadata is not None:
-            return self._reference_metadata
+    @thread_safe_cached_property
+    def _reference_field(self) -> Optional[Field]:
+        """Load the reference field from the FDB retriever if available."""
         if self._fdb_retriever is None:
             return None
 
         fields = self._fdb_retriever.get(self._requests[0].request)
-        metadatas = fields.metadata()
-        if not metadatas:
-            raise ValueError("FDB retriever returned no metadata.")
-        if len(metadatas) != 1:
-            raise ValueError(f"Expected exactly one metadata for the first request, got {len(metadatas)}.")
-        metadata = metadatas[0]
-        assert isinstance(metadata, GribMetadata), type(metadata)
-        self._reference_metadata = metadata
-        return metadata
+        if not fields:
+            raise ValueError("FDB retriever returned no fields.")
+        if len(fields) != 1:
+            raise ValueError(f"Expected exactly one field for the first request, got {len(fields)}.")
+        field = fields[0]
+        assert isinstance(field, Field), type(field)
+        return field
 
-    def _enrich_metadata_with_coordinates(self, indices: np.ndarray, metadata: UserMetadata) -> UserMetadata:
-        """Enriches the metadata with coordinates if reference metadata is available."""
-        if (reference_metadata := self._load_reference_metadata()) is None:
-            return metadata
+    @thread_safe_cached_property
+    def _latlons(self) -> Optional[Tuple[np.ndarray, np.ndarray]]:
+        """Load the latitude and longitude coordinates from the
+        reference field if available.
+        """
+        reference_field = self._reference_field
+        if reference_field is None:
+            return None
 
-        if self._latitudes is None or self._longitudes is None:
-            self._latitudes = reference_metadata.geography.latitudes()
-            self._longitudes = reference_metadata.geography.longitudes()
+        latitudes = reference_field.geography.latitudes().flatten()
+        longitudes = reference_field.geography.longitudes().flatten()
 
-        grid_latitudes = self._latitudes[indices]
-        grid_longitudes = self._longitudes[indices]
+        return latitudes, longitudes
 
-        metadata = metadata.override(
-            {
-                "latitudes": grid_latitudes,
-                "longitudes": grid_longitudes,
-            }
-        )
-        return metadata
+    def _build_geography(self, indices: np.ndarray, shape: tuple[int, ...] | None = None) -> dict:
+        r"""Build the geography dictionary for the extracted field based on the
+        reference field's coordinates.
+        """
+        if self._reference_field is None:
+            return None
+
+        lat, lon = self._latlons
+
+        grid_latitudes = lat[indices]
+        grid_longitudes = lon[indices]
+
+        if shape:
+            grid_latitudes = grid_latitudes.reshape(shape)
+            grid_longitudes = grid_longitudes.reshape(shape)
+
+        geography = {
+            "latitudes": grid_latitudes,
+            "longitudes": grid_longitudes,
+        }
+
+        return geography
 
     def to_xarray(self, *args, **kwargs):
         kwargs = kwargs.copy()
@@ -443,12 +437,11 @@ class GribJumpSource(Source):
             keyword arguments passed to the `pyfdb.FDB` constructor. These arguments are only passed
             to the FDB when fetching coordinates and is not used by GribJump for the extraction itself.
         """
-
         super().__init__(**kwargs)
 
         if sum(opt is not None for opt in (ranges, mask, indices)) != 1:
             raise ValueError(
-                "Exactly one of 'ranges', 'mask' or 'indices' must be set. " f"Got {ranges=}, {mask=}, {indices=}"
+                f"Exactly one of 'ranges', 'mask' or 'indices' must be set. Got {ranges=}, {mask=}, {indices=}"
             )
         self._ranges = ranges
         self._mask = mask

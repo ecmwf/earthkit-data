@@ -7,12 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-from ..readers.zarr import ZarrReader
+from ..readers.zarr.reader import ZarrReader
 from . import Source
 
 
 class ZarrSource(Source):
-
     def __init__(self, path, **kwargs):
         super().__init__(**kwargs)
         self._reader = ZarrReader(self, path, **kwargs)

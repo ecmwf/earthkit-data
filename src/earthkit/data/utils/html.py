@@ -61,14 +61,12 @@ def table_from_dict(vals, title=None):
 
     t = ""
     if title is not None and title:
-        t = f"<h4>{title}</h4>"
+        t = f"""<div class="eh-description">{title}</div><hr>"""
 
     t += """
 <table class="eh-table">
 {rows}
-</table>""".format(
-        rows=" ".join([tr(k, v) for k, v in vals.items()])
-    )
+</table>""".format(rows=" ".join([tr(k, v) for k, v in vals.items()]))
 
     style = css("table")
     return style + t
@@ -91,7 +89,7 @@ def tab(items, details=None, selected=None):
     t = f"""<div class="eh-description">{details}</div>""" if details else ""
     t += """
 <div>
-<section class="eh-section>
+<section class="eh-section">
 <div class="eh-tabs-container">
 <div class="eh-tabs-block">
 <div class="eh-tabs">
@@ -102,18 +100,16 @@ def tab(items, details=None, selected=None):
 </section>
 </div>
         """.format(
-        pages=" ".join(
-            [
-                tab_page(
-                    item["title"],
-                    item.get("tooltip", ""),
-                    str(uuid.uuid4()),
-                    item["text"],
-                    selected in (None, "") or item["title"] == selected,
-                )
-                for item in items
-            ]
-        ),
+        pages=" ".join([
+            tab_page(
+                item["title"],
+                item.get("tooltip", ""),
+                str(uuid.uuid4()),
+                item["text"],
+                selected in (None, "") or item["title"] == selected,
+            )
+            for item in items
+        ]),
     )
 
     style = css("tab")

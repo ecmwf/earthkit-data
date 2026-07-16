@@ -10,11 +10,11 @@
 import itertools
 import logging
 import sys
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
+
+from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.core.thread import SoftThreadPool
-from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils import ensure_iterable
 
 LOG = logging.getLogger(__name__)
@@ -42,8 +42,8 @@ class RequestBuilder:
         owner : Any
             The owner of the request builder.
         *args : tuple
-            Positional arguments representing request dictionaries. Each item can be dictionary
-            or a list/tuple of dictionaries.
+            Positional arguments representing request dictionaries. Each item can be dictionary or
+            a list/tuple of dictionaries.
         **kwargs : dict
             Keyword arguments representing request parameters.
         request : dict or list/tuple of dict, optional
@@ -128,7 +128,9 @@ class FileRequestRetriever:
         assert callable(self.retriever), self.retriever
 
     def retrieve(self, requests, *extra_args):
-        nthreads = min(self.owner.config("number-of-download-threads"), len(requests))
+        from earthkit.data.core.config import CONFIG
+
+        nthreads = min(CONFIG.get("number-of-download-threads"), len(requests))
 
         if nthreads < 2:
             path = [self.retriever(r, *extra_args) for r in requests]

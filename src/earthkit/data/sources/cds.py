@@ -17,9 +17,8 @@ except ImportError:
 
 import yaml
 
-from earthkit.data.decorators import normalize
-from earthkit.data.utils.request import FileRequestRetriever
-from earthkit.data.utils.request import RequestBuilder
+from earthkit.data.decorators import normalise
+from earthkit.data.utils.request import FileRequestRetriever, RequestBuilder
 
 from .file import FileSource
 from .prompt import APIKeyPrompt
@@ -109,7 +108,7 @@ class CdsRetriever(FileSource):
             self.source_filename = cds_result.location.split("/")[-1]
             cds_result.download(target=target)
 
-        return_object = self.cache_file(
+        return_object = self._cache_file(
             retrieve,
             (dataset, request),
             extension=EXTENSIONS.get(request.get("format"), ".cache"),
@@ -117,7 +116,7 @@ class CdsRetriever(FileSource):
         return return_object
 
     @staticmethod
-    @normalize("area", "bounding-box(list)")
+    @normalise("area", "bounding-box(list)")
     def _normalise_request(**kwargs):
         return kwargs
 

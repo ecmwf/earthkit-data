@@ -1,0 +1,770 @@
+# (C) Copyright 2020 ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation
+# nor does it submit to any jurisdiction.
+#
+
+import logging
+
+import xarray
+from xarray.backends import BackendEntrypoint
+
+LOG = logging.getLogger(__name__)
+
+
+class EarthkitBackendEntrypoint(BackendEntrypoint):
+    def open_dataset(
+        self,
+        filename_or_obj,
+        source_type="file",
+        profile="earthkit",
+        variable_key=None,
+        drop_variables=None,
+        rename_variables=None,
+        mono_variable=None,
+        extra_dims=None,
+        drop_dims=None,
+        ensure_dims=None,
+        fixed_dims=None,
+        dim_roles=None,
+        dim_name_from_role_name=None,
+        rename_dims=None,
+        dims_as_attrs=None,
+        time_dims=None,
+        level_dim_mode=None,
+        squeeze=None,
+        add_valid_time_coord=None,
+        decode_times=None,
+        decode_timedelta=None,
+        aux_coords=None,
+        add_geo_coords=None,
+        attrs_mode=None,
+        attrs=None,
+        variable_attrs=None,
+        global_attrs=None,
+        coord_attrs=None,
+        add_earthkit_attrs=None,
+        rename_attrs=None,
+        fill_metadata=None,
+        remapping=None,
+        flatten_values=None,
+        lazy_load=None,
+        release_source=None,
+        allow_holes=None,
+        strict=None,
+        dtype=None,
+        array_namespace=None,
+        errors=None,
+    ):
+        r"""
+        filename_or_obj, str, Path or earthkit object
+            Input GRIB file or object to be converted to an Xarray dataset.
+        profile: str, dict or None
+            Provide custom default values for most of the kwargs. The default profile is "earthkit".
+            An explicit dict can be used. None is equivalent to an empty dict. When a kwarg is specified it
+            will update the corresponding profile value if it is a dict otherwise it will overwrite it. See:
+            :ref:`xr_profile` for more information.
+        variable_key: str, None
+            The metadata key which will be used to name the Xarray Dataset variables.
+            Default is "parameter.variable" (which in the case of GRIB data is the same as
+            "metadata.shortName" and "metadata.param").
+            The same key cannot be used to define any dimension.
+            Only enabled when ``mono_variable`` is False or None.
+        drop_variables: str, or iterable of str, None
+            A variable or list of variables to drop from the dataset. Default is None. Only used when
+            ``variable_key`` is enabled.
+        rename_variables: dict, None
+            Mapping to rename variables. Default is None. Only used when ``variable_key`` is enabled.
+        mono_variable: bool, str, None
+            If True or str, the dataset will contain a single variable called "data" (or the value
+            of the ``mono_variable`` kwarg when it is a str). If False, the dataset will contain
+            one variable for each distinct value of ``variable_key`` metadata key. The default value
+            (None) expands to False unless the ``profile`` overwrites it.
+        extra_dims: str, or list of str, dict or tuple, or None
+            Define additional dimensions on top of the predefined dimensions. Only enabled when no
+            ``fixed_dims`` is specified. Default is None. It can be a single metadata key or a list. If a list,
+            each item is either a metadata key, or a dict/tuple defining mapping between the dimension
+            name and the metadata key. The whole option can be a dict. E.g.
+
+            .. code-block:: python
+
+                # use GRIB key "expver" as a dimension
+                extra_dims = "metadata.expver"
+                # use keys "metadata.expver" and "metadata.steam" as a dimension
+                extra_dims = ["metadata.expver", "metadata.stream"]
+                # define dimensions "expver", "mars_stream" and "mars_type" from
+                # GRIB keys "expver", "stream" and "type"
+                extra_dims = [
+                    "metadata.expver",
+                    {"mars_stream": "metadata.stream"},
+                    ("mars_type", "metadata.type"),
+                ]
+                extra_dims = [
+                    {
+                        "expver": "metadata.expver",
+                        "mars_stream": "metadata.stream",
+                        "mars_type": "metadata.type",
+                    }
+                ]
+
+        drop_dims: str, or iterable of str, None
+            Single or multiple dimensions to be ignored. Default is None.
+            Default is None.
+        ensure_dims: str, or iterable of str, None
+            Every item may be one of the following:
+
+            - **Dimension name**:
+              A dimension that must always be preserved in the output, even when
+              ``squeeze=True`` and its size is 1, or when it appears in ``dims_as_attrs``.
+            - **Metadata key**:
+              A key whose value defines an additional, non-squeezable dimension.
+              When a metadata key is listed here, it does *not* need to be repeated
+              in ``extra_dims``.
+
+            Default is None.
+        fixed_dims: str, or iterable of str, None
+            Define all the dimensions to be generated. When used no other dimensions will be created.
+            Might be incompatible with other settings. Default is None. It can be a single item or a list.
+            Each item is either a metadata key, or a dict/tuple defining mapping between the dimension
+            name and the metadata key. The whole option can be a dict. E.g.
+
+            .. code-block:: python
+
+                # use key "time.step" as a dimension
+                fixed_dims = "time.step"
+                # use keys "time.step" and "vertical.level" as a dimension
+                extra_dims = ["time.step", "vertical.level"]
+                # define dimensions "step", level" and "level_type" from
+                # metadata keys "metadata.step", "metadata.levelist" and "metadata.levtype"
+                extra_dims = [
+                    "metadata.step",
+                    {"level": "metadata.levelist"},
+                    ("level_type", "metadata.levtype"),
+                ]
+                extra_dims = [
+                    {"step": "metadata.step", "level": "metadata.levelist", "level_type": "metadata.levtype"}
+                ]
+
+        dim_roles: dict, None
+            Specify the "roles" used to form the predefined dimensions. The predefined dimensions are
+            automatically generated when no ``fixed_dims`` specified and comprise the following
+            (in a fixed order):
+
+            - ensemble forecast member dimension
+            - temporal dimensions (controlled by ``time_dims``)
+            - vertical dimensions (controlled by ``level_dim_mode``)
+
+            ``dim_roles`` is a mapping between the "roles" and the metadata keys representing the roles.
+            The possible roles are as follows:
+
+            - "member": metadata key interpreted as ensemble forecast members
+            - "forecast_reference_time": metadata key interpreted as forecast reference time. Can be a single
+               metadata key, or a list/tuple of two metadata keys representing the date and time parts of the
+               forecast reference time. Alternatively, it can be a dict with "date" and "time" keys specifying
+               the corresponding metadata keys. Used when ``"forecast_reference_time"`` is in ``time_dims``.
+            - "step": metadata key interpreted as forecast step
+            - "valid_time": metadata key interpreted as valid time. Used when ``"valid_time"`` is in
+               ``time_dims`` or ``add_valid_time_coord`` is True.
+            - "date": metadata key interpreted as base date. Used when ``"date"`` is in ``time_dims``.
+            - "time": metadata key interpreted as base time. Used when ``"time"`` is in ``time_dims``.
+            - "level": metadata key interpreted as level
+            - "level_type": metadata key interpreted as level type
+
+            The default values are as follows:
+
+            .. code-block:: python
+
+                {
+                    "member": "ensemble.member",
+                    "forecast_reference_time": "time.forecast_reference_time",
+                    "step": "time.step",
+                    "valid_time": "time.valid_datetime",
+                    "date": "time.base_date",
+                    "time": "time.base_time",
+                    "level": "vertical.level",
+                    "level_type": "vertical.level_type",
+                }
+
+            ``dims_roles`` behaves differently to the other kwargs in the sense that
+            it does not override but update the default values. So e.g. to change only "member" in
+            the default it is enough to specify: "dim_roles={"member": "metadata.perturbationNumber"}.
+        dim_name_from_role_name: bool, None
+            If True, the dimension names are formed from the role names. Otherwise, the
+            dimension names are formed from the metadata keys specified in ``dim_roles``.
+            Its default value (None) expands to True unless the ``profile`` overwrites it.
+            Only used when no ``fixed_dims`` are specified. **New in version 0.15.0**.
+        rename_dims: dict, None
+            Mapping to rename dimensions. Default is None.
+        dims_as_attrs: str, or iterable of str, None
+            A dimension name or a list of dimension names that should be converted
+            into variable attributes when they have only a single value for the
+            corresponding variable.
+            Note that such size-1 dimensions are still preserved if they are
+            explicitly listed in ``ensure_dims``.
+            The default is ``None``.
+        time_dims: str, list of str, or None
+            Explicitly specify the time dimension(s) to construct, together with their order.
+            Each element is a role name from ``dim_roles``. The default is
+            ``["forecast_reference_time", "step"]``.
+            Common configurations:
+
+            - ``["forecast_reference_time", "step"]``: two dimensions for forecast reference
+              time and step (default)
+            - ``["valid_time"]``: a single valid-time dimension
+            - ``["date", "time", "step"]``: three separate raw dimensions
+        level_dim_mode: str, None
+            Controls how predefined vertical dimensions are constructed.
+            The default is ``"level"``.
+            Valid values are:
+
+            - ``"level"``:
+              Creates two separate dimensions, ``"level"`` and ``"level_type"``,
+              as defined by the corresponding roles in ``dim_roles``.
+
+            - ``"level_per_type"``:
+              Uses a template dimension ``"<level_per_type>"`` that is expanded
+              into one or more vertical dimensions.
+              The dimension name is taken from the metadata key with the role
+              ``"level_type"`` (e.g. ``"pressure"``), and the coordinate
+              values come from the metadata key with the role ``"level"``
+              (e.g. ``[500, 700, 850, 1000]``).
+
+            - ``"level_and_type"``:
+              Produces a single combined dimension, ``"level_and_type"``,
+              in which the level value and the level type are merged.
+
+        squeeze: bool, None
+            Remove dimensions which have only one valid value. Not applies to dimensions in
+            ``ensure_dims``. Its default value (None) expands
+            to True unless the ``profile`` overwrites it.
+        add_valid_time_coord: bool, None
+            Add the `valid_time` coordinate containing np.datetime64 values to the
+            dataset. Only takes effect when ``"valid_time"`` is not in ``time_dims``. Its default
+            value (None) expands to False unless the ``profile`` overwrites it.
+        decode_times: bool, None
+            If True, decode date and datetime coordinates into ``datetime64`` values.
+            If False, leave the coordinates in their native type
+            (e.g. ``int`` if the coordinates come from the GRIB key like "date" or "validityDate").
+            The default value (None) expands to True unless the ``profile`` overwrites it.
+        decode_timedelta: bool, None
+            If True, decode time-like or duration-like coordinates into ``timedelta64`` values.
+            If False, leave the coordinates in their native type (e.g. ``int`` if the coordinates come
+            from the GRIB key like "time", "validityTime", "step"); additionally, the duration-like
+            coordinates (e.g. derived from the GRIB key like "step", "endStep", etc.)
+            will have the attribute "units" appropriately set (to "minutes", "hours", etc.).
+            If None (default), assume the same value of ``decode_times`` unless the ``profile``
+            overwrites it.
+        aux_coords: dict, None
+            Mapping from an auxiliary coordinate label to a tuple:
+            ``(metadata_key: str, dataset_dimension(s): str or iterable of str)``. The default value is None.
+        add_geo_coords: bool, None
+            If True, add geographic coordinates to the dataset when field values are represented by
+            a single "values" dimension. Its default value (None) expands
+            to True unless the ``profile`` overwrites it.
+        flatten_values: bool, None
+            if True, flatten the values per field resulting in a single dimension called
+            "values" representing a field. Otherwise the field shape is used to form
+            the field dimensions. When the fields are defined on an unstructured grid (e.g.
+            reduced Gaussian) or are spectral (e.g. spherical harmonics) this option is
+            ignored and the field values are always represented by a single "values"
+            dimension.  Its default value (None) expands
+            to False unless the ``profile`` overwrites it.
+        attrs_mode: str, None
+            Define how attributes are generated. Default is "fixed". The possible values are:
+
+            - "fixed": Use the attributes defined in ``variable_attrs`` as variables
+              attributes and ``global_attrs`` as global attributes.
+            - "unique": Use all the attributes defined in ``attrs``, ``variable_attrs``
+              and ``global_attrs``. When an attribute from ``attrs`` has unique value for a dataset
+              it will be a global attribute, otherwise it will be a variable attribute.
+              However, this logic is only applied if a unique variable attribute can be
+              a global attribute according to the CF conventions Appendix A. (e.g. "units" cannot
+              be a global attribute). Additionally, keys in ``variable_attrs`` are always used as
+              variable attributes, while keys in ``global_attrs`` are always used as global attributes.
+        attrs: str, number, callable, dict or list of these, None
+            Attribute or list of attributes. Only used when ``attrs_mode`` is ``unique``.
+            Its default value (None) expands to [] unless the ``profile`` overwrites it.
+            The following attributes are supported:
+
+            - str: Name of the attribute used as a metadata key to generate the value of
+              the attribute. Can also be specified by prefixing with "key=" (e.g. "key=vertical.level").
+              When prefixed with "namespace=" it specifies a metadata namespace
+              (e.g. "namespace=parameter"), which will be added as a dict to the attribute.
+            - callable: A callable that takes a Field object and returns a dict of attributes, e.g.:
+
+              .. code-block:: python
+
+                def rounded_wavelength(field):
+                    wl = field.get("metadata.wavelength")
+                    if wl is not None:
+                        return {"wavelength": round(wl)}
+                    else:
+                        return {}
+
+            - dict: A dictionary of attributes with the keys as the attribute names.
+              If the value is a callable it takes the attribute name and a Field object and
+              returns the value of the attribute, e.g.:
+
+              .. code-block:: python
+
+                def ensure_rounded(key, field):
+                    val = field.get(key)
+                    try:
+                        return round(val)
+                    except Exception:
+                        return val
+
+              A str value prefixed with "key=" or "namespace=" is interpreted as explained above.
+              Any other values are used as the pre-defined value for the attribute.
+        variable_attrs: str, number, callable, dict or list of these, None
+            Variable attribute or attributes. For the allowed values see ``attrs``. Its
+            default value (None) expands to [] unless the ``profile`` overwrites it.
+        global_attrs: str, number, dict or list of these, None
+            Global attribute or attributes. For the allowed values see ``attrs``. Its
+            default value (None) expands to [] unless the ``profile`` overwrites it.
+        coord_attrs: dict, None
+            To be documented. Default is None.
+        add_earthkit_attrs: bool, None
+            If True, add earthkit specific attributes to the dataset. Its default value
+            (None) expands to True unless the ``profile`` overwrites it.
+        rename_attrs: dict, None
+            A dictionary of attribute to rename. Default is None.
+        fill_metadata: dict, None
+            Define fill values to metadata keys. Default is None.
+        remapping: dict, None
+            Define new metadata keys for indexing. Any key provided in ``remapping`` may be referenced
+            when specifying options such as ``variable_key``, ``extra_dims``, ``ensure_dims``, ``aux_coords``
+            and others. Default is None.
+        lazy_load: bool, None
+            If True, the resulting Dataset will load data lazily from the
+            underlying data source. If False, a DataSet holding all the data in memory
+            and decoupled from the backend source will be created.
+            Using ``lazy_load=False`` with ``release_source=True`` can provide optimised
+            memory usage in certain cases. The default value of ``lazy_load`` (None)
+            expands to True unless the ``profile`` overwrites it.
+        release_source: bool, None
+            Only used when ``lazy_load=False``. If True, memory held in the input fields are
+            released as soon as their values are copied into the resulting Dataset. This is
+            done per field to avoid memory spikes. The release operation is currently
+            only supported for GRIB fields stored entirely in memory, e.g. when read from a
+            :ref:`stream <streams>`. When a field does not support the release operation, this
+            option is ignored. Having run :obj:`to_xarray` the input data becomes unusable,
+            so use this option carefully. The default value of ``release_source`` (None) expands
+            to False unless the ``profile`` overwrites it.
+        allow_holes: bool, None
+            If False, GRIB fields must form a full hypercube (without holes).
+            If True, a dataset will be created from any GRIB fields and
+            its coordinates will be a union of coordinates of the fields (outer join).
+            Values corresponding to missing GRIB fields will be filled with NaN.
+            The default value of ``allow_holes`` (None) expands to False unless the ``profile`` overwrites it.
+        strict: bool, None
+            If True, perform stricter checks on hypercube consistency. Its default value (None) expands
+            to False unless the ``profile`` overwrites it.
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the array data.
+        array_namespace: str, array namespace, None
+            The array namespace to use for array operations. The default value (None) is
+            expanded to "numpy".
+        """
+        fieldlist = self._fieldlist(filename_or_obj, source_type)
+
+        if hasattr(fieldlist, "_ek_builder"):
+            builder = fieldlist._ek_builder
+            return builder.build()
+        else:
+            from .builder import SingleDatasetBuilder
+
+            _kwargs = dict(
+                variable_key=variable_key,
+                drop_variables=drop_variables,
+                rename_variables=rename_variables,
+                mono_variable=mono_variable,
+                extra_dims=extra_dims,
+                drop_dims=drop_dims,
+                ensure_dims=ensure_dims,
+                fixed_dims=fixed_dims,
+                rename_dims=rename_dims,
+                dim_roles=dim_roles,
+                dim_name_from_role_name=dim_name_from_role_name,
+                dims_as_attrs=dims_as_attrs,
+                time_dims=time_dims,
+                level_dim_mode=level_dim_mode,
+                squeeze=squeeze,
+                attrs_mode=attrs_mode,
+                attrs=attrs,
+                variable_attrs=variable_attrs,
+                global_attrs=global_attrs,
+                coord_attrs=coord_attrs,
+                add_earthkit_attrs=add_earthkit_attrs,
+                rename_attrs=rename_attrs,
+                add_valid_time_coord=add_valid_time_coord,
+                add_geo_coords=add_geo_coords,
+                flatten_values=flatten_values,
+                fill_metadata=fill_metadata,
+                remapping=remapping,
+                decode_times=decode_times,
+                decode_timedelta=decode_timedelta,
+                lazy_load=lazy_load,
+                release_source=release_source,
+                strict=strict,
+                dtype=dtype,
+                array_namespace=array_namespace,
+                errors=errors,
+                allow_holes=allow_holes,
+            )
+
+            return SingleDatasetBuilder(fieldlist, profile, from_xr=True, backend_kwargs=_kwargs).build()
+
+    @classmethod
+    def guess_can_open(cls, filename_or_obj):
+        try:
+            from earthkit.data.core.fieldlist import FieldList
+
+            if isinstance(filename_or_obj, FieldList):
+                return True
+            elif isinstance(filename_or_obj, str):
+                from earthkit.data.readers.grib import is_grib_file
+
+                return is_grib_file(filename_or_obj)
+        except Exception:
+            LOG.debug("Failed to guess if %s can be opened by the earthkit backend", filename_or_obj, exc_info=True)
+
+        return False
+
+    @staticmethod
+    def _fieldlist(filename_or_obj, source_type):
+        import os
+        import pathlib
+
+        from earthkit.data.core.fieldlist import FieldList
+
+        ds = None
+        if isinstance(filename_or_obj, FieldList):
+            ds = filename_or_obj
+        elif isinstance(filename_or_obj, (str, os.PathLike, pathlib.Path)):
+            from earthkit.data import from_source
+
+            ds = from_source(source_type, filename_or_obj)
+            if ds and "fieldlist" in ds.available_types:
+                ds = ds.to_fieldlist()
+            else:
+                raise ValueError(
+                    f"Could not generate fieldlist from path={filename_or_obj} with source type {source_type}"
+                )
+        return ds
+
+
+# ---------------------------------------------------------------------------
+# Xarray accessor classes
+# ---------------------------------------------------------------------------
+
+
+class XarrayEarthkit:
+    def to_fieldlist(self):
+        from earthkit.data.indexing.simple import SimpleFieldList
+
+        return SimpleFieldList([f for f in self._to_fields()])
+
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self._obj, **kwargs)
+
+    def _generator(self):
+        from earthkit.data.indexing.simple import SimpleFieldList
+
+        class GeneratorFieldList(SimpleFieldList):
+            def __init__(self, data):
+                self._data = data
+
+            def mutate(self):
+                return self
+
+            def __iter__(self):
+                return self._data
+
+            def _default_encoder(self):
+                return "grib"
+
+        return GeneratorFieldList(self._to_fields())
+
+
+@xarray.register_dataarray_accessor("earthkit")
+class XarrayEarthkitDataArray(XarrayEarthkit):
+    def __init__(self, xarray_obj):
+        self._obj = xarray_obj
+
+    def _decoded_attrs(self):
+        """Decode the _earthkit attribute to a dict."""
+        from .accessor import ACCESSOR_KEY, decode_earthkit_attrs
+
+        raw = self._obj.attrs.get(ACCESSOR_KEY)
+        return decode_earthkit_attrs(raw)
+
+    @property
+    def reference_field(self):
+        message = self._grib_message()
+
+        try:
+            if message:
+                from earthkit.data.field.grib.create import create_grib_field_from_message
+
+                return create_grib_field_from_message(message, no_values=True)
+        except Exception as e:
+            raise ValueError(
+                (
+                    "Could not generate earthkit reference field from xarray object."
+                    "Attribute '_earthkit' contains incorrect data."
+                    f"Error: {str(e)}"
+                )
+            ) from e
+
+        return None
+
+    def _grib_message(self, raise_error=True):
+        attrs = self._decoded_attrs()
+
+        if attrs is None:
+            if raise_error:
+                raise ValueError(
+                    (
+                        "The xarray object does not contain the '_earthkit' attribute. Cannot determine"
+                        " the reference field."
+                    )
+                )
+            return None
+
+        if not isinstance(attrs, dict):
+            if raise_error:
+                raise ValueError(
+                    (
+                        "The '_earthkit' attribute must be a dictionary containing the metadata of the"
+                        f" reference field. Found: {type(attrs)}"
+                    )
+                )
+            return None
+
+        if "message" not in attrs:
+            if raise_error:
+                raise ValueError(
+                    "The '_earthkit' attribute must contain the 'message' key with the metadata of the reference field."
+                )
+            return None
+
+        message = attrs.get("message")
+
+        if not message:
+            if raise_error:
+                raise ValueError(
+                    "The 'message' key in the '_earthkit' attribute must contain the metadata of the reference field."
+                )
+            return None
+
+        return message
+
+    def _extra_grib_metadata(self):
+        attrs = self._decoded_attrs()
+        if isinstance(attrs, dict):
+            bvp = attrs.get("bitsPerValue", None)
+            if bvp is not None and bvp != 0:
+                return {"bitsPerValue": bvp}
+
+        return dict()
+
+    def _remove_earthkit_attrs(self):
+        """Create a copy of the DataArray and remove earthkit attributes."""
+        from .accessor import ACCESSOR_KEY
+
+        da = self._obj
+        if ACCESSOR_KEY in da.attrs:
+            da = da.copy()
+            del da.attrs[ACCESSOR_KEY]
+        return da
+
+    def to_netcdf(self, *args, remove_earthkit_attrs=False, **kwargs):
+        """A thin wrapper around the `xarray.DataArray.to_netcdf()` method.
+
+        Parameters
+        ----------
+        args, kwargs: passed to the method `to_netcdf()` on the underlying xarray object.
+
+        remove_earthkit_attrs: bool, optional
+            If True, remove attribute `_earthkit` before writing to NetCDF. Default is `False`.
+        """
+        if remove_earthkit_attrs:
+            ds = self._remove_earthkit_attrs()
+        else:
+            ds = self._obj
+
+        return ds.to_netcdf(*args, **kwargs)
+
+    def _to_fields(self):
+        from .grib import data_array_to_fields
+
+        for f in data_array_to_fields(
+            self._obj, reference_field=self.reference_field, metadata=self._extra_grib_metadata()
+        ):
+            yield f
+
+    def to_device(self, device, *, array_backend=None, array_namespace=None, **kwargs):
+        """Return a **new** DataArray whose data live on *device*."""
+        from earthkit.utils.array import convert
+
+        if array_backend is not None:
+            if array_namespace is not None:
+                raise ValueError("Cannot specify both 'array_backend' and 'array_namespace' arguments")
+            array_namespace = array_backend
+
+        moved = convert(self._obj.data, device=device, array_namespace=array_namespace, **kwargs)
+        da = self._obj.copy(deep=False)
+        da.data = moved
+        return da
+
+    def set(self, *args, **kwargs):
+        """Return a new DataArray with updated attributes on the reference field.
+
+        Accepts the same arguments as ``field.set()``.  When the reference
+        field is available, applies the metadata changes to it and rebuilds
+        the ``_earthkit`` attribute.  When it is not available, only
+        ``"geography.grid_spec"`` is accepted as a standalone update.
+        """
+        if not args and not kwargs:
+            return self._obj
+
+        try:
+            field = self.reference_field
+        except Exception:
+            field = None
+
+        if field is not None:
+            from .accessor import EarthkitAttrsBuilder
+
+            field = field.set(*args, **kwargs).sync()
+            da = self._obj.copy(deep=False)
+            attrs = EarthkitAttrsBuilder().set_field(field, da.attrs)
+            da.attrs.update(attrs)
+        else:
+            kwargs = kwargs.copy()
+            for a in args:
+                if a is None:
+                    continue
+                if isinstance(a, dict):
+                    kwargs.update(a)
+                    continue
+                raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
+
+            # allow setting grid_spec without reference field, but only if it's the only attribute being set
+            if len(kwargs) == 1 and list(kwargs.keys())[0] == "geography.grid_spec":
+                from .accessor import EarthkitAttrsBuilder
+
+                da = self._obj.copy(deep=False)
+                attrs = EarthkitAttrsBuilder().set_grid_spec(kwargs["geography.grid_spec"], da.attrs)
+                da.attrs.update(attrs)
+            else:
+                raise ValueError(
+                    (
+                        "Cannot update attributes of the reference field because it cannot be determined"
+                        " from the xarray object."
+                    )
+                )
+
+        return da
+
+    @property
+    def grid_spec(self) -> dict | None:
+        """Return the grid specification of the DataArray."""
+        try:
+            attrs = self._decoded_attrs()
+            if attrs is not None:
+                v = attrs.get("grid_spec", None)
+                if isinstance(v, dict):
+                    return v.copy()  # return a copy to avoid accidental modifications
+        except Exception:
+            pass
+
+        try:
+            return self.reference_field.geography.grid_spec()
+        except Exception:
+            # print(e)
+            return None
+
+
+@xarray.register_dataset_accessor("earthkit")
+class XarrayEarthkitDataset(XarrayEarthkit):
+    def __init__(self, xarray_obj):
+        self._obj = xarray_obj
+
+    def _to_fields(self):
+        from .grib import data_array_to_fields
+
+        for var in self._obj.data_vars:
+            for f in data_array_to_fields(self._obj[var]):
+                yield f
+
+    def _remove_earthkit_attrs(self):
+        """Create a copy of the dataset and remove earthkit attributes."""
+        from .accessor import ACCESSOR_KEY
+
+        ds = self._obj.copy()
+        for var in ds.data_vars:
+            if ACCESSOR_KEY in ds[var].attrs:
+                del ds[var].attrs[ACCESSOR_KEY]
+
+        return ds
+
+    def to_netcdf(self, *args, remove_earthkit_attrs=False, **kwargs):
+        """A thin wrapper around the `xarray.Dataset.to_netcdf()` method.
+
+        Parameters
+        ----------
+        args, kwargs: passed to the method `to_netcdf()` on the underlying xarray object.
+
+        remove_earthkit_attrs: bool, optional
+            If True, remove attribute `_earthkit` before writing to NetCDF. Default is `False`.
+        """
+        if remove_earthkit_attrs:
+            ds = self._remove_earthkit_attrs()
+        else:
+            ds = self._obj
+
+        return ds.to_netcdf(*args, **kwargs)
+
+    def to_device(self, device, *, array_backend=None, array_namespace=None, **kwargs):
+        """Return a new Dataset with every data variable on the specified ``device``."""
+        from earthkit.utils.array import convert
+
+        if array_backend is not None:
+            if array_namespace is not None:
+                raise ValueError("Cannot specify both 'array_backend' and 'array_namespace' arguments")
+            array_namespace = array_backend
+
+        ds = self._obj.copy(deep=False)
+        for name, var in ds.data_vars.items():
+            ds[name].data = convert(var.data, device=device, array_namespace=array_namespace, **kwargs)
+        return ds
+
+    def set(self, *args, **kwargs):
+        """Return a new Dataset with updated attributes on the reference field of each variable."""
+        if not args and not kwargs:
+            return self._obj
+
+        ds = self._obj.copy(deep=False)
+        for name in list(self._obj.data_vars.keys()):
+            da = ds[name]
+            da = da.earthkit.set(*args, **kwargs)
+            ds[name] = da
+        return ds
+
+    @property
+    def grid_spec(self):
+        """Return the grid specification of the DataSet."""
+        try:
+            # return grid spec of the first data variable
+            var = list(self._obj.data_vars.values())[0]
+            return var.earthkit.grid_spec
+
+        except Exception:
+            return None

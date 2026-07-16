@@ -14,8 +14,7 @@ import os
 import pytest
 
 from earthkit.data import config
-from earthkit.data.core.temporary import temp_directory
-from earthkit.data.core.temporary import temp_file
+from earthkit.data.core.temporary import temp_directory, temp_file
 
 
 def read_config_yaml(path=os.path.expanduser("~/.config/earthkit/data/config.yaml")):
@@ -63,6 +62,31 @@ def test_config_invalid():
     # invalid value
     with pytest.raises(ValueError):
         config.set("url-download-timeout", "A")
+
+
+@pytest.mark.parametrize(
+    "param,set_value,stored_value,raise_error",
+    [
+        ("check-out-of-date-urls", True, True, None),
+        ("check-out-of-date-urls", 1, True, None),
+        ("check-out-of-date-urls", 1.0, True, None),
+        ("check-out-of-date-urls", False, False, None),
+        ("check-out-of-date-urls", 0, False, None),
+        ("check-out-of-date-urls", 0.0, False, None),
+        ("check-out-of-date-urls", "true", True, None),
+        ("check-out-of-date-urls", "false", True, None),
+        ("check-out-of-date-urls", "1", True, None),
+        ("check-out-of-date-urls", "0", True, None),
+    ],
+)
+def test_config_set_bool(param, set_value, stored_value, raise_error):
+    with config.temporary():
+        if raise_error is None:
+            config.set(param, set_value)
+            assert config.get(param) == stored_value
+        else:
+            with pytest.raises(raise_error):
+                config.set(param, set_value)
 
 
 @pytest.mark.parametrize(
@@ -255,6 +279,6 @@ def test_config_env(monkeypatch, value, error):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

@@ -7,8 +7,7 @@
 # nor does it submit to any jurisdiction.
 
 import os
-from collections import defaultdict
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 
 SimplePart = namedtuple("SimplePart", ["offset", "length"])
 
@@ -54,7 +53,7 @@ class Part:
 
 
 def check_urls_and_parts(urls, parts):
-    """Check if urls and parts are compatible
+    """Check if urls and parts are compatible.
 
     When any of the ``urls`` contain a part ``parts`` must be None.
     """
@@ -148,7 +147,8 @@ class PathAndParts:
 
     def __init__(self, path, parts):
         """Should not be instantiated directly.
-        The public API are the factory methods."""
+        The public API are the factory methods.
+        """
         self.path = path
         self.parts = parts
 

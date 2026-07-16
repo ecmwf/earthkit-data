@@ -1,4 +1,4 @@
-# (C) Copyright 2020 ECMWF.
+# (C) Copyright 2022 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,1232 +7,228 @@
 # nor does it submit to any jurisdiction.
 #
 
-import math
-import warnings
 from abc import abstractmethod
-from collections import defaultdict
 
-import deprecation
-
-from earthkit.data.core import Base
-from earthkit.data.core.index import Index
-from earthkit.data.core.index import MaskIndex
-from earthkit.data.core.index import MultiIndex
-from earthkit.data.core.order import build_remapping
-from earthkit.data.decorators import cached_method
-from earthkit.data.decorators import detect_out_filename
-from earthkit.data.decorators import thread_safe_cached_property
-from earthkit.data.utils.metadata.args import metadata_argument
-from earthkit.utils.array import array_namespace as eku_array_namespace
-from earthkit.utils.array import convert as convert_array
-from earthkit.utils.array.convert import convert_dtype
+from earthkit.data.core import Encodable
+from earthkit.data.sources import Source
 
 
-def _bits_per_value_to_metadata(**kwargs):
-    # TODO: remove this function when save() and write() are removed
-    metadata = {}
-    bits_per_value = kwargs.pop("bits_per_value", None)
-    if bits_per_value is not None:
-        metadata = {"bitsPerValue": bits_per_value}
-    return metadata, kwargs
+def create_fieldlist(fields=None):
+    """Create a fieldlist object from the given fields.
+
+    Parameters
+    ----------
+    fields: iterable, :class:`~earthkit.data.core.field.Field`, None
+        Iterable of :class:`~earthkit.data.core.field.Field` objects. When it is None or empty,
+        an empty fieldlist is returned.
+
+    Returns
+    -------
+    :class:`~earthkit.data.indexing.simple.SimpleFieldList`, :class:`~earthkit.data.indexing.empty.EmptyFieldList`
+        A fieldlist object containing the given fields. When ``fields`` is None or empty, an
+        :class:`~earthkit.data.indexing.empty.EmptyFieldList` is returned. Otherwise a
+        :class:`~earthkit.data.indexing.simple.SimpleFieldList` is returned.
+
+    """
+    from earthkit.data.indexing.empty import EmptyFieldList
+    from earthkit.data.indexing.simple import SimpleFieldList
+
+    if fields is None or len(fields) == 0:
+        return EmptyFieldList()
+    else:
+        return SimpleFieldList(fields)
 
 
-class FieldListIndices:
-    def __init__(self, field_list):
-        self.fs = field_list
-        self.user_indices = dict()
+class FieldList(Source, Encodable):
+    """Base class for a FieldList.
 
-    @thread_safe_cached_property
-    def default_index_keys(self):
-        if len(self.fs) > 0:
-            return self.fs[0]._metadata.index_keys()
-        else:
-            return []
+    A FieldList is a collection of Fields. It is an immutable object that provides methods to access
+    the field values and metadata and allows iteration over the fields. It also provides methods to select
+    a subset of fields based on their metadata.
 
-    def _index_value(self, key):
-        values = set()
-        for f in self.fs:
-            v = f.metadata(key, default=None)
-            if v is not None:
-                values.add(v)
+    Implementations
+    ---------------
+    FieldList is an abstract class. All the concrete implementations are derived from
+    :class:`~earthkit.data.indexing.indexed.IndexFieldListBase`. This class is formed by
+    multiple inheritance with the :class:`~earthkit.data.core.index.Index` class that implements
+    indexing capabilities without specifying the actual indexed objects. It is still an abstract
+    class but provides concrete implementations for many of the FieldList methods. It also
+    implements fieldlist arithmetic.
 
-        return sorted(list(values))
+    Some of the concrete implementations are:
 
-    @thread_safe_cached_property
-    def default_indices(self):
-        indices = defaultdict(set)
-        keys = self.default_index_keys
-        for f in self.fs:
-            v = f.metadata(keys, default=None)
-            for i, k in enumerate(keys):
-                if v[i] is not None:
-                    indices[k].add(v[i])
-
-        return {k: sorted(list(v)) for k, v in indices.items()}
-
-    def indices(self, squeeze=False):
-        r = {**self.default_indices, **self.user_indices}
-
-        if squeeze:
-            return {k: v for k, v in r.items() if len(v) > 1}
-        else:
-            return r
-
-    def index(self, key):
-        if key in self.user_indices:
-            return self.user_indices[key]
-
-        if key in self.default_index_keys:
-            return self.default_indices[key]
-
-        self.user_indices[key] = self._index_value(key)
-        return self.user_indices[key]
+    - :class:`~earthkit.data.indexing.empty.EmptyFieldList` is a FieldList implementation that
+      contains no fields. It can be used when building fieldlists by concatenation.
+      of a FieldList with no fields. It can be used when building fieldlists by concatenation.
+    - :class:`~earthkit.data.indexing.simple.SimpleFieldList`: a FieldList containing a list fields.
+      Can be created from a list of fields by :obj:`from_fields` or the top
+      level earthkit-data :obj:`create_fieldlist` factory function.
+    - :class:`~earthkit.data.readers.grib.file.GribFieldListInFile`: a FieldList containing fields
+      from a GRIB file.
+    - :class:`~earthkit.data.readers.xarray.fieldlist.XArrayFieldList`: a FieldList containing fields
+      from an xarray Dataset.
 
 
-class Field(Base):
-    r"""Represent a Field."""
+    Creating a FieldList
+    ---------------------
+    A FieldList can be created by calling the :func:`to_fieldlist` method of a high level data object,
+    see :ref:`data-object` for more details.
 
-    @property
-    @deprecation.deprecated(deprecated_in="0.19.0", details="Use array_namespace instead")
-    def array_backend(self):
-        r""":obj:`ArrayBackend`: Return the array namespace of the field."""
-        return self.array_namespace
-
-    @property
-    def array_namespace(self):
-        r""":obj:`ArrayBackend`: Return the array namespace of the field."""
-        return eku_array_namespace(self._values())
+    A :class:`~earthkit.data.indexing.simple.SimpleFieldList` can also be created directly from
+    a list of fields by calling the :func:`from_fields` method, or alternatively by calling the
+    top level earthkit-data :func:`create_fieldlist` factory function.
+    """
 
     @abstractmethod
-    def _values(self, dtype=None):
-        r"""Return the raw values extracted from the underlying storage format
-        of the field.
-
-        Parameters
-        ----------
-        dtype: str, array.dtype or None
-            Typecode or data-type of the array. When it is :obj:`None` the default
-            type used by the underlying data accessor is used. For GRIB it is
-            ``float64``.
-
-        The original shape and array type of the raw values are kept.
-
-        Returns
-        -------
-        array-like
-            Field values.
-
-        """
-        self._not_implemented()
-
-    @property
-    def values(self):
-        r"""array-like: Get the values stored in the field as a 1D array."""
-        return self._flatten(self._values())
-
-    @property
-    @abstractmethod
-    def _metadata(self):
-        r"""Metadata: Get the object representing the field's metadata."""
-        self._not_implemented()
-
-    def to_numpy(self, flatten=False, dtype=None, index=None):
-        r"""Return the values stored in the field as an ndarray.
-
-        Parameters
-        ----------
-        flatten: bool
-            When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
-            :obj:`shape` is returned.
-        dtype: str, numpy.dtype or None
-            Typecode or data-type of the array. When it is :obj:`None` the default
-            type used by the underlying data accessor is used. For GRIB it is ``float64``.
-        index: ndarray indexing object, optional
-            The index of the values and to be extracted. When it
-            is None all the values are extracted
-
-        Returns
-        -------
-        ndarray
-            Field values
-
-        """
-        v = convert_array(self._values(dtype=dtype), array_namespace="numpy")
-        shape = self._required_shape(flatten)
-        if shape != v.shape:
-            v = v.reshape(shape)
-        if index is not None:
-            v = v[index]
-        return v
-
-    def to_array(self, flatten=False, dtype=None, array_backend=None, array_namespace=None, device=None, index=None):
-        r"""Return the values stored in the field.
-
-        Parameters
-        ----------
-        flatten: bool
-            When it is True a flat array is returned. Otherwise an array with the field's
-            :obj:`shape` is returned.
-        dtype: str, array.dtype or None
-            Typecode or data-type of the array. When it is :obj:`None` the default
-            type used by the underlying data accessor is used. For GRIB it is ``float64``.
-        array_backend: str, array_namespace or None
-            The array namespace to be used. When it is :obj:`None` the underlying array format
-            of the field is used. **Deprecated since version 0.19.0**. Use ``array_namespace`` instead.
-            In versions before 0.19.0 an :obj:`ArrayBackend` was also accepted here, which is no longer
-            the case.
-        array_namespace: str, array_namespace or None
-            The array namespace to be used. When it is :obj:`None` the underlying array format
-            of the field is used. **New in version 0.19.0**.
-        device: str or None
-            The device where the array will be allocated. When it is :obj:`None` the default device is used.
-        index: array indexing object, optional
-            The index of the values and to be extracted. When it
-            is None all the values are extracted
-
-        Returns
-        -------
-        array-array
-            Field values.
-
-        """
-        if array_backend is not None:
-            warnings.warn(
-                "to_array(): 'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning
-            )
-            if array_namespace is not None:
-                raise ValueError("to_array(): only one of array_backend and array_namespace can be specified")
-            array_namespace = array_backend
-
-        v = self._values(dtype=dtype)
-        if array_namespace is not None:
-            v = convert_array(v, array_namespace=array_namespace, device=device)
-
-        v = self._reshape(v, flatten)
-        if index is not None:
-            v = v[index]
-        return v
-
-    def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None, index=None):
-        r"""Return the values and/or the geographical coordinates for each grid point.
-
-        Parameters
-        ----------
-        keys: :obj:`str`, :obj:`list` or :obj:`tuple`
-            Specifies the type of data to be returned. Any combination of "lat", "lon" and "value"
-            is allowed here.
-        flatten: bool
-            When it is True a flat array per key is returned. Otherwise an array with the field's
-            :obj:`shape` is returned for each key.
-        dtype: str, array.dtype or None
-            Typecode or data-type of the arrays. When it is :obj:`None` the default
-            type used by the underlying data accessor is used. For GRIB it is ``float64``.
-        index: array indexing object, optional
-            The index of the values and or the latitudes/longitudes to be extracted. When it
-            is None all the values and/or coordinates are extracted.
-
-        Returns
-        -------
-        array-like
-            An multi-dimensional array containing one array per key is returned
-            (following the order in ``keys``). The underlying array format
-            of the field is used. When ``keys`` is a single value only the
-            array belonging to the key is returned.
-
-        Examples
-        --------
-        - :ref:`/examples/grib_lat_lon_value.ipynb`
-
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
-        >>> d = ds[0].data()
-        >>> d.shape
-        (3, 7, 12)
-        >>> d[0, 0, 0]  # first latitude
-        90.0
-        >>> d[1, 0, 0]  # first longitude
-        0.0
-        >>> d[2, 0, 0]  # first value
-        272.56417847
-        >>> d = ds[0].data(keys="lon")
-        >>> d.shape
-        (7, 12)
-        >>> d[0, 0]  # first longitude
-        0.0
-
-        See Also
-        --------
-        to_latlon
-        to_points
-        to_numpy
-        values
-
-        """
-        _keys = dict(
-            lat=self._metadata.geography.latitudes,
-            lon=self._metadata.geography.longitudes,
-            value=self._values,
-        )
-
-        if isinstance(keys, str):
-            keys = [keys]
-
-        for k in keys:
-            if k not in _keys:
-                raise ValueError(f"data: invalid argument: {k}")
-
-        r = {}
-        for k in keys:
-            # TODO: convert dtype
-            v = _keys[k](dtype=dtype)
-            if v is None:
-                raise ValueError(f"data: {k} not available")
-            v = self._reshape(v, flatten)
-            if index is not None:
-                v = v[index]
-            r[k] = v
-
-        # convert latlon to array format
-        ll = {k: r[k] for k in r if k != "value"}
-        if ll:
-            sample = r.get("value", None)
-            if sample is None:
-                sample = self._values(dtype=dtype)
-            target_xp = eku_array_namespace(sample)
-            device = target_xp.device(sample)
-            target_dtype = None
-            if dtype is not None:
-                target_dtype = convert_dtype(dtype, target_xp)
-
-            for k, v in ll.items():
-                r[k] = convert_array(v, array_namespace=target_xp, device=device)
-                if target_dtype is not None:
-                    r[k] = target_xp.astype(r[k], target_dtype, copy=False)
-
-        r = list(r.values())
-        if len(r) == 1:
-            return r[0]
-        else:
-            return eku_array_namespace(r[0]).stack(r)
-
-    def to_points(self, flatten=False, dtype=None, index=None):
-        r"""Return the geographical coordinates in the data's original
-        Coordinate Reference System (CRS).
-
-        Parameters
-        ----------
-        flatten: bool
-            When it is True 1D arrays are returned. Otherwise arrays with the field's
-            :obj:`shape` are returned.
-        dtype: str, array.dtype or None
-            Typecode or data-type of the arrays. When it is :obj:`None` the default
-            type used by the underlying data accessor is used. For GRIB it is
-            ``float64``.
-        index: array indexing object, optional
-            The index of the coordinates to be extracted. When it is None
-            all the values are extracted.
-
-        Returns
-        -------
-        dict
-            Dictionary with items "x" and "y", containing the arrays of the x and
-            y coordinates, respectively. The underlying array format
-            of the field is used.
-
-        Raises
-        ------
-        ValueError
-            When the coordinates in the data's original CRS are not available.
-
-        See Also
-        --------
-        to_latlon
-
-        """
-        x = self._metadata.geography.x(dtype=dtype)
-        y = self._metadata.geography.y(dtype=dtype)
-        r = {}
-        if x is not None and y is not None:
-            x = self._reshape(x, flatten)
-            y = self._reshape(y, flatten)
-            if index is not None:
-                x = x[index]
-                y = y[index]
-            r = dict(x=x, y=y)
-        elif self.projection().CARTOPY_CRS == "PlateCarree":
-            lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
-            return dict(x=lon, y=lat)
-        else:
-            raise ValueError("to_points(): geographical coordinates in original CRS are not available")
-
-        # convert values to array format
-        assert r
-        sample = self._values(dtype=dtype)
-        target_xp = eku_array_namespace(sample)
-        device = target_xp.device(sample)
-        target_dtype = None
-        if dtype is not None:
-            target_dtype = convert_dtype(dtype, target_xp)
-
-        for k, v in r.items():
-            r[k] = convert_array(v, array_namespace=target_xp, device=device)
-            if target_dtype is not None:
-                r[k] = target_xp.astype(r[k], target_dtype, copy=False)
-        return r
-
-    def to_latlon(self, flatten=False, dtype=None, index=None):
-        r"""Return the latitudes/longitudes of all the gridpoints in the field.
-
-        Parameters
-        ----------
-        flatten: bool
-            When it is True 1D arrays are returned. Otherwise arrays with the field's
-            :obj:`shape` are returned.
-        dtype: str, array.dtype or None
-            Typecode or data-type of the arrays. When it is :obj:`None` the default
-            type used by the underlying data accessor is used. For GRIB it is
-            ``float64``.
-        index: array indexing object, optional
-            The index of the latitudes/longitudes to be extracted. When it is None
-            all the values are extracted.
-
-        Returns
-        -------
-        dict
-            Dictionary with items "lat" and "lon", containing the arrays of the latitudes and
-            longitudes, respectively. The underlying array format
-            of the field is used.
-
-        See Also
-        --------
-        to_points
-
-        """
-        lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
-        return dict(lat=lat, lon=lon)
-
-    def grid_points(self):
-        r = self.to_latlon(flatten=True)
-        return r["lat"], r["lon"]
-
-    def grid_points_unrotated(self):
-        lat = self._metadata.geography.latitudes_unrotated()
-        lon = self._metadata.geography.longitudes_unrotated()
-        return lat, lon
-
-    @property
-    def rotation(self):
-        return self._metadata.geography.rotation
-
-    @property
-    def resolution(self):
-        return self._metadata.geography.resolution()
-
-    @property
-    def mars_grid(self):
-        return self._metadata.geography.mars_grid()
-
-    @property
-    def mars_area(self):
-        return self._metadata.geography.mars_area()
-
-    @property
-    def shape(self):
-        r"""tuple: Get the shape of the field.
-
-        For structured grids the shape is a tuple in the form of (Nj, Ni) where:
-
-        - ni: the number of gridpoints in i direction (longitude for a regular latitude-longitude grid)
-        - nj: the number of gridpoints in j direction (latitude for a regular latitude-longitude grid)
-
-        For other grid types the number of gridpoints is returned as ``(num,)``
-        """
-        return self._metadata.geography.shape()
-
-    def projection(self):
-        r"""Return information about the projection.
-
-        Returns
-        -------
-        :obj:`Projection`
-
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-        >>> ds.projection()
-        <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
-        Name: unknown
-        Axis Info [cartesian]:
-        - E[east]: Easting (unknown)
-        - N[north]: Northing (unknown)
-        - h[up]: Ellipsoidal height (metre)
-        Area of Use:
-        - undefined
-        Coordinate Operation:
-        - name: unknown
-        - method: Equidistant Cylindrical
-        Datum: Unknown based on WGS 84 ellipsoid
-        - Ellipsoid: WGS 84
-        - Prime Meridian: Greenwich
-        >>> ds.projection().to_proj_string()
-        '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
-        """
-        return self._metadata.geography.projection()
-
-    def bounding_box(self):
-        r"""Return the bounding box of the field.
-
-        Returns
-        -------
-        :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
-        """
-        return self._metadata.geography.bounding_box()
-
-    def datetime(self):
-        r"""Return the date and time of the field.
-
-        Returns
-        -------
-        dict of datatime.datetime
-            Dict with items "base_time" and "valid_time".
-
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
-        >>> ds[4].datetime()
-        {'base_time': datetime.datetime(2020, 12, 21, 12, 0),
-        'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
-
-        """
-        return self._metadata.datetime()
-
-    def valid_datetime(self):
-        self._not_implemented()
-
-    def base_datetime(self):
-        self._not_implemented()
-
-    def h_datetime(self):
-        self._not_implemented()
-
-    def an_datetime(self):
-        self._not_implemented()
-
-    def indexing_datetime(self):
-        self._not_implemented()
-
-    def metadata(self, *keys, astype=None, remapping=None, patches=None, **kwargs):
-        r"""Return metadata values from the field.
-
-        When called without any arguments returns a :obj:`Metadata` object.
-
-        Parameters
-        ----------
-        *keys: tuple
-            Positional arguments specifying metadata keys. Can be empty, in this case all
-            the keys from the specified ``namespace`` will
-            be used. (See examples below).
-        astype: type name, :obj:`list` or :obj:`tuple`
-            Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
-            Otherwise, must have same the number of elements as ``keys``. Only used when
-            ``keys`` is not empty.
-        remapping: dict, optional
-            Creates new metadata keys from existing ones that we can refer to in ``*args`` and
-            ``**kwargs``. E.g. to define a new
-            key "param_level" as the concatenated value of the "param" and "level" keys use::
-
-                remapping={"param_level": "{param}{level}"}
-        **kwargs: dict, optional
-            Other keyword arguments:
-
-            * namespace: :obj:`str`, :obj:`list`, :obj:`tuple`, :obj:`None` or :obj:`all`
-                The namespace to choose the ``keys`` from. When ``keys`` is empty and ``namespace`` is
-                :obj:`all` all the available namespaces will be used. When ``keys`` is non empty
-                ``namespace`` cannot specify multiple values and it cannot be :obj:`all`. When
-                ``namespace`` is None or empty str all the available keys will be used
-                (without a namespace qualifier).
-
-            * default: value, optional
-                Specifies the same default value for all the ``keys`` specified. When ``default`` is
-                **not present** and a key is not found or its value is a missing value
-                :obj:`metadata` will raise KeyError.
-
-        Returns
-        -------
-        single value, :obj:`list`, :obj:`tuple`, :obj:`dict` or :obj:`Metadata`
-            - when called without any arguments returns a :obj:`Metadata` object
-            - when ``keys`` is not empty:
-                - returns single value when ``keys`` is a str
-                - otherwise returns the same type as that of ``keys`` (:obj:`list` or :obj:`tuple`)
-            - when ``keys`` is empty:
-                - when ``namespace`` is None or an empty str returns a :obj:`dict` with all
-                  the available keys and values
-                - when ``namespace`` is :obj:`str` returns a :obj:`dict` with the keys and values
-                  in that namespace
-                - otherwise returns a :obj:`dict` with one item per namespace (dict of dict)
-
-        Raises
-        ------
-        KeyError
-            If no ``default`` is set and a key is not found in the message or it has a missing value.
-
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-
-        Calling without arguments:
-
-        >>> r = ds[0].metadata()
-        >>> r
-        <earthkit.data.readers.grib.metadata.GribMetadata object at 0x164ace170>
-        >>> r["name"]
-        '2 metre temperature'
-
-        Getting keys with their native type:
-
-        >>> ds[0].metadata("param")
-        '2t'
-        >>> ds[0].metadata("param", "units")
-        ('2t', 'K')
-        >>> ds[0].metadata(("param", "units"))
-        ('2t', 'K')
-        >>> ds[0].metadata(["param", "units"])
-        ['2t', 'K']
-        >>> ds[0].metadata(["param"])
-        ['2t']
-        >>> ds[0].metadata("badkey")
-        KeyError: 'badkey'
-        >>> ds[0].metadata("badkey", default=None)
-        <BLANKLINE>
-
-        Prescribing key types:
-
-        >>> ds[0].metadata("centre", astype=int)
-        98
-        >>> ds[0].metadata(["paramId", "centre"], astype=int)
-        [167, 98]
-        >>> ds[0].metadata(["centre", "centre"], astype=[int, str])
-        [98, 'ecmf']
-
-        Using namespaces:
-
-        >>> ds[0].metadata(namespace="parameter")
-        {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature', 'shortName': '2t'}
-        >>> ds[0].metadata(namespace=["parameter", "vertical"])
-        {'parameter': {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature',
-         'shortName': '2t'},
-         'vertical': {'typeOfLevel': 'surface', 'level': 0}}
-        >>> r = ds[0].metadata(namespace=all)
-        >>> r.keys()
-        dict_keys(['default', 'ls', 'geography', 'mars', 'parameter', 'statistics', 'time', 'vertical'])
-        >>> r = ds[0].metadata(namespace=None)
-        >>> len(r)
-        186
-        >>> r["name"]
-        '2 metre temperature'
-        """
-
-        if remapping is not None or patches is not None:
-            remapping = build_remapping(remapping, patches)
-            return remapping(self.metadata)(*keys, astype=astype, **kwargs)
-
-        # when called without arguments returns the metadata object
-        if len(keys) == 0 and astype is None and not kwargs:
-            return self._metadata
-
-        namespace = kwargs.pop("namespace", None)
-        key, namespace, astype, key_arg_type = metadata_argument(*keys, namespace=namespace, astype=astype)
-
-        assert isinstance(key, list)
-        assert isinstance(namespace, (list, tuple))
-
-        if key:
-            assert isinstance(astype, (list, tuple))
-            if namespace and namespace[0] != "default":
-                key = [namespace[0] + "." + k for k in key]
-
-            raise_on_missing = "default" not in kwargs
-            default = kwargs.pop("default", None)
-
-            r = [
-                self._metadata.get(
-                    k,
-                    default=default,
-                    astype=kt,
-                    raise_on_missing=raise_on_missing,
-                    **kwargs,
-                )
-                for k, kt in zip(key, astype)
-            ]
-
-            if key_arg_type is str:
-                return r[0]
-            elif key_arg_type is tuple:
-                return tuple(r)
-            else:
-                return r
-        elif namespace:
-            if all in namespace:
-                namespace = self._metadata.namespaces()
-
-            r = {ns: self._metadata.as_namespace(ns) for ns in namespace}
-            if len(r) == 1:
-                return r[namespace[0]]
-            else:
-                return r
-        else:
-            return self._metadata.as_namespace(None)
-
-    def dump(self, namespace=all, **kwargs):
-        r"""Generate dump with all the metadata keys belonging to ``namespace``.
-
-        In a Jupyter notebook it is represented as a tabbed interface.
-
-        Parameters
-        ----------
-        namespace: :obj:`str`, :obj:`list`, :obj:`tuple`, :obj:`None` or :obj:`all`
-            The namespace to dump. The following `namespace` values
-            have a special meaning:
-
-            - :obj:`all`: all the available namespaces will be used.
-            - None or empty str: all the available keys will be used
-                (without a namespace qualifier)
-
-        **kwargs: dict, optional
-            Other keyword arguments used for testing only
-
-        Returns
-        -------
-        NamespaceDump
-            Dict-like object with one item per namespace. In a Jupyter notebook represented
-            as a tabbed interface to browse the dump contents.
-
-        Examples
-        --------
-        :ref:`/examples/grib_metadata.ipynb`
-
-        """
-        return self._metadata.dump(namespace=namespace, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", details="Use to_target() instead")
-    def save(self, filename, append=False, **kwargs):
-        r"""Write the field into a file.
-
-        Parameters
-        ----------
-        filename: str, optional
-            The target file path, if not defined attempts will be made to detect the filename
-        append: bool, optional
-            When it is true append data to the target file. Otherwise
-            the target file be overwritten if already exists. Default is False
-        **kwargs: dict, optional
-            Other keyword arguments passed to :obj:`write`.
-        """
-        metadata = kwargs.pop("metadata", None)
-        if metadata is None:
-            metadata, kwargs = _bits_per_value_to_metadata(**kwargs)
-        self.to_target("file", filename, append=append, metadata=metadata, **kwargs)
-        # the original implementation
-        # flag = "wb" if not append else "ab"
-        # with open(filename, flag) as f:
-        #     self.write(f, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", details="Use to_target() instead")
-    def write(self, f, **kwargs):
-        metadata = kwargs.pop("metadata", None)
-        if metadata is None:
-            metadata, kwargs = _bits_per_value_to_metadata(**kwargs)
-        self.to_target("file", f, metadata=metadata, **kwargs)
-
-    def to_target(self, target, *args, **kwargs):
-        r"""Write the field into a target object.
-
-        Parameters
-        ----------
-        target: object
-            The target object to write the field into.
-        *args: tuple
-            Positional arguments used to specify the target object.
-        **kwargs: dict, optional
-            Other keyword arguments used to write the field into the target object.
-        """
-        from earthkit.data.targets import to_target
-
-        to_target(target, *args, data=self, **kwargs)
-
-    def default_encoder(self):
-        return self._metadata.data_format()
-
-    def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
-        return encoder._encode_field(self, **kwargs)
-
-    def __getitem__(self, key):
-        """Return the value of the metadata ``key``."""
-        return self._metadata.get(key)
-
-    @abstractmethod
-    def message(self):
-        r"""Return a buffer containing the encoded message for message based formats (e.g. GRIB).
-
-        Returns
-        -------
-        bytes
-        """
-        self._not_implemented()
-
-    def __repr__(self):
-        return "%s(%s,%s,%s,%s,%s,%s)" % (
-            self.__class__.__name__,
-            self._metadata.get("shortName", None),
-            self._metadata.get("levelist", None),
-            self._metadata.get("date", None),
-            self._metadata.get("time", None),
-            self._metadata.get("step", None),
-            self._metadata.get("number", None),
-        )
-
-    def _attributes(self, names, remapping=None, joiner=None, default=None):
-        result = {}
-        metadata = self._metadata.get
-        if remapping is not None:
-            metadata = remapping(metadata, joiner=joiner)
-
-        for name in names:
-            result[name] = metadata(name, default=default)
-        return result
-
-        # return {name: metadata(name) for name in names}
-
-    @abstractmethod
-    def clone(self, *, values=None, metadata=None, **kwargs):
-        r"""Create a new :class:`ClonedField` the with updated values and/or metadata.
-
-        Parameters
-        ----------
-        values: array-like or None
-            The values to be stored in the new :class:`ClonedField`. When it is ``None`` the resulting
-            :class:`ClonedField` will access the values from the original field.
-        metadata: dict, :class:`Metadata` or None
-            If it is a dictionary, it is merged with ``**kwargs`` and interpreted in the same way
-            as ``**kwargs``. If it is a :class:`Metadata` object, it is used as the new metadata. In
-            this case ``**kwargs`` cannot be used.
-        **kwargs: dict, optional
-            Keys and values to update the metadata with. Metadata values can also be ``callables``
-            with the following positional arguments: original_field, key, original_metadata.
-            The new :class:`ClonedField` will contain a reference to the original metadata object and
-            keys not present in ``kwargs`` will be accessed from the original field.
-
-        Returns
-        -------
-        :class:`ClonedField`
-            The new field with updated values and/or metadata keeping a
-            reference to the original field.
-
-        Raises
-        ------
-        ValueError
-            If ``metadata`` is a :class:`Metadata` object and ``**kwargs`` is not empty.
-
-        """
-        self._not_implemented()
-
-    def copy(
-        self,
-        *,
-        values=None,
-        flatten=False,
-        dtype=None,
-        array_backend=None,
-        array_namespace=None,
-        device=None,
-        metadata=None,
-    ):
-        r"""Create a new :class:`ArrayField` by copying the values and metadata.
-
-        Parameters
-        ----------
-        values: array-like or None
-            The values to be stored in the new :class:`Field`. When it is ``None`` the values
-            extracted from the original field by using :obj:`to_array` with ``flatten``, ``dtype``
-            and ``array_backend`` and copied to the new field.
-        flatten: bool
-            Control the shape of the values when they are extracted from the original field.
-            When ``True``, flatten the array, otherwise the field's shape is kept. Only used when
-            ``values`` is not provided.
-        dtype: str, array.dtype or None
-            Control the typecode or data-type of the values when they are extracted from
-            the original field. If :obj:`None`, the default type used by the underlying
-            data accessor is used. For GRIB it is ``float64``. Only used when  ``values``
-            is not provided.
-        array_backend: str, array_namespace or None
-            Control the array namespace of the values when they are extracted from
-            the original field. If :obj:`None`, the underlying array format
-            of the field is used. Only used when ``values`` is not provided.
-            **Deprecated since version 0.19.0**. Use ``array_namespace`` instead.
-            In versions before 0.19.0 an :obj:`ArrayBackend` was also accepted here, which is
-            no longer the case.
-        array_namespace: str, array_namespace or None
-            Control the array namespace of the values when they are extracted from
-            the original field.  When it is :obj:`None` the underlying array format
-            of the field is used. **New in version 0.19.0**.
-        device: str or None
-            The device where the array will be allocated. When it is :obj:`None` the default device is used.
-        metadata: :class:`Metadata` or None
-            The metadata to be stored in the new :class:`Field`. When it is :obj:`None`
-            a copy of the metadata of the original field is used.
-
-        Returns
-        -------
-        :class:`ArrayField`
-        """
-        from earthkit.data.sources.array_list import ArrayField
-
-        if values is None:
-            values = self.to_array(
-                flatten=flatten,
-                dtype=dtype,
-                array_backend=array_backend,
-                array_namespace=array_namespace,
-                device=device,
-            )
-
-        if metadata is None:
-            metadata = self._metadata.override()
-
-        return ArrayField(
-            values,
-            metadata,
-        )
-
-    def to_xarray(self, *args, **kwargs):
-        """Convert the Field into an Xarray Dataset.
-
-        Parameters
-        ----------
-        *args: tuple
-            Positional arguments passed to :obj:`FieldList.to_xarray`.
-        **kwargs: dict, optional
-            Other keyword arguments passed to :obj:`FieldList.to_xarray`.
-
-        Returns
-        -------
-        Xarray Dataset
-
-        """
-        return self._to_fieldlist().to_xarray(*args, **kwargs)
-
-    def ls(self, *args, **kwargs):
-        r"""Generate a list like summary using a set of metadata keys.
-
-        Parameters
-        ----------
-        *args: tuple
-            Positional arguments passed to :obj:`FieldList.ls`.
-        **kwargs: dict, optional
-            Other keyword arguments passed to :obj:`FieldList.ls`.
-
-        Returns
-        -------
-        Pandas DataFrame
-            DataFrame with one row.
-
-        """
-        return self._to_fieldlist().ls(*args, **kwargs)
-
-    def describe(self, *args, **kwargs):
-        r"""Generate a summary of the Field."""
-        return self._to_fieldlist().describe(*args, **kwargs)
-
-    def _to_fieldlist(self):
-        return FieldList.from_fields([self])
-
-    @staticmethod
-    def _flatten(v):
-        """Flatten the array without copying the data."
-
-        Parameters
-        ----------
-        v: array-like
-            The array to be flattened.
-
-        Returns
-        -------
-        array-like
-            1-D array.
-        """
-        if len(v.shape) != 1:
-            n = math.prod(v.shape)
-            n = (n,)
-            return eku_array_namespace(v).reshape(v, n)
-        return v
-
-    def _reshape(self, v, flatten):
-        """Reshape the array to the required shape."""
-        shape = self._required_shape(flatten)
-        if shape != v.shape:
-            v = eku_array_namespace(v).reshape(v, shape)
-        return v
-
-    def _required_shape(self, flatten, shape=None):
-        """Return the required shape of the array."""
-        if shape is None:
-            shape = self.shape
-        return shape if not flatten else (math.prod(shape),)
-
-    def _array_matches(self, array, flatten=False, dtype=None):
-        """Check if the array matches the field and conditions."""
-        shape = self._required_shape(flatten)
-        return shape == array.shape and (dtype is None or dtype == array.dtype)
-
-
-class FieldList(Index):
-    r"""Represent a list of :obj:`Field` \s."""
-
-    def __init__(self, **kwargs):
-        if "array_backend" in kwargs:
-            import warnings
-
-            warnings.warn(
-                ("array_backend option is not supported any longer in FieldList!" " Use to_fieldlist() instead"),
-                DeprecationWarning,
-            )
-            kwargs.pop("array_backend", None)
-
-        super().__init__(**kwargs)
-
-    def _init_from_mask(self, index):
+    def __getitem__(self, index):
         pass
 
-    def _init_from_multi(self, index):
+    @abstractmethod
+    def __len__(self):
         pass
 
     @staticmethod
-    def from_fields(fields):
-        r"""Create a :class:`SimpleFieldList`.
+    def from_fields(fields=None):
+        r"""Create a fieldlist from the given fields.
 
         Parameters
         ----------
-        fields: iterable
-            Iterable of :obj:`Field` objects.
+        fields: iterable, :class:`~earthkit.data.core.field.Field`, None
+            Iterable of :class:`~earthkit.data.core.field.Field` objects. When it is None or empty,
+            an empty fieldlist is returned.
 
         Returns
         -------
-        :class:`SimpleFieldList`
+        :class:`~earthkit.data.indexing.simple.SimpleFieldList`, :class:`~earthkit.data.indexing.empty.EmptyFieldList`
+            A fieldlist object containing the given fields. When ``fields`` is None or empty, an
+            :class:`~earthkit.data.indexing.empty.EmptyFieldList` is returned. Otherwise a
+            :class:`~earthkit.data.indexing.simple.SimpleFieldList` is returned.
 
         """
-        from earthkit.data.indexing.fieldlist import SimpleFieldList
+        return create_fieldlist(fields)
 
-        return SimpleFieldList([f for f in fields])
-
-    @staticmethod
-    def from_numpy(array, metadata):
-        return FieldList.from_array(array, metadata)
-
-    @staticmethod
-    def from_array(array, metadata):
-        r"""Create an :class:`SimpleFieldList`.
-
-        Parameters
-        ----------
-        array: array-like, list
-            The fields' values. When it is a list it must contain one array per field.
-        metadata: list, :class:`Metadata`
-            The fields' metadata. Must contain one :class:`Metadata` object per field. Or
-            it can be a single :class:`Metadata` object when all the fields have the same metadata.
-
-        In the generated :class:`SimpleFieldList`, each field is represented by an array
-        storing the field values and a :class:`MetaData` object holding
-        the field metadata. The shape and dtype of the array is controlled by the ``kwargs``.
-        """
-        from earthkit.data.sources.array_list import from_array
-
-        return from_array(array, metadata)
-
-    def ignore(self):
-        # When the concrete type is Fieldlist we assume the object was
-        # created with Fieldlist() i.e. it is empty. We ignore it from
-        # all the merge operations.
-        if type(self) is FieldList:
-            return True
-        else:
-            return False
-
-    @thread_safe_cached_property
-    def _md_indices(self):
-        return FieldListIndices(self)
-
-    def indices(self, squeeze=False):
-        r"""Return the unique, sorted values for a set of metadata keys (see below)
-        from all the fields. Individual keys can be also queried by :obj:`index`.
-
-        Parameters
-        ----------
-        squeeze : False
-            When True only returns the metadata keys that have more than one values.
-
-        Returns
-        -------
-        dict
-            Unique, sorted metadata values from all the
-            :obj:`Field`\ s.
-
-        See Also
-        --------
-        index
-
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
-        >>> ds.indices()
-        {'class': ['od'], 'stream': ['oper'], 'levtype': ['pl'], 'type': ['an'],
-        'expver': ['0001'], 'date': [20180801], 'time': [1200], 'domain': ['g'],
-        'number': [0], 'levelist': [300, 400, 500, 700, 850, 1000],
-        'param': ['t', 'u', 'v']}
-        >>> ds.indices(squeeze=True)
-        {'levelist': [300, 400, 500, 700, 850, 1000], 'param': ['t', 'u', 'v']}
-        >>> ds.index("level")
-        [300, 400, 500, 700, 850, 1000]
-
-        By default :obj:`indices` uses the keys from the
-        "mars" :xref:`eccodes_namespace`. Keys with no valid values are not included. Keys
-        that :obj:`index` is called with are automatically added to the original set of keys
-        used in :obj:`indices`.
-
-        """
-        return self._md_indices.indices(squeeze=squeeze)
-
-    def index(self, key):
-        r"""Return the unique, sorted values of the specified metadata ``key`` from all the fields.
-        ``key`` will be automatically added to the keys returned by :obj:`indices`.
-
-        Parameters
-        ----------
-        key : str
-            Metadata key.
-
-        Returns
-        -------
-        list
-            Unique, sorted values of ``key`` from all the
-            :obj:`Field`\ s.
-
-        See Also
-        --------
-        index
-
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
-        >>> ds.index("level")
-        [300, 400, 500, 700, 850, 1000]
-
-        """
-        return self._md_indices.index(key)
-
-    def _as_array(self, accessor, empty_array_namespace=None, **kwargs):
-        """Use pre-allocated target array to store the field values."""
-
-        def _vals(f):
-            return getattr(f, accessor)(**kwargs) if not is_property else getattr(f, accessor)
-
-        n = len(self)
-        if n > 0:
-            it = iter(self)
-            first = next(it)
-            is_property = not callable(getattr(first, accessor, None))
-            vals = _vals(first)
-            first = None
-            xp = eku_array_namespace(vals)
-            shape = (n, *vals.shape)
-            r = xp.empty(shape, dtype=vals.dtype, device=xp.device(vals))
-            r[0] = vals
-            for i, f in enumerate(it, start=1):
-                r[i] = _vals(f)
-        else:
-            # create an empty array using the right namespace and dtype
-            # TODO: get_backend() should return the default backend for None
-            xp = eku_array_namespace(empty_array_namespace if empty_array_namespace is not None else "numpy")
-            r = xp.empty((0,), dtype=kwargs.get("dtype"))
-
-        return r
-
-    def to_numpy(self, **kwargs):
-        r"""Return all the fields' values as an ndarray. It is formed as the array of the
-        :obj:`data.core.fieldlist.Field.to_numpy` values per field.
-
-        Parameters
-        ----------
-        **kwargs: dict, optional
-            Keyword arguments passed to :obj:`data.core.fieldlist.Field.to_numpy`
-
-        Returns
-        -------
-        ndarray
-            Array containing the field values.
-
-        See Also
-        --------
-        to_array
-        values
-        """
-        return self._as_array("to_numpy", empty_array_namespace="numpy", **kwargs)
-
-    def to_array(self, **kwargs):
-        r"""Return all the fields' values as an array. It is formed as the array of the
-        :obj:`data.core.fieldlist.Field.to_array` values per field.
-
-        Parameters
-        ----------
-        **kwargs: dict, optional
-            Keyword arguments passed to :obj:`data.core.fieldlist.Field.to_array`
+    @property
+    @abstractmethod
+    def values(self):
+        """Return the values of all the fields as a 2D array.
 
         Returns
         -------
         array-like
-            Array containing the field values.
+            Array containing the values of all the fields. The return array is
+            formed as the array of the flattened values extracted from each field by
+            :obj:`Field.values <earthkit.data.core.field.Field.values>`.
 
         See Also
         --------
-        values
-        to_numpy
-        """
-        ns = kwargs.get("array_namespace", None)
-        if ns is None:
-            ns = eku_array_namespace(kwargs.get("array_backend", None))
-
-        return self._as_array("to_array", empty_array_namespace=ns, **kwargs)
-
-    @property
-    def values(self):
-        r"""array-like: Get all the fields' values as a 2D array. It is formed as the array of
-        :obj:`GribField.values <data.readers.grib.codes.GribField.values>` per field.
-
-        See Also
-        --------
+        earthkit.data.core.field.Field.values
         to_array
 
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-        >>> for f in ds:
+        Examples
+        --------
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "test.grib").to_fieldlist()
+        >>> for f in fl:
         ...     print(f.values.shape)
         ...
         (209,)
         (209,)
-        >>> v = ds.values
+        >>> v = fl.values
         >>> v.shape
         (2, 209)
         >>> v[0][:3]
         array([262.78027344, 267.44726562, 268.61230469])
 
         """
-        return self._as_array("values")
+        pass
 
+    @abstractmethod
+    def to_numpy(self, flatten=False, dtype=None, copy=True, index=None):
+        r"""Return the values of all the fields as a Numpy array.
+
+        Parameters
+        ----------
+        flatten: bool
+            When it is True the values are flattened per field. Otherwise an ndarray with the field's
+            :obj:`shape` is returned per field.
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the array. When it is :obj:`None` the default
+            type used by the underlying data accessor of the field is used. For GRIB it is ``float64``.
+        copy: bool
+            When it is True a copy of the data values per field is returned. Otherwise a view
+            is returned where possible.
+        index: ndarray indexing object, optional
+            The index of the values to be extracted per field. When it is None all the values are extracted.
+
+        Returns
+        -------
+        ndarray
+            Array containing the field values. It is formed as the array of values extracted by
+            :obj:`earthkit.data.core.field.Field.to_numpy` per field.
+
+        See Also
+        --------
+        :obj:`earthkit.data.core.field.Field.to_numpy`
+        values
+        to_array
+
+        Examples
+        --------
+        How-to examples:
+
+        - :ref:`/tutorials/grib/grib_array_namespace.ipynb`
+
+        """
+        pass
+
+    @abstractmethod
+    def to_array(self, **kwargs):
+        r"""Return the values of all the fields as an array.
+
+        It is formed as the array of the :obj:`earthkit.data.core.field.Field.to_array` values per field.
+
+        Parameters
+        ----------
+        flatten: bool
+            When it is True the values are flattened per field. Otherwise an array with the field's
+            :obj:`shape` is returned per field.
+        dtype: str, array.dtype or None
+            Typecode or data-type of the array. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is ``float64``.
+        copy: bool
+            When it is True a copy of the data values per field is returned. Otherwise a view
+            is returned where possible.
+        array_namespace: str, array_namespace or None
+            The array namespace to be used. When it is :obj:`None` the underlying array format
+            of the field is used. For GRIB it is "numpy".
+        device: str or None
+            The device where the array will be allocated. When it is :obj:`None` the default device is used.
+        index: array indexing object, optional
+            The index of the values to be extracted per field. When it is None all the values are extracted.
+            is None all the values are extracted.
+
+        Returns
+        -------
+        array-like
+            Array containing the field values. It is formed as the array of values extracted by
+            :obj:`earthkit.data.core.field.Field.to_array` per field.
+
+        See Also
+        --------
+        :obj:`earthkit.data.core.field.Field.to_array`
+        values
+        to_numpy
+
+        Examples
+        --------
+        How-to examples:
+
+        - :ref:`/tutorials/grib/grib_array_namespace.ipynb`
+
+        """
+        pass
+
+    @abstractmethod
     def data(
         self,
         keys=("lat", "lon", "value"),
@@ -1274,15 +270,28 @@ class FieldList(Index):
         ValueError
             When not all the fields have the same grid geometry.
 
+
+        See Also
+        --------
+        geography
+        to_numpy
+        values
+
+
         Examples
         --------
-        - :ref:`/examples/grib_lat_lon_value.ipynb`
+        How-to examples:
 
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
-        >>> len(ds)
+        - :ref:`/tutorials/grib/grib_lat_lon_value_ll.ipynb`
+        - :ref:`/tutorials/grib/grib_lat_lon_value_rgg.ipynb`
+
+        More examples:
+
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "test6.grib").to_fieldlist()
+        >>> len(fl)
         6
-        >>> d = ds.data()
+        >>> d = fl.data()
         >>> d.shape
         (8, 7, 12)
         >>> d[0, 0, 0]  # first latitude
@@ -1292,105 +301,209 @@ class FieldList(Index):
         >>> d[2:, 0, 0]  # first value per field
         array([272.56417847,  -6.28688049,   7.83348083, 272.53916931,
                 -4.89837646,   8.66096497])
-        >>> d = ds.data(keys="lon")
+        >>> d = fl.data(keys="lon")
         >>> d.shape
         (1, 7, 12)
         >>> d[0, 0, 0]  # first longitude
         0.0
 
-        See Also
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def geography(self):
+        """Return the geography of the FieldList.
+
+        Returns
+        -------
+        GeographyBase
+            If the fields in the FieldList have the same grid geometry, the returned geography is the one of
+            the first field. Otherwise an error is raised.
+
+        Raises
+        ------
+        ValueError
+            When not all the fields have the same grid geometry or the FieldList is empty.
+        """
+        pass
+
+    @abstractmethod
+    def get(
+        self,
+        keys,
+        default=None,
+        astype=None,
+        raise_on_missing=False,
+        output="auto",
+        group_by_key=False,
+        flatten_dict=False,
+        remapping=None,
+        patch=None,
+    ):
+        r"""Return values for the specified keys from all the fields.
+
+        Parameters
+        ----------
+        keys: str, list, tuple
+            Specify the field metadata keys to extract. Can be a single key (str) or multiple
+            keys as a list/tuple of str. Keys are assumed to be of the form
+            "component.key". For example, "time.valid_datetime" or "parameter.name". Keys from the
+            raw field metadata (if any) can be accessed using the "metadata.key" syntax.
+            For example, when a :obj:`Field` was created from a GRIB message, the ecCodes GRIB keys can
+            be accessed as "metadata.shortName" or "metadata.level".
+        default: Any, None
+            Specify the default value(s) for ``keys``. Returned when the given key
+            is not found and ``raise_on_missing`` is False. When ``default`` is a single
+            value, it is used for all the keys. Otherwise it must be a list/tuple of the
+            same length as ``keys``.
+        astype: type as str, int or float
+            Return type for ``keys``.  When ``astype`` is a single type, it is used for
+            all the keys. Otherwise it must be a list/tuple of the same length as ``keys``.
+        raise_on_missing: bool
+            When True, raises KeyError if any of ``keys`` is not found.
+        output: type, str
+            Specify the output structure type in conjunction with ``group_by_key``. When ``group_by`` is False
+            (default) the output is a list with one item per field and ``output`` has the following effect
+            on the items:
+
+            - "auto" (default):
+                - when ``keys`` is a str returns a single value per field
+                - when ``keys`` is a list/tuple returns a list/tuple of values per field
+            - list or "list": returns a list of values per field.
+            - tuple or "tuple": returns a tuple of values per field.
+            - dict or "dict": returns a dictionary with keys and their values per field.
+
+            When ``group_by_key`` is True the output is grouped by key and return an object with
+            one item per key. The item per key contains the list of values for that key from all the
+            fields. When ``output`` is "dict" a dict is returned, otherwise a list.
+
+        group_by_key: bool
+            When True the output is grouped by key as described in ``output``.
+        flatten_dict: bool
+            When True and ``output`` is dict, for each field if any of the values in the returned dict
+            is itself a dict, it is flattened to depth 1 by concatenating the keys with a dot. For example, if
+            the returned dict is ``{"a": {"x": 1, "y": 2}, "b": 3}``, it becomes ``{"a.x": 1, " a.y": 2, "b": 3}``.
+            This option is ignored when ``output`` is not dict.
+        remapping: dict, optional
+            Create new metadata keys from existing ones. E.g. to define a new
+            key "param_level" as the concatenated value of the "parameter.variable" and "vertical.level" keys use::
+
+                remapping={"param_level": "{parameter.variable}{vertical.level}"}
+
+        patch: dict, optional
+            A dictionary of patch to be applied to the returned values.
+
+
+        Returns
+        -------
+        list, dict
+            The returned value depends on the ``output`` and ``group_by_key`` parameters. See above.
+
+        Raises
+        ------
+        KeyError
+            If ``raise_on_missing`` is True and any of ``keys`` is not found.
+
+
+        Examples
         --------
-        to_latlon
-        to_points
-        to_numpy
-        values
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "test.grib").to_fieldlist()
+        >>> fl.get("parameter.variable")
+        ['2t', 'msl']
+        >>> fl.get(["parameter.variable", "parameter.units"])
+        [('2t', 'K'), ('msl', 'Pa')]
+        >>> fl.get(("parameter.variable", "parameter.units"))
+        [['2t', 'K'], ['msl', 'Pa']]
 
         """
-        if isinstance(keys, str):
-            keys = [keys]
+        pass
 
-        if any(k not in ("lat", "lon", "value") for k in keys):
-            raise ValueError(f"data: invalid argument: {keys}")
-
-        if self._is_shared_grid():
-            if "lat" in keys or "lon" in keys:
-                latlon = self[0].to_latlon(flatten=flatten, dtype=dtype, index=index)
-
-            r = []
-            for k in keys:
-                if k == "lat":
-                    r.append(latlon["lat"])
-                elif k == "lon":
-                    r.append(latlon["lon"])
-                elif k == "value":
-                    r.extend([f.to_array(flatten=flatten, dtype=dtype, index=index) for f in self])
-            return eku_array_namespace(r[0]).stack(r)
-
-        elif len(self) == 0:
-            # empty array from the default array namespace
-            shape = tuple([0] * len(keys))
-            return eku_array_namespace().empty(shape, dtype=dtype)
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
-
+    @abstractmethod
     def metadata(self, *args, **kwargs):
-        r"""Return the metadata values for each field.
+        r"""Return the raw metadata values for each field.
 
         Parameters
         ----------
         *args: tuple
             Positional arguments defining the metadata keys. Passed to
-            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+            :obj:`Field.metadata() <earthkit.data.core.field.Field.metadata>`
         **kwargs: dict, optional
             Keyword arguments passed to
-            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+            :obj:`Field.metadata() <earthkit.data.core.field.Field.metadata>`
 
         Returns
         -------
         list
-            List with one item per :obj:`GribField <data.readers.grib.codes.GribField>`
+            List with one item per :obj:`Field <earthkit.data.core.field.Field>`
 
         Examples
         --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-        >>> ds.metadata("param")
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "test.grib").to_fieldlist()
+        >>> fl.metadata("param")
         ['2t', 'msl']
-        >>> ds.metadata("param", "units")
+        >>> fl.metadata("param", "units")
         [('2t', 'K'), ('msl', 'Pa')]
-        >>> ds.metadata(["param", "units"])
+        >>> fl.metadata(["param", "units"])
         [['2t', 'K'], ['msl', 'Pa']]
 
         """
-        result = []
-        for s in self:
-            result.append(s.metadata(*args, **kwargs))
-        return result
+        pass
 
-    def ls(self, n=None, keys=None, extra_keys=None, namespace=None):
+    def set(self, *args, **kwargs):
+        r"""Set the metadata values for each field.
+
+        All the arguments are passed to :py:meth:`earthkit.data.core.field.Field.set` for each field in the fieldlist.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments defining the metadata keys and values.
+        **kwargs: dict, optional
+            Keyword arguments defining the metadata keys and values.
+
+        Returns
+        -------
+        FieldList
+            New FieldList with the updated metadata values.
+
+        See Also
+        --------
+        :py:meth:`earthkit.data.core.field.Field.set`
+
+        """
+        pass
+
+    @abstractmethod
+    def ls(self, n=None, keys="default", extra_keys=None, collections=None):
         r"""Generate a list like summary using a set of metadata keys.
 
         Parameters
         ----------
         n: int, None
-            The number of :obj:`Field`\ s to be
-            listed. None means all the messages, ``n > 0`` means fields from the front, while
+            The number of fields to be
+            listed. None means all the fields, ``n > 0`` means fields from the front, while
             ``n < 0`` means fields from the back of the fieldlist.
         keys: list of str, dict, None
-            Metadata keys. If it is None the following default set of keys will be used:  "centre",
-            "shortName", "typeOfLevel", "level", "dataDate", "dataTime", "stepRange", "dataType",
-            "number", "gridType". To specify a column title for each key in the output use a dict.
+            The metadata keys to extract. If ``keys="default"``, a built-in default set of keys is used.
+            To specify a column title for each key in the output use a dict as a mapping from the keys to the
+            column titles.
         extra_keys: list of str, dict, None
-            List of additional keys to ``keys``. To specify a column title for each key in the output
-            use a dict.
-        namespace: str, None
-            The namespace to choose the ``keys`` from. When it is set ``keys`` and
-            ``extra_keys`` are omitted.
+            List of additional keys on top of ``keys``. To specify a column title for each key in the output
+            use a dict as a mapping from the keys to the column titles.
+        collections: str, list of str, None
+            The collections to extract. Can be a single collection (str) or multiple collections as a list of str.
+            A collection is a component of the field (e.g. "time", "parameter", "geography", etc.) as a dictionary.
+            It can also be a collection within the raw "metadata" component. For example, when a :obj:`Field` was
+            created from a GRIB message, the ecCodes GRIB "namespaces" can be accessed as collections,
+            e.g. "metadata.mars" means the ecCodes GRIB "mars" namespace.
 
         Returns
         -------
         Pandas DataFrame
-            DataFrame with one row per :obj:`Field`.
+            DataFrame with one row per :py:class:`~earthkit.data.core.field.Field`.
 
         See Also
         --------
@@ -1398,52 +511,25 @@ class FieldList(Index):
         tail
 
         """
-        from earthkit.data.utils.summary import ls
+        pass
 
-        def _proc(keys, n):
-            num = len(self)
-            pos = slice(0, num)
-            if n is not None:
-                pos = slice(0, min(num, n)) if n > 0 else slice(num - min(num, -n), num)
-            pos_range = range(pos.start, pos.stop)
-
-            if "namespace" in keys:
-                ns = keys.pop("namespace", None)
-                for i in pos_range:
-                    f = self[i]
-                    v = f.metadata(namespace=ns)
-                    if len(keys) > 0:
-                        v.update(f._attributes(keys))
-                    yield (v)
-            else:
-                for i in pos_range:
-                    yield (self[i]._attributes(keys))
-
-        _keys = self._default_ls_keys() if namespace is None else dict(namespace=namespace)
-        return ls(_proc, _keys, n=n, keys=keys, extra_keys=extra_keys)
-
-    @cached_method
-    def _default_ls_keys(self):
-        if len(self) > 0:
-            return self[0]._metadata.ls_keys()
-        else:
-            return []
-
+    @abstractmethod
     def head(self, n=5, **kwargs):
-        r"""Generate a list like summary of the first ``n`` :obj:`Field`\ s.
+        r"""Generate a list like summary of the first ``n`` fields.
+
         Same as calling :obj:`ls` with ``n``.
 
         Parameters
         ----------
         n: int, None
-            The number of messages (``n`` > 0) to be printed from the front.
+            The number of fields (``n`` > 0) to be printed from the front.
         **kwargs: dict, optional
             Other keyword arguments passed to :obj:`ls`.
 
         Returns
         -------
         Pandas DataFrame
-            See  :obj:`ls`.
+            See :obj:`ls`.
 
         See Also
         --------
@@ -1456,25 +542,25 @@ class FieldList(Index):
 
         .. code-block:: python
 
-            ds.head()
-            ds.head(5)
-            ds.head(n=5)
-            ds.ls(5)
-            ds.ls(n=5)
+            fl.head()
+            fl.head(5)
+            fl.head(n=5)
+            fl.ls(5)
+            fl.ls(n=5)
 
         """
-        if n <= 0:
-            raise ValueError("head: n must be > 0")
-        return self.ls(n=n, **kwargs)
+        pass
 
+    @abstractmethod
     def tail(self, n=5, **kwargs):
-        r"""Generate a list like summary of the last ``n`` :obj:`Field`\ s.
+        r"""Generate a list like summary of the last ``n`` fields.
+
         Same as calling :obj:`ls` with ``-n``.
 
         Parameters
         ----------
         n: int, None
-            The number of messages (``n`` > 0)  to be printed from the back.
+            The number of fields (``n`` > 0)  to be printed from the back.
         **kwargs: dict, optional
             Other keyword arguments passed to :obj:`ls`.
 
@@ -1494,346 +580,420 @@ class FieldList(Index):
 
         .. code-block:: python
 
-            ds.tail()
-            ds.tail(5)
-            ds.tail(n=5)
-            ds.ls(-5)
-            ds.ls(n=-5)
+            fl.tail()
+            fl.tail(5)
+            fl.tail(n=5)
+            fl.ls(-5)
+            fl.ls(n=-5)
 
         """
-        if n <= 0:
-            raise ValueError("n must be > 0")
-        return self.ls(n=-n, **kwargs)
+        pass
 
+    @abstractmethod
     def describe(self, *args, **kwargs):
         r"""Generate a summary of the fieldlist."""
-        from earthkit.data.utils.summary import format_describe
+        pass
 
-        def _proc():
-            for f in self:
-                yield (f._attributes(self._describe_keys()))
-
-        return format_describe(_proc(), *args, **kwargs)
-
-    @cached_method
-    def _describe_keys(self):
-        if len(self) > 0:
-            return self[0]._metadata.describe_keys()
-        else:
-            return []
-
-    def datetime(self):
-        r"""Return the unique, sorted list of dates and times in the fieldlist.
-
-        Returns
-        -------
-        dict of datatime.datetime
-            Dict with items "base_time" and "valid_time".
-
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
-        >>> ds.datetime()
-        {'base_time': [datetime.datetime(2020, 12, 21, 12, 0)],
-        'valid_time': [
-            datetime.datetime(2020, 12, 21, 12, 0),
-            datetime.datetime(2020, 12, 21, 15, 0),
-            datetime.datetime(2020, 12, 21, 18, 0),
-            datetime.datetime(2020, 12, 21, 21, 0),
-            datetime.datetime(2020, 12, 23, 12, 0)]}
-
-        """
-        base = set()
-        valid = set()
-        for s in self:
-            d = s.datetime()
-            base.add(d["base_time"])
-            valid.add(d["valid_time"])
-        return {"base_time": sorted(base), "valid_time": sorted(valid)}
-
-    def to_points(self, **kwargs):
-        r"""Return the geographical coordinates shared by all the fields in
-        the data's original Coordinate Reference System (CRS).
+    @abstractmethod
+    def unique(
+        self,
+        *args,
+        sort=False,
+        drop_none=True,
+        squeeze=False,
+        unwrap_single=False,
+        remapping=None,
+        patch=None,
+        cache=True,
+        progress_bar=False,
+    ) -> dict | tuple:
+        """Return the unique values for a given set of metadata keys.
 
         Parameters
         ----------
-        **kwargs: dict, optional
-            Keyword arguments passed to
-            :obj:`Field.to_points() <data.core.fieldlist.Field.to_points>`
+        *args: tuple
+            Positional arguments specifying the metadata keys to collect unique values for.
+        sort: bool, optional
+            Whether to sort the collected unique values. Default is False.
+        drop_none: bool, optional
+            Whether to drop None values from the collected unique values. Default is True.
+        squeeze: bool, optional
+            When True only returns the metadata keys that have more than one values. Default is False.
+        unwrap_single: bool, optional
+            When True and only one metadata key is specified, the unique values are returned as a tuple instead
+            of a dict. Default is False.
+        remapping: dict, optional
+            A dictionary for remapping keys or values during collection. Default is None.
+        patch: dict, optional
+            A dictionary for patching key values during collection. Default is None.
+        cache: bool, optional
+            Whether to use an a cache attached to the fieldlist for previously collected unique values.
+            Default is True.
+        progress_bar: bool, optional
+            Whether to display a progress bar during collection. Default is False.
 
         Returns
         -------
         dict
-            Dictionary with items "x" and "y", containing the arrays of the x and
-            y coordinates, respectively.
+            A dictionary containing the unique values for the specified metadata keys.
 
-        Raises
-        ------
-        ValueError
-            When not all the fields have the same grid geometry.
         """
-        if self._is_shared_grid():
-            return self[0].to_points(**kwargs)
-        elif len(self) == 0:
-            return dict(x=None, y=None)
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
+        pass
 
-    def to_latlon(self, index=None, **kwargs):
-        r"""Return the latitudes/longitudes shared by all the fields.
+    @abstractmethod
+    def sel(self, *args, remapping=None, **kwargs) -> "FieldList":
+        """Select the fields matching the given metadata conditions.
 
         Parameters
         ----------
-        index: array indexing object, optional
-            The index of the latitudes/longitudes to be extracted. When it is None
-            all the values are extracted.
+        *args: tuple
+            Positional arguments specifying the filter conditions as a dict.
+            Both single or multiple keys are allowed to use. When multiple filter conditions
+            are specified, they are combined with a logical AND operator. Each metadata key in
+            the filter conditions can specify the following type of filter values:
+
+            - single value::
+
+                fl.sel({parameter.variable: "t"})
+
+            - list of values::
+
+                fl.sel({parameter.variable: ["u", "v"]})
+
+            - slice of values (defines a closed interval, so treated as inclusive of both the start
+            and stop values, unlike normal Python indexing). The following example filters the fields
+            with "vertical.level" between 300 and 500 inclusively::
+
+                fl.sel({vertical.level: slice(300, 500)})
+
+            Date and time related keys from the "time" field component are automatically normalised
+            for comparison. This is also applied to the following keys from the raw
+            metadata: "metadata.base_datetime", "metadata.valid_datetime" and "metadata.step_timedelta".
+
+            For example, when filtering by "time.valid_datetime" the following calls are equivalent:
+
+            >>> fl.sel({ "time.valid_datetime": "2018-08-01T12:00:00"})
+            >>> fl.sel({ "time.valid_datetime": datetime(2018, 8, 1, 12, 0) })
+
+            Similarly, when filtering by "time.step" the following calls are equivalent (values are assumed
+            to be in hours when the unit is not specified):
+
+            >>> fl.sel({ "time.step": "6h"})
+            >>> fl.sel({ "time.step": 6})
+            >>> fl.sel({ "time.step": "360m"})
+            >>> fl.sel({ "time.step": timedelta(hours=6)})
+
+        remapping: dict
+            Define new metadata keys from existing ones to use in ``*args`` and ``**kwargs``.
+            E.g. to define a new key "param_level" as the concatenated value of
+            the "parameter.variable" and "vertical.level" keys use::
+
+            >>> remapping={"param_level": "{parameter.variable}{vertical.level}"}
+
+            See below for a more elaborate example.
+
         **kwargs: dict, optional
-            Keyword arguments passed to
-            :meth:`Field.to_latlon() <data.core.fieldlist.Field.to_latlon>`
+            Other keyword arguments specifying the filter conditions.
 
         Returns
         -------
-        dict
-            Dictionary with items "lat" and "lon", containing the arrays of the latitudes and
-            longitudes, respectively.
+        MaskFieldlist, FieldList
+            Returns a MaskFieldList with the reordered fields. It provides a view to the data in the
+            original object, so no data is copied. When called without any arguments it returns the
+            original fieldlist.
 
-        Raises
-        ------
-        ValueError
-            When not all the fields have the same grid geometry
 
         Examples
         --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-        >>> for f in ds:
-        ...     print(f.shape)
-        ...
-        (11, 19)
-        (11, 19)
-        >>> r = ds.to_latlon()
-        >>> for k, v in r.items():
-        ...     print(f"{k}: shape={v.shape}")
-        ...
-        lat: shape=(11, 19)
-        lon: shape=(11, 19)
-        >>> r["lon"][:2]
-        array([[-27., -23., -19., -15., -11.,  -7.,  -3.,   1.,   5.,   9.,  13.,
-         17.,  21.,  25.,  29.,  33.,  37.,  41.,  45.],
-        [-27., -23., -19., -15., -11.,  -7.,  -3.,   1.,   5.,   9.,  13.,
-         17.,  21.,  25.,  29.,  33.,  37.,  41.,  45.]])
+        How-to examples:
 
+        - :ref:`/tutorials/grib/grib_selection.ipynb`
+
+        More examples:
+
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "tuv_pl.grib").to_fieldlist()
+        >>> len(fl)
+        18
+
+        Selecting by a single key ("parameter.variable") with a single value:
+
+        >>> fl1 = fl.sel({parameter.variable: "t"})
+        >>> for f in fl1:
+        ...     print(f)
+        ...
+        Field(t,1000,20180801,1200,0,0)
+        Field(t,850,20180801,1200,0,0)
+        Field(t,700,20180801,1200,0,0)
+        Field(t,500,20180801,1200,0,0)
+        Field(t,400,20180801,1200,0,0)
+        Field(t,300,20180801,1200,0,0)
+
+        Selecting by multiple keys ("parameter.variable", "vertical.level") with a list and slice of values:
+
+        >>> fl1 = fl.sel(
+        ...     {parameter.variable: ["u", "v"], vertical.level: slice(400, 700)}
+        ... )
+        >>> for f in fl1:
+        ...     print(f)
+        ...
+        Field(u,700,20180801,1200,0,0)
+        Field(v,700,20180801,1200,0,0)
+        Field(u,500,20180801,1200,0,0)
+        Field(v,500,20180801,1200,0,0)
+        Field(u,400,20180801,1200,0,0)
+        Field(v,400,20180801, 1200,0,0)
+
+        Using ``remapping`` to specify the selection by a key created from two other keys
+        (we created key "param_level" from "parameter.variable" and "vertical.level"):
+
+        >>> fl1 = fl.sel(
+        ...     param_level=["t850", "u1000"],
+        ...     remapping={"param_level": "{parameter.variable}{vertical.level}"},
+        ... )
+        >>> for f in fl1:
+        ...     print(f)
+        ...
+        Field(u,1000,20180801,1200,0,0)
+        Field(t,850,20180801,1200,0,0)
         """
-        if self._is_shared_grid():
-            return self[0].to_latlon(index=index, **kwargs)
-        elif len(self) == 0:
-            return dict(lat=None, lon=None)
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
+        pass
 
-    def projection(self):
-        r"""Return the projection information shared by all the fields.
+    @abstractmethod
+    def order_by(self, *args, remapping=None, patch=None, **kwargs):
+        """Change the order of the fields in a fieldlist.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments specifying the metadata keys to perform the ordering on. Each argument can be
+            a single key (str) or multiple keys as a list/tuple of str or a dictionary.
+            Any metadata keys that :meth:`earthkit.data.core.field.Field.get` accepts can be
+            used here. The order of the keys defines the priority of the ordering. When a dictionary is used it
+            must specify the ordering direction or the order of the values for each key. The ordering direction
+            can be either "ascending" or "descending" (the default is "ascending"). The order of values for
+            a key is defined by a list of values for that key, which must include all the available values
+            for that key in the fieldlist. See the examples below for more details.
+        remapping: dict
+            Define new metadata keys from existing ones to use in ``*args`` and
+            ``**kwargs``. E.g. to define a new
+            key "param_level" as the concatenated value of the "parameter.variable"
+            and "vertical.level" keys use::
+
+                remapping={"param_level": "{parameter.variable}{vertical.level}"}
+
+            See below for a more elaborate example.
+
+        **kwargs: dict, optional
+            Other keyword arguments specifying the metadata keys to perform the ordering on. Used in
+            the same way as a dictionary in ``*args``.
+
 
         Returns
         -------
-        :obj:`Projection`
-
-        Raises
-        ------
-        ValueError
-            When not all the fields have the same grid geometry
+        MaskFieldList, FieldList
+            Returns a MaskFieldList with the reordered fields. It provides a view to the data in the
+            original object, so no data is copied. When called without any arguments it returns the
+            original fieldlist.
 
         Examples
         --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-        >>> ds.projection()
-        <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
-        Name: unknown
-        Axis Info [cartesian]:
-        - E[east]: Easting (unknown)
-        - N[north]: Northing (unknown)
-        - h[up]: Ellipsoidal height (metre)
-        Area of Use:
-        - undefined
-        Coordinate Operation:
-        - name: unknown
-        - method: Equidistant Cylindrical
-        Datum: Unknown based on WGS 84 ellipsoid
-        - Ellipsoid: WGS 84
-        - Prime Meridian: Greenwich
-        >>> ds.projection().to_proj_string()
-        '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
+        How-to examples:
+
+        - :ref:`/tutorials/grib/grib_order_by.ipynb`
+
+
+        Ordering by a single metadata key ("parameter.variable"). The default ordering direction
+        is ``ascending``:
+
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "test6.grib").to_fieldlist()
+        >>> for f in fl.order_by("parameter.variable"):
+        ...     print(f)
+        ...
+        Field(t,850,20180801,1200,0,0)
+        Field(t,1000,20180801,1200,0,0)
+        Field(u,850,20180801,1200,0,0)
+        Field(u,1000,20180801,1200,0,0)
+        Field(v,850,20180801,1200,0,0)
+        Field(v,1000,20180801,1200,0,0)
+
+        Ordering by multiple keys (first by "vertical.level" then by "parameter.variable"). The default ordering
+        direction is ``ascending`` for both keys:
+
+        >>> for f in fl.order_by(["vertical.level", "parameter.variable"]):
+        ...     print(f)
+        ...
+        Field(t,850,20180801,1200,0,0)
+        Field(u,850,20180801,1200,0,0)
+        Field(v,850,20180801,1200,0,0)
+        Field(t,1000,20180801,1200,0,0)
+        Field(u,1000,20180801,1200,0,0)
+        Field(v,1000,20180801,1200,0,0)
+
+        Specifying the ordering direction:
+
+        >>> for f in fl.order_by(
+        ...     {"parameter.variable": "ascending", "vertical.level": "descending"}
+        ... ):
+        ...     print(f)
+        Field(t,1000,20180801,1200,0,0)
+        Field(t,850,20180801,1200,0,0)
+        Field(u,1000,20180801,1200,0,0)
+        Field(u,850,20180801,1200,0,0)
+        Field(v,1000,20180801,1200,0,0)
+        Field(v,850,20180801,1200,0,0)
+
+        Using the list of all the values of a key ("parameter.variable") to define the order:
+
+        >>> for f in fl.order_by({"parameter.variable": ["u", "t", "v"]}):
+        ...     print(f)
+        Field(u,1000,20180801,1200,0,0)
+        Field(u,850,20180801,1200,0,0)
+        Field(t,1000,20180801,1200,0,0)
+        Field(t,850,20180801,1200,0,0)
+        Field(v,1000,20180801,1200,0,0)
+        Field(v,850,20180801,1200,0,0)
+
+        Using ``remapping`` to specify the order by a key created from two other keys
+        (we created key "param_level" from "parameter.variable" and "vertical.level"):
+
+        >>> ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
+        >>> remapping = {"param_level": "{parameter.variable}{vertical.level}"}
+        >>> for f in fl.order_by({"param_level": ordering}, remapping=remapping):
+        ...     print(f)
+        Field(t,850,20180801,1200,0,0)
+        Field(t,1000,20180801,1200,0,0)
+        Field(u,1000,20180801,1200,0,0)
+        Field(v,850,20180801,1200,0,0)
+        Field(v,1000,20180801,1200,0,0)
+        Field(u,850,20180801,1200,0,0)
         """
-        if self._is_shared_grid():
-            return self[0].projection()
-        elif len(self) == 0:
-            return None
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
+        pass
 
-    def bounding_box(self):
-        r"""Return the bounding box for each field.
+    @abstractmethod
+    def to_fieldlist(self, array_namespace=None, device=None, flatten=False, dtype=None):
+        r"""Change how the values stored in each field in a fieldlist.
 
-        Returns
-        -------
-        list
-            List with one :obj:`BoundingBox <data.utils.bbox.BoundingBox>` per
-            :obj:`Field`
-        """
-        return [s.bounding_box() for s in self]
+        This method converts the data values in each field to an array with a given ``array_namespace``
+        and/or ``device``. The resulting fieldlist is then composed of the converted fields.
+        The field values are extracted using the :py:meth:`earthkit.data.core.field.Field.to_array` method
+        of each field.
 
-    @cached_method
-    def _is_shared_grid(self):
-        if len(self) > 0:
-            grid = self[0]._metadata.geography._unique_grid_id()
-            if grid is not None:
-                return all(f._metadata.geography._unique_grid_id() == grid for f in self)
-        return False
+        When a field already stores its values as an array with a matching ``array_namespace`` and ``device``, a
+        copy of that array is made and stored in the resulting field. This means that even if called without any
+        arguments, the resulting fieldlist will have its own copy of the data values.
 
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    @detect_out_filename
-    def save(self, filename, append=False, **kwargs):
-        r"""Write all the fields into a file.
+        The primary use of this method is to convert the values in GRIB fields loaded from disk to in-memory
+        arrays. By default, the values in GRIB fields loaded from disk are not stored as arrays in memory, but
+        rather as references to the on-disk data. This allows for efficient access to the data without loading
+        it all into memory at once. However, in some cases it may be desirable to convert these values to
+        in-memory arrays for faster access or for compatibility with other libraries. This method provides a
+        way to do that while preserving the metadata of the fields.
 
         Parameters
         ----------
-        filename: str, optional
-            The target file path, if not defined attempts will be made to detect the filename
-        append: bool, optional
-            When it is true append data to the target file. Otherwise
-            the target file be overwritten if already exists. Default is False
-        **kwargs: dict, optional
-            Other keyword arguments passed to :obj:`write`.
-
-        See Also
-        --------
-        :obj:`write`
-        :meth:`GribFieldList.save() <data.readers.grib.index.GribFieldList.save>`
-        :meth:`SimpleFieldList.save() <data.indexing.fieldlist.SimpleFieldList.save>`
-
-        """
-        metadata, kwargs = _bits_per_value_to_metadata(**kwargs)
-        self.to_target("file", filename, append=append, metadata=metadata, **kwargs)
-
-        # original code
-        # flag = "wb" if not append else "ab"
-        # with open(filename, flag) as f:
-        #     self.write(f, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def write(self, f, **kwargs):
-        r"""Write all the fields to a file object.
-
-        Parameters
-        ----------
-        f: file object
-            The target file object.
-        **kwargs: dict, optional
-            Other keyword arguments passed to the underlying field implementation.
-
-        See Also
-        --------
-        read
-
-        """
-        metadata, kwargs = _bits_per_value_to_metadata(**kwargs)
-        self.to_target("file", f, metadata=metadata, **kwargs)
-
-        # original code
-        # for s in self:
-        #     s.write(f, **kwargs)
-
-    def default_encoder(self):
-        if len(self) > 0:
-            return self[0]._metadata.data_format()
-
-    def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
-        return encoder._encode_fieldlist(self, **kwargs)
-
-    def to_tensor(self, *args, **kwargs):
-        from earthkit.data.indexing.tensor import FieldListTensor
-
-        return FieldListTensor.from_fieldlist(self, *args, **kwargs)
-
-    def to_fieldlist(self, array_backend=None, array_namespace=None, device=None, **kwargs):
-        r"""Convert to a new :class:`FieldList`.
-
-        Parameters
-        ----------
-        array_backend: str, array_namespace or None
-            Specify the array namespace for the generated :class:`FieldList`.
-            **Deprecated in version 0.19.0**. Use ``array_namespace`` instead.
-            In versions before 0.19.0 an :obj:`ArrayBackend` was also accepted
-            here, which is no longer the case.
         array_namespace: str, array_namespace or None
-            The array namespace to be used. **New in version 0.19.0**.
+            The array namespace to be used for the field values in the resulting fieldlist. When it is None,
+            the default array namespace used by the underlying data accessor of the field is used. For GRIB
+            it is "numpy".
         device: str or None
-            The device where the array will be allocated. When it is
-            :obj:`None` the default device is used. **New in version 0.19.0**.
-        **kwargs: dict, optional
-            ``kwargs`` are passed to :obj:`to_array` to
-            extract the field values the resulting object will store.
+            The device where the array will be allocated. When it is :obj:`None` the default device is used.
+        flatten: bool
+            When it is True the values are flattened per field. Otherwise the array will have the
+            field's :obj:`shape` per field.
+        dtype: str, array.dtype or None
+            Typecode or data-type of the array. When it is :obj:`None` the default type used by the underlying
+            data accessor per field is used. For GRIB it is ``float64``.
 
         Returns
         -------
         :class:`SimpleFieldList`
-            - a new fieldlist containing :class`ArrayField` fields
+            New fieldlist formed from the converted fields.
 
         Examples
         --------
-        The following example will convert a fieldlist read from a file into a
-        :class:`SimpleFieldList` storing single precision field values.
+        How-to examples:
+
+        - :ref:`/tutorials/grib/grib_array_namespace.ipynb`
+
+        The following example will convert a fieldlist read from a GRIB file into a
+        :class:`SimpleFieldList` storing data values as single precision arrays in each field.
 
         >>> import numpy as np
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
-        >>> ds.path
-        'docs/examples/tuv_pl.grib'
-        >>> r = ds.to_fieldlist(array_namespace="numpy", dtype=np.float32)
-        >>> r
-        SimpleFieldList(fields=18)
-        >>> hasattr(r, "path")
-        False
+        >>> import earthkit.data as ekd
+        >>> fl = ekd.from_source("sample", "tuv_pl.grib").to_fieldlist()
+        >>> r = fl.to_fieldlist(array_namespace="numpy", dtype=np.float32)
         >>> r.to_numpy().dtype
         dtype('float32')
 
         """
-        return self.from_fields(
-            [
-                f.copy(array_backend=array_backend, array_namespace=array_namespace, device=device, **kwargs)
-                for f in self
-            ]
-        )
+        pass
 
-    def cube(self, *args, **kwargs):
-        from earthkit.data.indexing.cube import FieldCube
+    @abstractmethod
+    def to_tensor(self, *args, **kwargs):
+        """Convert to a tensor-like structure.
 
-        return FieldCube(self, *args, **kwargs)
+        This method is intended to use internally to support the Xarray engine, which converts fieldlist
+        to a tensor-like structure before converting it to an Xarray Dataset or DataArray.
+        """
+        pass
 
-    @classmethod
-    def new_mask_index(self, *args, **kwargs):
-        return MaskFieldList(*args, **kwargs)
+    @abstractmethod
+    def to_cube(self, *args, **kwargs):
+        """Convert to a cube-like structure.
 
-    @classmethod
-    def merge(cls, sources):
-        assert all(isinstance(_, FieldList) for _ in sources)
-        return MultiFieldList(sources)
+        This method is intended to support fieldlist usage in the ``anemoi-datasets`` package. Planned to be
+        removed in the future and use :obj:`to_tensor` instead.
+        """
+        pass
 
-    def _cache_diag(self):
-        """For testing only"""
-        from earthkit.data.utils.diag import metadata_cache_diag
+    @abstractmethod
+    def batched(self, n):
+        """Iterate through the fieldlist in batches of ``n`` fields.
 
-        return metadata_cache_diag(self)
+        Parameters
+        ----------
+        n: int
+            Batch size.
 
+        Returns
+        -------
+        object
+            Returns an iterator yielding batches of ``n`` fields. Each batch is a new fieldlist
+            containing a view to the data in the original object, so no data is copied. The last
+            batch may contain fewer than ``n`` fields.
 
-class MaskFieldList(FieldList, MaskIndex):
-    def __init__(self, *args, **kwargs):
-        MaskIndex.__init__(self, *args, **kwargs)
+        """
+        pass
 
+    @abstractmethod
+    def group_by(self, *keys, sort=True):
+        """Iterate through the fieldlist in groups defined by metadata keys.
 
-class MultiFieldList(FieldList, MultiIndex):
-    def __init__(self, *args, **kwargs):
-        MultiIndex.__init__(self, *args, **kwargs)
+        Parameters
+        ----------
+        *keys: tuple
+            Positional arguments specifying the metadata keys to group by.
+            Keys can be a single or multiple str, or a list or tuple of str.
+
+        sort: bool, optional
+            If ``True`` (default), the fieldlist is sorted by the metadata ``keys`` before grouping.
+
+        Returns
+        -------
+        object
+            Returns an iterator yielding batches of fields grouped by the metadata ``keys``. Each
+            batch is a new fieldlist containing a view to the data in the original object, so no data
+            is copied. It generates a new group every time the value of the ``keys`` change.
+
+        """
+        pass
+
+    @abstractmethod
+    def _unary_op(self, oper):
+        pass
+
+    @abstractmethod
+    def _binary_op(self, oper, y):
+        pass

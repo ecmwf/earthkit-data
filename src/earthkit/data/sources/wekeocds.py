@@ -14,14 +14,12 @@ try:
 except ImportError:
     raise ImportError("WEkEO access requires 'hda' to be installed")
 
-from earthkit.data.decorators import normalize
-from earthkit.data.utils.request import FileRequestRetriever
-from earthkit.data.utils.request import RequestBuilder
+from earthkit.data.decorators import normalise
+from earthkit.data.utils.request import FileRequestRetriever, RequestBuilder
 
 from .file import FileSource
-from .wekeo import EXTENSIONS
+from .wekeo import EXTENSIONS, HDAAPIKeyPrompt
 from .wekeo import ApiClient as WekeoClient
-from .wekeo import HDAAPIKeyPrompt
 
 LOG = logging.getLogger(__name__)
 
@@ -34,12 +32,10 @@ class ApiClient(WekeoClient):
 
     def retrieve(self, name, request, target=None):
         rq = {"dataset_id": name}
-        rq.update(
-            {
-                _name: (_value if isinstance(_value, list) or _name in ("data_format", "download_format") else [_value])
-                for _name, _value in request.items()
-            }
-        )
+        rq.update({
+            _name: (_value if isinstance(_value, list) or _name in ("data_format", "download_format") else [_value])
+            for _name, _value in request.items()
+        })
 
         if "area" in request:
             rq.update({"bbox": request["area"]})
@@ -72,14 +68,14 @@ class WekeoCdsRetriever(FileSource):
         def retrieve(target, args):
             self.client(self.prompt).retrieve(args[0], args[1], target)
 
-        return self.cache_file(
+        return self._cache_file(
             retrieve,
             (dataset, request),
             extension=EXTENSIONS.get(request.get("format"), ".cache"),
         )
 
-    @normalize("date", "date-list(%Y-%m-%d)")
-    @normalize("area", "bounding-box(list)")
+    @normalise("date", "date-list(%Y-%m-%d)")
+    @normalise("area", "bounding-box(list)")
     def _normalise_request(self, **kwargs):
         return kwargs
 
