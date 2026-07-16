@@ -23,3 +23,19 @@ def test_hl_csv_single_core():
     df = ds.to_pandas()
     assert len(df) == 6
     assert list(df.columns) == ["h1", "h2", "h3", "name"]
+
+
+def test_hl_csv_multi_core():
+    paths = [earthkit_test_data_file("test.csv")] * 2
+    ds = from_source("file", paths)
+
+    assert ds._TYPE_NAME == "Multi"
+    assert ds.is_stream() is False
+    assert "pandas" in ds.available_types
+    assert "xarray" in ds.available_types
+    assert "fieldlist" not in ds.available_types
+
+    df = ds.to_pandas()
+    assert len(df) == 12
+    assert set(df.columns) == set(["h1", "h2", "h3", "name"])
+    assert df["name"].tolist() == ["A", "B", "C", "a", "b", "c"] * 2

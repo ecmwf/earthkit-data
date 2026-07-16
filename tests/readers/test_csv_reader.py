@@ -14,6 +14,7 @@ import mimetypes
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 def test_csv_1():
@@ -171,6 +172,16 @@ def test_csv_mimetypes():
     assert mimetypes.guess_type("x.csv") == ("text/csv", None)
     assert mimetypes.guess_type("x.csv.gz") == ("text/csv", "gzip")
     assert mimetypes.guess_type("x.csv.bz2") == ("text/csv", "bzip2")
+
+
+def test_csv_multi_1():
+    paths = [earthkit_test_data_file("test.csv")] * 2
+    d = from_source("file", paths)
+
+    df = d.to_pandas()
+    assert len(df) == 12
+    assert set(df.columns) == set(["h1", "h2", "h3", "name"])
+    assert df["name"].tolist() == ["A", "B", "C", "a", "b", "c"] * 2
 
 
 # TODO test compression

@@ -7,30 +7,46 @@
 # nor does it submit to any jurisdiction.
 #
 
-
-from . import SimpleData
+from . import Data, SimpleData
 
 
 class MultiData(SimpleData):
+    _TYPE_NAME = "Multi"
+
     def __init__(self, sources):
         """Initialize a MultiData object with multiple sources.
 
         Parameters
         ----------
-        sources : list
+        sources : list, MultiSource
             List of data sources to combine.
         """
         self.sources = sources
         self._source = sources
-        # self.datas = [s._reader._to_data_object() for s in self.sources.sources]
 
     @property
     def available_types(self):
         """list[str]: Return the list of available types that this data object can be converted to."""
         types = set()
-        for d in self.sources:
-            types.update(d.available_types)
-        return sorted(types)
+        try:
+            for d in self._datas():
+                types.update(d.available_types)
+            return sorted(types)
+        except Exception:
+            pass
+
+        return list()
+
+    def _datas(self):
+        res = []
+        for s in self._source.sources:
+            if isinstance(s, Data):
+                res.append(s)
+            else:
+                res.append(s.to_data_object())
+
+        print(f"MultiData<{id(self)}>: _datas() -> {res}")
+        return res
 
     def describe(self):
         """Provide a description of the MultiData.
@@ -62,8 +78,10 @@ class MultiData(SimpleData):
         NotImplementedError
             If conversion to FieldList is not implemented for this combination of sources.
         """
-        # return self.sources.to_fieldlist(*args, **kwargs)
-        data = [s.to_data_object() for s in self.sources.sources]
+        if "fieldlist" not in self.available_types:
+            raise NotImplementedError("Cannot convert this MultiData object to a fieldlist")
+
+        data = self._datas()
         fs = [d.to_fieldlist(*args, **kwargs) for d in data]
         from earthkit.data.mergers import merge_by_class
 
@@ -71,7 +89,7 @@ class MultiData(SimpleData):
         if merged is not None:
             return merged.mutate()
 
-        raise NotImplementedError("Conversion of MultiData to fieldlist is not implemented")
+        raise NotImplementedError("Cannot convert this MultiData object to a fieldlist")
 
     def to_xarray(self, *args, **kwargs):
         """Convert into an Xarray dataset.
@@ -88,7 +106,14 @@ class MultiData(SimpleData):
         :py:class:`xarray.Dataset`
             An Xarray dataset containing data from all sources.
         """
-        return self.sources.to_xarray(*args, **kwargs)
+        if "xarray" not in self.available_types:
+            raise NotImplementedError("Cannot convert this MultiData object to xarray")
+
+        data = self._datas()
+
+        from earthkit.data.mergers import make_merger
+
+        return make_merger(None, data).to_xarray(*args, **kwargs)
 
     def to_pandas(self, *args, **kwargs):
         """Convert into a Pandas DataFrame.
@@ -105,7 +130,14 @@ class MultiData(SimpleData):
         :py:class:`pandas.DataFrame`
             A Pandas DataFrame containing data from all sources.
         """
-        pass
+        if "pandas" not in self.available_types:
+            raise NotImplementedError("Cannot convert this MultiData object to pandas")
+
+        data = self._datas()
+
+        from earthkit.data.mergers import make_merger
+
+        return make_merger(None, data).to_pandas(*args, **kwargs)
 
     def to_geopandas(self, *args, **kwargs):
         """Convert into a GeoPandas GeoDataFrame.
