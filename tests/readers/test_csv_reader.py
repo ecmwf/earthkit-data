@@ -184,6 +184,51 @@ def test_csv_multi_1():
     assert df["name"].tolist() == ["A", "B", "C", "a", "b", "c"] * 2
 
 
+def test_csv_multi_2_comment_and_separator():
+    s1 = from_source(
+        "dummy-source",
+        "csv",
+        headers=["a", "b", "c"],
+        quote_strings=True,
+        lines=[
+            [1, "x", 3],
+            [4, "y", 6],
+            [7, "z", 9],
+        ],
+        separator="|",
+        comment_line="This is a comment",
+        comment="?",
+    )
+
+    s2 = from_source(
+        "dummy-source",
+        "csv",
+        headers=["a", "b", "c"],
+        quote_strings=True,
+        lines=[
+            [8, "x", 15],
+            [9, "y", 16],
+            [10, "z", 17],
+        ],
+        separator="|",
+        comment_line="This is a comment",
+        comment="?",
+    )
+
+    filename1 = s1._reader.path
+    filename2 = s2._reader.path
+
+    d = from_source("file", [filename1, filename2])
+
+    df = d.to_pandas(comment="?", pandas_read_csv_kwargs={"sep": "|"})
+    assert len(df) == 6
+    assert set(df.columns) == set(["a", "b", "c"])
+
+    df = d.to_pandas(pandas_read_csv_kwargs={"sep": "|", "comment": "?"})
+    assert len(df) == 6
+    assert set(df.columns) == set(["a", "b", "c"])
+
+
 # TODO test compression
 
 if __name__ == "__main__":

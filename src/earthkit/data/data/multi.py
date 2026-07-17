@@ -28,7 +28,16 @@ if TYPE_CHECKING:
 class MultiData(SimpleData):
     _TYPE_NAME = "Multi"
 
-    """Represent multiple sources that cannot be represented by a single Data object."""
+    """Represent multiple sources that cannot be represented by a single Data object.
+
+    When :py:func:`earthkit.data.from_source` is called with multiple input files, earthkit-data attempts to
+    return a single, type-specific Data object (e.g. ``GribData`` for a set of GRIB files). A ``MultiData``
+    object is returned instead in two situations:
+
+    - the source type does not support multiple input files (e.g. ``CSVData`` handles only one file at a time,
+      so multiple CSV files yield a ``MultiData``);
+    - the input files are of mixed types and cannot be merged into a single typed object.
+    """
 
     def __init__(self, sources):
         """Initialize a MultiData object.
