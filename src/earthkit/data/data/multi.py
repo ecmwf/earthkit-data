@@ -56,7 +56,7 @@ class MultiData(SimpleData):
 
     @property
     @experimental(msg="MultiData.sources is experimental and may change or be removed without notice. Do not use it.")
-    def _legacy_sources(self) -> Any:
+    def sources(self) -> Any:
         """Experimental property and may change or be removed in future versions."""
         return self._sources_legacy
 
