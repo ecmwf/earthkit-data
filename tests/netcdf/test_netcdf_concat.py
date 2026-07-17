@@ -229,7 +229,6 @@ def _concat_var_different_coords_1(kind1, kind2):
     target = xr.concat([ds1, ds2], dim="time")
 
     ds = from_source("multi", [s1, s2], merger="concat(concat_dim=time)")
-    # ds.graph()
     merged = ds.to_xarray()
 
     assert target.identical(merged), f"Concat failed for {kind1}, {kind2}"

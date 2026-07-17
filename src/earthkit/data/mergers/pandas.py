@@ -18,4 +18,8 @@ def merge(
 
     options = dict(ignore_index=True)  # Renumber all indices
     options.update(kwargs)
-    return pd.concat([s.to_pandas(**kwargs) for s in sources], **options)
+    if "pandas_read_csv_kwargs" in options:
+        pandas_read_csv_kwargs = options.pop("pandas_read_csv_kwargs")
+    else:
+        pandas_read_csv_kwargs = kwargs
+    return pd.concat([s.to_pandas(pandas_read_csv_kwargs=pandas_read_csv_kwargs) for s in sources], **options)
