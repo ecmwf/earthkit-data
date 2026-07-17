@@ -85,8 +85,6 @@ class Merger:
                 self.reader_class = _nearest_common_class(readers)
                 self.paths = paths
 
-        print("reader_class", self.reader_class, "paths", self.paths, "common", self.common)
-
     @property
     def paths_or_sources(self):
         if self.paths is not None:
