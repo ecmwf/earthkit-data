@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.utils.decorators import experimental
+
 from . import Data, SimpleData
 
 
@@ -18,10 +20,10 @@ class MultiData(SimpleData):
 
         Parameters
         ----------
-        sources : list, MultiSource
-            List of data sources to combine.
+        sources : MultiSource
+            A MultiSource object containing multiple data sources.
         """
-        self.sources = sources
+        self._sources_legacy = sources
         self._source = sources
 
     @property
@@ -37,6 +39,12 @@ class MultiData(SimpleData):
 
         return list()
 
+    @property
+    @experimental(msg="MultiData.sources is experimental and may change or be removed without notice. Do not use it.")
+    def sources(self):
+        """Experimental property and may change or be removed in future versions."""
+        return self._sources_legacy
+
     def _datas(self):
         res = []
         for s in self._source.sources:
@@ -45,7 +53,6 @@ class MultiData(SimpleData):
             else:
                 res.append(s.to_data_object())
 
-        print(f"MultiData<{id(self)}>: _datas() -> {res}")
         return res
 
     def describe(self):
