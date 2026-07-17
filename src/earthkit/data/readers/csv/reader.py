@@ -31,8 +31,6 @@ class CSVReader(Reader):
     def to_pandas(self, comment="#", pandas_read_csv_kwargs=None):
         """Convert CSV data into a :py:class:`pandas.DataFrame` using :py:func:`pandas.read_csv`.
 
-        Please note that Earthkit should be able to handle compressed file objects.
-
         Parameters
         ----------
         comment: str
@@ -42,9 +40,16 @@ class CSVReader(Reader):
             kwargs passed to :func:`pandas.read_csv`, this is used for safe parsing of kwargs via intermediate
             methods
 
+
         Returns
         -------
         :py:class:`pandas.DataFrame`
+
+
+        Notes
+        -----
+        Compressed file objects are supported.
+
 
         Examples
         --------
