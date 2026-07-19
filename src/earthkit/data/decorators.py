@@ -122,7 +122,7 @@ OPTIONS = {
 
 
 def normalise_grib_keys(f):
-    f = alias_argument("levelist", ["level", "levellist"])(f)
+    f = alias_argument("levelist", ["levellist"])(f)
     f = alias_argument("levtype", ["leveltype"])(f)
     f = alias_argument("param", ["variable", "parameter"])(f)
     f = alias_argument("number", ["realization", "realisation"])(f)

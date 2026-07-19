@@ -291,6 +291,27 @@ class GribHandleMaker:
             else:
                 bpv = template_md.get("bitsPerValue", default=None)
 
+    def _levtype_from_metadata(self, metadata):
+        levtype = metadata.get("levtype", None)
+        type_of_level = metadata.get("typeOfLevel", None)
+
+        if levtype is None:
+            if type_of_level is not None:
+                if type_of_level == "isobaricInhPa":
+                    levtype = "pl"
+                elif type_of_level == "surface":
+                    levtype = "sfc"
+                else:
+                    raise ValueError(
+                        f"Unsupported typeOfLevel {type_of_level} for GRIB encoding when only metadata is provided."
+                    )
+            elif "levelist" in metadata or "level" in metadata:
+                levtype = "pl"
+            else:
+                levtype = "sfc"
+
+        return levtype
+
     def _ll_field(self, values_shape, metadata):
         Nj, Ni = values_shape
         metadata["Nj"] = Nj
@@ -320,12 +341,7 @@ class GribHandleMaker:
         metadata["longitudeOfLastGridPointInDegrees"] = east
 
         edition = metadata.get("edition", 2)
-        levtype = metadata.get("levtype")
-        if levtype is None:
-            if "levelist" in metadata:
-                levtype = "pl"
-            else:
-                levtype = "sfc"
+        levtype = self._levtype_from_metadata(metadata)
 
         return f"regular_ll_{levtype}_grib{edition}"
 
@@ -379,12 +395,7 @@ class GribHandleMaker:
             metadata.update(_gg_pl(N))
 
         edition = metadata.get("edition", 2)
-        levtype = metadata.get("levtype")
-        if levtype is None:
-            if "levelist" in metadata:
-                levtype = "pl"
-            else:
-                levtype = "sfc"
+        levtype = self._levtype_from_metadata(metadata)
 
         if octahedral or levtype == "sfc":
             return f"reduced_gg_{levtype}_grib{edition}"
@@ -855,7 +866,7 @@ class GribEncoder(Encoder):
                 metadata["stepRange"] = step_range_to_grib(start, end)
 
     def _update_metadata(self, handle, metadata, compulsory, can_infer_time):
-        # TODO: revisit that logic
+        # TODO: revisit the logic
         combined = Combined(handle, metadata)
 
         if "stepRange" in metadata:
@@ -906,9 +917,6 @@ class GribEncoder(Encoder):
         if metadata.get("type") in ("pf", "cf"):
             metadata.setdefault("typeOfGeneratingProcess", 4)
 
-        if "levelist" in metadata:
-            metadata.setdefault("levtype", "pl")
-
         if "param" in metadata:
             param = metadata.pop("param")
             try:
@@ -916,17 +924,46 @@ class GribEncoder(Encoder):
             except ValueError:
                 metadata["shortName"] = param
 
-        # levtype is a readOnly key in ecCodes >= 2.33.0
-        levtype_remap = {
-            "pl": "isobaricInhPa",
-            "ml": "hybrid",
-            "pt": "theta",
-            "pv": "potentialVorticity",
-            "sfc": "surface",
-        }
         if "levtype" in metadata:
-            v = metadata.pop("levtype")
-            metadata["typeOfLevel"] = levtype_remap[v]
+            import warnings
+
+            warnings.warn(
+                "The 'levtype' ecCodes key is deprecated. It has been "
+                "read-only since ecCodes 2.33.0 and its use is discouraged. Use 'typeOfLevel' instead. "
+                "For backward compatibility, the values 'sfc', 'pl', 'ml', 'pt', and "
+                "'pv' are still accepted and silently mapped to the equivalent 'typeOfLevel' value, "
+                "but this mapping will be removed in a future release.",
+                DeprecationWarning,
+            )
+
+            # levtype is a readOnly key in ecCodes >= 2.33.0
+            levtype_remap = {
+                "pl": "isobaricInhPa",
+                "ml": "hybrid",
+                "pt": "theta",
+                "pv": "potentialVorticity",
+                "sfc": "surface",
+            }
+
+            levtype = metadata.pop("levtype")
+            type_of_level = metadata.get("typeOfLevel")
+
+            if levtype in levtype_remap:
+                if type_of_level is None:
+                    metadata["typeOfLevel"] = levtype_remap[levtype]
+                elif type_of_level != levtype_remap[levtype]:
+                    raise ValueError(
+                        f"Cannot set levtype='{levtype}': typeOfLevel='{type_of_level}' is already set "
+                        f"to an incompatible value. Use typeOfLevel exclusively; levtype is deprecated "
+                        "and has been read-only since ecCodes 2.33.0."
+                    )
+
+            else:
+                raise ValueError(
+                    f"Cannot map levtype='{levtype}' to a typeOfLevel value. "
+                    "Use typeOfLevel exclusively; levtype is deprecated and has been read-only since ecCodes 2.33.0. "
+                    f"Accepted levtype values are: {list(levtype_remap)}."
+                )
 
 
 encoder = GribEncoder
