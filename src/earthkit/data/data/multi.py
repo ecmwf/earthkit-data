@@ -64,9 +64,16 @@ class MultiData(SimpleData):
         return list()
 
     @property
-    @deprecation.deprecated(deprecated_in="1.1.0", removed_in=None)
+    @deprecation.deprecated(
+        deprecated_in="1.1.0",
+        removed_in=None,
+        details=(
+            "The 'sources' property is deprecated and will be removed in a future release. "
+            "Access to the underlying sources in MultiData is no longer part of the public API."
+        ),
+    )
     def sources(self) -> Any:
-        """Deprecated property and will be removed in future versions."""
+        """Deprecated. Access to the underlying sources is no longer part of the public API."""
         return self._sources_legacy
 
     def _datas(self):
