@@ -11,14 +11,14 @@ Deprecations
 +++++++++++++++++++
 
 - :ref:`deprecated-levtype-grib-encoder`
+- :ref:`deprecated-multi-data-sources`
 
 
 Changes
 ++++++++++++
 
 - The ``level`` ecCodes key is no longer silently renamed to ``levelist`` by
-  :py:meth:`earthkit.data.encoders.GribEncoder.encode`. It is now written to the GRIB
-  message unchanged.
+  :py:meth:`earthkit.data.encoders.GribEncoder.encode` before it is encoded. It is now written to the GRIB message unchanged.
 
 
 Fixes
