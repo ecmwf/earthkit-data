@@ -928,9 +928,9 @@ class GribEncoder(Encoder):
             import warnings
 
             warnings.warn(
-                "The 'levtype' ecCodes key is deprecated in the Grib Encoder. It has been "
+                "The 'levtype' ecCodes key is deprecated in the GribEncoder. It has been "
                 "read-only since ecCodes 2.33.0 and its use is discouraged. Use 'typeOfLevel' instead. "
-                "For backward compatibility, the values 'sfc', 'pl', 'ml', 'pt', and "
+                "For backwards compatibility, the values 'sfc', 'pl', 'ml', 'pt', and "
                 "'pv' are still accepted and silently mapped to the equivalent 'typeOfLevel' value, "
                 "but this mapping will be removed in a future release.",
                 DeprecationWarning,
@@ -960,9 +960,10 @@ class GribEncoder(Encoder):
 
             else:
                 raise ValueError(
-                    f"Cannot map levtype='{levtype}' to a typeOfLevel value. "
+                    f"Unsupported levtype='{levtype}'. "
                     "Use typeOfLevel exclusively; levtype is deprecated and has been read-only since ecCodes 2.33.0. "
-                    f"Accepted levtype values are: {list(levtype_remap)}."
+                    "For backwards compatibility, the following levtype values are still "
+                    f"accepted: {list(levtype_remap)}."
                 )
 
 
