@@ -62,6 +62,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 )
 def test_xr_engine_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, dims, or_mask_spec, nfields):
     kwargs["lazy_load"] = lazy_load
+    kwargs["add_valid_time_coord"] = True
 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
@@ -155,6 +156,7 @@ def test_xr_engine_incomplete_tensor_holes_2(
     lazy_load, kwargs, dim_keys, dims, or_mask_spec, expected_dims_by_param, nfields
 ):
     kwargs["lazy_load"] = lazy_load
+    kwargs["add_valid_time_coord"] = True
 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
@@ -254,6 +256,7 @@ def test_xr_engine_incomplete_tensor_coordinates_trimmed_plus_holes(
     lazy_load, kwargs, dim_keys, dims, or_mask_spec, dropped_coords, nfields
 ):
     kwargs["lazy_load"] = lazy_load
+    kwargs["add_valid_time_coord"] = True
 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
