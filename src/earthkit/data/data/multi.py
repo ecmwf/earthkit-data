@@ -14,7 +14,7 @@ from typing import (
     Any,  # noqa: F401
 )
 
-from earthkit.utils.decorators import experimental
+import deprecation
 
 from . import Data, SimpleData
 
@@ -64,9 +64,16 @@ class MultiData(SimpleData):
         return list()
 
     @property
-    @experimental(msg="MultiData.sources is experimental and may change or be removed without notice. Do not use it.")
+    @deprecation.deprecated(
+        deprecated_in="1.1.0",
+        removed_in=None,
+        details=(
+            "The 'sources' property is deprecated and will be removed in a future release. "
+            "Access to the underlying sources in MultiData is no longer part of the public API."
+        ),
+    )
     def sources(self) -> Any:
-        """Experimental property and may change or be removed in future versions."""
+        """Deprecated. Access to the underlying sources is no longer part of the public API."""
         return self._sources_legacy
 
     def _datas(self):
