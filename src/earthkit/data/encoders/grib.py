@@ -928,7 +928,7 @@ class GribEncoder(Encoder):
             import warnings
 
             warnings.warn(
-                "The 'levtype' ecCodes key is deprecated. It has been "
+                "The 'levtype' ecCodes key is deprecated in the Grib Encoder. It has been "
                 "read-only since ecCodes 2.33.0 and its use is discouraged. Use 'typeOfLevel' instead. "
                 "For backward compatibility, the values 'sfc', 'pl', 'ml', 'pt', and "
                 "'pv' are still accepted and silently mapped to the equivalent 'typeOfLevel' value, "
