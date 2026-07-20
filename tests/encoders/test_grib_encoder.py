@@ -718,19 +718,3 @@ def test_grib_encoder_level_keys_bad(_kwargs, error):
 
     with pytest.raises(error):
         encoder.encode(data=f, **_kwargs)
-
-
-# def test_grib_encoder_level_2():
-#     f = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()[0]
-
-#     encoder = create_encoder("grib")
-#     r = encoder.encode(data=f, metadata={"level": 320, "typeOfLevel": "theta"})
-
-#     f_r = r.to_field()
-#     assert f is not f_r
-
-#     ref_source = {"vertical.level": 1000, "vertical.level_type": "pressure", "parameter.variable": "t"}
-#     ref_result = {"vertical.level": 320, "vertical.level_type": "potential_temperature", "parameter.variable": "t"}
-
-#     assert f.get(list(ref_source.keys()), output=dict) == ref_source
-#     assert f_r.get(list(ref_result.keys()), output=dict) == ref_result
