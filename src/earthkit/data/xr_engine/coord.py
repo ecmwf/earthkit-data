@@ -25,7 +25,7 @@ class Coord:
         self.name = simple_name if simple_name is not None else name
         self.vals = vals
         self.dims = dims
-        
+
         if self.dims is None:
             if np.ndim(vals) == 0:
                 self.dims = ()

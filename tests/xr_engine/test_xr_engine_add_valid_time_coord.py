@@ -138,13 +138,10 @@ def test_time_dims_frt_only(pl_fl, lazy_load, allow_holes):
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_single_valid_time_is_scalar_aux_coord(pl_fl, lazy_load, allow_holes):
     """A single valid_time should be retained as a scalar auxiliary coordinate."""
-
-    fl_single_step = pl_fl.sel(
-        {
-            "metadata.step": 0,
-            "metadata.base_datetime": "2024-06-03T00:00:00",
-        }
-    )[0]
+    fl_single_step = pl_fl.sel({
+        "metadata.step": 0,
+        "metadata.base_datetime": "2024-06-03T00:00:00",
+    })[0]
 
     ds = fl_single_step.to_xarray(
         profile="earthkit",

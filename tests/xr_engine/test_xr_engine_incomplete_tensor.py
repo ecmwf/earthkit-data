@@ -91,7 +91,7 @@ def test_xr_engine_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, dims, or
         if is_masked:
             da2 = da2.where(False)  # makes all values NaN
 
-        # valid_time is now retained as a scalar auxiliary coordinate 
+        # valid_time is now retained as a scalar auxiliary coordinate
         # when converting single valid time fields
         if "valid_time" in da2.coords and "valid_time" not in da.coords:
             da = da.assign_coords(valid_time=da2.coords["valid_time"])
