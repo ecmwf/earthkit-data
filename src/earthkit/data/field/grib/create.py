@@ -18,7 +18,7 @@ def create_grib_field(handle, data=None, cache=False, extra_keys=None, template_
     from earthkit.data.field.grib.geography import GribGeographyHandler
     from earthkit.data.field.grib.metadata import GribMetadata
     from earthkit.data.field.grib.parameter import GribParameter
-    from earthkit.data.field.grib.proc import GribProc
+    from earthkit.data.field.grib.processing import GribProcessing
     from earthkit.data.field.grib.time import GribTime
     from earthkit.data.field.grib.vertical import GribVertical
 
@@ -29,7 +29,7 @@ def create_grib_field(handle, data=None, cache=False, extra_keys=None, template_
     geography = GribGeographyHandler(handle)
     vertical = GribVertical(handle)
     ensemble = GribEnsemble(handle)
-    proc = GribProc(handle)
+    proc = GribProcessing(handle)
     parameter = GribParameter(handle)
     grib = GribMetadata(handle, extra_keys=extra_keys, cache=cache)
 
@@ -44,7 +44,7 @@ def create_grib_field(handle, data=None, cache=False, extra_keys=None, template_
         geography=geography,
         vertical=vertical,
         ensemble=ensemble,
-        proc=proc,
+        processing=proc,
         labels=labels,
     )
     r._set_private_data("metadata", grib)
