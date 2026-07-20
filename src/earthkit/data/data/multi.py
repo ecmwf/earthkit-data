@@ -7,32 +7,86 @@
 # nor does it submit to any jurisdiction.
 #
 
+from __future__ import annotations
 
-from . import SimpleData
+from typing import (
+    TYPE_CHECKING,
+    Any,  # noqa: F401
+)
+
+import deprecation
+
+from . import Data, SimpleData
+
+if TYPE_CHECKING:
+    import pandas  # type: ignore[import]
+    import xarray  # type: ignore[import]
+
+    from earthkit.data.core.fieldlist import FieldList
 
 
 class MultiData(SimpleData):
+    _TYPE_NAME = "Multi"
+
+    """Represent multiple sources that cannot be represented by a single Data object.
+
+    When :py:func:`earthkit.data.from_source` is called with multiple input files, earthkit-data attempts to
+    return a single, type-specific Data object (e.g. ``GribData`` for a set of GRIB files). A ``MultiData``
+    object is returned instead in two situations:
+
+    - the source type does not support multiple input files (e.g. ``CSVData`` handles only one file at a time,
+      so multiple CSV files yield a ``MultiData``);
+    - the input files are of mixed types and cannot be merged into a single typed object.
+    """
+
     def __init__(self, sources):
-        """Initialize a MultiData object with multiple sources.
+        """Initialize a MultiData object.
 
         Parameters
         ----------
-        sources : list
-            List of data sources to combine.
+        sources : MultiSource
+            A MultiSource object containing multiple data sources.
         """
-        self.sources = sources
+        self._sources_legacy = sources
         self._source = sources
-        # self.datas = [s._reader._to_data_object() for s in self.sources.sources]
 
     @property
-    def available_types(self):
+    def available_types(self) -> list[str]:
         """list[str]: Return the list of available types that this data object can be converted to."""
         types = set()
-        for d in self.sources:
-            types.update(d.available_types)
-        return sorted(types)
+        try:
+            for d in self._datas():
+                types.update(d.available_types)
+            return sorted(types)
+        except Exception:
+            pass
 
-    def describe(self):
+        return list()
+
+    @property
+    @deprecation.deprecated(
+        deprecated_in="1.1.0",
+        removed_in=None,
+        details=(
+            "The 'sources' property is deprecated and will be removed in a future release. "
+            "Access to the underlying sources in MultiData is no longer part of the public API."
+        ),
+    )
+    def sources(self) -> Any:
+        """Deprecated. Access to the underlying sources is no longer part of the public API."""
+        return self._sources_legacy
+
+    def _datas(self):
+        res = []
+        for s in self._source.sources:
+            if isinstance(s, Data):
+                res.append(s)
+            else:
+                res.append(s.to_data_object())
+
+        return res
+
+    def describe(self) -> Any:
         """Provide a description of the MultiData.
 
         Returns
@@ -42,7 +96,7 @@ class MultiData(SimpleData):
         """
         pass
 
-    def to_fieldlist(self, *args, **kwargs):
+    def to_fieldlist(self, *args, **kwargs) -> FieldList:
         """Convert into a FieldList.
 
         Parameters
@@ -62,8 +116,11 @@ class MultiData(SimpleData):
         NotImplementedError
             If conversion to FieldList is not implemented for this combination of sources.
         """
-        # return self.sources.to_fieldlist(*args, **kwargs)
-        data = [s.to_data_object() for s in self.sources.sources]
+        if "fieldlist" not in self.available_types:
+            raise NotImplementedError("Cannot convert this MultiData object to a fieldlist")
+
+        # TODO: review this merger usage
+        data = self._datas()
         fs = [d.to_fieldlist(*args, **kwargs) for d in data]
         from earthkit.data.mergers import merge_by_class
 
@@ -71,41 +128,79 @@ class MultiData(SimpleData):
         if merged is not None:
             return merged.mutate()
 
-        raise NotImplementedError("Conversion of MultiData to fieldlist is not implemented")
+        raise NotImplementedError("Cannot convert this MultiData object to a fieldlist")
 
-    def to_xarray(self, *args, **kwargs):
+    def to_xarray(self, *args, xarray_open_mfdataset_kwargs=None, **kwargs) -> "xarray.Dataset":
         """Convert into an Xarray dataset.
+
+        The conversion is performed by using :py:func:`xarray.open_mfdataset`.
 
         Parameters
         ----------
         *args
-            Positional arguments to pass to the sources' to_xarray method.
+            Positional arguments to pass to the reader's to_xarray method.
+            Not used currently. It is there to allow for future extensions or
+            additional parameters that may be needed for specific use cases.
+        xarray_open_mfdataset_kwargs: dict, None, optional
+            Keyword arguments passed to :py:func:`xarray.open_mfdataset`.
+            When specified, this argument takes precedence over
+            any other keyword arguments passed to the method. It is used for safe
+            parsing of kwargs via intermediate methods.
         **kwargs
-            Keyword arguments to pass to the sources' to_xarray method.
+            Keyword arguments passed :py:func:`xarray.open_mfdataset`.
+            Ignored if `xarray_open_mfdataset_kwargs` is specified.
 
         Returns
         -------
         :py:class:`xarray.Dataset`
-            An Xarray dataset containing data from all sources.
+            An Xarray dataset containing data from all objects in the MultiData.
         """
-        return self.sources.to_xarray(*args, **kwargs)
+        if xarray_open_mfdataset_kwargs:
+            options = dict(xarray_open_mfdataset_kwargs=xarray_open_mfdataset_kwargs)
+        else:
+            options = dict()
 
-    def to_pandas(self, *args, **kwargs):
+        if "xarray" not in self.available_types:
+            raise NotImplementedError(
+                "Cannot convert this MultiData object to Xarray. Not all objects support Xarray conversion."
+            )
+
+        # TODO: review this merger usage
+        return self._source.to_xarray(*args, **options, **kwargs)
+
+    def to_pandas(self, comment="#", pandas_read_csv_kwargs=None) -> "pandas.DataFrame":
         """Convert into a Pandas DataFrame.
 
         Parameters
         ----------
-        *args
-            Positional arguments (unused).
-        **kwargs
-            Keyword arguments (unused).
+        comment: str
+            Character that represents a comment line in a CSV file. This value is ignored if the
+            comment character is defined in ``pandas_read_csv_kwargs``. Applied to all the CSV data
+            sources in the current object.
+        pandas_read_csv_kwargs: dict, None, optional
+            Keyword arguments passed to :func:`pandas.read_csv`. This is used for safe parsing of
+            kwargs via intermediate methods. Applied to all the CSV data sources in the current object.
 
         Returns
         -------
         :py:class:`pandas.DataFrame`
-            A Pandas DataFrame containing data from all sources.
+            A Pandas DataFrame containing the data from all objects in the MultiData.
         """
-        pass
+        if "pandas" not in self.available_types:
+            raise NotImplementedError(
+                "Cannot convert this MultiData object to pandas. Not all objects support pandas conversion."
+            )
+
+        # TODO: review this merger usage
+        data = self._datas()
+
+        from earthkit.data.mergers import make_merger
+
+        pandas_read_csv_kwargs = dict(pandas_read_csv_kwargs) if pandas_read_csv_kwargs is not None else {}
+        if "comment" not in pandas_read_csv_kwargs:
+            pandas_read_csv_kwargs["comment"] = comment
+
+        return make_merger(None, data).to_pandas(pandas_read_csv_kwargs=pandas_read_csv_kwargs)
 
     def to_geopandas(self, *args, **kwargs):
         """Convert into a GeoPandas GeoDataFrame.
@@ -124,7 +219,7 @@ class MultiData(SimpleData):
         """
         raise NotImplementedError("Conversion of MultiData to geopandas is not implemented")
 
-    def to_geojson(self, *args, **kwargs):
+    def to_geojson(self, *args, **kwargs) -> dict:
         """Convert into GeoJSON format.
 
         Parameters

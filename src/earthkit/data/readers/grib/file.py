@@ -205,6 +205,9 @@ class GRIBReader(Source, GRIBReaderBase):
     def to_array(self, *args, **kwargs):
         return self.to_fieldlist().to_array(*args, **kwargs)
 
+    def to_pandas(self, *args, **kwargs):
+        return self.to_fieldlist().to_pandas(*args, **kwargs)
+
     def peek(self):
         return first_field_from_grib_file(self.path, parts=self._kwargs.get("parts", None))
 
@@ -255,6 +258,9 @@ class MultiGRIBReader(Source, GRIBReaderBase):
 
     def to_xarray(self, *args, **kwargs):
         return self.to_fieldlist().to_xarray(*args, **kwargs)
+
+    def to_pandas(self, *args, **kwargs):
+        return self.to_fieldlist().to_pandas(*args, **kwargs)
 
     def __repr__(self):
         return f"MultiGRIBReader({self.sources})"
