@@ -62,6 +62,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 )
 def test_xr_engine_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, dims, or_mask_spec, nfields):
     kwargs["lazy_load"] = lazy_load
+    kwargs["add_valid_time_coord"] = True
 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
@@ -89,6 +90,11 @@ def test_xr_engine_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, dims, or
         da2 = field.to_xarray(**kwargs_with_full_tensor)[param]
         if is_masked:
             da2 = da2.where(False)  # makes all values NaN
+
+        # valid_time is now retained as a scalar auxiliary coordinate
+        # when converting single valid time fields
+        if "valid_time" in da2.coords and "valid_time" not in da.coords:
+            da = da.assign_coords(valid_time=da2.coords["valid_time"])
 
         # check for dimensions (including their order), coordinates and values
         assert da.equals(da2), f"{param=}, {coords_dict=}, NaN expected: {is_masked}"
@@ -150,6 +156,7 @@ def test_xr_engine_incomplete_tensor_holes_2(
     lazy_load, kwargs, dim_keys, dims, or_mask_spec, expected_dims_by_param, nfields
 ):
     kwargs["lazy_load"] = lazy_load
+    kwargs["add_valid_time_coord"] = True
 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
@@ -184,6 +191,9 @@ def test_xr_engine_incomplete_tensor_holes_2(
         da2 = field.to_xarray(**kwargs_with_full_tensor)[param]
         if is_masked:
             da2 = da2.where(False)  # makes all values NaN
+
+        if "valid_time" in da2.coords and "valid_time" not in da.coords:
+            da = da.assign_coords(valid_time=da2.coords["valid_time"])
 
         # check for dimensions (including their order), coordinates and values
         assert da.equals(da2), f"{param=}, {coords_dict=}, NaN expected: {is_masked}"
@@ -246,6 +256,7 @@ def test_xr_engine_incomplete_tensor_coordinates_trimmed_plus_holes(
     lazy_load, kwargs, dim_keys, dims, or_mask_spec, dropped_coords, nfields
 ):
     kwargs["lazy_load"] = lazy_load
+    kwargs["add_valid_time_coord"] = True
 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
@@ -281,6 +292,9 @@ def test_xr_engine_incomplete_tensor_coordinates_trimmed_plus_holes(
         da2 = field.to_xarray(**kwargs_with_full_tensor)[param]
         if is_masked:
             da2 = da2.where(False)  # makes all values NaN
+
+        if "valid_time" in da2.coords and "valid_time" not in da.coords:
+            da = da.assign_coords(valid_time=da2.coords["valid_time"])
 
         # check for dimensions (including their order), coordinates and values
         assert da.equals(da2), f"{param=}, {coords_dict=}, NaN expected: {is_masked}"
