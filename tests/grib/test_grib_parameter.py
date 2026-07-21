@@ -22,13 +22,17 @@ from grib_fixtures import (
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_parameter_1(fl_type):
     ds, _ = load_grib_data("test_single.grib", fl_type, folder="data")
+    assert ds is not None
     f = ds[0]
 
     assert f.parameter.variable() == "2t"
-    assert f.parameter.standard_name() == "unknown"
+    assert f.parameter.standard_name() is None
     assert f.parameter.long_name() == "2 metre temperature"
     assert f.parameter.param() == "2t"
     assert f.parameter.units() == "K"
+
+    xr_ds = ds.to_xarray()
+    assert "standard_name" not in xr_ds["2t"].attrs
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -53,7 +57,7 @@ def test_grib_parameter_tilde_shortname(fl_type):
     assert f.parameter.variable() == "106"
     assert f.parameter.param() == "106"
     assert f.parameter.units() == "~"
-    assert f.parameter.standard_name() == "unknown"
+    assert f.parameter.standard_name() is None
     assert f.parameter.long_name() == "Experimental product"
 
 
