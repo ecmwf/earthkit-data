@@ -15,7 +15,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.field.component.duration import Duration
-from earthkit.data.field.component.processing import ProcessingMethod, TimeProcessingItem
+from earthkit.data.field.component.processing import ProcessingKind, ProcessingMethod
 from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
@@ -28,11 +28,11 @@ def test_grib_proc_analysis():
     assert f.time.step() == datetime.timedelta(0)
     assert f.time.valid_datetime() == datetime.datetime(2016, 9, 25)
 
-    assert isinstance(f.processing.items(), list)
-    t = f.processing.time_processing()
-    assert isinstance(t, TimeProcessingItem)
-    assert t.method == ProcessingMethod.POINT
-    assert t.window_length is None
+    assert list(f.processing) is not None
+    t = f.processing
+    assert t.kind() == ProcessingKind.TIME_PROCESSING
+    assert t.method() == ProcessingMethod.POINT
+    assert t.window_length() is None
 
 
 @pytest.mark.cache
@@ -46,13 +46,13 @@ def test_grib_proc_step_range_1():
     assert f.time.step() == datetime.timedelta(hours=24)
     assert f.time.forecast_period() == datetime.timedelta(hours=24)
 
-    t = f.processing.time_processing()
-    assert t.window_length == Duration(hours=6)
-    assert t.method == ProcessingMethod.MAXIMUM
+    t = f.processing
+    assert t.window_length() == Duration(hours=6)
+    assert t.method() == ProcessingMethod.MAXIMUM
 
-    t = f.processing.items()[0]
-    assert t.window_length == Duration(hours=6)
-    assert t.method == ProcessingMethod.MAXIMUM
+    t = list(f.processing)[0]
+    assert t.window_length() == Duration(hours=6)
+    assert t.method() == ProcessingMethod.MAXIMUM
 
 
 @pytest.mark.cache
@@ -64,15 +64,15 @@ def test_grib_proc_step_range_2():
     assert f.time.base_datetime() == datetime.datetime(2025, 5, 27)
     assert f.time.step() == datetime.timedelta(hours=72)
 
-    t = f.processing.time_processing()
-    assert t.window_length == Duration(hours=1)
-    assert t.method == ProcessingMethod.SUM
+    t = f.processing
+    assert t.window_length() == Duration(hours=1)
+    assert t.method() == ProcessingMethod.SUM
 
     f = ds[1]
     assert f.time.valid_datetime() == datetime.datetime(2025, 5, 30, 1)
     assert f.time.base_datetime() == datetime.datetime(2025, 5, 27)
     assert f.time.step() == datetime.timedelta(hours=73)
 
-    t = f.processing.time_processing()
-    assert t.window_length == Duration(hours=1)
-    assert t.method == ProcessingMethod.SUM
+    t = f.processing
+    assert t.window_length() == Duration(hours=1)
+    assert t.method() == ProcessingMethod.SUM

@@ -78,14 +78,10 @@ class GribProcessingBuilder:
                         window_length = Duration.from_timedelta(td).to_iso_string()
 
         return {
-            "items": [
-                {
-                    "kind": "time_processing",
-                    "method": proc_method.value,
-                    "window_length": window_length,
-                    "incrementing": _get_incrementing(handle, proc_method),
-                }
-            ]
+            "kind": "time_processing",
+            "method": proc_method.value,
+            "window_length": window_length,
+            "incrementing": _get_incrementing(handle, proc_method),
         }
 
 
@@ -114,18 +110,18 @@ class GribProcessingContextCollector(GribContextCollector):
         component = handler.component
 
         time_item = None
-        for item in component.items():
+        for item in component:
             if isinstance(item, TimeProcessingItem):
                 time_item = item
                 break
         if time_item is not None:
-            method = _METHOD_TO_GRIB.get(time_item.method, "instant")
+            method = _METHOD_TO_GRIB.get(time_item.method(), "instant")
             context["stepType"] = method
-            if time_item.method != ProcessingMethod.POINT:
-                if time_item.window_length is not None:
-                    context["stepRange"] = time_item.window_length.to_timedelta()
-                if time_item.incrementing is not None:
-                    grib_type = _INCREMENTING_TO_GRIB_TYPE_OF_TIME_INTERVAL.get(time_item.incrementing)
+            if time_item.method() != ProcessingMethod.POINT:
+                if time_item.window_length() is not None:
+                    context["stepRange"] = time_item.window_length().to_timedelta()
+                if time_item.incrementing() is not None:
+                    grib_type = _INCREMENTING_TO_GRIB_TYPE_OF_TIME_INTERVAL.get(time_item.incrementing())
                     if grib_type is not None:
                         context["typeOfTimeInterval"] = grib_type
 

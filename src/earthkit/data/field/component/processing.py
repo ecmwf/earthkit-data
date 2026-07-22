@@ -11,11 +11,15 @@
 
 A processing component describes post-processing operations applied to a field,
 such as time-based statistical processing or ensemble statistics.
+
+The processing component follows a linked-list design (Proposition #2):
+the component itself acts as the head of a linked list of ProcessingItem nodes.
+Each node exposes its attributes directly and links to the next via ``.next()``.
 """
 
 from abc import ABCMeta, abstractmethod
 from enum import Enum
-from typing import List, Optional
+from typing import Iterator, Optional
 
 from .component import SimpleFieldComponent, component_keys, mark_get_key
 from .duration import Duration, to_duration
@@ -153,9 +157,11 @@ def get_incrementing_type(value) -> Optional["IncrementingType"]:
 
 
 class ProcessingItem(metaclass=ABCMeta):
-    """Base class for processing items.
+    """Base class for processing items (linked-list nodes).
 
     A processing item describes a single processing operation applied to a field.
+    Items form a linked list: each item optionally links to the next via
+    :meth:`next`.
 
     Parameters
     ----------
@@ -163,36 +169,108 @@ class ProcessingItem(metaclass=ABCMeta):
         The kind of processing (time_processing, ensemble_statistics).
     method : ProcessingMethod
         The statistical method used (maximum, minimum, mean, etc.).
+    next_item : ProcessingItem or None
+        The next processing item in the chain.
     """
 
-    def __init__(self, kind: ProcessingKind, method: ProcessingMethod) -> None:
-        self.kind = get_processing_kind(kind)
-        self.method = get_processing_method(method)
+    def __init__(
+        self,
+        kind: ProcessingKind,
+        method: ProcessingMethod,
+        next_item: Optional["ProcessingItem"] = None,
+    ) -> None:
+        self._kind = get_processing_kind(kind)
+        self._method = get_processing_method(method)
+        self._next = next_item
+
+    def kind(self) -> ProcessingKind:
+        """Return the kind of this processing item.
+
+        Returns
+        -------
+        ProcessingKind
+        """
+        return self._kind
+
+    def method(self) -> ProcessingMethod:
+        """Return the statistical method of this processing item.
+
+        Returns
+        -------
+        ProcessingMethod
+        """
+        return self._method
+
+    def next(self) -> Optional["ProcessingItem"]:
+        """Return the next processing item in the chain.
+
+        Returns
+        -------
+        ProcessingItem or None
+            The next item, or None if this is the last item.
+        """
+        return self._next
+
+    def __len__(self) -> int:
+        """Return the length of the processing chain from this item onwards."""
+        count = 1
+        node = self._next
+        while node is not None:
+            count += 1
+            node = node._next
+        return count
+
+    def __iter__(self) -> Iterator["ProcessingItem"]:
+        """Iterate over processing items from this item onwards."""
+        node = self
+        while node is not None:
+            yield node
+            node = node._next
+
+    def to_dict(self) -> dict:
+        """Serialize the processing item (and its chain) to a nested dictionary.
+
+        The ``"next"`` key contains the nested dict of the following item, if any.
+
+        Returns
+        -------
+        dict
+        """
+        d = self._own_to_dict()
+        if self._next is not None:
+            d["next"] = self._next.to_dict()
+        return d
 
     @abstractmethod
-    def to_dict(self) -> dict:
-        """Serialize the processing item to a dictionary."""
+    def _own_to_dict(self) -> dict:
+        """Serialize only this item's own attributes (without the 'next' chain)."""
         pass
 
     @classmethod
     def from_dict(cls, d: dict) -> "ProcessingItem":
-        """Create a ProcessingItem from a dictionary.
+        """Create a ProcessingItem chain from a (possibly nested) dictionary.
 
         Parameters
         ----------
         d : dict
-            Dictionary with at least ``kind`` and ``method`` keys.
+            Dictionary with at least ``kind`` and ``method`` keys. May contain
+            a ``"next"`` key with the nested next item's dict.
 
         Returns
         -------
         ProcessingItem
-            The appropriate subclass instance.
+            The head of the reconstructed chain.
         """
+        # Recursively build the next item first
+        next_item = None
+        if "next" in d:
+            next_item = ProcessingItem.from_dict(d["next"])
+
         kind = get_processing_kind(d["kind"])
         if kind == ProcessingKind.TIME_PROCESSING:
-            return TimeProcessingItem.from_dict(d)
+            return TimeProcessingItem._from_dict(d, next_item=next_item)
         elif kind == ProcessingKind.ENSEMBLE_STATISTICS:
-            return EnsembleProcessingItem.from_dict(d)
+            return EnsembleProcessingItem._from_dict(d, next_item=next_item)
         else:
             raise ValueError(f"Unknown processing kind: {kind}")
 
@@ -220,6 +298,8 @@ class TimeProcessingItem(ProcessingItem):
         ``typeOfTimeInterval=1``). ``"forecast_period"`` means successive
         samples have the same base datetime but different steps (GRIB
         ``typeOfTimeInterval=2``). Default is ``"forecast_period"``.
+    next_item : ProcessingItem or None
+        The next processing item in the chain.
     """
 
     DEFAULT_INCREMENTING = IncrementingType.FORECAST_PERIOD
@@ -230,39 +310,73 @@ class TimeProcessingItem(ProcessingItem):
         window_length: Optional[Duration] = None,
         sampling_frequency: Optional[Duration] = None,
         incrementing: Optional[IncrementingType] = None,
+        next_item: Optional[ProcessingItem] = None,
     ) -> None:
-        super().__init__(kind=ProcessingKind.TIME_PROCESSING, method=method)
-        self.window_length = to_duration(window_length)
-        self.sampling_frequency = to_duration(sampling_frequency)
-        self.incrementing = get_incrementing_type(
+        super().__init__(
+            kind=ProcessingKind.TIME_PROCESSING,
+            method=method,
+            next_item=next_item,
+        )
+        self._window_length = to_duration(window_length)
+        self._sampling_frequency = to_duration(sampling_frequency)
+        self._incrementing = get_incrementing_type(
             incrementing if incrementing is not None else self.DEFAULT_INCREMENTING
         )
 
+    def window_length(self) -> Optional[Duration]:
+        """Return the time window length.
+
+        Returns
+        -------
+        Duration or None
+        """
+        return self._window_length
+
+    def sampling_frequency(self) -> Optional[Duration]:
+        """Return the sampling frequency.
+
+        Returns
+        -------
+        Duration or None
+        """
+        return self._sampling_frequency
+
+    def incrementing(self) -> Optional[IncrementingType]:
+        """Return the incrementing type.
+
+        Returns
+        -------
+        IncrementingType or None
+        """
+        return self._incrementing
+
     def __repr__(self) -> str:
-        parts = [f"method={self.method.value!r}"]
-        if self.window_length is not None:
-            parts.append(f"window_length={self.window_length!r}")
-        if self.sampling_frequency is not None:
-            parts.append(f"sampling_frequency={self.sampling_frequency!r}")
-        if self.incrementing is not None and self.incrementing != self.DEFAULT_INCREMENTING:
-            parts.append(f"incrementing={self.incrementing.value!r}")
+        parts = [f"method={self._method.value!r}"]
+        if self._window_length is not None:
+            parts.append(f"window_length={self._window_length!r}")
+        if self._sampling_frequency is not None:
+            parts.append(f"sampling_frequency={self._sampling_frequency!r}")
+        if self._incrementing is not None and self._incrementing != self.DEFAULT_INCREMENTING:
+            parts.append(f"incrementing={self._incrementing.value!r}")
+        if self._next is not None:
+            parts.append(f"next={self._next!r}")
         return f"TimeProcessingItem({', '.join(parts)})"
 
-    def to_dict(self) -> dict:
+    def _own_to_dict(self) -> dict:
         d = {
-            "kind": self.kind.value,
-            "method": self.method.value,
+            "kind": self._kind.value,
+            "method": self._method.value,
         }
-        if self.window_length is not None:
-            d["window_length"] = self.window_length.to_iso_string()
-        if self.sampling_frequency is not None:
-            d["sampling_frequency"] = self.sampling_frequency.to_iso_string()
-        if self.incrementing is not None:
-            d["incrementing"] = self.incrementing.value
+        if self._window_length is not None:
+            d["window_length"] = self._window_length.to_iso_string()
+        if self._sampling_frequency is not None:
+            d["sampling_frequency"] = self._sampling_frequency.to_iso_string()
+        if self._incrementing is not None:
+            d["incrementing"] = self._incrementing.value
         return d
 
     @classmethod
-    def from_dict(cls, d: dict) -> "TimeProcessingItem":
+    def _from_dict(cls, d: dict, next_item=None) -> "TimeProcessingItem":
         """Create a TimeProcessingItem from a dictionary.
 
         Parameters
@@ -270,6 +384,8 @@ class TimeProcessingItem(ProcessingItem):
         d : dict
             Dictionary with ``method`` and optionally ``window_length``,
             ``sampling_frequency``, ``incrementing``.
+        next_item : ProcessingItem or None
+            The next item in the chain.
 
         Returns
         -------
@@ -280,6 +396,7 @@ class TimeProcessingItem(ProcessingItem):
             window_length=d.get("window_length"),
             sampling_frequency=d.get("sampling_frequency"),
             incrementing=d.get("incrementing"),
+            next_item=next_item,
         )
 
 
@@ -294,34 +411,55 @@ class EnsembleProcessingItem(ProcessingItem):
         The statistical method (e.g. "mean", "standard_deviation").
     ensemble_size : int
         The number of ensemble members used in the computation.
+    next_item : ProcessingItem or None
+        The next processing item in the chain.
     """
 
     def __init__(
         self,
         method: ProcessingMethod = ProcessingMethod.MEAN,
         ensemble_size: int = 0,
+        next_item: Optional[ProcessingItem] = None,
     ) -> None:
-        super().__init__(kind=ProcessingKind.ENSEMBLE_STATISTICS, method=method)
-        self.ensemble_size = int(ensemble_size)
+        super().__init__(
+            kind=ProcessingKind.ENSEMBLE_STATISTICS,
+            method=method,
+            next_item=next_item,
+        )
+        self._ensemble_size = int(ensemble_size)
+
+    def ensemble_size(self) -> int:
+        """Return the ensemble size.
+
+        Returns
+        -------
+        int
+        """
+        return self._ensemble_size
 
     def __repr__(self) -> str:
-        return f"EnsembleProcessingItem(method={self.method.value!r}, ensemble_size={self.ensemble_size})"
+        parts = [f"method={self._method.value!r}", f"ensemble_size={self._ensemble_size}"]
+        if self._next is not None:
+            parts.append(f"next={self._next!r}")
+        return f"EnsembleProcessingItem({', '.join(parts)})"
 
-    def to_dict(self) -> dict:
+    def _own_to_dict(self) -> dict:
         return {
-            "kind": self.kind.value,
-            "method": self.method.value,
-            "ensemble_size": self.ensemble_size,
+            "kind": self._kind.value,
+            "method": self._method.value,
+            "ensemble_size": self._ensemble_size,
         }
 
     @classmethod
-    def from_dict(cls, d: dict) -> "EnsembleProcessingItem":
+    def _from_dict(cls, d: dict, next_item=None) -> "EnsembleProcessingItem":
         """Create an EnsembleProcessingItem from a dictionary.
 
         Parameters
         ----------
         d : dict
             Dictionary with ``method`` and ``ensemble_size``.
+        next_item : ProcessingItem or None
+            The next item in the chain.
 
         Returns
         -------
@@ -330,6 +468,7 @@ class EnsembleProcessingItem(ProcessingItem):
         return cls(
             method=d.get("method", "mean"),
             ensemble_size=d.get("ensemble_size", 0),
+            next_item=next_item,
         )
 
 
@@ -337,69 +476,196 @@ class EnsembleProcessingItem(ProcessingItem):
 class ProcessingBase(SimpleFieldComponent):
     """Base class for the processing component of a field.
 
-    The processing component is a list of :class:`ProcessingItem` instances describing
-    post-processing operations applied to the field (e.g. time statistics, ensemble statistics).
+    The processing component follows a linked-list design (Proposition #2):
+    it acts as the head of a chain of :class:`ProcessingItem` nodes. Attribute
+    access on the component (e.g. ``f.processing.kind()``) delegates to the
+    head item. The next item in the chain is accessed via ``f.processing.next()``.
 
-    The supported keys for :meth:`get` are:
+    Supported keys for :meth:`get`:
 
-    - "items": the full list of processing items
-    - "time_processing": the first TimeProcessingItem, or None
-    - "ensemble_statistics": the first EnsembleProcessingItem, or None
+    - ``"kind"``: the kind of the head processing item
+    - ``"method"``: the method of the head processing item
+    - ``"window_length"``: the window length (TimeProcessingItem only)
+    - ``"sampling_frequency"``: the sampling frequency (TimeProcessingItem only)
+    - ``"incrementing"``: the incrementing type (TimeProcessingItem only)
+    - ``"ensemble_size"``: the ensemble size (EnsembleProcessingItem only)
+    - ``"len"``: the length of the processing chain
+    - ``"next.kind"``, ``"next.method"``, etc.: attributes of the next item
 
     This object is accessed via the :attr:`processing` attribute of a field.
     Keys can also be accessed via the field's :meth:`get` method using the
-    ``"processing."`` prefix.
+    ``"processing."`` prefix (e.g. ``f.get("processing.kind")``).
 
     Examples
     --------
-    >>> import earthkit.data as ekd
-    >>> field = ekd.from_source("file", "example.grib2").to_fieldlist()[0]
-    >>> field.processing.time_processing()
-    TimeProcessingItem(method='maximum', window_length=Duration(hours=6))
-    >>> field.processing.get("time_processing")
-    TimeProcessingItem(method='maximum', window_length=Duration(hours=6))
+    >>> f.processing.kind()
+    <ProcessingKind.TIME_PROCESSING: 'time_processing'>
+    >>> f.processing.method()
+    <ProcessingMethod.MEAN: 'mean'>
+    >>> f.processing.window_length()
+    Duration(...)
+    >>> f.processing.next().kind()
+    <ProcessingKind.TIME_PROCESSING: 'time_processing'>
+    >>> f.processing.next().method()
+    <ProcessingMethod.MAXIMUM: 'maximum'>
+    >>> len(f.processing)
+    2
+    >>> f.processing.to_dict()
+    {'kind': 'time_processing', 'method': 'mean', 'window_length': 'P1M', ...}
     """
 
     @abstractmethod
-    def items(self) -> List[ProcessingItem]:
-        """Return the list of processing items."""
+    def _head(self) -> Optional[ProcessingItem]:
+        """Return the head processing item, or None if empty."""
         pass
 
     @mark_get_key
-    @abstractmethod
-    def time_processing(self) -> Optional[TimeProcessingItem]:
-        r"""Return the first time processing item.
+    def kind(self) -> Optional[ProcessingKind]:
+        """Return the kind of the head processing item.
 
         Returns
         -------
-        TimeProcessingItem or None
-            The first time processing item, or None if not available.
+        ProcessingKind or None
         """
-        pass
+        head = self._head()
+        return head.kind() if head is not None else None
 
     @mark_get_key
-    @abstractmethod
-    def ensemble_statistics(self) -> Optional[EnsembleProcessingItem]:
-        r"""Return the first ensemble statistics item.
+    def method(self) -> Optional[ProcessingMethod]:
+        """Return the method of the head processing item.
 
         Returns
         -------
-        EnsembleProcessingItem or None
-            The first ensemble statistics item, or None if not available.
+        ProcessingMethod or None
         """
-        pass
+        head = self._head()
+        return head.method() if head is not None else None
+
+    @mark_get_key
+    def window_length(self) -> Optional[Duration]:
+        """Return the window length of the head processing item.
+
+        Returns
+        -------
+        Duration or None
+            The window length, or None if not applicable or empty.
+        """
+        head = self._head()
+        if head is not None and hasattr(head, "window_length"):
+            return head.window_length()
+        return None
+
+    @mark_get_key
+    def sampling_frequency(self) -> Optional[Duration]:
+        """Return the sampling frequency of the head processing item.
+
+        Returns
+        -------
+        Duration or None
+            The sampling frequency, or None if not applicable or empty.
+        """
+        head = self._head()
+        if head is not None and hasattr(head, "sampling_frequency"):
+            return head.sampling_frequency()
+        return None
+
+    @mark_get_key
+    def incrementing(self) -> Optional[IncrementingType]:
+        """Return the incrementing type of the head processing item.
+
+        Returns
+        -------
+        IncrementingType or None
+            The incrementing type, or None if not applicable or empty.
+        """
+        head = self._head()
+        if head is not None and hasattr(head, "incrementing"):
+            return head.incrementing()
+        return None
+
+    @mark_get_key
+    def ensemble_size(self) -> Optional[int]:
+        """Return the ensemble size of the head processing item.
+
+        Returns
+        -------
+        int or None
+            The ensemble size, or None if not applicable or empty.
+        """
+        head = self._head()
+        if head is not None and hasattr(head, "ensemble_size"):
+            return head.ensemble_size()
+        return None
+
+    def next(self) -> Optional[ProcessingItem]:
+        """Return the next processing item after the head.
+
+        Returns
+        -------
+        ProcessingItem or None
+        """
+        head = self._head()
+        return head.next() if head is not None else None
+
+    def __len__(self) -> int:
+        """Return the length of the processing chain."""
+        head = self._head()
+        return len(head) if head is not None else 0
+
+    def __iter__(self) -> Iterator[ProcessingItem]:
+        """Iterate over all processing items in the chain."""
+        head = self._head()
+        if head is not None:
+            yield from head
+        return
+
+    def _get_single(self, key, default=None, astype=None, raise_on_missing=False):
+        """Extended get supporting dotted 'next.' prefix navigation."""
+        # Handle "len" specially
+        if key == "len":
+            return len(self)
+
+        # Handle "next.X" keys by navigating the chain
+        if key.startswith("next."):
+            remainder = key[len("next.") :]
+            next_item = self.next()
+            if next_item is None:
+                if raise_on_missing:
+                    raise KeyError(f"Key {key} not found: no next processing item")
+                return default
+            return _get_from_item(next_item, remainder, default=default, raise_on_missing=raise_on_missing)
+
+        # Fall back to standard SimpleFieldComponent behaviour
+        return super()._get_single(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+
+
+def _get_from_item(item: ProcessingItem, key: str, default=None, raise_on_missing=False):
+    """Retrieve a value from a ProcessingItem by key, supporting 'next.' navigation."""
+    if key == "len":
+        return len(item)
+
+    if key.startswith("next."):
+        remainder = key[len("next.") :]
+        next_item = item.next()
+        if next_item is None:
+            if raise_on_missing:
+                raise KeyError(f"Key {key} not found: no next processing item")
+            return default
+        return _get_from_item(next_item, remainder, default=default, raise_on_missing=raise_on_missing)
+
+    # Direct attribute access
+    if hasattr(item, key) and callable(getattr(item, key)):
+        return getattr(item, key)()
+
+    if raise_on_missing:
+        raise KeyError(f"Key {key!r} not found on {type(item).__name__}")
+    return default
 
 
 class EmptyProcessing(ProcessingBase):
     """An empty processing component representing no processing information."""
 
-    def items(self) -> List[ProcessingItem]:
-        return []
-
-    def time_processing(self) -> None:
-        return None
-
-    def ensemble_statistics(self) -> None:
+    def _head(self) -> None:
         return None
 
     @classmethod
@@ -407,7 +673,7 @@ class EmptyProcessing(ProcessingBase):
         return cls()
 
     def to_dict(self) -> dict:
-        return dict()
+        return {}
 
     def set(self, *args, **kwargs):
         raise ValueError("Cannot set values on EmptyProcessing")
@@ -420,54 +686,68 @@ class EmptyProcessing(ProcessingBase):
 
 
 class Processing(ProcessingBase):
-    """A processing component containing a list of processing items.
+    """A processing component containing a linked list of processing items.
+
+    This is the concrete implementation of Proposition #2: the processing
+    component holds the head of a linked list of :class:`ProcessingItem` nodes.
 
     Parameters
     ----------
-    items : list of ProcessingItem
-        The processing items describing operations applied to the field.
+    head : ProcessingItem
+        The head (first) processing item in the chain.
     """
 
-    def __init__(self, items: List[ProcessingItem]) -> None:
-        self._items = items
+    def __init__(self, head: ProcessingItem) -> None:
+        self._item = head
 
-    def items(self) -> List[ProcessingItem]:
-        return self._items
+    def _head(self) -> ProcessingItem:
+        return self._item
 
-    @mark_get_key
-    def time_processing(self) -> Optional[TimeProcessingItem]:
-        r"""Return the first time processing item."""
-        for item in self._items:
-            if isinstance(item, TimeProcessingItem):
-                return item
-        return None
+    def to_dict(self) -> dict:
+        """Serialize the processing chain to a nested dictionary.
 
-    @mark_get_key
-    def ensemble_statistics(self) -> Optional[EnsembleProcessingItem]:
-        r"""Return the first ensemble statistics item."""
-        for item in self._items:
-            if isinstance(item, EnsembleProcessingItem):
-                return item
-        return None
+        Returns
+        -------
+        dict
+            A nested dictionary where the ``"next"`` key links to the next
+            item's dict representation.
+
+        Examples
+        --------
+        >>> proc.to_dict()
+        {
+            "kind": "time_processing",
+            "method": "mean",
+            "window_length": "P1M",
+            "sampling_frequency": "P1D",
+            "next": {
+                "kind": "time_processing",
+                "method": "maximum",
+                "window_length": "P1D",
+                "sampling_frequency": "PT1H"
+            }
+        }
+        """
+        return self._item.to_dict()
 
     @classmethod
     def from_dict(cls, d: dict) -> "Processing":
-        """Create a Processing component from a dictionary.
+        """Create a Processing component from a (possibly nested) dictionary.
 
         Parameters
         ----------
         d : dict
-            Dictionary with an ``"items"`` key containing a list of item dicts.
+            Dictionary representing the head item, possibly with a ``"next"``
+            key for subsequent items.
 
         Returns
         -------
         Processing
         """
-        items = [ProcessingItem.from_dict(item) for item in d["items"]]
-        return cls(items)
-
-    def to_dict(self) -> dict:
-        return {"items": [item.to_dict() for item in self._items]}
+        if not d:
+            return EmptyProcessing()
+        head = ProcessingItem.from_dict(d)
+        return cls(head)
 
     def set(self, *args, **kwargs):
         """Set new values for the processing component and return a new instance.
@@ -477,8 +757,10 @@ class Processing(ProcessingBase):
         raise NotImplementedError("Setting values on Processing is not yet implemented")
 
     def __getstate__(self):
-        return {"items": [item.to_dict() for item in self._items]}
+        return self._item.to_dict()
 
     def __setstate__(self, state):
-        items_data = state.get("items", [])
-        self._items = [ProcessingItem.from_dict(item) for item in items_data]
+        if state:
+            self._item = ProcessingItem.from_dict(state)
+        else:
+            self._item = None
