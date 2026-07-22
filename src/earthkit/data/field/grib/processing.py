@@ -9,6 +9,7 @@
 
 
 from earthkit.data.field.component.processing import (
+    IncrementingType,
     Processing,
     ProcessingMethod,
     TimeProcessingItem,
@@ -27,6 +28,16 @@ _GRIB_TO_METHOD = {
 }
 
 _METHOD_TO_GRIB = {v: k for k, v in _GRIB_TO_METHOD.items()}
+
+# GRIB typeOfTimeInterval mapping
+# 1 = successive times have same forecast period, different reference times
+# 2 = successive times have same reference time, different forecast periods
+_GRIB_TYPE_OF_TIME_INTERVAL_TO_INCREMENTING = {
+    1: IncrementingType.FORECAST_REFERENCE_TIME,
+    2: IncrementingType.FORECAST_PERIOD,
+}
+
+_INCREMENTING_TO_GRIB_TYPE_OF_TIME_INTERVAL = {v: k for k, v in _GRIB_TYPE_OF_TIME_INTERVAL_TO_INCREMENTING.items()}
 
 
 class GribProcessingBuilder:
@@ -72,9 +83,29 @@ class GribProcessingBuilder:
                     "kind": "time_processing",
                     "method": proc_method.value,
                     "window_length": window_length,
+                    "incrementing": _get_incrementing(handle, proc_method),
                 }
             ]
         }
+
+
+def _get_incrementing(handle, proc_method):
+    """Determine the incrementing type from GRIB typeOfTimeInterval.
+
+    Returns the string value of the IncrementingType enum, or None for
+    point (instantaneous) fields.
+    """
+    if proc_method == ProcessingMethod.POINT:
+        return None
+
+    type_of_time_interval = handle.get("typeOfTimeInterval", default=None)
+    if type_of_time_interval is not None:
+        inc = _GRIB_TYPE_OF_TIME_INTERVAL_TO_INCREMENTING.get(type_of_time_interval)
+        if inc is not None:
+            return inc.value
+
+    # Default: forecast_period (typeOfTimeInterval=2 semantics)
+    return IncrementingType.FORECAST_PERIOD.value
 
 
 class GribProcessingContextCollector(GribContextCollector):
@@ -93,6 +124,10 @@ class GribProcessingContextCollector(GribContextCollector):
             if time_item.method != ProcessingMethod.POINT:
                 if time_item.window_length is not None:
                     context["stepRange"] = time_item.window_length.to_timedelta()
+                if time_item.incrementing is not None:
+                    grib_type = _INCREMENTING_TO_GRIB_TYPE_OF_TIME_INTERVAL.get(time_item.incrementing)
+                    if grib_type is not None:
+                        context["typeOfTimeInterval"] = grib_type
 
 
 COLLECTOR = GribProcessingContextCollector()

@@ -41,6 +41,21 @@ class ProcessingMethod(Enum):
     VARIANCE = "variance"
 
 
+class IncrementingType(Enum):
+    """Which time coordinate is incremented across successive samples.
+
+    In GRIB, this corresponds to ``typeOfTimeInterval``:
+
+    - ``FORECAST_REFERENCE_TIME``: successive samples share the same forecast
+      period (step) but have different base datetimes (``typeOfTimeInterval=1``).
+    - ``FORECAST_PERIOD``: successive samples share the same base datetime but
+      have different forecast periods / steps (``typeOfTimeInterval=2``).
+    """
+
+    FORECAST_REFERENCE_TIME = "forecast_reference_time"
+    FORECAST_PERIOD = "forecast_period"
+
+
 def get_processing_kind(value) -> ProcessingKind:
     """Convert a value to a ProcessingKind enum member.
 
@@ -105,6 +120,38 @@ def get_processing_method(value) -> ProcessingMethod:
     raise ValueError(f"Unknown processing method: {value!r}")
 
 
+def get_incrementing_type(value) -> Optional["IncrementingType"]:
+    """Convert a value to an IncrementingType enum member.
+
+    Parameters
+    ----------
+    value : IncrementingType, str, or None
+        The value to convert. If None, returns None.
+
+    Returns
+    -------
+    IncrementingType or None
+
+    Raises
+    ------
+    ValueError
+        If the value cannot be mapped to an IncrementingType.
+    """
+    if value is None:
+        return None
+    if isinstance(value, IncrementingType):
+        return value
+    if isinstance(value, str):
+        try:
+            return IncrementingType(value)
+        except ValueError:
+            try:
+                return IncrementingType[value.upper()]
+            except KeyError:
+                pass
+    raise ValueError(f"Unknown incrementing type: {value!r}")
+
+
 class ProcessingItem(metaclass=ABCMeta):
     """Base class for processing items.
 
@@ -166,17 +213,30 @@ class TimeProcessingItem(ProcessingItem):
     sampling_frequency : Duration, datetime.timedelta, str, or None
         The sampling frequency of the input data within the window.
         Can be an ISO 8601 duration string (e.g. ``"PT1H"``).
+    incrementing : IncrementingType, str, or None
+        Which time coordinate is incremented across successive samples in
+        the processing window. ``"forecast_reference_time"`` means successive
+        samples have different base datetimes but the same step (GRIB
+        ``typeOfTimeInterval=1``). ``"forecast_period"`` means successive
+        samples have the same base datetime but different steps (GRIB
+        ``typeOfTimeInterval=2``). Default is ``"forecast_period"``.
     """
+
+    DEFAULT_INCREMENTING = IncrementingType.FORECAST_PERIOD
 
     def __init__(
         self,
         method: ProcessingMethod = ProcessingMethod.POINT,
         window_length: Optional[Duration] = None,
         sampling_frequency: Optional[Duration] = None,
+        incrementing: Optional[IncrementingType] = None,
     ) -> None:
         super().__init__(kind=ProcessingKind.TIME_PROCESSING, method=method)
         self.window_length = to_duration(window_length)
         self.sampling_frequency = to_duration(sampling_frequency)
+        self.incrementing = get_incrementing_type(
+            incrementing if incrementing is not None else self.DEFAULT_INCREMENTING
+        )
 
     def __repr__(self) -> str:
         parts = [f"method={self.method.value!r}"]
@@ -184,6 +244,8 @@ class TimeProcessingItem(ProcessingItem):
             parts.append(f"window_length={self.window_length!r}")
         if self.sampling_frequency is not None:
             parts.append(f"sampling_frequency={self.sampling_frequency!r}")
+        if self.incrementing is not None and self.incrementing != self.DEFAULT_INCREMENTING:
+            parts.append(f"incrementing={self.incrementing.value!r}")
         return f"TimeProcessingItem({', '.join(parts)})"
 
     def to_dict(self) -> dict:
@@ -195,6 +257,8 @@ class TimeProcessingItem(ProcessingItem):
             d["window_length"] = self.window_length.to_iso_string()
         if self.sampling_frequency is not None:
             d["sampling_frequency"] = self.sampling_frequency.to_iso_string()
+        if self.incrementing is not None:
+            d["incrementing"] = self.incrementing.value
         return d
 
     @classmethod
@@ -204,7 +268,8 @@ class TimeProcessingItem(ProcessingItem):
         Parameters
         ----------
         d : dict
-            Dictionary with ``method`` and optionally ``window_length``, ``sampling_frequency``.
+            Dictionary with ``method`` and optionally ``window_length``,
+            ``sampling_frequency``, ``incrementing``.
 
         Returns
         -------
@@ -214,6 +279,7 @@ class TimeProcessingItem(ProcessingItem):
             method=d.get("method", "point"),
             window_length=d.get("window_length"),
             sampling_frequency=d.get("sampling_frequency"),
+            incrementing=d.get("incrementing"),
         )
 
 
