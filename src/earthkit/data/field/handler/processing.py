@@ -23,10 +23,6 @@ class ProcessingFieldComponentHandler(SimpleFieldComponentHandler):
 
         COLLECTOR.collect(self, context)
 
-    def set(self, *args, **kwargs):
-        spec = self._spec.set(*args, **kwargs)
-        return ProcessingFieldComponentHandler(spec)
-
     @classmethod
     def from_component(cls, component: ProcessingBase) -> "ProcessingFieldComponentHandler":
         return ProcessingFieldComponentHandler(component)

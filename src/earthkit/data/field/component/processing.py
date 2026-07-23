@@ -662,6 +662,42 @@ def _get_from_item(item: ProcessingItem, key: str, default=None, raise_on_missin
     return default
 
 
+def _apply_updates(d, updates):
+    """Apply dotted-key updates to a nested processing dict in place.
+
+    Keys without a ``"next."`` prefix update the current dict directly.
+    Keys starting with ``"next."`` recurse into ``d["next"]``, creating
+    it if necessary.
+
+    Parameters
+    ----------
+    d : dict
+        The processing dict to update.
+    updates : dict
+        Key-value pairs to apply.
+    """
+    nested = {}
+    for key, value in updates.items():
+        if key.startswith("next."):
+            nested[key[len("next.") :]] = value
+        else:
+            # Convert enum values to their string representation for dict storage
+            if isinstance(value, ProcessingKind):
+                value = value.value
+            elif isinstance(value, ProcessingMethod):
+                value = value.value
+            elif isinstance(value, IncrementingType):
+                value = value.value
+            elif isinstance(value, Duration):
+                value = value.to_iso_string()
+            d[key] = value
+
+    if nested:
+        if "next" not in d:
+            d["next"] = {}
+        _apply_updates(d["next"], nested)
+
+
 class EmptyProcessing(ProcessingBase):
     """An empty processing component representing no processing information."""
 
@@ -676,7 +712,39 @@ class EmptyProcessing(ProcessingBase):
         return {}
 
     def set(self, *args, **kwargs):
-        raise ValueError("Cannot set values on EmptyProcessing")
+        """Create a new Processing from the given values.
+
+        Since this is an empty processing component, a new Processing
+        instance is built from the provided key-value pairs.
+
+        Parameters
+        ----------
+        *args : dict
+            Dictionaries of key-value pairs.
+        **kwargs
+            Key-value pairs.
+
+        Returns
+        -------
+        Processing
+            A new Processing instance.
+        """
+        updates = {}
+        for a in args:
+            if a is None:
+                continue
+            if isinstance(a, dict):
+                updates.update(a)
+            else:
+                raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
+        updates.update(kwargs)
+
+        if not updates:
+            return self
+
+        d = {}
+        _apply_updates(d, updates)
+        return Processing.from_dict(d)
 
     def __getstate__(self):
         return {}
@@ -750,11 +818,45 @@ class Processing(ProcessingBase):
         return cls(head)
 
     def set(self, *args, **kwargs):
-        """Set new values for the processing component and return a new instance.
+        """Create a new Processing instance with updated values.
 
-        Not yet implemented.
+        Accepts dictionaries and/or keyword arguments whose keys correspond
+        to processing item attributes (``kind``, ``method``, ``window_length``,
+        ``sampling_frequency``, ``incrementing``, ``ensemble_size``). Keys
+        prefixed with ``next.`` navigate to deeper items in the chain.
+
+        Parameters
+        ----------
+        *args : dict
+            Dictionaries of key-value pairs to set.
+        **kwargs
+            Key-value pairs to set.
+
+        Returns
+        -------
+        Processing
+            A new Processing instance with the updated values.
+
+        Examples
+        --------
+        >>> p2 = p.set({"method": "mean", "next.method": "maximum"})
         """
-        raise NotImplementedError("Setting values on Processing is not yet implemented")
+        updates = {}
+        for a in args:
+            if a is None:
+                continue
+            if isinstance(a, dict):
+                updates.update(a)
+            else:
+                raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
+        updates.update(kwargs)
+
+        if not updates:
+            return self
+
+        d = self.to_dict()
+        _apply_updates(d, updates)
+        return Processing.from_dict(d)
 
     def __getstate__(self):
         return self._item.to_dict()
