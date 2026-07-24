@@ -31,6 +31,10 @@ class FieldListData(SourceData):
         """
         return f"FieldList data with {len(self._fieldlist)} fields"
 
+    @property
+    def path(self) -> str | list[str] | None:
+        return self._reader.path
+
     def to_fieldlist(self, *args, **kwargs):
         """Convert into a FieldList.
 

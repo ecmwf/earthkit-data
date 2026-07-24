@@ -27,10 +27,14 @@ class NetCDFData(SourceData):
         """
         from earthkit.data.utils.summary import DataDescriber
 
-        return DataDescriber(title="NetCDF file", path=self._reader.path, types=self.available_types)
+        return DataDescriber(title="NetCDF file", path=self.path, types=self.available_types)
+
+    @property
+    def path(self) -> str | list[str] | None:
+        return self._reader.path
 
     def __repr__(self) -> str:
-        return f"NetCDFData(path={self._reader.path})"
+        return f"NetCDFData(path={self.path})"
 
     def _repr_html_(self) -> str:
         return self.describe()._repr_html_()

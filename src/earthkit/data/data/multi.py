@@ -96,6 +96,10 @@ class MultiData(SimpleData):
         """
         pass
 
+    @property
+    def path(self) -> str | list[str] | None:
+        return [s.path for s in self._datas()]
+
     def to_fieldlist(self, *args, **kwargs) -> FieldList:
         """Convert into a FieldList.
 

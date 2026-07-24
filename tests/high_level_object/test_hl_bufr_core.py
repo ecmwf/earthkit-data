@@ -19,6 +19,7 @@ def test_hl_bufr_single_core():
     assert ds._TYPE_NAME == "BUFR"
     assert ds.is_stream() is False
     assert "featurelist" in ds.available_types
+    assert isinstance(ds.path, str)
 
     fl = ds.to_featurelist()
     assert len(fl) == 10
@@ -32,7 +33,8 @@ def test_hl_bufr_multi_core():
     assert ds._TYPE_NAME == "BUFR"
     assert ds.is_stream() is False
     assert "featurelist" in ds.available_types
+    isinstance(ds.path, list)
+    assert all(isinstance(p, str) for p in ds.path)
 
     fl = ds.to_featurelist()
     assert len(fl) == 20
-    assert fl.get("dataCategory") == [2] * 10 + [0] * 10

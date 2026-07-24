@@ -9,22 +9,19 @@
 # nor does it submit to any jurisdiction.
 #
 
-import pytest
-
 from earthkit.data import from_source
-from earthkit.data.utils.testing import NO_ODC, earthkit_examples_file
-
-if NO_ODC:
-    pytest.skip("pyodc is not installed", allow_module_level=True)
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
-def test_hl_odb_single_core():
-    ds = from_source("file", earthkit_examples_file("test.odb"))
+def test_hl_text_single_core():
+    ds = from_source("file", earthkit_test_data_file("test.txt"))
 
-    assert ds._TYPE_NAME == "ODB"
+    assert ds._TYPE_NAME == "Text"
     assert ds.is_stream() is False
-    assert "pandas" in ds.available_types
+    assert ds.available_types is None
     assert isinstance(ds.path, str)
 
-    df = ds.to_pandas()
-    assert len(df) == 717
+    import pytest
+
+    with pytest.raises(NotImplementedError):
+        ds.to_pandas()
