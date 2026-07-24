@@ -247,6 +247,32 @@ class ProcessingItem(metaclass=ABCMeta):
         pass
 
     @classmethod
+    def _from_dict(cls, d: dict, next_item: "ProcessingItem | None" = None) -> "ProcessingItem":
+        """Create a single ProcessingItem from a dictionary with a given next_item.
+
+        Does NOT recurse into ``d["next"]`` — the caller is responsible for
+        providing the already-built ``next_item``.
+
+        Parameters
+        ----------
+        d : dict
+            Dictionary with at least ``kind`` and ``method`` keys.
+        next_item : ProcessingItem or None
+            The next item to attach to the created item.
+
+        Returns
+        -------
+        ProcessingItem
+        """
+        kind = get_processing_kind(d["kind"])
+        if kind == ProcessingKind.TIME_PROCESSING:
+            return TimeProcessingItem._from_dict(d, next_item=next_item)
+        elif kind == ProcessingKind.ENSEMBLE_STATISTICS:
+            return EnsembleProcessingItem._from_dict(d, next_item=next_item)
+        else:
+            raise ValueError(f"Unknown processing kind: {kind}")
+
+    @classmethod
     def from_dict(cls, d: dict) -> "ProcessingItem":
         """Create a ProcessingItem chain from a (possibly nested) dictionary.
 
@@ -266,13 +292,7 @@ class ProcessingItem(metaclass=ABCMeta):
         if "next" in d:
             next_item = ProcessingItem.from_dict(d["next"])
 
-        kind = get_processing_kind(d["kind"])
-        if kind == ProcessingKind.TIME_PROCESSING:
-            return TimeProcessingItem._from_dict(d, next_item=next_item)
-        elif kind == ProcessingKind.ENSEMBLE_STATISTICS:
-            return EnsembleProcessingItem._from_dict(d, next_item=next_item)
-        else:
-            raise ValueError(f"Unknown processing kind: {kind}")
+        return cls._from_dict(d, next_item=next_item)
 
 
 class TimeProcessingItem(ProcessingItem):
@@ -645,12 +665,9 @@ class ProcessingBase(SimpleFieldComponent):
         >>> p2.next().kind()
         <ProcessingKind.TIME_PROCESSING: 'time_processing'>
         """
-        # Attach current chain as 'next' of the new item
-        d = dict(item_dict)
+        # Attach current chain as 'next' of the new item (no round-trip serialization)
         head = self._head()
-        if head is not None:
-            d["next"] = head.to_dict()
-        return Processing(ProcessingItem.from_dict(d))
+        return Processing(ProcessingItem._from_dict(item_dict, next_item=head))
 
     def pop(self) -> "ProcessingBase":
         """Remove the head processing item and return the remainder of the chain.

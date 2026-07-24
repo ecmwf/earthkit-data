@@ -174,57 +174,42 @@ class GribProcessingBuilder:
     def build(handle):
         from earthkit.data.field.handler.processing import ProcessingFieldComponentHandler
 
-        d = GribProcessingBuilder._build_dict(handle)
-        if d is None:
-            from earthkit.data.field.component.processing import EmptyProcessing
-
-            component = EmptyProcessing()
-        else:
-            component = Processing.from_dict(d)
+        component = GribProcessingBuilder._build_component(handle)
         handler = ProcessingFieldComponentHandler.from_component(component)
         return handler
 
     @staticmethod
-    def _build_dict(handle):
-        """Build a nested processing dict from GRIB handle.
+    def _build_component(handle):
+        """Build a Processing component from GRIB handle.
 
         Strategy:
         1. Try GRIB2 PDT 4.8 keys (typeOfStatisticalProcessing, etc.)
-           → builds a TimeProcessingItem chain (outer to inner).
-        2. Check derivedForecast → EnsembleProcessingItem at the head.
+           → builds a TimeProcessingItem chain (outer to inner) via recursion.
+        2. Check derivedForecast → EnsembleProcessingItem pushed at the head.
         3. Fallback to legacy stepType-based detection.
 
         Returns
         -------
-        dict or None
-            Nested dict suitable for Processing.from_dict(), or None if no
-            processing detected.
+        Processing or EmptyProcessing
         """
-
-        def _get(key, default=None):
-            return handle.get(key, default=default)
-
         # ------------------------------------------------------------------
         # Step 1: Build TimeProcessingItem chain from PDT 4.8 keys
         # ------------------------------------------------------------------
-        time_chain_dict = GribProcessingBuilder._build_time_chain(handle)
+        component = GribProcessingBuilder._build_time_chain(handle)
 
         # ------------------------------------------------------------------
         # Step 2: Check for ensemble derived forecast (Code Table 4.7)
         # ------------------------------------------------------------------
-        ensemble_dict = GribProcessingBuilder._build_ensemble(handle)
+        ensemble_dict = GribProcessingBuilder._build_ensemble_dict(handle)
+        if ensemble_dict is not None:
+            if component is not None:
+                # Push ensemble at head; time chain becomes its next
+                component = component.push(ensemble_dict)
+            else:
+                component = Processing.from_dict(ensemble_dict)
 
-        # ------------------------------------------------------------------
-        # Step 3: Assemble the chain (ensemble at head if present)
-        # ------------------------------------------------------------------
-        if ensemble_dict is not None and time_chain_dict is not None:
-            # Ensemble is outermost; time chain is nested inside
-            ensemble_dict["next"] = time_chain_dict
-            return ensemble_dict
-        elif ensemble_dict is not None:
-            return ensemble_dict
-        elif time_chain_dict is not None:
-            return time_chain_dict
+        if component is not None:
+            return component
 
         # ------------------------------------------------------------------
         # Fallback: legacy stepType-based detection
@@ -232,96 +217,96 @@ class GribProcessingBuilder:
         return GribProcessingBuilder._build_legacy(handle)
 
     @staticmethod
-    def _build_time_chain(handle):
+    def _build_time_chain(handle, index=0, lists=None):
         """Build TimeProcessingItem chain from GRIB2 PDT 4.8 repeated keys.
 
-        The keys typeOfStatisticalProcessing, typeOfTimeIncrement,
-        indicatorOfUnitForTimeRange, lengthOfTimeRange,
-        indicatorOfUnitForTimeIncrement, timeIncrement may each be a scalar
-        or an array (all of the same length N), defining N processing items
-        from outermost to innermost.
+        Uses recursion: builds the innermost item first, then wraps each
+        outer item using :meth:`Processing.push`.
+
+        Parameters
+        ----------
+        handle : GRIB handle
+        index : int
+            Current index into the arrays (0 = outermost).
+        lists : dict or None
+            Pre-fetched arrays of GRIB keys. Built on first call.
 
         Returns
         -------
-        dict or None
-            Nested dict for the outermost TimeProcessingItem, or None if keys
-            are absent.
+        Processing or None
+            Processing component for the chain starting at ``index``,
+            or None if no valid items found.
         """
+        if lists is None:
 
-        def _get(key, default=None):
-            return handle.get(key, default=default)
+            def _get(key, default=None):
+                return handle.get(key, default=default)
 
-        stat_proc_list = _ensure_list(_get("typeOfStatisticalProcessing"))
-        type_of_time_inc_list = _ensure_list(_get("typeOfTimeIncrement"))
-        unit_for_range_list = _ensure_list(_get("indicatorOfUnitForTimeRange"))
-        length_of_range_list = _ensure_list(_get("lengthOfTimeRange"))
-        unit_for_inc_list = _ensure_list(_get("indicatorOfUnitForTimeIncrement"))
-        time_inc_list = _ensure_list(_get("timeIncrement"))
+            stat_proc = _get("typeOfStatisticalProcessing")
+            if stat_proc is None:
+                return None
 
-        n = len(stat_proc_list)
+            lists = {
+                "stat_proc": _ensure_list(stat_proc),
+                "type_inc": _ensure_list(_get("typeOfTimeIncrement")),
+                "unit_range": _ensure_list(_get("indicatorOfUnitForTimeRange")),
+                "len_range": _ensure_list(_get("lengthOfTimeRange")),
+                "unit_inc": _ensure_list(_get("indicatorOfUnitForTimeIncrement")),
+                "time_inc": _ensure_list(_get("timeIncrement")),
+            }
 
-        def _safe_get(lst, idx):
-            if lst is None or idx >= len(lst):
+        n = len(lists["stat_proc"])
+        if index >= n:
+            return None
+
+        def _safe_get(key, idx):
+            lst = lists[key]
+            if idx >= len(lst):
                 return None
             return lst[idx]
 
-        # Build items from innermost to outermost so we can link them
-        items = []
-        for i in range(n - 1, -1, -1):
-            sp = stat_proc_list[i]
-            method = _GRIB_STAT_PROCESS_TO_METHOD.get(sp)
-            if method is None:
-                # Unknown statistical process code — skip this item
-                continue
+        # Recurse to build the inner (next) part of the chain first
+        inner = GribProcessingBuilder._build_time_chain(handle, index + 1, lists)
 
-            # typeOfTimeIncrement → incrementing
-            type_inc = _safe_get(type_of_time_inc_list, i)
-            incrementing = None
-            if type_inc is not None:
-                inc_enum = _GRIB_TYPE_OF_TIME_INCREMENT_TO_INCREMENTING.get(type_inc)
-                if inc_enum is not None:
-                    incrementing = inc_enum.value
-                else:
-                    # Default to forecast_period for unknown codes
-                    incrementing = IncrementingType.FORECAST_PERIOD.value
+        # Build the item dict for the current index
+        sp = _safe_get("stat_proc", index)
+        method = _GRIB_STAT_PROCESS_TO_METHOD.get(sp)
+        if method is None:
+            # Unknown statistical process code — skip this level, return inner
+            return inner
 
-            # window_length from indicatorOfUnitForTimeRange + lengthOfTimeRange
-            unit_range = _safe_get(unit_for_range_list, i)
-            len_range = _safe_get(length_of_range_list, i)
-            window_length = _grib_time_unit_to_duration(unit_range, len_range)
+        # typeOfTimeIncrement → incrementing
+        type_inc = _safe_get("type_inc", index)
+        incrementing = None
+        if type_inc is not None:
+            inc_enum = _GRIB_TYPE_OF_TIME_INCREMENT_TO_INCREMENTING.get(type_inc)
+            if inc_enum is not None:
+                incrementing = inc_enum.value
+            else:
+                incrementing = IncrementingType.FORECAST_PERIOD.value
 
-            # sampling_frequency from indicatorOfUnitForTimeIncrement + timeIncrement
-            unit_inc = _safe_get(unit_for_inc_list, i)
-            time_inc = _safe_get(time_inc_list, i)
-            sampling_frequency = _grib_time_unit_to_duration(unit_inc, time_inc)
+        # window_length
+        window_length = _grib_time_unit_to_duration(_safe_get("unit_range", index), _safe_get("len_range", index))
 
-            item_dict = {
-                "kind": "time_processing",
-                "method": method.value,
-            }
-            if window_length is not None:
-                item_dict["window_length"] = window_length
-            if sampling_frequency is not None:
-                item_dict["sampling_frequency"] = sampling_frequency
-            if incrementing is not None:
-                item_dict["incrementing"] = incrementing
+        # sampling_frequency
+        sampling_frequency = _grib_time_unit_to_duration(_safe_get("unit_inc", index), _safe_get("time_inc", index))
 
-            items.append(item_dict)
+        item_dict = {"kind": "time_processing", "method": method.value}
+        if window_length is not None:
+            item_dict["window_length"] = window_length
+        if sampling_frequency is not None:
+            item_dict["sampling_frequency"] = sampling_frequency
+        if incrementing is not None:
+            item_dict["incrementing"] = incrementing
 
-        if not items:
-            return None
-
-        # items is ordered innermost-first; link them into a chain
-        # (outermost is last in the list)
-        result = items[0]  # innermost — no "next"
-        for i in range(1, len(items)):
-            items[i]["next"] = result
-            result = items[i]
-
-        return result
+        # Push current item at head of inner chain (or create new if inner is None)
+        if inner is not None:
+            return inner.push(item_dict)
+        else:
+            return Processing.from_dict(item_dict)
 
     @staticmethod
-    def _build_ensemble(handle):
+    def _build_ensemble_dict(handle):
         """Build EnsembleProcessingItem dict from derivedForecast key.
 
         Returns
@@ -410,7 +395,7 @@ class GribProcessingBuilder:
             d["window_length"] = window_length
         if incrementing is not None:
             d["incrementing"] = incrementing
-        return d
+        return Processing.from_dict(d)
 
 
 class GribProcessingContextCollector(GribContextCollector):
