@@ -58,7 +58,10 @@ class GeoJsonData(SourceData):
 
     @property
     def path(self) -> str | list[str] | None:
-        return self._reader.path
+        try:
+            return self._reader.path
+        except Exception:
+            return None
 
     def __repr__(self) -> str:
         return f"GeoJSONData(path={self.path})"

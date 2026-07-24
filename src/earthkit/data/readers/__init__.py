@@ -40,6 +40,10 @@ class Reader(Loader, Encodable, os.PathLike):
     def path(self):
         return self._path
 
+    @path.setter
+    def path(self, value):
+        self._path = value
+
     @property
     def filter(self):
         return self.source.filter

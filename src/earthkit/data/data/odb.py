@@ -53,7 +53,10 @@ class ODBData(SourceData):
 
     @property
     def path(self) -> str | list[str] | None:
-        return self._reader.path
+        try:
+            return self._reader.path
+        except Exception:
+            return None
 
     def __repr__(self) -> str:
         return f"ODBData(path={self.path})"

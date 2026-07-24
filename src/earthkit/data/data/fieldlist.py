@@ -33,7 +33,13 @@ class FieldListData(SourceData):
 
     @property
     def path(self) -> str | list[str] | None:
-        return self._reader.path
+        try:
+            if hasattr(self._reader, "path"):
+                return self._reader.path
+            else:
+                return None
+        except Exception:
+            return None
 
     def to_fieldlist(self, *args, **kwargs):
         """Convert into a FieldList.

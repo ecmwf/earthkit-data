@@ -21,6 +21,7 @@ def test_hl_pp_file():
     assert ds._TYPE_NAME == "PP"
     assert ds.is_stream() is False
     assert "xarray" in ds.available_types
+    assert isinstance(ds.path, str)
 
     a = ds.to_xarray()
     assert "air_temperature" in a.data_vars

@@ -106,19 +106,22 @@ class FileTarget(SimpleTarget):
 
     def _check_overwrite(self, data):
         """Ensure we do not overwrite file that is being read."""
-        if (
-            data is not None
-            and self.filename is not None
-            and os.path.isfile(self.filename)
-            and hasattr(data, "path")
-            and data.path is not None
-            and os.path.isfile(data.path)
-            and os.path.samefile(self.filename, data.path)
-        ):
-            import warnings
+        try:
+            if (
+                data is not None
+                and self.filename is not None
+                and os.path.isfile(self.filename)
+                and hasattr(data, "path")
+                and data.path is not None
+                and os.path.isfile(data.path)
+                and os.path.samefile(self.filename, data.path)
+            ):
+                import warnings
 
-            warnings.warn(UserWarning(f"Earthkit refusing to overwrite the file being read: {self.filename}"))
-            return False
+                warnings.warn(UserWarning(f"Earthkit refusing to overwrite the file being read: {self.filename}"))
+                return False
+        except Exception:
+            pass
         return True
 
     def _write(self, data=None, **kwargs):
