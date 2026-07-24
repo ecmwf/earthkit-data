@@ -118,9 +118,11 @@ _GRIB_TIME_UNIT_MULTIPLIER = {
 _GRIB_STEP_TYPE_TO_METHOD = {
     "accum": ProcessingMethod.SUM,
     "avg": ProcessingMethod.MEAN,
+    "avgd": ProcessingMethod.MEAN,
     "instant": ProcessingMethod.POINT,
     "max": ProcessingMethod.MAXIMUM,
     "min": ProcessingMethod.MINIMUM,
+    "sd": ProcessingMethod.STANDARD_DEVIATION,
 }
 
 _METHOD_TO_GRIB_STEP_TYPE = {v: k for k, v in _GRIB_STEP_TYPE_TO_METHOD.items()}
