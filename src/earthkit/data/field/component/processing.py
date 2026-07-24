@@ -619,6 +619,64 @@ class ProcessingBase(SimpleFieldComponent):
             yield from head
         return
 
+    def push(self, item_dict: dict) -> "Processing":
+        """Add a new processing item at the head of the chain.
+
+        The new item becomes the outermost (first) operation and the current
+        chain becomes its ``next``.
+
+        Parameters
+        ----------
+        item_dict : dict
+            Dictionary specifying the new processing item. Must contain at
+            least ``"kind"`` and ``"method"`` keys (same format as
+            :meth:`ProcessingItem.from_dict`).
+
+        Returns
+        -------
+        Processing
+            A new Processing instance with the new item prepended.
+
+        Examples
+        --------
+        >>> p2 = p.push({"kind": "ensemble_statistics", "method": "mean", "ensemble_size": 50})
+        >>> p2.kind()
+        <ProcessingKind.ENSEMBLE_STATISTICS: 'ensemble_statistics'>
+        >>> p2.next().kind()
+        <ProcessingKind.TIME_PROCESSING: 'time_processing'>
+        """
+        # Attach current chain as 'next' of the new item
+        d = dict(item_dict)
+        head = self._head()
+        if head is not None:
+            d["next"] = head.to_dict()
+        return Processing(ProcessingItem.from_dict(d))
+
+    def pop(self) -> "ProcessingBase":
+        """Remove the head processing item and return the remainder of the chain.
+
+        Returns
+        -------
+        Processing or EmptyProcessing
+            A new Processing instance with the former second item as head,
+            or EmptyProcessing if the chain had only one item (or was empty).
+
+        Examples
+        --------
+        >>> p.method()
+        <ProcessingMethod.MEAN: 'mean'>
+        >>> p2 = p.pop()
+        >>> p2.method()
+        <ProcessingMethod.MAXIMUM: 'maximum'>
+        """
+        head = self._head()
+        if head is None:
+            return EmptyProcessing()
+        next_item = head.next()
+        if next_item is None:
+            return EmptyProcessing()
+        return Processing(next_item)
+
     def _get_single(self, key, default=None, astype=None, raise_on_missing=False):
         """Extended get supporting dotted 'next.' prefix navigation."""
         # Handle "len" specially
