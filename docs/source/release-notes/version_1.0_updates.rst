@@ -10,7 +10,6 @@ Version 1.0 Updates
     and how to update your code.
 
 
-
 Version 1.0.2
 ==============
 

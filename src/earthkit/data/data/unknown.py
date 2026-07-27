@@ -21,6 +21,11 @@ class UnknownData(SourceData):
         """list[str] or None: Return the list of available types that this data object can be converted to."""
         return None
 
+    @property
+    def path(self):
+        """str: Return the path of the underlying data source."""
+        return self._reader.path
+
     def describe(self):
         """Provide a description of the unknown data.
 
@@ -29,4 +34,4 @@ class UnknownData(SourceData):
         str
             A description of the unknown data including the file path.
         """
-        return f"Unknown data from {self._reader.path}"
+        return f"Unknown data from {self.path}"

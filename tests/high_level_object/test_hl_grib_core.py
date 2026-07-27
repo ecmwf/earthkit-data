@@ -38,6 +38,10 @@ def test_hl_grib_single_core():
     assert a["2t"].shape == (8, 13)
     assert a["msl"].shape == (8, 13)
 
+    df = ds.to_pandas()
+    assert len(df) == 208
+    assert set(df.columns) == {"lat", "lon", "value", "datetime"}
+
     v = ds.to_numpy()
     assert v.shape == (2, 8, 13)
 

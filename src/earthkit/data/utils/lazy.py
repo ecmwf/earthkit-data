@@ -56,9 +56,13 @@ class LazySource:
 
     def __getattr__(self, name):
         if self._exception is not None:
-            raise self._exception(name)
+            raise AttributeError(name) from self._exception
         assert name != "source"
-        return getattr(self.source, name)
+        try:
+            src = self.source
+        except Exception as e:
+            raise AttributeError(name) from e
+        return getattr(src, name)
 
     def __call__(self, **kwargs):
         assert self._source is None

@@ -120,11 +120,12 @@ def test_netcdf_multi_cds():
     s2.to_xarray()
 
     source = from_source("multi", s1, s2)
-    for s in source:
-        print(s)
 
-    # TODO: this is crashing with new CDS
-    # source.to_xarray()
+    ds = source.to_xarray()
+
+    assert "t2m" in ds.data_vars
+    assert ds.t2m.shape == (2, 9, 18)
+    assert ds.valid_time.shape == (2,)
 
 
 @pytest.mark.no_eccodes

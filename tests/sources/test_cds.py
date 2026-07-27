@@ -14,7 +14,7 @@ import os
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.core.temporary import temp_directory
+from earthkit.data.core.temporary import temp_directory, temp_file
 from earthkit.data.utils.testing import NO_CDS, preserve_cwd
 
 CDS_TIMEOUT = pytest.CDS_TIMEOUT
@@ -420,18 +420,21 @@ def test_cds_grib_to_pandas_xarray():
     )
     data_cds = from_source("cds", collection_id, **request)
 
-    # Assert a consistent behaviour for local and remote versions
-    data_file = from_source("file", data_cds.path)
-    assert data_cds.to_pandas().equals(data_file.to_pandas())
-    assert data_cds.to_xarray().equals(data_file.to_xarray())
+    with temp_file() as filename:
+        data_cds.to_target("file", filename)
 
-    df = data_file.to_pandas()
-    assert len(df) == 388168
-    assert list(df.columns)[:3] == ["lat", "lon", "value"]
+        # Assert a consistent behaviour for local and remote versions
+        data_file = from_source("file", filename)
+        assert data_cds.to_pandas().equals(data_file.to_pandas())
+        assert data_cds.to_xarray().equals(data_file.to_xarray())
 
-    ds = data_file.to_xarray()
-    assert len(ds) == 2
-    assert len(ds.data_vars) == 2
+        df = data_file.to_pandas()
+        assert len(df) == 388168
+        assert list(df.columns)[:3] == ["lat", "lon", "value"]
+
+        ds = data_file.to_xarray()
+        assert len(ds) == 2
+        assert len(ds.data_vars) == 2
 
 
 @pytest.mark.long_test
