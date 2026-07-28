@@ -19,6 +19,7 @@ node (with ``next()``).  Concrete subclasses are :class:`TimeProcessing` and
 of processing information.
 """
 
+from abc import abstractmethod
 from enum import Enum
 from typing import Iterator, Optional
 
@@ -77,7 +78,6 @@ def get_processing_kind(value) -> ProcessingKind:
     Returns
     -------
     ProcessingKind
-        The corresponding enum member.
 
     Raises
     ------
@@ -108,7 +108,6 @@ def get_processing_method(value) -> ProcessingMethod:
     Returns
     -------
     ProcessingMethod
-        The corresponding enum member.
 
     Raises
     ------
@@ -169,15 +168,7 @@ def _apply_updates(d, updates):
     """Apply dotted-key updates to a nested processing dict in place.
 
     Keys without a ``"next."`` prefix update the current dict directly.
-    Keys starting with ``"next."`` recurse into ``d["next"]``, creating
-    it if necessary.
-
-    Parameters
-    ----------
-    d : dict
-        The processing dict to update.
-    updates : dict
-        Key-value pairs to apply.
+    Keys starting with ``"next."`` recurse into ``d["next"]``.
     """
     nested = {}
     for key, value in updates.items():
@@ -242,7 +233,11 @@ class ProcessingBase(SimpleFieldComponent):
 
     :class:`EmptyProcessing` represents the absence of any processing.
 
-    Supported ``get`` keys (delegated to the head node):
+    Concrete subclasses store their ``_next`` pointer and inherit the linked-list
+    traversal logic (``next``, ``__len__``, ``__iter__``, ``__next__``,
+    ``to_dict``, ``push``, ``pop``) from this base class.
+
+    Supported ``get`` keys:
 
     - ``"kind"``, ``"method"``
     - ``"window_length"``, ``"sampling_frequency"``, ``"incrementing"`` (time only)
@@ -251,65 +246,48 @@ class ProcessingBase(SimpleFieldComponent):
     - ``"next.kind"``, ``"next.method"``, … (chained navigation)
     """
 
+    # Subclasses that represent actual processing nodes set this to their
+    # next node (or None).  EmptyProcessing leaves it as None and overrides
+    # the relevant methods.
+    _next: Optional["ProcessingBase"] = None
+
+    # -----------------------------------------------------------------------
+    # Attribute accessors (defaults return None; overridden by subclasses)
+    # -----------------------------------------------------------------------
+
     @mark_get_key
     def kind(self) -> Optional[ProcessingKind]:
-        """Return the kind of this processing node.
-
-        Returns
-        -------
-        ProcessingKind or None
-        """
+        """Return the kind of this processing node."""
         return None
 
     @mark_get_key
     def method(self) -> Optional[ProcessingMethod]:
-        """Return the statistical method of this processing node.
-
-        Returns
-        -------
-        ProcessingMethod or None
-        """
+        """Return the statistical method of this processing node."""
         return None
 
     @mark_get_key
     def window_length(self) -> Optional[Duration]:
-        """Return the window length (TimeProcessing only).
-
-        Returns
-        -------
-        Duration or None
-        """
+        """Return the window length (TimeProcessing only)."""
         return None
 
     @mark_get_key
     def sampling_frequency(self) -> Optional[Duration]:
-        """Return the sampling frequency (TimeProcessing only).
-
-        Returns
-        -------
-        Duration or None
-        """
+        """Return the sampling frequency (TimeProcessing only)."""
         return None
 
     @mark_get_key
     def incrementing(self) -> Optional[IncrementingType]:
-        """Return the incrementing type (TimeProcessing only).
-
-        Returns
-        -------
-        IncrementingType or None
-        """
+        """Return the incrementing type (TimeProcessing only)."""
         return None
 
     @mark_get_key
     def ensemble_size(self) -> Optional[int]:
-        """Return the ensemble size (EnsembleProcessing only).
-
-        Returns
-        -------
-        int or None
-        """
+        """Return the ensemble size (EnsembleProcessing only)."""
         return None
+
+    # -----------------------------------------------------------------------
+    # Linked-list traversal
+    # -----------------------------------------------------------------------
 
     def next(self) -> Optional["ProcessingBase"]:
         """Return the next processing node in the chain.
@@ -318,15 +296,87 @@ class ProcessingBase(SimpleFieldComponent):
         -------
         ProcessingBase or None
         """
-        return None
+        return self._next
+
+    def _has_next(self) -> bool:
+        """Return True if there is a meaningful next node."""
+        return self._next is not None and not isinstance(self._next, EmptyProcessing)
 
     def __len__(self) -> int:
         """Return the length of the processing chain from this node onwards."""
-        return 0
+        if self.kind() is None:
+            # EmptyProcessing
+            return 0
+        count = 1
+        node = self._next
+        while node is not None and not isinstance(node, EmptyProcessing):
+            count += 1
+            node = node._next
+        return count
 
     def __iter__(self) -> Iterator["ProcessingBase"]:
         """Iterate over processing nodes from this node onwards."""
-        return iter(())
+        if self.kind() is None:
+            return
+        node = self
+        while node is not None and not isinstance(node, EmptyProcessing):
+            yield node
+            node = node._next
+
+    def __next__(self) -> "ProcessingBase":
+        """Return the next processing node, or raise StopIteration.
+
+        This allows using ``next(node)`` as an alternative to ``node.next()``,
+        raising ``StopIteration`` when the chain is exhausted.
+
+        Returns
+        -------
+        ProcessingBase
+
+        Raises
+        ------
+        StopIteration
+            If there is no next node.
+        """
+        nxt = self._next
+        if nxt is None or isinstance(nxt, EmptyProcessing):
+            raise StopIteration
+        return nxt
+
+    # -----------------------------------------------------------------------
+    # Serialization
+    # -----------------------------------------------------------------------
+
+    @abstractmethod
+    def _own_to_dict(self) -> dict:
+        """Serialize only this node's own attributes (without ``next``)."""
+        pass
+
+    def to_dict(self) -> dict:
+        """Serialize the processing chain to a nested dictionary.
+
+        The ``"next"`` key contains the nested dict of the following node.
+
+        Returns
+        -------
+        dict
+        """
+        d = self._own_to_dict()
+        if self._has_next():
+            d["next"] = self._next.to_dict()
+        return d
+
+    def __getstate__(self):
+        return self.to_dict()
+
+    def __setstate__(self, state):
+        if state:
+            rebuilt = from_dict(state)
+            self.__dict__.update(rebuilt.__dict__)
+
+    # -----------------------------------------------------------------------
+    # push / pop
+    # -----------------------------------------------------------------------
 
     def push(self, item_dict: dict) -> "ProcessingBase":
         """Add a new processing node at the head of the chain.
@@ -364,10 +414,14 @@ class ProcessingBase(SimpleFieldComponent):
         --------
         >>> p2 = p.pop()
         """
-        nxt = self.next()
-        if nxt is None:
+        nxt = self._next
+        if nxt is None or isinstance(nxt, EmptyProcessing):
             return EmptyProcessing()
         return nxt
+
+    # -----------------------------------------------------------------------
+    # get / set
+    # -----------------------------------------------------------------------
 
     def _get_single(self, key, default=None, astype=None, raise_on_missing=False):
         """Extended get supporting dotted 'next.' prefix navigation."""
@@ -376,8 +430,8 @@ class ProcessingBase(SimpleFieldComponent):
 
         if key.startswith("next."):
             remainder = key[len("next.") :]
-            next_node = self.next()
-            if next_node is None:
+            next_node = self._next
+            if next_node is None or isinstance(next_node, EmptyProcessing):
                 if raise_on_missing:
                     raise KeyError(f"Key {key} not found: no next processing node")
                 return default
@@ -418,7 +472,6 @@ class ProcessingBase(SimpleFieldComponent):
 
         d = self.to_dict()
         if not d:
-            # EmptyProcessing — build from scratch
             _apply_updates(d, updates)
             return from_dict(d)
 
@@ -434,12 +487,15 @@ class ProcessingBase(SimpleFieldComponent):
 class EmptyProcessing(ProcessingBase):
     """An empty processing component representing no processing information."""
 
-    @classmethod
-    def from_dict(cls, d: dict):
-        return cls()
+    def _own_to_dict(self) -> dict:
+        return {}
 
     def to_dict(self) -> dict:
         return {}
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        return cls()
 
     def __getstate__(self):
         return {}
@@ -494,7 +550,7 @@ class TimeProcessing(ProcessingBase):
         )
         self._next = next_node
 
-    # -- linked-list / chain -------------------------------------------------
+    # -- attribute accessors (override base defaults) ------------------------
 
     def kind(self) -> ProcessingKind:
         return self._kind
@@ -511,23 +567,6 @@ class TimeProcessing(ProcessingBase):
     def incrementing(self) -> Optional[IncrementingType]:
         return self._incrementing
 
-    def next(self) -> Optional[ProcessingBase]:
-        return self._next
-
-    def __len__(self) -> int:
-        count = 1
-        node = self._next
-        while node is not None and not isinstance(node, EmptyProcessing):
-            count += 1
-            node = node.next()
-        return count
-
-    def __iter__(self) -> Iterator[ProcessingBase]:
-        node = self
-        while node is not None and not isinstance(node, EmptyProcessing):
-            yield node
-            node = node.next()
-
     # -- repr / serialization ------------------------------------------------
 
     def __repr__(self) -> str:
@@ -538,12 +577,11 @@ class TimeProcessing(ProcessingBase):
             parts.append(f"sampling_frequency={self._sampling_frequency!r}")
         if self._incrementing is not None and self._incrementing != self.DEFAULT_INCREMENTING:
             parts.append(f"incrementing={self._incrementing.value!r}")
-        if self._next is not None and not isinstance(self._next, EmptyProcessing):
+        if self._has_next():
             parts.append(f"next={self._next!r}")
         return f"TimeProcessing({', '.join(parts)})"
 
     def _own_to_dict(self) -> dict:
-        """Serialize only this node's own attributes (no ``next``)."""
         d = {
             "kind": self._kind.value,
             "method": self._method.value,
@@ -554,12 +592,6 @@ class TimeProcessing(ProcessingBase):
             d["sampling_frequency"] = self._sampling_frequency.to_iso_string()
         if self._incrementing is not None:
             d["incrementing"] = self._incrementing.value
-        return d
-
-    def to_dict(self) -> dict:
-        d = self._own_to_dict()
-        if self._next is not None and not isinstance(self._next, EmptyProcessing):
-            d["next"] = self._next.to_dict()
         return d
 
     @classmethod
@@ -580,13 +612,6 @@ class TimeProcessing(ProcessingBase):
             incrementing=d.get("incrementing"),
             next_node=next_node,
         )
-
-    def __getstate__(self):
-        return self.to_dict()
-
-    def __setstate__(self, state):
-        rebuilt = TimeProcessing.from_dict(state)
-        self.__dict__.update(rebuilt.__dict__)
 
 
 # ---------------------------------------------------------------------------
@@ -621,7 +646,7 @@ class EnsembleProcessing(ProcessingBase):
         self._ensemble_size = int(ensemble_size)
         self._next = next_node
 
-    # -- linked-list / chain -------------------------------------------------
+    # -- attribute accessors (override base defaults) ------------------------
 
     def kind(self) -> ProcessingKind:
         return self._kind
@@ -632,44 +657,20 @@ class EnsembleProcessing(ProcessingBase):
     def ensemble_size(self) -> int:
         return self._ensemble_size
 
-    def next(self) -> Optional[ProcessingBase]:
-        return self._next
-
-    def __len__(self) -> int:
-        count = 1
-        node = self._next
-        while node is not None and not isinstance(node, EmptyProcessing):
-            count += 1
-            node = node.next()
-        return count
-
-    def __iter__(self) -> Iterator[ProcessingBase]:
-        node = self
-        while node is not None and not isinstance(node, EmptyProcessing):
-            yield node
-            node = node.next()
-
     # -- repr / serialization ------------------------------------------------
 
     def __repr__(self) -> str:
         parts = [f"method={self._method.value!r}", f"ensemble_size={self._ensemble_size}"]
-        if self._next is not None and not isinstance(self._next, EmptyProcessing):
+        if self._has_next():
             parts.append(f"next={self._next!r}")
         return f"EnsembleProcessing({', '.join(parts)})"
 
     def _own_to_dict(self) -> dict:
-        """Serialize only this node's own attributes (no ``next``)."""
         return {
             "kind": self._kind.value,
             "method": self._method.value,
             "ensemble_size": self._ensemble_size,
         }
-
-    def to_dict(self) -> dict:
-        d = self._own_to_dict()
-        if self._next is not None and not isinstance(self._next, EmptyProcessing):
-            d["next"] = self._next.to_dict()
-        return d
 
     @classmethod
     def from_dict(cls, d: dict) -> "EnsembleProcessing":
@@ -687,13 +688,6 @@ class EnsembleProcessing(ProcessingBase):
             ensemble_size=d.get("ensemble_size", 0),
             next_node=next_node,
         )
-
-    def __getstate__(self):
-        return self.to_dict()
-
-    def __setstate__(self, state):
-        rebuilt = EnsembleProcessing.from_dict(state)
-        self.__dict__.update(rebuilt.__dict__)
 
 
 # ---------------------------------------------------------------------------
@@ -751,15 +745,3 @@ def from_dict(d: dict) -> ProcessingBase:
         next_node = from_dict(d["next"])
 
     return _from_dict(d, next_node=next_node)
-
-
-# ---------------------------------------------------------------------------
-# Backward-compatible aliases
-# ---------------------------------------------------------------------------
-
-# These aliases allow existing code that imports the old names to continue
-# working without modification.
-ProcessingItem = ProcessingBase
-TimeProcessingItem = TimeProcessing
-EnsembleProcessingItem = EnsembleProcessing
-Processing = ProcessingBase  # Processing was a wrapper; now ProcessingBase is the chain itself
