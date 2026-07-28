@@ -24,11 +24,13 @@ The mapping uses:
 
 from earthkit.data.field.component.duration import Duration
 from earthkit.data.field.component.processing import (
-    EnsembleProcessingItem,
+    EnsembleProcessing,
     IncrementingType,
-    Processing,
     ProcessingMethod,
-    TimeProcessingItem,
+    TimeProcessing,
+)
+from earthkit.data.field.component.processing import (
+    from_dict as processing_from_dict,
 )
 
 from .collector import GribContextCollector
@@ -208,7 +210,7 @@ class GribProcessingBuilder:
                 # Push ensemble at head; time chain becomes its next
                 component = component.push(ensemble_dict)
             else:
-                component = Processing.from_dict(ensemble_dict)
+                component = processing_from_dict(ensemble_dict)
 
         if component is not None:
             return component
@@ -305,7 +307,7 @@ class GribProcessingBuilder:
         if inner is not None:
             return inner.push(item_dict)
         else:
-            return Processing.from_dict(item_dict)
+            return processing_from_dict(item_dict)
 
     @staticmethod
     def _build_ensemble_dict(handle):
@@ -397,7 +399,7 @@ class GribProcessingBuilder:
             d["window_length"] = window_length
         if incrementing is not None:
             d["incrementing"] = incrementing
-        return Processing.from_dict(d)
+        return processing_from_dict(d)
 
 
 class GribProcessingContextCollector(GribContextCollector):
@@ -410,9 +412,9 @@ class GribProcessingContextCollector(GribContextCollector):
         time_item = None
         ensemble_item = None
         for item in component:
-            if isinstance(item, TimeProcessingItem) and time_item is None:
+            if isinstance(item, TimeProcessing) and time_item is None:
                 time_item = item
-            if isinstance(item, EnsembleProcessingItem) and ensemble_item is None:
+            if isinstance(item, EnsembleProcessing) and ensemble_item is None:
                 ensemble_item = item
 
         if time_item is not None:
