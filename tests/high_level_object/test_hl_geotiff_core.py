@@ -23,6 +23,7 @@ def test_hl_geotiff_single_core():
     assert ds.is_stream() is False
     assert "xarray" in ds.available_types
     assert "fieldlist" in ds.available_types
+    assert isinstance(ds.path, str)
 
     a = ds.to_xarray()
     assert "band_1" in a.data_vars
