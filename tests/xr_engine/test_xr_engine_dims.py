@@ -560,7 +560,6 @@ def test_xr_ensure_dims(
             },
             {
                 "2dfd": {
-                    "standard_name": "unknown",
                     "long_name": "2D wave spectra (single)",
                     "units": "meter ** 2 * second / radian",
                     "typeOfLevel": "meanSea",
@@ -619,7 +618,6 @@ def test_xr_extra_dims(source, allow_holes, lazy_load, sel, kwargs, coords, dims
             },
             {
                 "2dfd": {
-                    "standard_name": "unknown",
                     "long_name": "2D wave spectra (single)",
                     "units": "meter ** 2 * second / radian",
                     "typeOfLevel": "meanSea",
@@ -722,7 +720,6 @@ def test_xr_wave_dims(source, allow_holes, lazy_load, sel, kwargs, coords, dims,
             },
             {
                 "aod": {
-                    "standard_name": "unknown",
                     "long_name": "Aerosol optical depth",
                     "units": "Numeric",
                     "level_type": "surface",
