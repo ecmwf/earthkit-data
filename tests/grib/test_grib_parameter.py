@@ -25,7 +25,7 @@ def test_grib_parameter_1(fl_type):
     f = ds[0]
 
     assert f.parameter.variable() == "2t"
-    assert f.parameter.standard_name() == "unknown"
+    assert f.parameter.standard_name() is None
     assert f.parameter.long_name() == "2 metre temperature"
     assert f.parameter.param() == "2t"
     assert f.parameter.units() == "K"
@@ -53,7 +53,7 @@ def test_grib_parameter_tilde_shortname(fl_type):
     assert f.parameter.variable() == "106"
     assert f.parameter.param() == "106"
     assert f.parameter.units() == "~"
-    assert f.parameter.standard_name() == "unknown"
+    assert f.parameter.standard_name() is None
     assert f.parameter.long_name() == "Experimental product"
 
 

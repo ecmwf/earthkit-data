@@ -68,6 +68,17 @@ class Data(Encodable):
         pass
 
     @abstractmethod
+    def path(self) -> str | list[str] | None:
+        """Return the path(s) of the data object.
+
+        Returns
+        -------
+        str|List[str]|None
+            The path(s) of the data object.
+        """
+        pass
+
+    @abstractmethod
     def to(self, to_type: Any, *args, **kwargs) -> Any:
         """Convert the data object into another type.
 
@@ -162,6 +173,10 @@ class SimpleData(Data):
         if method is None:
             raise NotImplementedError(f"Conversion to {type_str} is not implemented")
         return method(*args, **kwargs)
+
+    @property
+    def path(self) -> str | list[str] | None:
+        return None
 
     def to_fieldlist(self, *args, **kwargs) -> "FieldList":
         """Convert into a fieldlist.

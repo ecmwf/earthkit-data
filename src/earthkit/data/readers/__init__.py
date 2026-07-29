@@ -29,12 +29,20 @@ class Reader(Loader, Encodable, os.PathLike):
     def __init__(self, source, path, **kwargs):
         LOG.debug("Reader for %s is %s", path, self.__class__.__name__)
         self._source = weakref.ref(source)
-        self.path = path
+        self._path = path
         self.source_filename = self.source.source_filename
 
     @property
     def source(self):
         return self._source()
+
+    @property
+    def path(self):
+        return self._path
+
+    @path.setter
+    def path(self, value):
+        self._path = value
 
     @property
     def filter(self):
