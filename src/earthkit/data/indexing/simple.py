@@ -118,12 +118,11 @@ class SimpleFieldList(SimpleFieldListBase):
 
     def __init__(self, fields=None):
         if isinstance(fields, Field):
-            fields = [fields]
-
-        if fields is None:
+            self.__fields = [fields]
+        elif fields is None:
             self.__fields = []
-
-        self.__fields = [f for f in fields]
+        else:
+            self.__fields = [f for f in fields]
 
     @property
     def _fields(self):
