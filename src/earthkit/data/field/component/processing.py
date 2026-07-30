@@ -14,8 +14,8 @@ such as time-based statistical processing or ensemble statistics.
 
 The processing component uses a **tuple-based** data model:
 
-- :class:`Processing` holds an immutable tuple of :class:`ProcessingItem` nodes.
-- :class:`ProcessingItem` is an abstract base with concrete subclasses
+- :class:`Processing` holds an immutable tuple of :class:`ProcessingItemBase` nodes.
+- :class:`ProcessingItemBase` is an abstract base with concrete subclasses
   :class:`TimeProcessingItem` and :class:`EnsembleProcessingItem`.
 - :class:`EmptyProcessingItem` is a terminal singleton that is returned when
   accessing out-of-range indices.
@@ -26,7 +26,7 @@ and propagates item-level accessors (e.g. ``.kind()``, ``.method()``) as
 tuples of values across all items.
 """
 
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from enum import Enum
 from typing import Optional, Tuple
 
@@ -124,11 +124,11 @@ def get_incrementing_type(value) -> Optional[IncrementingType]:
 
 
 # ===========================================================================
-# ProcessingItem — abstract base
+# ProcessingItemBase — abstract base
 # ===========================================================================
 
 
-class ProcessingItem(SimpleFieldComponent, metaclass=ABCMeta):
+class ProcessingItemBase(SimpleFieldComponent):
     """Abstract base class for a single processing item.
 
     Subclasses: :class:`TimeProcessingItem`, :class:`EnsembleProcessingItem`.
@@ -208,7 +208,7 @@ class ProcessingItem(SimpleFieldComponent, metaclass=ABCMeta):
         return item_from_dict(d)
 
     @classmethod
-    def from_dict(cls, d: dict) -> "ProcessingItem":
+    def from_dict(cls, d: dict) -> "ProcessingItemBase":
         """Dispatch to the appropriate subclass based on 'kind'."""
         return item_from_dict(d)
 
@@ -226,7 +226,7 @@ class ProcessingItem(SimpleFieldComponent, metaclass=ABCMeta):
 
 
 @component_keys
-class EmptyProcessingItem(ProcessingItem):
+class EmptyProcessingItem(ProcessingItemBase):
     """A terminal processing item returned for out-of-range access.
 
     All attribute accessors return None.  ``get()`` respects
@@ -300,7 +300,7 @@ _EMPTY_PROCESSING_ITEM = EmptyProcessingItem()
 
 
 @component_keys
-class TimeProcessingItem(ProcessingItem):
+class TimeProcessingItem(ProcessingItemBase):
     """A time-based processing item.
 
     Parameters
@@ -401,7 +401,7 @@ class TimeProcessingItem(ProcessingItem):
 
 
 @component_keys
-class EnsembleProcessingItem(ProcessingItem):
+class EnsembleProcessingItem(ProcessingItemBase):
     """An ensemble statistics processing item.
 
     Parameters
@@ -461,8 +461,8 @@ class EnsembleProcessingItem(ProcessingItem):
 # ===========================================================================
 
 
-def item_from_dict(d: dict) -> ProcessingItem:
-    """Create a ProcessingItem from a dictionary, dispatching by 'kind'.
+def item_from_dict(d: dict) -> ProcessingItemBase:
+    """Create a ProcessingItemBase from a dictionary, dispatching by 'kind'.
 
     Parameters
     ----------
@@ -498,7 +498,7 @@ _INDEX_RE = re.compile(r"^\[(\d+)\](?:\.(.+))?$")
 class Processing(SimpleFieldComponent):
     """The processing component of a field.
 
-    Contains an immutable tuple of :class:`ProcessingItem` instances describing
+    Contains an immutable tuple of :class:`ProcessingItemBase` instances describing
     the processing chain applied to the field (outermost first).
 
     Implements a partial tuple interface and propagates item-level accessors
@@ -506,7 +506,7 @@ class Processing(SimpleFieldComponent):
 
     Parameters
     ----------
-    items : tuple or list of ProcessingItem
+    items : tuple or list of ProcessingItemBase
         The processing items (outermost operation first).
 
     Examples
@@ -519,7 +519,7 @@ class Processing(SimpleFieldComponent):
     2
     """
 
-    def __init__(self, items: "Tuple[ProcessingItem, ...] | list" = ()) -> None:
+    def __init__(self, items: "Tuple[ProcessingItemBase, ...] | list" = ()) -> None:
         if isinstance(items, list):
             items = tuple(items)
         self._items = items
@@ -528,7 +528,7 @@ class Processing(SimpleFieldComponent):
     # Tuple-like interface
     # -------------------------------------------------------------------
 
-    def __getitem__(self, index) -> ProcessingItem:
+    def __getitem__(self, index) -> ProcessingItemBase:
         """Return the item at ``index``, or :class:`EmptyProcessingItem` if out of range."""
         if isinstance(index, int):
             if 0 <= index < len(self._items):
@@ -704,10 +704,10 @@ class Processing(SimpleFieldComponent):
                     # "[i]" = full item replacement
                     if isinstance(value, dict):
                         item_replacements[idx] = value
-                    elif isinstance(value, ProcessingItem):
+                    elif isinstance(value, ProcessingItemBase):
                         item_replacements[idx] = value._own_to_dict()
                     else:
-                        raise ValueError(f"Value for '{key}' must be a dict or ProcessingItem")
+                        raise ValueError(f"Value for '{key}' must be a dict or ProcessingItemBase")
             else:
                 raise KeyError(f"Key {key!r} not supported in Processing.set(). Use indexed keys like '[0].method'.")
 
