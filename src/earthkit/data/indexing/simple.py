@@ -120,7 +120,10 @@ class SimpleFieldList(SimpleFieldListBase):
         if isinstance(fields, Field):
             fields = [fields]
 
-        self.__fields = fields if fields is not None else []
+        if fields is None:
+            self.__fields = []
+
+        self.__fields = [f for f in fields]
 
     @property
     def _fields(self):
