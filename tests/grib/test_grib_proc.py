@@ -14,7 +14,7 @@ import datetime
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.utils.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_examples_file, earthkit_remote_test_data_file
 
 
 @pytest.mark.cache
@@ -73,3 +73,19 @@ def test_grib_proc_step_range_2():
     t = f.proc.time()
     assert t.value == datetime.timedelta(hours=1)
     assert t.method == "accum"
+
+
+# TODO: Replace it with a proper high-level test that checks the proc component's behavior in a more meaningful way.
+def test_grib_proc_internals():
+    f = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()[0]
+
+    ctx = {}
+    handler = f._components["proc"]
+    collector = handler.COLLECTOR
+
+    collector.collect_keys(handler, ctx)
+
+    assert ctx == {
+        "stepType": "instant",
+        "stepRange": 0,
+    }
