@@ -10,7 +10,7 @@
 
 from earthkit.data.field.component.time_span import TimeMethods
 from earthkit.data.field.grib.time import ZERO_TIMEDELTA
-from earthkit.data.utils.dates import to_timedelta
+from earthkit.data.utils.dates import step_to_grib, to_timedelta
 
 from .collector import GribContextCollector
 from .core import GribFieldComponentHandler
@@ -83,7 +83,7 @@ class GribProcContextCollector(GribContextCollector):
             method = _METHOD_TO_GRIB.get(time_item.method, "instant")
             context["stepType"] = method
             if time_item.method != TimeMethods.INSTANT:
-                context["stepRange"] = time_item.value
+                context["stepRange"] = step_to_grib(time_item.value)
 
 
 COLLECTOR = GribProcContextCollector()
