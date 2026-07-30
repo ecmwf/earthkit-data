@@ -343,14 +343,16 @@ class GribIndex:
             ctx.pop("handle", None)
             print(f"Field {i + 1}: {ctx=}")
 
-            keys = field._serialise()
+            keys = ctx
+
+            # keys = field._serialise()
 
             # keys = field.get(collections="metadata.mars", default={}).copy()
             # keys.update({k: field.get(f"metadata.{k}", default=None) for k in self.keys})
 
             # keys.setdefault("param", keys.get("shortName", keys.get("paramId")))
 
-            keys = {k: v for k, v in keys.items() if v is not None}
+            # keys = {k: v for k, v in keys.items() if v is not None}
 
             # if keys.get("param") in (0, "unknown"):
             #     param = (
