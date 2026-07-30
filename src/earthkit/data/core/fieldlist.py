@@ -33,7 +33,7 @@ def create_fieldlist(fields=None):
     from earthkit.data.indexing.empty import EmptyFieldList
     from earthkit.data.indexing.simple import SimpleFieldList
 
-    if fields is None or len(fields) == 0:
+    if fields is None or (hasattr(fields, "__len__") and len(fields) == 0):
         return EmptyFieldList()
     else:
         return SimpleFieldList(fields)
