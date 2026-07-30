@@ -864,7 +864,20 @@ class Field(Base):
     def _get_component(self, key):
         if "." in key:
             component_name, name = key.split(".", 1)
+            # Handle indexed component names like "processing[0].kind"
+            # → component lookup uses "processing", name becomes "[0].kind"
+            base_name = component_name.split("[", 1)[0] if "[" in component_name else component_name
+            if base_name != component_name:
+                # Re-join the index into the name: "processing[0]" + "kind" → "[0].kind"
+                idx_part = component_name[len(base_name) :]  # e.g. "[0]"
+                name = idx_part + "." + name
+                component_name = base_name
             return component_name, self._components.get(component_name), name
+        elif "[" in key:
+            # Handle "processing[0]" without trailing dot
+            base_name = key.split("[", 1)[0]
+            idx_part = key[len(base_name) :]  # e.g. "[0]"
+            return base_name, self._components.get(base_name), idx_part
         elif key in self._components[_DATA]:
             return _DATA, self._components[_DATA], key
         return None, None, key
@@ -931,6 +944,18 @@ class Field(Base):
 
     def _get_single_collection(self, key, raise_on_missing=False):
         component_name = key
+
+        # Handle indexed collection names like "processing[0]"
+        if "[" in key:
+            base_name = key.split("[", 1)[0]
+            idx_part = key[len(base_name) :]  # e.g. "[0]"
+            component = self._components.get(base_name)
+            if component:
+                return component.component._get_single(idx_part, raise_on_missing=raise_on_missing)
+            if raise_on_missing:
+                raise KeyError(f"Key {key} not found in field")
+            return None
+
         component = self._components.get(key)
 
         if component:

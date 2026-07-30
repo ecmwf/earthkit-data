@@ -30,9 +30,16 @@ def test_grib_proc_analysis():
 
     assert list(f.processing) is not None
     t = f.processing
-    assert t.kind() == ProcessingKind.TIME_PROCESSING
-    assert t.method() == ProcessingMethod.POINT
-    assert t.window_length() is None
+    assert len(t) == 1
+    assert t.kind() == (ProcessingKind.TIME_PROCESSING,)
+    assert t.method() == (ProcessingMethod.POINT,)
+    assert t.window_length() == (None,)
+
+    # Indexed access
+    item = t[0]
+    assert item.kind() == ProcessingKind.TIME_PROCESSING
+    assert item.method() == ProcessingMethod.POINT
+    assert item.window_length() is None
 
 
 @pytest.mark.cache
@@ -47,12 +54,13 @@ def test_grib_proc_step_range_1():
     assert f.time.forecast_period() == datetime.timedelta(hours=24)
 
     t = f.processing
-    assert t.window_length() == Duration(hours=6)
-    assert t.method() == ProcessingMethod.MAXIMUM
+    assert len(t) == 1
+    assert t.window_length() == (Duration(hours=6),)
+    assert t.method() == (ProcessingMethod.MAXIMUM,)
 
-    t = list(f.processing)[0]
-    assert t.window_length() == Duration(hours=6)
-    assert t.method() == ProcessingMethod.MAXIMUM
+    item = list(f.processing)[0]
+    assert item.window_length() == Duration(hours=6)
+    assert item.method() == ProcessingMethod.MAXIMUM
 
 
 @pytest.mark.cache
@@ -65,14 +73,19 @@ def test_grib_proc_step_range_2():
     assert f.time.step() == datetime.timedelta(hours=72)
 
     t = f.processing
-    assert t.window_length() == Duration(hours=1)
-    assert t.method() == ProcessingMethod.SUM
+    assert len(t) == 1
+    assert t.window_length() == (Duration(hours=1),)
+    assert t.method() == (ProcessingMethod.SUM,)
+
+    item = t[0]
+    assert item.window_length() == Duration(hours=1)
+    assert item.method() == ProcessingMethod.SUM
 
     f = ds[1]
     assert f.time.valid_datetime() == datetime.datetime(2025, 5, 30, 1)
     assert f.time.base_datetime() == datetime.datetime(2025, 5, 27)
     assert f.time.step() == datetime.timedelta(hours=73)
 
-    t = f.processing
-    assert t.window_length() == Duration(hours=1)
-    assert t.method() == ProcessingMethod.SUM
+    item = f.processing[0]
+    assert item.window_length() == Duration(hours=1)
+    assert item.method() == ProcessingMethod.SUM

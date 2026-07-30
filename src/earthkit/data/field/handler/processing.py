@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.field.component.processing import EmptyProcessing, ProcessingBase
+from earthkit.data.field.component.processing import Processing
 
 from .core import SimpleFieldComponentHandler
 
@@ -15,7 +15,7 @@ from .core import SimpleFieldComponentHandler
 class ProcessingFieldComponentHandler(SimpleFieldComponentHandler):
     """Handler for the processing component of a field."""
 
-    COMPONENT_CLS = ProcessingBase
+    COMPONENT_CLS = Processing
     NAME = "processing"
 
     def get_grib_context(self, context) -> dict:
@@ -24,7 +24,7 @@ class ProcessingFieldComponentHandler(SimpleFieldComponentHandler):
         COLLECTOR.collect(self, context)
 
     @classmethod
-    def from_component(cls, component: ProcessingBase) -> "ProcessingFieldComponentHandler":
+    def from_component(cls, component: Processing) -> "ProcessingFieldComponentHandler":
         return ProcessingFieldComponentHandler(component)
 
     @classmethod
@@ -32,4 +32,4 @@ class ProcessingFieldComponentHandler(SimpleFieldComponentHandler):
         return EMPTY_PROCESSING_HANDLER
 
 
-EMPTY_PROCESSING_HANDLER = ProcessingFieldComponentHandler(EmptyProcessing())
+EMPTY_PROCESSING_HANDLER = ProcessingFieldComponentHandler(Processing(()))
