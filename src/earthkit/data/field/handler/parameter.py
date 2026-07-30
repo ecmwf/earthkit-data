@@ -19,10 +19,10 @@ class ParameterFieldComponentHandler(SimpleFieldComponentHandler):
     COMPONENT_MAKER = create_parameter
     NAME = "parameter"
 
-    def get_grib_context(self, context) -> dict:
+    def get_grib_context(self, context, relative=True) -> None:
         from earthkit.data.field.grib.parameter import COLLECTOR
 
-        COLLECTOR.collect(self, context)
+        COLLECTOR.collect(self, context, relative=relative)
 
     @classmethod
     def from_component(cls, component: ParameterBase) -> "ParameterFieldComponentHandler":
@@ -31,6 +31,9 @@ class ParameterFieldComponentHandler(SimpleFieldComponentHandler):
     @classmethod
     def create_empty(cls) -> "ParameterFieldComponentHandler":
         return EMPTY_PARAMETER_HANDLER
+
+    def _serialise(self):
+        return {f"{self.NAME}.{k}": v for k, v in self.component.to_dict().items() if v is not None}
 
 
 EMPTY_PARAMETER_HANDLER = ParameterFieldComponentHandler(EmptyParameter())

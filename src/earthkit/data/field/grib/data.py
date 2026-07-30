@@ -49,8 +49,8 @@ class GribData(DataFieldComponentHandler):
     def check(self, owner):
         pass
 
-    # def get_grib_context(self, context):
-    #     COLLECTOR.collect_keys(self, context)
+    # def get_grib_context(self, context, relative=True) -> None:
+    #     COLLECTOR.collect_keys(self, context, relative=relative)
 
     def __getstate__(self):
         state = {}

@@ -70,12 +70,12 @@ class GribProcBuilder:
 class GribProcContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(handler, context):
-        from earthkit.data.field.handler.proc import TimeProcItem
+        from earthkit.data.field.component.proc import TimeProcItem
 
         component = handler.component
 
         time_item = None
-        for item in component.items:
+        for item in component.items():
             if isinstance(item, TimeProcItem):
                 time_item = item
                 break

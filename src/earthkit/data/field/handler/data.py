@@ -187,11 +187,11 @@ class DataFieldComponentHandler(BaseDataFieldComponentHandler):
         if self.values.size != math.prod(owner.shape):
             raise ValueError(f"Data shape mismatch: {self.values.shape} (data) != {owner.shape} (field)")
 
-    def get_grib_context(self, context):
+    def get_grib_context(self, context, relative=True) -> None:
         """Get the GRIB context for the data component of the field."""
         from earthkit.data.field.grib.data import COLLECTOR
 
-        COLLECTOR.collect(self, context)
+        COLLECTOR.collect(self, context, relative=relative)
 
     # @classmethod
     # def create_empty(cls) -> "DataFieldComponentHandler":
@@ -268,7 +268,7 @@ class EmptyDataFieldComponentHandler(BaseDataFieldComponentHandler):
     def check(self, owner):
         pass
 
-    def get_grib_context(self, context):
+    def get_grib_context(self, context, relative=True) -> None:
         pass
 
     def __getstate__(self):

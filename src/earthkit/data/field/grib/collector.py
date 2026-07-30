@@ -11,8 +11,8 @@ from abc import ABCMeta, abstractmethod
 
 
 class GribContextCollector(metaclass=ABCMeta):
-    def collect(self, spec, context):
-        if hasattr(spec, "handle"):
+    def collect(self, spec, context, relative=True):
+        if relative and hasattr(spec, "handle"):
             handle = spec.handle
             if handle is not None:
                 if "handle" not in context:
@@ -24,7 +24,3 @@ class GribContextCollector(metaclass=ABCMeta):
     @abstractmethod
     def collect_keys(spec, context):
         pass
-
-    # @staticmethod
-    # def get_handle(spec):
-    #     return spec.get_private_data("handle")

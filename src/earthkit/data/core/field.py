@@ -1932,7 +1932,7 @@ class Field(Base):
         # for m in self._components.values():
         #     m.check(self)
 
-    def _get_grib_context(self, context):
+    def _get_grib_context(self, context, relative=True):
         """Helper method to get the GRIB context for the field and its components.
 
         It is used by the encoders.
@@ -1942,7 +1942,7 @@ class Field(Base):
             context["handle"] = grib.handle
 
         for m in self._components.values():
-            m.get_grib_context(context)
+            m.get_grib_context(context, relative=relative)
 
     def _set_metadata(self, md):
         """Helper method to set raw metadata in the field."""
@@ -2063,3 +2063,13 @@ class Field(Base):
         self.__init__(**components)
         private = state.get("private", {})
         self._private = private
+
+    def _serialise(self):
+        """Return a serialisable representation of the field."""
+        d = dict()
+        for c in self._components:
+            if hasattr(self._components[c], "_serialise"):
+                s = self._components[c]._serialise()
+                if s:
+                    d.update(s)
+        return d

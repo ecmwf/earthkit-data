@@ -41,7 +41,7 @@ KEYS2 = ("shortName", "paramId", "level", "step", "number", "date", "time", "val
 KEYS = KEYS1 + KEYS2
 
 
-PARAM_KEYS = (
+_PARAM_KEYS = (
     "variable",
     "standard_name",
     "long_name",
@@ -60,6 +60,22 @@ PARAM_KEYS = (
     "wave_frequency_bounds",
     "wave_frequency_units",
 )
+
+PARAM_KEYS = (
+    "shortName",
+    "units",
+    "paramId",
+    "param",
+    "cfName",
+    "chemId",
+    "chemName",
+    "wavelength",
+    "waveDirection",
+    "waveFrequency",
+)
+LEVEL_KEYS = ("level", "typeOfLevel", "topLevel", "bottomLevel", "NV")
+TIME_KEYS = ("dataDate", "dataTime", "step", "endStep", "forecastMonth", "indexingDate", "indexingTime")
+ENSEMBLE_KEYS = ("number", "perturbationNumber")
 
 
 class GribIndex:
@@ -261,8 +277,8 @@ class GribIndex:
         list[str]
             A list of column names.
         """
-        if self._columns is not None:
-            return self._columns
+        # if self._columns is not None:
+        #     return self._columns
 
         self.cursor.execute("PRAGMA table_info(grib_index)")
         columns = {row[1] for row in self.cursor.fetchall()}
@@ -322,7 +338,12 @@ class GribIndex:
             fields = self.flavour.map(fields)
 
         for i, field in enumerate(tqdm.tqdm(fields, leave=False)):
-            keys = field.parameter.to_dict()
+            ctx = dict()
+            field._get_grib_context(ctx, relative=False)
+            ctx.pop("handle", None)
+            print(f"Field {i + 1}: {ctx=}")
+
+            keys = field._serialise()
 
             # keys = field.get(collections="metadata.mars", default={}).copy()
             # keys.update({k: field.get(f"metadata.{k}", default=None) for k in self.keys})
@@ -613,6 +634,16 @@ class GribIndex:
                 # if matcher(n):
                 #     result.append(n)
         # return result
+
+    def _iterate(self):
+        # with self.cursor as db:
+        # print("description", self.cursor.description)
+        keys = ",".join([self._quote_column(c) for c in self._all_columns()])
+        for d in self.cursor.execute(f"SELECT {keys} FROM grib_index"):
+            # print("d", d)
+            # print("description", self.cursor.description)
+            # print("type(d)", type(d))
+            yield d
 
 
 # @source_registry.register("grib-index")

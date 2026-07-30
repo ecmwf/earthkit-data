@@ -19,10 +19,10 @@ class GeographyFieldComponentHandler(SimpleFieldComponentHandler):
     COMPONENT_MAKER = _create_geography_from_dict
     NAME = "geography"
 
-    def get_grib_context(self, context) -> dict:
+    def get_grib_context(self, context, relative=True) -> dict:
         from earthkit.data.field.grib.geography import COLLECTOR
 
-        COLLECTOR.collect(self, context)
+        COLLECTOR.collect(self, context, relative=relative)
 
     @classmethod
     def from_component(cls, component: GeographyBase) -> "GeographyFieldComponentHandler":

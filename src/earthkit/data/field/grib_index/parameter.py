@@ -30,26 +30,9 @@ class IndexParameterBuilder:
 
     @staticmethod
     def _build_dict(db):
-        keys = [
-            "variable",
-            "standard_name",
-            "long_name",
-            "units",
-            "chem",
-            "chem_long_name",
-            "wavelength",
-            "wavelength_bounds",
-            "wavelength_units",
-            "wave_direction",
-            "wave_direction_index",
-            "wave_direction_bounds",
-            "wave_direction_units",
-            "wave_frequency",
-            "wave_frequency_index",
-            "wave_frequency_bounds",
-            "wave_frequency_units",
-        ]
-
-        d = {k: db.get(k, None) for k in keys}
+        d = dict()
+        for k, v in db.items():
+            if k.startswith("parameter.") and v is not None:
+                d[k[10:]] = v
 
         return d

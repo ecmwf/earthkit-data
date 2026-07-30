@@ -143,7 +143,13 @@ class GribGeography(GeographyBase):
 
         This feature is not yet implemented in earthkit-data, and this method currently returns None.
         """
-        return None
+        gs = self.grid_spec()
+        if gs is not None:
+            from eckit.geo import Grid
+
+            return Grid(gs)
+        else:
+            return None
 
     def grid_spec(self):
         if ECKIT_GRID_SUPPORT.has_ecc_grid_spec and ECKIT_GRID_SUPPORT.has_grid:
@@ -246,8 +252,8 @@ class GribGeographyContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(handler, context):
         component = handler.component
-        if component.grid() is not None and component.grid_spec():
-            grid_spec = component.grid_spec()
+        print(f"GribGeographyContextCollector: component={component}")
+        if (grid_spec := component.grid_spec()) is not None:
             if isinstance(grid_spec, dict):
                 import json
 

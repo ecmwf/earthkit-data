@@ -24,7 +24,7 @@ def create_index_field(db, index, data=None, values=None, geography=None, refere
         data = ArrayDataFieldComponentHandler(values)
 
     # ensemble = MarsEnsembleBuilder.build(index, reference_field=reference_field)
-    parameter = IndexParameterBuilder.build(index)
+    parameter = IndexParameterBuilder.build(db)
     # time = MarsTimeBuilder.build(index)
     # vertical = MarsVerticalBuilder.build(index)
     # labels = SimpleLabels({"mars": index})
