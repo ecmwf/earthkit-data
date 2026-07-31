@@ -602,7 +602,19 @@ def item_from_dict(d: dict) -> ProcessingItemBase:
 
 import re  # noqa: E402
 
-_INDEX_RE = re.compile(r"^\[(\d+)\](?:\.(.+))?$")
+# Matches an indexed key of the form "<attr>[<i>]", e.g. "method[0]".
+_INDEX_RE = re.compile(r"^(\w+)\[(-?\d+)\]$")
+
+
+def _parse_indexed_key(key):
+    """Split an indexed key ``"attr[i]"`` into ``(attr, i)``.
+
+    Returns ``(key, None)`` for a plain (non-indexed) key.
+    """
+    m = _INDEX_RE.match(key)
+    if m:
+        return m.group(1), int(m.group(2))
+    return key, None
 
 
 @component_keys
@@ -723,33 +735,18 @@ class Processing(SimpleFieldComponent):
     def __contains__(self, name):
         """Check if the key is supported.
 
-        Supports both plain keys (e.g. "kind") and indexed keys (e.g. "[0].kind").
+        Supports both plain keys (e.g. ``"kind"``) and indexed keys
+        (e.g. ``"method[0]"``).
         """
-        if name in self._KEYS:
-            return True
-        # Check for indexed access pattern [i].key
-        m = _INDEX_RE.match(name)
-        if m:
-            return True
-        return False
+        attr, idx = _parse_indexed_key(name)
+        return attr in self._KEYS
 
     def _get_single(self, key, default=None, astype=None, raise_on_missing=False):
-        """Get a value, supporting indexed access like ``[0].kind``."""
-        # Check for indexed access: "[i].key" or "[i]"
-        m = _INDEX_RE.match(key)
-        if m:
-            idx = int(m.group(1))
-            sub_key = m.group(2)
-            item = self[idx]
-            if sub_key:
-                return item.get(sub_key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-            else:
-                # "[i]" alone — return the item's dict
-                if isinstance(item, EmptyProcessingItem):
-                    if raise_on_missing:
-                        raise KeyError(f"Processing item at index {idx} does not exist")
-                    return default
-                return item.to_dict()
+        """Get a value, supporting indexed access like ``method[0]``."""
+        attr, idx = _parse_indexed_key(key)
+        if idx is not None:
+            # "attr[i]" → the attribute of the i-th item
+            return self[idx].get(attr, default=default, astype=astype, raise_on_missing=raise_on_missing)
 
         # Plain key — propagated accessor (returns tuple)
         return super()._get_single(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
@@ -759,8 +756,8 @@ class Processing(SimpleFieldComponent):
 
         Supports:
         - ``"kind"``, ``"method"``, etc. → tuple of values across all items
-        - ``"[i].kind"`` → value from the i-th item
-        - ``"[i]"`` → dict of the i-th item
+        - ``"method[i]"`` → value of ``method`` for the i-th item (equivalent to
+          ``self[i].get("method")``)
         """
         return self._get_single(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
 
@@ -768,9 +765,9 @@ class Processing(SimpleFieldComponent):
         """Return a new Processing with updated items.
 
         Accepts:
-        - Indexed keys: ``{"[0].method": "mean"}`` → update item at index 0
-        - Indexed item replacement: ``{"[0]": {...}}`` → replace item at index 0
-        - Full replacement: a list/tuple of dicts passed directly
+        - Indexed keys: ``{"method[0]": "mean"}`` → update ``method`` on item 0
+          (equivalent to replacing item 0 with ``self[0].set(method="mean")``)
+        - Full replacement: a list/tuple of item dicts passed directly
 
         Parameters
         ----------
@@ -790,7 +787,7 @@ class Processing(SimpleFieldComponent):
             if isinstance(a, dict):
                 updates.update(a)
             elif isinstance(a, (list, tuple)):
-                # Full replacement from a list of dicts
+                # Full replacement from a list of item dicts
                 return Processing(tuple(item_from_dict(d) for d in a))
             else:
                 raise ValueError(f"Cannot use arg={a}. Only dict or list allowed.")
@@ -799,39 +796,20 @@ class Processing(SimpleFieldComponent):
         if not updates:
             return self
 
-        # Group updates by index
+        # Group updates by item index
         items_list = list(self._items)
-        indexed_updates = {}  # idx -> dict of sub_key -> value
-        item_replacements = {}  # idx -> full dict
+        indexed_updates = {}  # idx -> {attr: value}
 
         for key, value in updates.items():
-            m = _INDEX_RE.match(key)
-            if m:
-                idx = int(m.group(1))
-                sub_key = m.group(2)
-                if sub_key:
-                    indexed_updates.setdefault(idx, {})[sub_key] = value
-                else:
-                    # "[i]" = full item replacement
-                    if isinstance(value, dict):
-                        item_replacements[idx] = value
-                    elif isinstance(value, ProcessingItemBase):
-                        item_replacements[idx] = value._own_to_dict()
-                    else:
-                        raise ValueError(f"Value for '{key}' must be a dict or ProcessingItemBase")
-            else:
-                raise KeyError(f"Key {key!r} not supported in Processing.set(). Use indexed keys like '[0].method'.")
+            attr, idx = _parse_indexed_key(key)
+            if idx is None:
+                raise KeyError(f"Key {key!r} not supported in Processing.set(). Use indexed keys like 'method[0]'.")
+            indexed_updates.setdefault(idx, {})[attr] = value
 
-        # Apply item replacements
-        for idx, d in item_replacements.items():
-            while len(items_list) <= idx:
-                items_list.append(_EMPTY_PROCESSING_ITEM)
-            items_list[idx] = item_from_dict(d)
-
-        # Apply indexed updates (modify existing items)
         for idx, sub_updates in indexed_updates.items():
-            if idx < len(items_list) and not isinstance(items_list[idx], EmptyProcessingItem):
-                items_list[idx] = items_list[idx].set(sub_updates)
+            real_idx = idx if idx >= 0 else idx + len(items_list)
+            if 0 <= real_idx < len(items_list) and not isinstance(items_list[real_idx], EmptyProcessingItem):
+                items_list[real_idx] = items_list[real_idx].set(sub_updates)
             else:
                 raise KeyError(f"Cannot update item at index {idx}: out of range")
 

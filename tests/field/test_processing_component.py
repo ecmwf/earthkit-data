@@ -477,59 +477,69 @@ def test_processing_get_plain_key_empty():
 
 
 # ===========================================================================
-# Processing — indexed get()
+# Processing — indexed get()  ("attr[i]")
 # ===========================================================================
 
 
 def test_processing_get_indexed_subkey():
     p, _, _ = _sample_processing()
-    assert p.get("[0].kind") == ProcessingKind.TIME_PROCESSING
-    assert p.get("[0].method") == ProcessingMethod.MAXIMUM
-    assert p.get("[0].window_length") == Duration(hours=6)
-    assert p.get("[1].ensemble_size") == 50
+    assert p.get("kind[0]") == ProcessingKind.TIME_PROCESSING
+    assert p.get("method[0]") == ProcessingMethod.MAXIMUM
+    assert p.get("window_length[0]") == Duration(hours=6)
+    assert p.get("ensemble_size[1]") == 50
     # cross-type applicable-but-absent -> None
-    assert p.get("[1].window_length") is None
+    assert p.get("window_length[1]") is None
 
 
-def test_processing_get_indexed_item_dict():
-    p, t, _ = _sample_processing()
-    assert p.get("[0]") == t.to_dict()
+def test_processing_get_indexed_equivalent_to_item_get():
+    # "attr[i]" on the component is equivalent to ".get(attr)" on the i-th item
+    p, _, _ = _sample_processing()
+    assert p.get("method[0]") == p[0].get("method")
+    assert p.get("ensemble_size[1]") == p[1].get("ensemble_size")
 
 
 def test_processing_get_indexed_out_of_range():
     p, _, _ = _sample_processing()
-    assert p.get("[9].kind") is None
-    assert p.get("[9]") is None
-    assert p.get("[9]", default="x") == "x"
+    assert p.get("kind[9]") is None
+    assert p.get("method[9]", default="x") == "x"
     with pytest.raises(KeyError):
-        p.get("[9]", raise_on_missing=True)
+        p.get("method[9]", raise_on_missing=True)
+
+
+def test_processing_get_bare_index_unsupported():
+    # the bare "[i]" form is no longer supported; use ``p[i]`` instead
+    p, _, _ = _sample_processing()
+    assert p.get("[0]") is None
+    assert "[0]" not in p
 
 
 def test_processing_contains_indexed():
     p, _, _ = _sample_processing()
-    assert "[0].kind" in p
-    assert "[1]" in p
+    assert "kind[0]" in p
+    assert "method[1]" in p
+    assert "not_a_key[0]" not in p
 
 
 # ===========================================================================
-# Processing — set()
+# Processing — set()  ("attr[i]")
 # ===========================================================================
 
 
 def test_processing_set_indexed_update():
     p, _, _ = _sample_processing()
-    p2 = p.set({"[0].method": "mean"})
+    p2 = p.set({"method[0]": "mean"})
     assert p2[0].method() == ProcessingMethod.MEAN
     assert p2[0].window_length() == Duration(hours=6)
     # original unchanged
     assert p[0].method() == ProcessingMethod.MAXIMUM
 
 
-def test_processing_set_item_replacement():
+def test_processing_set_indexed_equivalent_to_item_set():
+    # setting "attr[i]" is equivalent to replacing item i with item.set(attr=...)
     p, _, _ = _sample_processing()
-    p2 = p.set({"[0]": {"kind": "time_processing", "method": "sum", "window_length": "PT1H"}})
-    assert p2[0].method() == ProcessingMethod.SUM
-    assert p2[0].window_length() == Duration(hours=1)
+    via_component = p.set({"method[0]": "mean"})
+    via_item = Processing((p[0].set(method="mean"), p[1]))
+    assert via_component == via_item
 
 
 def test_processing_set_full_replacement():
@@ -551,10 +561,17 @@ def test_processing_set_plain_key_raises():
         p.set({"method": "mean"})
 
 
+def test_processing_set_bare_index_raises():
+    # the bare "[i]" item-replacement form is no longer supported
+    p, _, _ = _sample_processing()
+    with pytest.raises(KeyError):
+        p.set({"[0]": {"kind": "time_processing", "method": "sum"}})
+
+
 def test_processing_set_update_out_of_range_raises():
     p, _, _ = _sample_processing()
     with pytest.raises(KeyError):
-        p.set({"[9].method": "mean"})
+        p.set({"method[9]": "mean"})
 
 
 # ===========================================================================
@@ -586,3 +603,60 @@ def test_processing_from_dict_variants():
 def test_processing_pickle():
     p, _, _ = _sample_processing()
     assert pickle.loads(pickle.dumps(p)) == p
+
+
+# ===========================================================================
+# Field / FieldList integration — namespaced processing keys
+#
+# At the field level the index may be written on the component name or on the
+# sub-key: "processing[i].attr" and "processing.attr[i]" are equivalent.
+# ===========================================================================
+
+
+def _field(*items):
+    from earthkit.data.core.field import Field
+
+    return Field.from_components(processing=Processing(items))
+
+
+def test_processing_field_get():
+    t = TimeProcessingItem(method="maximum", window_length="PT6H")
+    e = EnsembleProcessingItem(method="mean", ensemble_size=50)
+    f = _field(t, e)
+
+    # plain (propagated) key → tuple across all items
+    assert f.get("processing.method") == (ProcessingMethod.MAXIMUM, ProcessingMethod.MEAN)
+
+    # the two indexed forms are equivalent
+    assert f.get("processing.method[0]") == ProcessingMethod.MAXIMUM
+    assert f.get("processing[0].method") == ProcessingMethod.MAXIMUM
+    assert f.get("processing.method[0]") == f.get("processing[0].method")
+
+    assert f.get("processing.ensemble_size[1]") == 50
+    assert f.get("processing[1].ensemble_size") == 50
+
+
+def test_processing_field_set():
+    t = TimeProcessingItem(method="maximum", window_length="PT6H")
+    f = _field(t)
+
+    f1 = f.set({"processing.method[0]": "mean"})
+    f2 = f.set({"processing[0].method": "mean"})
+    assert f1.get("processing.method[0]") == ProcessingMethod.MEAN
+    assert f2.get("processing[0].method") == ProcessingMethod.MEAN
+    # original field is unchanged
+    assert f.get("processing.method[0]") == ProcessingMethod.MAXIMUM
+
+
+def test_processing_fieldlist_sel():
+    import earthkit.data as ekd
+
+    def mk(method):
+        return _field(TimeProcessingItem(method=method, window_length="PT6H"))
+
+    fl = ekd.SimpleFieldList([mk("maximum"), mk("minimum"), mk("maximum")])
+
+    # both indexed forms select the same fields
+    r1 = fl.sel({"processing.method[0]": "maximum"})
+    r2 = fl.sel({"processing[0].method": "maximum"})
+    assert len(r1) == len(r2) == 2

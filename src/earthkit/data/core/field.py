@@ -864,13 +864,13 @@ class Field(Base):
     def _get_component(self, key):
         if "." in key:
             component_name, name = key.split(".", 1)
-            # Handle indexed component names like "processing[0].kind"
-            # → component lookup uses "processing", name becomes "[0].kind"
+            # Handle indexed component names like "processing[0].kind": the index is
+            # moved onto the sub-key so that "processing[0].kind" and
+            # "processing.kind[0]" resolve identically to the "kind[0]" component key.
             base_name = component_name.split("[", 1)[0] if "[" in component_name else component_name
             if base_name != component_name:
-                # Re-join the index into the name: "processing[0]" + "kind" → "[0].kind"
                 idx_part = component_name[len(base_name) :]  # e.g. "[0]"
-                name = idx_part + "." + name
+                name = name + idx_part  # "kind" + "[0]" → "kind[0]"
                 component_name = base_name
             return component_name, self._components.get(component_name), name
         elif "[" in key:
