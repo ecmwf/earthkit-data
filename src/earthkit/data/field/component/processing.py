@@ -15,7 +15,8 @@ such as time-based statistical processing or ensemble statistics.
 The processing component uses a **tuple-based** data model:
 
 - :class:`Processing` holds an immutable tuple of :class:`ProcessingItemBase` nodes.
-- :class:`ProcessingItemBase` is an abstract base with concrete subclasses
+- :class:`ProcessingItemBase` is an abstract base declaring the full accessor interface.
+- :class:`ProcessingItem` implements the logic shared by the concrete subclasses
   :class:`TimeProcessingItem` and :class:`EnsembleProcessingItem`.
 - :class:`EmptyProcessingItem` is a terminal singleton that is returned when
   accessing out-of-range indices.
@@ -128,25 +129,85 @@ def get_incrementing_type(value) -> Optional[IncrementingType]:
 # ===========================================================================
 
 
+@component_keys
 class ProcessingItemBase(SimpleFieldComponent):
     """Abstract base class for a single processing item.
 
-    Subclasses: :class:`TimeProcessingItem`, :class:`EnsembleProcessingItem`.
-    """
+    This class defines the interface for a processing item. Some of the accessors are
+    not applicable to all processing item types (e.g. :meth:`ensemble_size` only applies
+    to :class:`EnsembleProcessingItem`), and return None when not applicable.
 
-    _KEYS: tuple = ()
-    _ALIASES: dict = {}
+    The processing information can be accessed by methods like :meth:`kind`,
+    :meth:`method`, :meth:`window_length`, :meth:`sampling_frequency`,
+    :meth:`incrementing`, and :meth:`ensemble_size`. Each of these methods has an
+    associated key that can be used in the :meth:`get` method to retrieve the
+    corresponding information. The list of supported keys is as follows:
+
+    - "kind": the :class:`ProcessingKind` of this item
+    - "method": the :class:`ProcessingMethod` used
+    - "window_length": the :class:`Duration` of the time window, or None
+    - "sampling_frequency": the sampling frequency within the window as a :class:`Duration`, or None
+    - "incrementing": the :class:`IncrementingType` (which time coordinate is incremented), or None
+    - "ensemble_size": the number of ensemble members as an int, or None
+
+    Subclasses: :class:`EmptyProcessingItem`, :class:`ProcessingItem` (and, in turn,
+    :class:`TimeProcessingItem` and :class:`EnsembleProcessingItem`).
+    """
 
     @mark_get_key
     @abstractmethod
-    def kind(self) -> ProcessingKind:
-        """Return the kind of this processing item."""
+    def kind(self) -> Optional[ProcessingKind]:
+        """Return the kind of this processing item.
+
+        The kind is a :class:`ProcessingKind` enum member identifying the family of
+        processing (e.g. time processing or ensemble statistics).
+        """
         pass
 
     @mark_get_key
     @abstractmethod
-    def method(self) -> ProcessingMethod:
-        """Return the statistical method."""
+    def method(self) -> Optional[ProcessingMethod]:
+        """Return the statistical method.
+
+        The method is a :class:`ProcessingMethod` enum member describing the statistical
+        operation applied (e.g. mean, maximum, standard deviation).
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def window_length(self) -> Optional[Duration]:
+        """Return the length of the time window as a :class:`Duration`.
+
+        Only applicable to time-processing items; returns None otherwise.
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def sampling_frequency(self) -> Optional[Duration]:
+        """Return the sampling frequency within the window as a :class:`Duration`.
+
+        Only applicable to time-processing items; returns None otherwise.
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def incrementing(self) -> Optional[IncrementingType]:
+        """Return which time coordinate is incremented as an :class:`IncrementingType`.
+
+        Only applicable to time-processing items; returns None otherwise.
+        """
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def ensemble_size(self) -> Optional[int]:
+        """Return the number of ensemble members.
+
+        Only applicable to ensemble-statistics items; returns None otherwise.
+        """
         pass
 
     @abstractmethod
@@ -225,7 +286,6 @@ class ProcessingItemBase(SimpleFieldComponent):
 # ===========================================================================
 
 
-@component_keys
 class EmptyProcessingItem(ProcessingItemBase):
     """A terminal processing item returned for out-of-range access.
 
@@ -233,28 +293,52 @@ class EmptyProcessingItem(ProcessingItemBase):
     ``raise_on_missing``.
     """
 
-    @mark_get_key
     def kind(self) -> None:
+        """Return the kind of this processing item.
+
+        An EmptyProcessingItem does not contain any processing information, and this
+        method returns None.
+        """
         return None
 
-    @mark_get_key
     def method(self) -> None:
+        """Return the statistical method.
+
+        An EmptyProcessingItem does not contain any processing information, and this
+        method returns None.
+        """
         return None
 
-    @mark_get_key
     def window_length(self) -> None:
+        """Return the length of the time window.
+
+        An EmptyProcessingItem does not contain any processing information, and this
+        method returns None.
+        """
         return None
 
-    @mark_get_key
     def sampling_frequency(self) -> None:
+        """Return the sampling frequency within the window.
+
+        An EmptyProcessingItem does not contain any processing information, and this
+        method returns None.
+        """
         return None
 
-    @mark_get_key
     def incrementing(self) -> None:
+        """Return which time coordinate is incremented.
+
+        An EmptyProcessingItem does not contain any processing information, and this
+        method returns None.
+        """
         return None
 
-    @mark_get_key
     def ensemble_size(self) -> None:
+        """Return the number of ensemble members.
+
+        An EmptyProcessingItem does not contain any processing information, and this
+        method returns None.
+        """
         return None
 
     def _own_to_dict(self) -> dict:
@@ -295,12 +379,60 @@ _EMPTY_PROCESSING_ITEM = EmptyProcessingItem()
 
 
 # ===========================================================================
+# ProcessingItem — common base for non-empty items
+# ===========================================================================
+
+
+class ProcessingItem(ProcessingItemBase):
+    """Common base for concrete (non-empty) processing items.
+
+    Implements the logic shared by :class:`TimeProcessingItem` and
+    :class:`EnsembleProcessingItem`: the :meth:`kind` and :meth:`method` accessors
+    (backed by ``self._kind`` and ``self._method``), and default None implementations
+    for the type-specific accessors, which the relevant subclass overrides.
+    """
+
+    def kind(self) -> ProcessingKind:
+        return self._kind
+
+    def method(self) -> ProcessingMethod:
+        return self._method
+
+    def window_length(self) -> None:
+        """Return the length of the time window.
+
+        This processing item does not have a time window, and this method returns None.
+        """
+        return None
+
+    def sampling_frequency(self) -> None:
+        """Return the sampling frequency within the window.
+
+        This processing item does not have a sampling frequency, and this method returns None.
+        """
+        return None
+
+    def incrementing(self) -> None:
+        """Return which time coordinate is incremented.
+
+        This processing item does not have an incrementing type, and this method returns None.
+        """
+        return None
+
+    def ensemble_size(self) -> None:
+        """Return the number of ensemble members.
+
+        This processing item does not have an ensemble size, and this method returns None.
+        """
+        return None
+
+
+# ===========================================================================
 # TimeProcessingItem
 # ===========================================================================
 
 
-@component_keys
-class TimeProcessingItem(ProcessingItemBase):
+class TimeProcessingItem(ProcessingItem):
     """A time-based processing item.
 
     Parameters
@@ -332,23 +464,12 @@ class TimeProcessingItem(ProcessingItemBase):
             incrementing if incrementing is not None else self.DEFAULT_INCREMENTING
         )
 
-    @mark_get_key
-    def kind(self) -> ProcessingKind:
-        return self._kind
-
-    @mark_get_key
-    def method(self) -> ProcessingMethod:
-        return self._method
-
-    @mark_get_key
     def window_length(self) -> Optional[Duration]:
         return self._window_length
 
-    @mark_get_key
     def sampling_frequency(self) -> Optional[Duration]:
         return self._sampling_frequency
 
-    @mark_get_key
     def incrementing(self) -> Optional[IncrementingType]:
         return self._incrementing
 
@@ -400,8 +521,7 @@ class TimeProcessingItem(ProcessingItemBase):
 # ===========================================================================
 
 
-@component_keys
-class EnsembleProcessingItem(ProcessingItemBase):
+class EnsembleProcessingItem(ProcessingItem):
     """An ensemble statistics processing item.
 
     Parameters
@@ -421,15 +541,6 @@ class EnsembleProcessingItem(ProcessingItemBase):
         self._method = get_processing_method(method)
         self._ensemble_size = int(ensemble_size)
 
-    @mark_get_key
-    def kind(self) -> ProcessingKind:
-        return self._kind
-
-    @mark_get_key
-    def method(self) -> ProcessingMethod:
-        return self._method
-
-    @mark_get_key
     def ensemble_size(self) -> int:
         return self._ensemble_size
 
@@ -575,35 +686,29 @@ class Processing(SimpleFieldComponent):
     # Propagated accessors (return tuples)
     # -------------------------------------------------------------------
 
-    @mark_get_key
     def kind(self) -> Tuple[Optional[ProcessingKind], ...]:
         """Return a tuple of kinds for all items."""
         return tuple(item.kind() for item in self._items)
 
-    @mark_get_key
     def method(self) -> Tuple[Optional[ProcessingMethod], ...]:
         """Return a tuple of methods for all items."""
         return tuple(item.method() for item in self._items)
 
-    @mark_get_key
     def window_length(self) -> Tuple[Optional[Duration], ...]:
         """Return a tuple of window lengths (None if not applicable)."""
-        return tuple(item.window_length() if hasattr(item, "window_length") else None for item in self._items)
+        return tuple(item.window_length() for item in self._items)
 
-    @mark_get_key
     def sampling_frequency(self) -> Tuple[Optional[Duration], ...]:
         """Return a tuple of sampling frequencies (None if not applicable)."""
-        return tuple(item.sampling_frequency() if hasattr(item, "sampling_frequency") else None for item in self._items)
+        return tuple(item.sampling_frequency() for item in self._items)
 
-    @mark_get_key
     def incrementing(self) -> Tuple[Optional[IncrementingType], ...]:
         """Return a tuple of incrementing types (None if not applicable)."""
-        return tuple(item.incrementing() if hasattr(item, "incrementing") else None for item in self._items)
+        return tuple(item.incrementing() for item in self._items)
 
-    @mark_get_key
     def ensemble_size(self) -> Tuple[Optional[int], ...]:
         """Return a tuple of ensemble sizes (None if not applicable)."""
-        return tuple(item.ensemble_size() if hasattr(item, "ensemble_size") else None for item in self._items)
+        return tuple(item.ensemble_size() for item in self._items)
 
     # -------------------------------------------------------------------
     # SimpleFieldComponent interface
