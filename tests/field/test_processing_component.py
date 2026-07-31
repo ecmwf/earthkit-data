@@ -438,6 +438,45 @@ def test_processing_propagated_accessors_empty():
 
 
 # ===========================================================================
+# Processing — propagated plain-key access (keys / __contains__ / get)
+# ===========================================================================
+
+
+def test_processing_keys_and_contains():
+    p, _, _ = _sample_processing()
+    assert set(p.keys()) == _ALL_KEYS
+    for k in _ALL_KEYS:
+        assert k in p
+    assert "not-a-key" not in p
+
+
+def test_processing_get_plain_key():
+    p, _, _ = _sample_processing()
+    # plain keys resolve to the propagated tuple across all items
+    assert p.get("kind") == (ProcessingKind.TIME_PROCESSING, ProcessingKind.ENSEMBLE_STATISTICS)
+    assert p.get("method") == (ProcessingMethod.MAXIMUM, ProcessingMethod.MEAN)
+    assert p.get("window_length") == (Duration(hours=6), None)
+    assert p.get("sampling_frequency") == (None, None)
+    assert p.get("incrementing") == (IncrementingType.FORECAST_PERIOD, None)
+    assert p.get("ensemble_size") == (None, 50)
+
+
+def test_processing_get_plain_key_missing():
+    p, _, _ = _sample_processing()
+    assert p.get("not-a-key") is None
+    assert p.get("not-a-key", default="x") == "x"
+    with pytest.raises(KeyError):
+        p.get("not-a-key", raise_on_missing=True)
+
+
+def test_processing_get_plain_key_empty():
+    p = Processing(())
+    # keys are supported regardless of item count; value is an empty tuple
+    assert "kind" in p
+    assert p.get("kind") == ()
+
+
+# ===========================================================================
 # Processing — indexed get()
 # ===========================================================================
 

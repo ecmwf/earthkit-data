@@ -686,26 +686,32 @@ class Processing(SimpleFieldComponent):
     # Propagated accessors (return tuples)
     # -------------------------------------------------------------------
 
+    @mark_get_key
     def kind(self) -> Tuple[Optional[ProcessingKind], ...]:
         """Return a tuple of kinds for all items."""
         return tuple(item.kind() for item in self._items)
 
+    @mark_get_key
     def method(self) -> Tuple[Optional[ProcessingMethod], ...]:
         """Return a tuple of methods for all items."""
         return tuple(item.method() for item in self._items)
 
+    @mark_get_key
     def window_length(self) -> Tuple[Optional[Duration], ...]:
         """Return a tuple of window lengths (None if not applicable)."""
         return tuple(item.window_length() for item in self._items)
 
+    @mark_get_key
     def sampling_frequency(self) -> Tuple[Optional[Duration], ...]:
         """Return a tuple of sampling frequencies (None if not applicable)."""
         return tuple(item.sampling_frequency() for item in self._items)
 
+    @mark_get_key
     def incrementing(self) -> Tuple[Optional[IncrementingType], ...]:
         """Return a tuple of incrementing types (None if not applicable)."""
         return tuple(item.incrementing() for item in self._items)
 
+    @mark_get_key
     def ensemble_size(self) -> Tuple[Optional[int], ...]:
         """Return a tuple of ensemble sizes (None if not applicable)."""
         return tuple(item.ensemble_size() for item in self._items)
