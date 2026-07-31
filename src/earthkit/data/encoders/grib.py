@@ -233,7 +233,9 @@ class GribHandleMaker:
 
     @staticmethod
     def handle_from_field(field, values_shape=None):
-        r = {}
+        from earthkit.data.field.grib.context import GribEncoderContext
+
+        r = GribEncoderContext()
         field = field.sync()
         field._get_grib_context(r)
         handle = r.pop("handle", None)

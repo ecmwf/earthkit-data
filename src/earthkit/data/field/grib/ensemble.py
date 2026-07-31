@@ -38,13 +38,29 @@ class GribEnsembleBuilder:
 
 
 class GribEnsembleContextCollector(GribContextCollector):
+    _ALL_INDEXER_KEYS = ["perturbationNumber"]
+
     @staticmethod
-    def collect_keys(handler, context):
+    def collect_for_encoder(handler, context):
         component = handler.component
         r = {
             "perturbationNumber": component.member(),
         }
         context.update(r)
+
+    @staticmethod
+    def collect_for_indexer(handler, context):
+        keys = GribEnsembleContextCollector.indexer_keys(handler)
+        GribContextCollector._collect_keys(keys, handler, context)
+
+    @staticmethod
+    def indexer_keys(handler):
+        return GribEnsembleContextCollector._ALL_INDEXER_KEYS
+
+    @staticmethod
+    @property
+    def all_indexer_keys():
+        return GribEnsembleContextCollector._ALL_INDEXER_KEYS
 
 
 COLLECTOR = GribEnsembleContextCollector()

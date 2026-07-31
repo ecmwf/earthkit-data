@@ -69,7 +69,7 @@ class GribProcBuilder:
 
 class GribProcContextCollector(GribContextCollector):
     @staticmethod
-    def collect_keys(handler, context):
+    def collect_for_encoder(handler, context):
         from earthkit.data.field.component.proc import TimeProcItem
 
         component = handler.component
@@ -84,6 +84,20 @@ class GribProcContextCollector(GribContextCollector):
             context["stepType"] = method
             if time_item.method != TimeMethods.INSTANT:
                 context["stepRange"] = step_to_grib(time_item.value)
+
+    @staticmethod
+    def collect_for_indexer(handler, context):
+        keys = GribProcContextCollector.indexer_keys(handler)
+        GribContextCollector._collect_keys(keys, handler, context)
+
+    @staticmethod
+    def indexer_keys(handler):
+        return ["stepType", "stepRange"]
+
+    @staticmethod
+    @property
+    def all_indexer_keys():
+        return ["stepType", "stepRange"]
 
 
 COLLECTOR = GribProcContextCollector()

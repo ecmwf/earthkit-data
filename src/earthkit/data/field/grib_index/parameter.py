@@ -16,23 +16,7 @@ class IndexParameterBuilder:
     """
 
     @staticmethod
-    def build(db, build_empty=False):
-        from earthkit.data.field.component.parameter import create_parameter
-        from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
+    def build(handle):
+        from earthkit.data.field.grib.parameter import GribParameterBuilder
 
-        d = IndexParameterBuilder._build_dict(db)
-        if not d and not build_empty:
-            return None
-
-        component = create_parameter(d)
-        handler = ParameterFieldComponentHandler.from_component(component)
-        return handler
-
-    @staticmethod
-    def _build_dict(db):
-        d = dict()
-        for k, v in db.items():
-            if k.startswith("parameter.") and v is not None:
-                d[k[10:]] = v
-
-        return d
+        return GribParameterBuilder.build(handle)

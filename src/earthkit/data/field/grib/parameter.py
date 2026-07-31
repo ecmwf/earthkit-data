@@ -182,14 +182,31 @@ class GribParameterBuilder:
 
 
 class GribParameterContextCollector(GribContextCollector):
-    """Collector for extracting GRIB context keys from parameter components.
+    """Collector for extracting GRIB context keys from parameter components."""
 
-    Collects the "shortName" key from the parameter component's variable for use
-    in GRIB encoding context.
-    """
+    _ALL_INDEXER_KEYS = [
+        "shortName",
+        "units",
+        "cfName",
+        "chemShortName",
+        "parameter.chemShortName",
+        "chemName",
+        "mars.wavelength",
+        "mars.firstWavelength",
+        "mars.secondWavelength",
+        "directionNumber",
+        "numberOfDirections",
+        "directionScalingFactor",
+        "scaledDirections",
+        "frequencyNumber",
+        "numberOfFrequencies",
+        "frequencyScalingFactor",
+        "scaledFrequencies",
+        "edition",
+    ]
 
     @staticmethod
-    def collect_keys(handler, context):
+    def collect_for_encoder(handler, context):
         component = handler.component
         r = {
             "shortName": component.variable(),
@@ -221,6 +238,38 @@ class GribParameterContextCollector(GribContextCollector):
             r["frequencyNumber"] = wave_frequency_index + 1  # convert to 1-based index
 
         context.update(r)
+
+    @staticmethod
+    def collect_for_indexer(handler, context):
+        keys = GribParameterContextCollector.indexer_keys(handler)
+        GribContextCollector._collect_keys(keys, handler, context)
+
+    @staticmethod
+    def indexer_keys(handler):
+        component = handler.component
+        keys = []
+
+        keys.extend(["shortName", "units", "cfName", "edition"])
+
+        chem = component.chem()
+        if chem:
+            keys.extend(["chemShortName", "parameter.chemShortName", "chemName"])
+
+        if component.wavelength_bounds(units="m") is not None:
+            keys.extend(["mars.wavelength", "mars.firstWavelength", "mars.secondWavelength"])
+
+        if component.wave_direction_index() is not None:
+            keys.extend(["directionNumber", "numberOfDirections", "directionScalingFactor", "scaledDirections"])
+
+        if component.wave_frequency_index() is not None:
+            keys.extend(["frequencyNumber", "numberOfFrequencies", "frequencyScalingFactor", "scaledFrequencies"])
+
+        return keys
+
+    @staticmethod
+    @property
+    def all_indexer_keys():
+        return GribParameterContextCollector.ALL_INDEXER_KEYS
 
 
 COLLECTOR = GribParameterContextCollector()

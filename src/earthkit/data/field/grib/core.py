@@ -37,8 +37,8 @@ class GribFieldComponentHandler(LazyFieldComponentHandler):
             self._exception = e
             raise
 
-    def get_grib_context(self, context, relative=True) -> None:
-        self.COLLECTOR.collect(self, context, relative=relative)
+    def get_grib_context(self, context) -> None:
+        self.COLLECTOR.collect(self, context)
 
     def __getstate__(self):
         state = {}

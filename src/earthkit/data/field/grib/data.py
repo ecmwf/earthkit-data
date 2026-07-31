@@ -15,13 +15,26 @@ from .collector import GribContextCollector
 
 class GribDataContextCollector(GribContextCollector):
     @staticmethod
-    def collect_keys(spec, context):
+    def collect_for_encoder(spec, context):
         from earthkit.utils.array import convert
 
         r = {
             "values": convert(spec.values, array_namespace="numpy"),
         }
         context.update(r)
+
+    @staticmethod
+    def collect_for_indexer(spec, context):
+        pass
+
+    @staticmethod
+    def indexer_keys(spec):
+        return []
+
+    @staticmethod
+    @property
+    def all_indexer_keys():
+        return []
 
 
 COLLECTOR = GribDataContextCollector()
@@ -48,9 +61,6 @@ class GribData(DataFieldComponentHandler):
 
     def check(self, owner):
         pass
-
-    # def get_grib_context(self, context, relative=True) -> None:
-    #     COLLECTOR.collect_keys(self, context, relative=relative)
 
     def __getstate__(self):
         state = {}

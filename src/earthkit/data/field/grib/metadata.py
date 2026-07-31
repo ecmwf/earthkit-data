@@ -264,6 +264,16 @@ class GribMetadata:
     def __setstate__(self, state):
         self.__init__(state["handle"])
 
+    # TODO: temporary method
+    def is_defined(self, key):
+        return key in self._cache
+
+
+class IndexedGribMetadata(GribMetadata):
+    def __init__(self, handle, extra_keys=None, cache=None):
+        super().__init__(handle, extra_keys=extra_keys, cache=cache)
+        self._handle = handle.as_indexed()
+
 
 # class GribLabels(SimpleLabels):
 #     def __init__(self, handle):

@@ -337,9 +337,11 @@ class GribIndex:
         if self.flavour is not None:
             fields = self.flavour.map(fields)
 
+        from earthkit.data.field.grib.context import GribIndexerContext
+
         for i, field in enumerate(tqdm.tqdm(fields, leave=False)):
-            ctx = dict()
-            field._get_grib_context(ctx, relative=False)
+            ctx = GribIndexerContext()
+            field._get_grib_context(ctx)
             ctx.pop("handle", None)
             print(f"Field {i + 1}: {ctx=}")
 
@@ -640,7 +642,13 @@ class GribIndex:
     def _iterate(self):
         # with self.cursor as db:
         # print("description", self.cursor.description)
-        keys = ",".join([self._quote_column(c) for c in self._all_columns()])
+        keys = (
+            self._quote_column("_offset")
+            + ", "
+            + self._quote_column("_length")
+            + ", "
+            + ", ".join([self._quote_column(c) for c in self._all_columns()])
+        )
         for d in self.cursor.execute(f"SELECT {keys} FROM grib_index"):
             # print("d", d)
             # print("description", self.cursor.description)

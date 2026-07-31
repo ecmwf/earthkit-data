@@ -389,8 +389,10 @@ class GribVerticalBuilder:
 
 
 class GribVerticalContextCollector(GribContextCollector):
+    _ALL_INDEXER_KEYS = ["typeOfLevel", "level", "topLevel", "bottomLevel", "NV"]
+
     @staticmethod
-    def collect_keys(handler, context):
+    def collect_for_encoder(handler, context):
         component = handler.component
         handle = context.get("handle")
         grib_level_type = _COMPONENT_TYPES.get(component.level_type())
@@ -407,6 +409,20 @@ class GribVerticalContextCollector(GribContextCollector):
 
         r = grib_level_type.to_grib(component, handle)
         context.update(r)
+
+    @staticmethod
+    def collect_for_indexer(handler, context):
+        keys = GribVerticalContextCollector.indexer_keys(handler)
+        GribContextCollector._collect_keys(keys, handler, context)
+
+    @staticmethod
+    def indexer_keys(handler):
+        return ["typeOfLevel", "level", "topLevel", "bottomLevel", "NV"]
+
+    @staticmethod
+    @property
+    def all_indexer_keys():
+        return GribVerticalContextCollector._ALL_INDEXER_KEYS
 
 
 COLLECTOR = GribVerticalContextCollector()

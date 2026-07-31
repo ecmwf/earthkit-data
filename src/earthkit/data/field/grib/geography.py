@@ -249,10 +249,12 @@ class GribGeographyBuilder:
 
 
 class GribGeographyContextCollector(GribContextCollector):
+    _ALL_INDEXER_KEYS = ["gridSpec"]
+
     @staticmethod
-    def collect_keys(handler, context):
+    def collect_for_encoder(handler, context):
         component = handler.component
-        print(f"GribGeographyContextCollector: component={component}")
+
         if (grid_spec := component.grid_spec()) is not None:
             if isinstance(grid_spec, dict):
                 import json
@@ -267,6 +269,43 @@ class GribGeographyContextCollector(GribContextCollector):
             raise ValueError(
                 ("GribGeographyContextCollector: cannot collect context for a geography without a valid grid_spec")
             )
+
+    @staticmethod
+    def collect_for_indexer(handler, context):
+        component = handler.component
+        if (grid_spec := component.grid_spec()) is not None:
+            if isinstance(grid_spec, dict):
+                import json
+
+                grid_spec = json.dumps(grid_spec)
+
+            r = {
+                "gridSpec": grid_spec,
+            }
+            context.update(r)
+            return
+        else:
+            keys = [
+                "gridType",
+                "latitudeOfFirstGridPointInDegrees",
+                "latitudeOfLastGridPointInDegrees",
+                "longitudeOfFirstGridPointInDegrees",
+                "longitudeOfLastGridPointInDegrees",
+                "Ni",
+                "Nj",
+                "numberOfDataPoints",
+                "md5GridSection",
+            ]
+            GribContextCollector._collect_keys(keys, handler, context)
+
+    @staticmethod
+    def indexer_keys(handler):
+        return []
+
+    @staticmethod
+    @property
+    def all_indexer_keys():
+        return GribGeographyContextCollector._ALL_INDEXER_KEYS
 
 
 COLLECTOR = GribGeographyContextCollector()

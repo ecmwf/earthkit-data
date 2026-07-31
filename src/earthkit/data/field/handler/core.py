@@ -153,7 +153,7 @@ class FieldComponentHandler(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_grib_context(self, context, relative=True) -> None:
+    def get_grib_context(self, context) -> None:
         """Populate the GRIB context dictionary for this FieldComponent."""
         pass
 

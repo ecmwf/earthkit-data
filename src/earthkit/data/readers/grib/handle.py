@@ -360,6 +360,24 @@ class DeflatedGribHandle(MemoryGribHandle):
         return self
 
 
+class IndexedGribHandle(GribHandle):
+    """A GribHandle that has been indexed to only contain the headers and the index."""
+
+    def __init__(self, handle, index):
+        super().__init__(handle)
+        self.index = index
+
+    @classmethod
+    def from_handle(cls, handle, index):
+        handle_new = handle.clone(headers_only=True)
+        return cls(handle_new, index=index)
+
+    def deflate(self):
+        """Deflate the handle to only contain the headers and the index."""
+        # This method is a no-op for IndexedGribHandle as it is already indexed.
+        return self
+
+
 class GribHandleCache:
     def __init__(self, cache_size=None):
         self.cache_size = cache_size

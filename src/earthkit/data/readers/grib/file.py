@@ -179,6 +179,174 @@ class GribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
         return r
 
 
+class IndexedGribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
+    handle_cache = None
+
+    def __init__(
+        self,
+        path,
+        db=None,
+        parts=None,
+        positions=None,
+        grib_handle_policy=None,
+        grib_handle_cache_size=None,
+        use_grib_metadata_cache=None,
+    ):
+        assert isinstance(path, str), path
+        GRIBReaderBase.__init__(self, self, path)
+        # self.path = path
+        self._db = db
+        self._file_parts = parts
+        self.__positions = positions
+
+        from earthkit.data.core.config import CONFIG
+
+        def _get_opt(v, name):
+            return v if v is not None else CONFIG.get(name)
+
+        self.handle_policy = _get_opt(grib_handle_policy, "grib-handle-policy")
+        self.handle_cache_size = _get_opt(grib_handle_cache_size, "grib-handle-cache-size")
+        self.use_metadata_cache = _get_opt(use_grib_metadata_cache, "use-grib-metadata-cache")
+
+    @thread_safe_cached_property
+    def _fields(self):
+        handle_cache = None
+        if self.handle_policy == "cache":
+            from .handle import GribHandleCache
+
+            handle_cache = GribHandleCache(cache_size=self.handle_cache_size)
+
+        keys = self._db._all_columns()
+        res = []
+        for row in self._db._iterate():
+            d = dict(zip(keys, row[2:]))
+            offset = row[0]
+            length = row[1]
+            f = self._create_field(d, offset, length, handle_cache)
+            res.append(f)
+        return res
+
+        # return [self._create_field(i, handle_cache) for i in range(self.number_of_parts())]
+
+    def _create_field(self, d, offset, length, handle_cache):
+        from earthkit.data.field.grib_index.create import create_grib_field
+        from earthkit.data.utils.parts import Part
+
+        from .handle import FileGribHandle
+
+        part = Part(self.path, offset, length)
+        # part = self.part(n)
+        handle = FileGribHandle.from_part(part, self.handle_policy, handle_cache)
+
+        from earthkit.data.field.grib.metadata import GribMetadata
+
+        metadata = GribMetadata(handle, cache=d)
+
+        field = create_grib_field(metadata, handle, data=None, values=None, geography=None, reference_field=None)
+        return field
+
+    @property
+    def _positions(self):
+        # TODO: thread safety
+        if self.__positions is None:
+            self.__positions = GribCodesMessagePositionIndex(self.path, self._file_parts)
+        return self.__positions
+
+    def part(self, n):
+        pos = self._positions
+        return Part(self.path, pos.offsets[n], pos.lengths[n])
+
+    def number_of_parts(self):
+        return len(self._positions)
+
+    def __getstate__(self):
+        from earthkit.data.core.config import CONFIG
+
+        policy = CONFIG.get("grib-file-serialisation-policy")
+        # state = {"serialisation_policy": policy, "kwargs": self._source_kwargs}
+        state = {"serialisation_policy": policy}
+
+        state["handle_policy"] = self.handle_policy
+        state["handle_cache_size"] = self.handle_cache_size
+        state["use_metadata_cache"] = self.use_metadata_cache
+
+        if policy == "path":
+            state["path"] = self.path
+            state["positions"] = self._positions
+            # state["handle_policy"] = self.handle_policy
+            # state["handle_cache_size"] = self.handle_cache_size
+            # state["use_metadata_cache"] = self.use_metadata_cache
+        elif policy == "memory":
+            state["messages"] = [f.message() for f in self]
+        else:
+            raise ValueError(f"Policy {policy} not supported for GribFieldListInFile")
+
+        return state
+
+    def __setstate__(self, state):
+        policy = state["serialisation_policy"]
+
+        if policy == "path":
+            path = state["path"]
+            positions = state["positions"]
+            handle_policy = state["handle_policy"]
+            handle_cache_size = state["handle_cache_size"]
+            use_metadata_cache = state["use_metadata_cache"]
+            self.__init__(
+                path,
+                positions=positions,
+                grib_handle_policy=handle_policy,
+                grib_handle_cache_size=handle_cache_size,
+                use_grib_metadata_cache=use_metadata_cache,
+            )
+        elif policy == "memory":
+            from earthkit.data.core.caching import cache_file
+            from earthkit.data.sources import _from_source_internal
+
+            def _create(path, args):
+                with open(path, "wb") as f:
+                    for message in state["messages"]:
+                        f.write(message)
+
+            path = cache_file(
+                "GRIBReader",
+                _create,
+                [],
+            )
+            handle_policy = state["handle_policy"]
+            handle_cache_size = state["handle_cache_size"]
+            use_metadata_cache = state["use_metadata_cache"]
+            ds = _from_source_internal(
+                "file",
+                path,
+                grib_handle_policy=handle_policy,
+                grib_handle_cache_size=handle_cache_size,
+                use_grib_metadata_cache=use_metadata_cache,
+            )
+            self.__init__(ds.path)
+        else:
+            raise ValueError(f"Unknown serialisation policy {policy}")
+
+    def _diag(self):
+        """For diagnostics purposes, returns a dict with information about the handle and metadata cache."""
+        from collections import defaultdict
+
+        r = defaultdict(int)
+        r["grib_handle_policy"] = self.handle_policy
+
+        handle = self._fields[0]._get_grib().handle
+        if hasattr(handle, "manager"):
+            manager = handle.manager
+            if manager is not None:
+                r.update(manager._diag())
+
+        if self.use_metadata_cache:
+            from earthkit.data.utils.diag import metadata_cache_diag
+
+            r.update(metadata_cache_diag(self._fields))
+        return r
+
+
 class GRIBReader(Source, GRIBReaderBase):
     def __init__(self, source, path, parts=None, positions=None):
         self._ori_source = source

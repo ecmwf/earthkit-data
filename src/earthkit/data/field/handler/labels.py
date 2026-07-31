@@ -186,5 +186,5 @@ class SimpleLabels(dict, Labels):
     #         r = {_prefix(k): v for k, v in self.items()}
     #         result[self.NAME] = r
 
-    def get_grib_context(self, context, relative=True) -> None:
+    def get_grib_context(self, context) -> None:
         pass

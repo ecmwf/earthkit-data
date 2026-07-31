@@ -19,10 +19,10 @@ class VerticalFieldComponentHandler(SimpleFieldComponentHandler):
     COMPONENT_MAKER = create_vertical
     NAME = "vertical"
 
-    def get_grib_context(self, context, relative=True) -> None:
+    def get_grib_context(self, context) -> None:
         from earthkit.data.field.grib.vertical import COLLECTOR
 
-        COLLECTOR.collect(self, context, relative=relative)
+        COLLECTOR.collect(self, context)
 
     @classmethod
     def from_component(cls, component: VerticalBase) -> "VerticalFieldComponentHandler":

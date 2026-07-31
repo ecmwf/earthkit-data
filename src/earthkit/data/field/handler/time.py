@@ -20,10 +20,10 @@ class TimeFieldComponentHandler(SimpleFieldComponentHandler):
     COMPONENT_MAKER = create_time
     NAME = "time"
 
-    def get_grib_context(self, context, relative=True) -> None:
+    def get_grib_context(self, context) -> None:
         from earthkit.data.field.grib.time import COLLECTOR
 
-        COLLECTOR.collect(self, context, relative=relative)
+        COLLECTOR.collect(self, context)
 
     @classmethod
     def from_component(cls, component: TimeBase) -> "TimeFieldComponentHandler":

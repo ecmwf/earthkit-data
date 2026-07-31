@@ -66,8 +66,10 @@ class GribTimeBuilder:
 
 
 class GribTimeContextCollector(GribContextCollector):
+    _ALL_INDEXER_KEYS = ["dataDate", "dataTime", "step", "endStep", "forecastMonth", "indexingDate", "indexingTime"]
+
     @staticmethod
-    def collect_keys(handler, context):
+    def collect_for_encoder(handler, context):
         component = handler.component
         r = {}
 
@@ -85,6 +87,28 @@ class GribTimeContextCollector(GribContextCollector):
                 r["indexingTime"] = itime
 
         context.update(r)
+
+    @staticmethod
+    def collect_for_indexer(handler, context):
+        keys = GribTimeContextCollector.indexer_keys(handler)
+        GribContextCollector._collect_keys(keys, handler, context)
+
+    @staticmethod
+    def indexer_keys(handler):
+        component = handler.component
+
+        keys = ["dataDate", "dataTime", "step", "endStep"]
+        if component.forecast_month() is not None:
+            keys.extend(["forecastMonth"])
+            if component.indexing_datetime() is not None:
+                keys.extend(["indexingDate", "indexingTime"])
+
+        return keys
+
+    @staticmethod
+    @property
+    def all_indexer_keys():
+        return GribTimeContextCollector._ALL_INDEXER_KEYS
 
 
 COLLECTOR = GribTimeContextCollector()

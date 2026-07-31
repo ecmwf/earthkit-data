@@ -1932,17 +1932,17 @@ class Field(Base):
         # for m in self._components.values():
         #     m.check(self)
 
-    def _get_grib_context(self, context, relative=True):
+    def _get_grib_context(self, context):
         """Helper method to get the GRIB context for the field and its components.
 
-        It is used by the encoders.
+        It is used by the encoders and the GRIB indexer.
         """
         grib = self._get_grib()
         if grib is not None:
             context["handle"] = grib.handle
 
         for m in self._components.values():
-            m.get_grib_context(context, relative=relative)
+            m.get_grib_context(context)
 
     def _set_metadata(self, md):
         """Helper method to set raw metadata in the field."""
