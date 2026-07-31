@@ -226,15 +226,6 @@ class ProcessingItemBase(SimpleFieldComponent):
     def __hash__(self):
         return hash(id(self))
 
-    def __contains__(self, name):
-        return name in self._KEYS
-
-    def keys(self):
-        return self._KEYS
-
-    def aliases(self):
-        return self._ALIASES
-
     def _get_single(self, key, default=None, astype=None, raise_on_missing=False):
         if key in self._KEYS:
             v = getattr(self, key)()
@@ -247,9 +238,6 @@ class ProcessingItemBase(SimpleFieldComponent):
         if raise_on_missing:
             raise KeyError(f"Key {key!r} not found on {type(self).__name__}")
         return default
-
-    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
-        return self._get_single(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
 
     def set(self, *args, **kwargs):
         """Return a new item with updated attributes."""

@@ -247,7 +247,7 @@ class SimpleFieldComponent(FieldComponent):
             return v
 
         if raise_on_missing:
-            raise KeyError(f"Key {key} not found in FieldComponent")
+            raise KeyError(f"Key {key!r} not found on {type(self).__name__}")
 
         return default
 
