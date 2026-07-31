@@ -241,15 +241,18 @@ class ProcessingItemBase(SimpleFieldComponent):
 
     def set(self, *args, **kwargs):
         """Return a new item with updated attributes."""
-        updates = {}
-        for a in args:
-            if a is None:
-                continue
-            if isinstance(a, dict):
-                updates.update(a)
-            else:
-                raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
-        updates.update(kwargs)
+        updates = self._normalise_set_kwargs(
+            *args,
+            allowed_keys=(
+                "kind",
+                "method",
+                "window_length",
+                "sampling_frequency",
+                "incrementing",
+                "ensemble_size",
+            ),
+            **kwargs,
+        )
         if not updates:
             return self
         d = self._own_to_dict()
@@ -376,9 +379,14 @@ class ProcessingItem(ProcessingItemBase):
 
     Implements the logic shared by :class:`TimeProcessingItem` and
     :class:`EnsembleProcessingItem`: the :meth:`kind` and :meth:`method` accessors
-    (backed by ``self._kind`` and ``self._method``), and default None implementations
-    for the type-specific accessors, which the relevant subclass overrides.
+    (backed by ``self._kind`` and ``self._method``, set in :meth:`__init__`), and
+    default None implementations for the type-specific accessors, which the relevant
+    subclass overrides.
     """
+
+    def __init__(self, kind, method) -> None:
+        self._kind = get_processing_kind(kind)
+        self._method = get_processing_method(method)
 
     def kind(self) -> ProcessingKind:
         return self._kind
@@ -444,8 +452,7 @@ class TimeProcessingItem(ProcessingItem):
         sampling_frequency=None,
         incrementing=None,
     ) -> None:
-        self._kind = ProcessingKind.TIME_PROCESSING
-        self._method = get_processing_method(method)
+        super().__init__(ProcessingKind.TIME_PROCESSING, method)
         self._window_length = to_duration(window_length)
         self._sampling_frequency = to_duration(sampling_frequency)
         self._incrementing = get_incrementing_type(
@@ -493,6 +500,9 @@ class TimeProcessingItem(ProcessingItem):
             and self._incrementing == other._incrementing
         )
 
+    def __hash__(self) -> int:
+        return hash((self._kind, self._method, self._window_length, self._sampling_frequency, self._incrementing))
+
     def __repr__(self) -> str:
         parts = [f"method={self._method.value!r}"]
         if self._window_length is not None:
@@ -525,8 +535,7 @@ class EnsembleProcessingItem(ProcessingItem):
         method="mean",
         ensemble_size: int = 0,
     ) -> None:
-        self._kind = ProcessingKind.ENSEMBLE_STATISTICS
-        self._method = get_processing_method(method)
+        super().__init__(ProcessingKind.ENSEMBLE_STATISTICS, method)
         self._ensemble_size = int(ensemble_size)
 
     def ensemble_size(self) -> int:
@@ -550,6 +559,9 @@ class EnsembleProcessingItem(ProcessingItem):
         if not isinstance(other, EnsembleProcessingItem):
             return NotImplemented
         return self._method == other._method and self._ensemble_size == other._ensemble_size
+
+    def __hash__(self) -> int:
+        return hash((self._kind, self._method, self._ensemble_size))
 
     def __repr__(self) -> str:
         return f"EnsembleProcessingItem(method={self._method.value!r}, ensemble_size={self._ensemble_size})"
