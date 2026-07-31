@@ -660,3 +660,53 @@ def test_processing_fieldlist_sel():
     r1 = fl.sel({"processing.method[0]": "maximum"})
     r2 = fl.sel({"processing[0].method": "maximum"})
     assert len(r1) == len(r2) == 2
+
+
+def test_processing_fieldlist_sel_duration():
+    # Duration-valued keys can be selected with ISO 8601 duration strings
+    import earthkit.data as ekd
+
+    def mk(wl):
+        return _field(TimeProcessingItem(method="maximum", window_length=wl))
+
+    fl = ekd.SimpleFieldList([mk("PT6H"), mk("PT6H"), mk("PT3H")])
+
+    assert len(fl.sel({"processing.window_length[0]": "PT6H"})) == 2
+    assert len(fl.sel({"processing.window_length[0]": "PT3H"})) == 1
+    assert len(fl.sel({"processing.window_length[0]": "PT1H"})) == 0
+    # list of duration strings
+    assert len(fl.sel({"processing.window_length[0]": ["PT6H", "PT3H"]})) == 3
+    # combined with another key
+    assert len(fl.sel({"processing[0].method": "maximum", "processing.window_length[0]": "PT6H"})) == 2
+
+
+def test_processing_fieldlist_sel_plain_key_any_item():
+    # A plain (unindexed) processing key matches if ANY item in the chain matches.
+    import earthkit.data as ekd
+
+    t6 = TimeProcessingItem(method="maximum", window_length="PT6H")
+    t3 = TimeProcessingItem(method="minimum", window_length="PT3H")
+    t12 = TimeProcessingItem(method="mean", window_length="PT12H")
+    e = EnsembleProcessingItem(method="mean", ensemble_size=50)
+
+    fl = ekd.SimpleFieldList([
+        _field(t6),  # 0: window_length (PT6H,)
+        _field(t3),  # 1: window_length (PT3H,)
+        _field(e, t6),  # 2: window_length (None, PT6H); methods (mean, maximum)
+        _field(t12),  # 3: window_length (PT12H,)
+    ])
+
+    # single value — any item
+    assert len(fl.sel({"processing.window_length": "PT6H"})) == 2  # fields 0, 2
+    assert len(fl.sel({"processing.window_length": "PT1H"})) == 0
+    assert len(fl.sel({"processing.method": "mean"})) == 2  # fields 2, 3
+
+    # list of values — any item has a value within the list
+    assert len(fl.sel({"processing.window_length": ["PT6H", "PT12H", "P1D"]})) == 3  # 0, 2, 3
+    assert len(fl.sel({"processing.method": ["maximum", "minimum"]})) == 3  # 0, 1, and 2 (has a max item)
+
+    # ensemble-only attribute, propagated across the chain
+    assert len(fl.sel({"processing.ensemble_size": 50})) == 1  # field 2
+
+    # combined plain keys (AND across keys, ANY within each key)
+    assert len(fl.sel({"processing.method": "maximum", "processing.window_length": "PT6H"})) == 2  # 0, 2

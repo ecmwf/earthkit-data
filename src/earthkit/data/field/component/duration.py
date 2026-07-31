@@ -43,8 +43,12 @@ class Duration:
 
     Parameters
     ----------
-    years : int
-        Number of years.
+    years : int or Duration or datetime.timedelta or str
+        Number of years. As a convenience, the first positional argument may also be
+        an existing :class:`Duration`, a :class:`datetime.timedelta`, or an ISO 8601
+        duration string (e.g. ``"PT6H"``), in which case it is parsed and the remaining
+        arguments must be left at their defaults. This lets ``Duration(value)`` round-trip
+        the serialized form, mirroring ``int(...)`` / ``float(...)``.
     months : int
         Number of months.
     weeks : int
@@ -63,7 +67,7 @@ class Duration:
 
     def __init__(
         self,
-        years: int = 0,
+        years: Union[int, "Duration", datetime.timedelta, str] = 0,
         months: int = 0,
         weeks: int = 0,
         days: int = 0,
@@ -71,6 +75,19 @@ class Duration:
         minutes: int = 0,
         seconds: float = 0,
     ) -> None:
+        if isinstance(years, (Duration, datetime.timedelta, str)):
+            if months or weeks or days or hours or minutes or seconds:
+                raise TypeError("Duration(<Duration|timedelta|str>) does not accept other arguments")
+            years = to_duration(years)
+            (years, months, weeks, days, hours, minutes, seconds) = (
+                years.years,
+                years.months,
+                years.weeks,
+                years.days,
+                years.hours,
+                years.minutes,
+                years.seconds,
+            )
         self.years = years
         self.months = months
         self.weeks = weeks

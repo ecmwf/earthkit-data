@@ -44,6 +44,10 @@ class Selection(OrderOrSelection):
                 self.lst = lst  # lazy casting: lst will be modified
 
             def __call__(self, x):
+                # A multi-valued field key (e.g. the processing chain's propagated
+                # accessors) reports a tuple/list of values; match if ANY of them matches.
+                if isinstance(x, (tuple, list)):
+                    return any(self(el) for el in x)
                 if self.first and x is not None:
                     target_type = type(x)
                     self.lst = [y if isinstance(y, target_type) else target_type(y) for y in self.lst]
