@@ -710,3 +710,46 @@ def test_processing_fieldlist_sel_plain_key_any_item():
 
     # combined plain keys (AND across keys, ANY within each key)
     assert len(fl.sel({"processing.method": "maximum", "processing.window_length": "PT6H"})) == 2  # 0, 2
+
+
+def test_processing_fieldlist_sel_duration_fuzzy():
+    # sel on Duration keys is fuzzy: a month matches 30/31 days, a year 360-366 days
+    import earthkit.data as ekd
+
+    def mk(wl):
+        return _field(TimeProcessingItem(method="mean", window_length=wl))
+
+    fl = ekd.SimpleFieldList([mk("P28D"), mk("P30D"), mk("P31D"), mk("P25D"), mk("P365D")])
+
+    assert len(fl.sel({"processing.window_length": "P1M"})) == 3  # P28D, P30D, P31D (not P25D)
+    assert len(fl.sel({"processing.window_length": "P1Y"})) == 1  # P365D
+
+
+def test_processing_fieldlist_sel_slice():
+    # sel supports slices (closed interval) on processing keys, including the
+    # chain-valued plain key (any item in range) and Duration bounds as strings
+    import earthkit.data as ekd
+
+    def mk(wl):
+        return _field(TimeProcessingItem(method="mean", window_length=wl))
+
+    fl = ekd.SimpleFieldList([mk("PT3H"), mk("PT6H"), mk("PT12H"), mk("P1D"), mk("P2D")])
+
+    assert len(fl.sel({"processing.window_length": slice("PT6H", "P1D")})) == 3  # PT6H, PT12H, P1D
+    # reversed bounds are normalised the same way
+    assert len(fl.sel({"processing.window_length": slice("P1D", "PT6H")})) == 3
+    # open-ended slices
+    assert len(fl.sel({"processing.window_length": slice(None, "PT6H")})) == 2  # PT3H, PT6H
+    assert len(fl.sel({"processing.window_length": slice("PT6H", None)})) == 4  # PT6H .. P2D
+    # indexed key (scalar) and Duration-object bounds
+    assert len(fl.sel({"processing.window_length[0]": slice("PT6H", "P1D")})) == 3
+    assert len(fl.sel({"processing.window_length": slice(Duration(hours=6), Duration(days=1))})) == 3
+
+
+def test_processing_fieldlist_sel_slice_skips_none_items():
+    # items without the attribute (None) are simply skipped, not errors
+    import earthkit.data as ekd
+
+    f = _field(EnsembleProcessingItem(ensemble_size=5), TimeProcessingItem(window_length="PT6H"))
+    fl = ekd.SimpleFieldList([f])
+    assert len(fl.sel({"processing.window_length": slice("PT3H", "P1D")})) == 1

@@ -17,6 +17,7 @@ which cannot be converted to a fixed number of days without a reference date.
 """
 
 import datetime
+import functools
 import re
 from typing import Optional, Union
 
@@ -34,6 +35,7 @@ _ISO_DURATION_RE = re.compile(
 )
 
 
+@functools.total_ordering
 class Duration:
     """An ISO 8601 duration.
 
@@ -229,21 +231,65 @@ class Duration:
 
         return result
 
+    # Calendar components have no fixed length, so they are mapped to a *range* of
+    # days rather than a single value (see :meth:`_day_range`): a month spans
+    # ``[28, 31]`` days and a year ``[360, 366]`` days. Comparisons are therefore
+    # fuzzy — e.g. ``"P1M"`` compares equal to any of ``"P28D"`` .. ``"P31D"``, and
+    # ``"P1Y"`` to any of ``"P360D"`` .. ``"P366D"``.
+    _MONTH_DAYS = (28, 31)
+    _YEAR_DAYS = (360, 366)
+
+    def _day_range(self) -> tuple:
+        """Return ``(lo, hi)``: the range of total days this duration can represent.
+
+        The fixed components (weeks, days, hours, minutes, seconds) are exact and
+        contribute equally to ``lo`` and ``hi``; each month contributes 28–31 days
+        and each year 360–366 days.
+        """
+        fixed = self.weeks * 7 + self.days + self.hours / 24 + self.minutes / 1440 + self.seconds / 86400
+        lo = fixed + self.months * self._MONTH_DAYS[0] + self.years * self._YEAR_DAYS[0]
+        hi = fixed + self.months * self._MONTH_DAYS[1] + self.years * self._YEAR_DAYS[1]
+        return lo, hi
+
+    @staticmethod
+    def _coerce(value) -> Optional["Duration"]:
+        """Coerce a value to a Duration for comparison, or None if not possible."""
+        if isinstance(value, Duration):
+            return value
+        try:
+            return to_duration(value)
+        except (TypeError, ValueError):
+            return None
+
     def __eq__(self, other) -> bool:
-        if isinstance(other, Duration):
-            return (
-                self.years == other.years
-                and self.months == other.months
-                and self.weeks == other.weeks
-                and self.days == other.days
-                and self.hours == other.hours
-                and self.minutes == other.minutes
-                and self.seconds == other.seconds
-            )
-        return NotImplemented
+        """Fuzzy equality: the two durations' day-ranges overlap.
+
+        Accepts a :class:`Duration`, a :class:`datetime.timedelta`, or an ISO 8601
+        duration string.
+        """
+        other = self._coerce(other)
+        if other is None:
+            return NotImplemented
+        a_lo, a_hi = self._day_range()
+        b_lo, b_hi = other._day_range()
+        return a_lo <= b_hi and b_lo <= a_hi
+
+    def __lt__(self, other) -> bool:
+        """Ordering: this duration's day-range lies entirely below the other's.
+
+        Combined with :meth:`__eq__` (via :func:`functools.total_ordering`) this
+        yields fuzzy ``<``, ``<=``, ``>``, ``>=`` in which overlapping durations
+        compare equal.
+        """
+        other = self._coerce(other)
+        if other is None:
+            return NotImplemented
+        return self._day_range()[1] < other._day_range()[0]
 
     def __hash__(self) -> int:
-        return hash((self.years, self.months, self.weeks, self.days, self.hours, self.minutes, self.seconds))
+        # Fuzzy equality (day-range overlap) is not transitive, so no value-based
+        # hash can satisfy the eq/hash contract; a constant hash keeps it valid.
+        return 0
 
 
 def to_duration(value: Optional[Union["Duration", datetime.timedelta, str]]) -> Optional["Duration"]:

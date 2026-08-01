@@ -56,14 +56,34 @@ class Selection(OrderOrSelection):
 
         class InSlice:
             def __init__(self, slc):
-                self.slc = slc
-                if self.slc.start is None and self.slc.stop is None:
+                if slc.start is None and slc.stop is None:
                     raise ValueError("Invalid selection value: slice(None, None)")
+                self.slc = slc
+                self.first = True
 
-                if self.slc.start is not None and self.slc.stop is not None and self.slc.stop < self.slc.start:
-                    self.slc = slice(self.slc.stop, self.slc.start)
+            def _prepare(self, x):
+                # Lazily cast the bounds to the field value's type (so e.g. ISO
+                # duration strings become Duration), then normalise the direction.
+                target_type = type(x)
+                start, stop = self.slc.start, self.slc.stop
+                if start is not None and not isinstance(start, target_type):
+                    start = target_type(start)
+                if stop is not None and not isinstance(stop, target_type):
+                    stop = target_type(stop)
+                if start is not None and stop is not None and stop < start:
+                    start, stop = stop, start
+                self.slc = slice(start, stop)
+                self.first = False
 
             def __call__(self, x):
+                # A multi-valued field key (e.g. the processing chain's propagated
+                # accessors) reports a tuple/list of values; match if ANY is in range.
+                if isinstance(x, (tuple, list)):
+                    return any(self(el) for el in x if el is not None)
+                if x is None:
+                    return False
+                if self.first:
+                    self._prepare(x)
                 return not (
                     (self.slc.start is not None and x < self.slc.start)
                     or (self.slc.stop is not None and x > self.slc.stop)
