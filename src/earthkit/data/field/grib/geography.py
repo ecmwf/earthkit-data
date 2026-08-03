@@ -16,7 +16,7 @@ from earthkit.data.field.component.component import _normalise_set_kwargs
 from earthkit.data.field.component.geography import GeographyBase, _create_geography_from_dict
 from earthkit.data.utils.grid import ECKIT_GRID_SUPPORT
 
-from .collector import GribContextCollector
+from .collector import GribEncoderCollector, GribIndexerCollector
 from .core import GribFieldComponentHandler
 
 LOG = logging.getLogger(__name__)
@@ -248,11 +248,11 @@ class GribGeographyBuilder:
         return GeographyFieldComponentHandler.from_component(component)
 
 
-class GribGeographyContextCollector(GribContextCollector):
-    _ALL_INDEXER_KEYS = ["gridSpec"]
+class GribGeographyEncoderCollector(GribEncoderCollector):
+    # _ALL_INDEXER_KEYS = ["gridSpec"]
 
     @staticmethod
-    def collect_for_encoder(handler, context):
+    def _collect(handler, context):
         component = handler.component
 
         if (grid_spec := component.grid_spec()) is not None:
@@ -267,25 +267,58 @@ class GribGeographyContextCollector(GribContextCollector):
             context.update(r)
         else:
             raise ValueError(
-                ("GribGeographyContextCollector: cannot collect context for a geography without a valid grid_spec")
+                ("GribGeographyEncoderCollector: cannot collect context for a geography without a valid grid_spec")
             )
 
+    # @staticmethod
+    # def collect_for_indexer(handler, context):
+    #     component = handler.component
+    #     if (grid_spec := component.grid_spec()) is not None:
+    #         if isinstance(grid_spec, dict):
+    #             import json
+
+    #             grid_spec = json.dumps(grid_spec)
+
+    #         r = {
+    #             "gridSpec": grid_spec,
+    #         }
+    #         context.update(r)
+    #         return
+    #     else:
+    #         keys = [
+    #             "gridType",
+    #             "latitudeOfFirstGridPointInDegrees",
+    #             "latitudeOfLastGridPointInDegrees",
+    #             "longitudeOfFirstGridPointInDegrees",
+    #             "longitudeOfLastGridPointInDegrees",
+    #             "Ni",
+    #             "Nj",
+    #             "numberOfDataPoints",
+    #             "md5GridSection",
+    #         ]
+    #         GribContextCollector._collect_keys(keys, handler, context)
+
+    # @staticmethod
+    # def indexer_keys(handler):
+    #     return []
+
+    # @staticmethod
+    # @property
+    # def all_indexer_keys():
+    #     return GribGeographyContextCollector._ALL_INDEXER_KEYS
+
+
+class GribGeographyIndexerCollector(GribIndexerCollector):
     @staticmethod
-    def collect_for_indexer(handler, context):
-        component = handler.component
-        if (grid_spec := component.grid_spec()) is not None:
-            if isinstance(grid_spec, dict):
-                import json
-
-                grid_spec = json.dumps(grid_spec)
-
+    def _collect(handle, context):
+        if (grid_spec := handle.get("gridSpec", None)) is not None:
             r = {
                 "gridSpec": grid_spec,
             }
             context.update(r)
             return
         else:
-            keys = [
+            _ALL_INDEXER_KEYS = [
                 "gridType",
                 "latitudeOfFirstGridPointInDegrees",
                 "latitudeOfLastGridPointInDegrees",
@@ -296,19 +329,14 @@ class GribGeographyContextCollector(GribContextCollector):
                 "numberOfDataPoints",
                 "md5GridSection",
             ]
-            GribContextCollector._collect_keys(keys, handler, context)
 
-    @staticmethod
-    def indexer_keys(handler):
-        return []
-
-    @staticmethod
-    @property
-    def all_indexer_keys():
-        return GribGeographyContextCollector._ALL_INDEXER_KEYS
+            context["gridSpec"] = None
+            keys = _ALL_INDEXER_KEYS
+            GribIndexerCollector._collect_keys(keys, handle, context)
 
 
-COLLECTOR = GribGeographyContextCollector()
+COLLECTOR = GribGeographyEncoderCollector()
+GEOGRAPHY_INDEXER_COLLECTOR = GribGeographyIndexerCollector()
 
 
 class GribGeographyHandler(GribFieldComponentHandler):

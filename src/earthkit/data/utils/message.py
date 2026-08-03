@@ -111,7 +111,7 @@ class CodesMessagePositionIndex:
         finally:
             os.close(fd)
 
-    def _get_message_positions_part(self, path, part, max_count=None):
+    def _get_message_positions_part(self, fd, part, max_count=None):
         raise NotImplementedError
 
     @staticmethod
@@ -135,6 +135,12 @@ class CodesMessagePositionIndex:
 
         self.offsets = offsets
         self.lengths = lengths
+
+    # def load(self):
+    #     self._load()
+
+    # def scan(self):
+    #     yield from self._get_message_positions(self.path, self.parts)
 
     def _load(self):
         if CACHE.policy.use_message_position_index_cache():

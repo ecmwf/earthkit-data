@@ -8,7 +8,7 @@
 #
 
 
-from .collector import GribContextCollector
+from .collector import GribEncoderCollector, GribIndexerCollector
 from .core import GribFieldComponentHandler
 
 
@@ -37,33 +37,50 @@ class GribEnsembleBuilder:
         )
 
 
-class GribEnsembleContextCollector(GribContextCollector):
-    _ALL_INDEXER_KEYS = ["perturbationNumber"]
+class GribEnsembleEncoderCollector(GribEncoderCollector):
+    # _ALL_INDEXER_KEYS = ["perturbationNumber"]
 
     @staticmethod
-    def collect_for_encoder(handler, context):
+    def _collect(handler, context):
         component = handler.component
         r = {
             "perturbationNumber": component.member(),
         }
         context.update(r)
 
+    # @staticmethod
+    # def collect_for_indexer(handler, context):
+    #     keys = GribEnsembleContextCollector.indexer_keys(handler)
+    #     GribContextCollector._collect_keys(keys, handler, context)
+
+    # @staticmethod
+    # def collect_for_indexer_from_handle(context):
+    #     keys = GribEnsembleContextCollector._ALL_INDEXER_KEYS
+    #     GribContextCollector._collect_keys(keys, context)
+
+    # @staticmethod
+    # def indexer_keys(handler):
+    #     return GribEnsembleContextCollector._ALL_INDEXER_KEYS
+
+    # @staticmethod
+    # @property
+    # def all_indexer_keys():
+    #     return GribEnsembleContextCollector._ALL_INDEXER_KEYS
+
+
+class GribEnsembleIndexerCollector(GribIndexerCollector):
     @staticmethod
-    def collect_for_indexer(handler, context):
-        keys = GribEnsembleContextCollector.indexer_keys(handler)
-        GribContextCollector._collect_keys(keys, handler, context)
+    def _collect(handle, context):
+        keys = GribEnsembleIndexerCollector.indexer_keys()
+        GribIndexerCollector._collect_keys(keys, handle, context)
 
     @staticmethod
-    def indexer_keys(handler):
-        return GribEnsembleContextCollector._ALL_INDEXER_KEYS
-
-    @staticmethod
-    @property
-    def all_indexer_keys():
-        return GribEnsembleContextCollector._ALL_INDEXER_KEYS
+    def indexer_keys():
+        return ["perturbationNumber"]
 
 
-COLLECTOR = GribEnsembleContextCollector()
+COLLECTOR = GribEnsembleEncoderCollector()
+ENSEMBLE_INDEXER_COLLECTOR = GribEnsembleIndexerCollector()
 
 
 class GribEnsemble(GribFieldComponentHandler):

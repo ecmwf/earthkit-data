@@ -7,10 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
+
 from earthkit.data.field.component.parameter import create_parameter
 from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
 
-from .collector import GribContextCollector
+from .collector import GribContextCollector, GribIndexerCollector
 from .core import GribFieldComponentHandler
 
 
@@ -181,32 +182,32 @@ class GribParameterBuilder:
         return d
 
 
-class GribParameterContextCollector(GribContextCollector):
+class GribParameterEncoderCollector(GribContextCollector):
     """Collector for extracting GRIB context keys from parameter components."""
 
-    _ALL_INDEXER_KEYS = [
-        "shortName",
-        "units",
-        "cfName",
-        "chemShortName",
-        "parameter.chemShortName",
-        "chemName",
-        "mars.wavelength",
-        "mars.firstWavelength",
-        "mars.secondWavelength",
-        "directionNumber",
-        "numberOfDirections",
-        "directionScalingFactor",
-        "scaledDirections",
-        "frequencyNumber",
-        "numberOfFrequencies",
-        "frequencyScalingFactor",
-        "scaledFrequencies",
-        "edition",
-    ]
+    # _ALL_INDEXER_KEYS = [
+    #     "shortName",
+    #     "units",
+    #     "cfName",
+    #     "chemShortName",
+    #     "parameter.chemShortName",
+    #     "chemName",
+    #     "mars.wavelength",
+    #     "mars.firstWavelength",
+    #     "mars.secondWavelength",
+    #     "directionNumber",
+    #     "numberOfDirections",
+    #     "directionScalingFactor",
+    #     "scaledDirections",
+    #     "frequencyNumber",
+    #     "numberOfFrequencies",
+    #     "frequencyScalingFactor",
+    #     "scaledFrequencies",
+    #     "edition",
+    # ]
 
     @staticmethod
-    def collect_for_encoder(handler, context):
+    def _collect(handler, context):
         component = handler.component
         r = {
             "shortName": component.variable(),
@@ -239,40 +240,69 @@ class GribParameterContextCollector(GribContextCollector):
 
         context.update(r)
 
+    # @staticmethod
+    # def collect_for_indexer(handler, context):
+    #     keys = GribParameterContextCollector.indexer_keys(handler)
+    #     GribContextCollector._collect_keys(keys, handler, context)
+
+    # @staticmethod
+    # def indexer_keys(handler):
+    #     component = handler.component
+    #     keys = []
+
+    #     keys.extend(["shortName", "units", "cfName", "edition"])
+
+    #     chem = component.chem()
+    #     if chem:
+    #         keys.extend(["chemShortName", "parameter.chemShortName", "chemName"])
+
+    #     if component.wavelength_bounds(units="m") is not None:
+    #         keys.extend(["mars.wavelength", "mars.firstWavelength", "mars.secondWavelength"])
+
+    #     if component.wave_direction_index() is not None:
+    #         keys.extend(["directionNumber", "numberOfDirections", "directionScalingFactor", "scaledDirections"])
+
+    #     if component.wave_frequency_index() is not None:
+    #         keys.extend(["frequencyNumber", "numberOfFrequencies", "frequencyScalingFactor", "scaledFrequencies"])
+
+    #     return keys
+
+    # @staticmethod
+    # @property
+    # def all_indexer_keys():
+    #     return GribParameterContextCollector.ALL_INDEXER_KEYS
+
+
+class GribParameterIndexerCollector(GribIndexerCollector):
     @staticmethod
-    def collect_for_indexer(handler, context):
-        keys = GribParameterContextCollector.indexer_keys(handler)
-        GribContextCollector._collect_keys(keys, handler, context)
+    def collect(handle, result):
+        keys = ["shortName", "name", "units", "cfName", "edition"]
 
-    @staticmethod
-    def indexer_keys(handler):
-        component = handler.component
-        keys = []
-
-        keys.extend(["shortName", "units", "cfName", "edition"])
-
-        chem = component.chem()
-        if chem:
+        chem_id = handle.get("chemId", None)
+        if chem_id is not None and chem_id != -1:
+            result["chemId"] = chem_id
             keys.extend(["chemShortName", "parameter.chemShortName", "chemName"])
 
-        if component.wavelength_bounds(units="m") is not None:
-            keys.extend(["mars.wavelength", "mars.firstWavelength", "mars.secondWavelength"])
+        wavelength = handle.get("mars.wavelength", None)
+        if wavelength is not None:
+            result["mars.wavelength"] = wavelength
+            keys.extend(["mars.firstWavelength", "mars.secondWavelength"])
 
-        if component.wave_direction_index() is not None:
-            keys.extend(["directionNumber", "numberOfDirections", "directionScalingFactor", "scaledDirections"])
+        direction_number = handle.get("directionNumber", None)
+        if direction_number is not None:
+            result["directionNumber"] = direction_number
+            keys.extend(["numberOfDirections", "directionScalingFactor", "scaledDirections"])
 
-        if component.wave_frequency_index() is not None:
-            keys.extend(["frequencyNumber", "numberOfFrequencies", "frequencyScalingFactor", "scaledFrequencies"])
+        frequency_number = handle.get("frequencyNumber", None)
+        if frequency_number is not None:
+            result["frequencyNumber"] = frequency_number
+            keys.extend(["numberOfFrequencies", "frequencyScalingFactor", "scaledFrequencies"])
 
-        return keys
-
-    @staticmethod
-    @property
-    def all_indexer_keys():
-        return GribParameterContextCollector.ALL_INDEXER_KEYS
+        GribIndexerCollector._collect_keys(keys, handle, result)
 
 
-COLLECTOR = GribParameterContextCollector()
+COLLECTOR = GribParameterEncoderCollector()
+INDEXER_COLLECTOR = GribParameterIndexerCollector()
 
 
 class GribParameter(GribFieldComponentHandler):

@@ -333,6 +333,34 @@ class GribIndex:
         path_id = self._path_id(path)
         # print(f"Indexing {path} (path_id={path_id})")
 
+        from .handle import GribHandle
+        from .scan import GribCodesMessagePositionIndex
+
+        positions = GribCodesMessagePositionIndex(path)
+
+        keys = ["shortName", "paramId", "level", "step", "number", "date", "time", "valid_datetime", "levelist"]
+
+        with open(path, "rb") as f:
+            for i, (offset, length) in enumerate(tqdm.tqdm(positions, leave=False)):
+                f.seek(offset)
+                data = f.read(length)
+                handle = GribHandle.from_message(data)
+
+                ctx = {}
+                from earthkit.data.core.field import Field
+
+                Field._get_grib_indexer_context(handle, ctx)
+                keys = ctx
+
+                self._ensure_columns(keys)
+
+                self._add_grib(
+                    _path_id=path_id,
+                    _offset=handle.metadata("offset"),
+                    _length=handle.metadata("totalLength"),
+                    **{k: handle.metadata(k) for k in keys},
+                )
+
         fields = ekd.from_source("file", path).to_fieldlist()
         if self.flavour is not None:
             fields = self.flavour.map(fields)

@@ -1944,6 +1944,12 @@ class Field(Base):
         for m in self._components.values():
             m.get_grib_context(context)
 
+    @staticmethod
+    def _get_grib_indexer_context(handle, context):
+        from earthkit.data.field.grib.keys import collect
+
+        collect(handle, context)
+
     def _set_metadata(self, md):
         """Helper method to set raw metadata in the field."""
         grib = self._get_grib()

@@ -11,52 +11,95 @@ from abc import ABCMeta, abstractmethod
 
 
 class GribContextCollector(metaclass=ABCMeta):
-    def collect(self, spec, context):
-        if context._MODE == "encoder":
-            if hasattr(spec, "handle"):
-                handle = spec.handle
-                if handle is not None:
-                    if "handle" not in context:
-                        context["handle"] = handle
-            else:
-                self.collect_for_encoder(spec, context)
-        elif context._MODE == "indexer":
-            self.collect_for_indexer(spec, context)
+    @abstractmethod
+    def collect(self, data, context):
+        pass
+
+
+class GribEncoderCollector(GribContextCollector):
+    def collect(self, handler, context):
+        if hasattr(handler, "handle"):
+            handle = handler.handle
+            if handle is not None:
+                if "handle" not in context:
+                    context["handle"] = handle
         else:
-            raise ValueError(f"Unknown context mode: {context._MODE}")
+            self._collect(handler, context)
 
     @staticmethod
     @abstractmethod
-    def collect_for_encoder(spec, context):
+    def _collect(handler, context):
         pass
+
+    # def collect(self, handler, context):
+    #     if context._MODE == "encoder":
+    #         if hasattr(handler, "handle"):
+    #             handle = handler.handle
+    #             if handle is not None:
+    #                 if "handle" not in context:
+    #                     context["handle"] = handle
+    #         else:
+    #             self.collect_for_encoder(spec, context)
+    #     elif context._MODE == "indexer":
+    #         self.collect_for_indexer(spec, context)
+    #     else:
+    #         raise ValueError(f"Unknown context mode: {context._MODE}")
+
+    # @staticmethod
+    # @abstractmethod
+    # def collect_for_encoder(spec, context):
+    #     pass
+
+    # @staticmethod
+    # @abstractmethod
+    # def collect_for_indexer(spec, context):
+    #     pass
+
+    # @staticmethod
+    # def _collect_keys(keys, context):
+    #     if "handle" in context:
+    #         handle = context["handle"]
+    #     else:
+    #         return
+
+    #     r = {}
+    #     for k in keys:
+    #         if k not in r:
+    #             v = handle.get(k, default=None)
+    #             if v is not None:
+    #                 r[k] = v
+
+    #     context.update(r)
+
+    # @staticmethod
+    # @abstractmethod
+    # def indexer_keys(spec):
+    #     pass
+
+    # @staticmethod
+    # @property
+    # def all_indexer_keys():
+    #     pass
+
+
+class GribIndexerCollector(GribContextCollector):
+    def collect(self, handle, context):
+        self._collect(handle, context)
 
     @staticmethod
     @abstractmethod
-    def collect_for_indexer(spec, context):
+    def _collect(handle, context):
         pass
 
     @staticmethod
-    def _collect_keys(keys, spec, context):
-        if "handle" in context:
-            handle = context["handle"]
-        else:
-            return
-
-        r = {}
+    def _collect_keys(keys, handle, result):
         for k in keys:
-            if k not in r:
+            if k not in result:
                 v = handle.get(k, default=None)
                 if v is not None:
-                    r[k] = v
+                    result[k] = v
 
-        context.update(r)
-
-    @staticmethod
-    @abstractmethod
-    def indexer_keys(spec):
-        pass
-
-    @staticmethod
-    @property
-    def all_indexer_keys():
-        pass
+    # @staticmethod
+    # @abstractmethod
+    # def collect(handle, context):
+    #     pass

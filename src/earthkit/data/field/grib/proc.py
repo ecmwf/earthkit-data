@@ -7,12 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-
 from earthkit.data.field.component.time_span import TimeMethods
 from earthkit.data.field.grib.time import ZERO_TIMEDELTA
 from earthkit.data.utils.dates import step_to_grib, to_timedelta
 
-from .collector import GribContextCollector
+from .collector import GribEncoderCollector, GribIndexerCollector
 from .core import GribFieldComponentHandler
 
 _GRIB_TO_METHOD = {
@@ -67,9 +66,9 @@ class GribProcBuilder:
         }
 
 
-class GribProcContextCollector(GribContextCollector):
+class GribProcEncoderCollector(GribEncoderCollector):
     @staticmethod
-    def collect_for_encoder(handler, context):
+    def _collect(handler, context):
         from earthkit.data.field.component.proc import TimeProcItem
 
         component = handler.component
@@ -85,22 +84,34 @@ class GribProcContextCollector(GribContextCollector):
             if time_item.method != TimeMethods.INSTANT:
                 context["stepRange"] = step_to_grib(time_item.value)
 
+    # @staticmethod
+    # def collect_for_indexer(handler, context):
+    #     keys = GribProcContextCollector.indexer_keys(handler)
+    #     GribContextCollector._collect_keys(keys, handler, context)
+
+    # @staticmethod
+    # def indexer_keys(handler):
+    #     return ["stepType", "stepRange"]
+
+    # @staticmethod
+    # @property
+    # def all_indexer_keys():
+    #     return ["stepType", "stepRange"]
+
+
+class GribProcIndexerCollector(GribIndexerCollector):
     @staticmethod
-    def collect_for_indexer(handler, context):
-        keys = GribProcContextCollector.indexer_keys(handler)
-        GribContextCollector._collect_keys(keys, handler, context)
+    def _collect(handle, context):
+        keys = GribProcIndexerCollector.indexer_keys()
+        GribIndexerCollector._collect_keys(keys, handle, context)
 
     @staticmethod
-    def indexer_keys(handler):
+    def indexer_keys():
         return ["stepType", "stepRange"]
 
-    @staticmethod
-    @property
-    def all_indexer_keys():
-        return ["stepType", "stepRange"]
 
-
-COLLECTOR = GribProcContextCollector()
+COLLECTOR = GribProcEncoderCollector()
+PROC_INDEXER_COLLECTOR = GribProcIndexerCollector()
 
 
 class GribProc(GribFieldComponentHandler):

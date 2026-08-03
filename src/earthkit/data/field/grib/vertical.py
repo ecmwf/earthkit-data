@@ -19,7 +19,7 @@ from earthkit.data.field.component.level_type import (
     LevelTypes,
 )
 
-from .collector import GribContextCollector
+from .collector import GribEncoderCollector, GribIndexerCollector
 from .core import GribFieldComponentHandler
 
 
@@ -388,11 +388,11 @@ class GribVerticalBuilder:
         #  )
 
 
-class GribVerticalContextCollector(GribContextCollector):
-    _ALL_INDEXER_KEYS = ["typeOfLevel", "level", "topLevel", "bottomLevel", "NV"]
+class GribVerticalEncoderCollector(GribEncoderCollector):
+    # _ALL_INDEXER_KEYS = ["typeOfLevel", "level", "topLevel", "bottomLevel", "NV"]
 
     @staticmethod
-    def collect_for_encoder(handler, context):
+    def _collect(handler, context):
         component = handler.component
         handle = context.get("handle")
         grib_level_type = _COMPONENT_TYPES.get(component.level_type())
@@ -410,22 +410,34 @@ class GribVerticalContextCollector(GribContextCollector):
         r = grib_level_type.to_grib(component, handle)
         context.update(r)
 
+    # @staticmethod
+    # def collect_for_indexer(handler, context):
+    #     keys = GribVerticalContextCollector.indexer_keys(handler)
+    #     GribContextCollector._collect_keys(keys, handler, context)
+
+    # @staticmethod
+    # def indexer_keys(handler):
+    #     return ["typeOfLevel", "level", "topLevel", "bottomLevel", "NV"]
+
+    # @staticmethod
+    # @property
+    # def all_indexer_keys():
+    #     return GribVerticalContextCollector._ALL_INDEXER_KEYS
+
+
+class GribVerticalIndexerCollector(GribIndexerCollector):
     @staticmethod
-    def collect_for_indexer(handler, context):
-        keys = GribVerticalContextCollector.indexer_keys(handler)
-        GribContextCollector._collect_keys(keys, handler, context)
+    def _collect(handle, context):
+        keys = GribVerticalIndexerCollector.indexer_keys()
+        GribIndexerCollector._collect_keys(keys, handle, context)
 
     @staticmethod
-    def indexer_keys(handler):
+    def indexer_keys():
         return ["typeOfLevel", "level", "topLevel", "bottomLevel", "NV"]
 
-    @staticmethod
-    @property
-    def all_indexer_keys():
-        return GribVerticalContextCollector._ALL_INDEXER_KEYS
 
-
-COLLECTOR = GribVerticalContextCollector()
+COLLECTOR = GribVerticalEncoderCollector()
+PARAMETER_INDEXER_COLLECTOR = GribVerticalIndexerCollector()
 
 
 class GribVertical(GribFieldComponentHandler):
