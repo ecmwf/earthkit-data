@@ -178,18 +178,22 @@ class MonthCoord(Coord):
 
 class LevelCoord(Coord):
     def __init__(self, name, vals, dims=None, ds=None, **kwargs):
-        self._level_type = {}
+        self._level_types = {}
         self._default = None
+        self._field = None
         if ds is not None:
             # TODO: this is a bit hacky, need to find a better way to get the level type information
             _cf_attrs = ds[0].vertical.cf()  # can be None
             self._default = dict(_cf_attrs) if _cf_attrs else {}
 
-            # TODO; try to avoid getting the metadata upfront
-            for k in ["vertical.level_type", "metadata.typeOfLevel", "metadata.levtype"]:
-                v = ds[0]._get_fast(k)
-                if v is not None:
-                    self._level_type[k] = v
+            # we only store the level type for the high-level level type key. For other
+            # keys it will be looked up on demand from the stored field to avoid
+            # accessing raw ecCodes keys unnecessarily, which can be expensive.
+            v = ds[0]._get_fast("vertical.level_type") if self._field else None
+            if v is not None:
+                self._level_types["vertical.level_type"] = v
+
+            self._field = ds[0]
 
         super().__init__(name, vals, dims, **kwargs)
 
@@ -203,9 +207,23 @@ class LevelCoord(Coord):
 
             for key in keys:
                 if key == level_type_key or level_type_key is None:
-                    level_type = self._level_type.get(key)
+                    # check the stored level type
+                    level_type = None
+                    if key in self._level_types:
+                        level_type = self._level_types[key]
+
+                    # check other level type keys.
+                    # It involves getting raw ecCodes keys,
+                    # which can be expensive, so this step is delayed
+                    # until we actually need the level type information.
+                    if level_type is None and self._field is not None:
+                        v = self._field._get_fast(key)
+                        if v is not None:
+                            level_type = v
+
                     if level_type is None:
                         continue
+
                     _attrs = conf.get(level_type)
                     if _attrs is not None:
                         return _attrs
