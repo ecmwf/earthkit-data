@@ -191,7 +191,7 @@ class LevelCoord(Coord):
             # we only store the level type for the high-level level type key. For other
             # keys it will be looked up on demand from the stored field to avoid
             # accessing raw ecCodes keys unnecessarily, which can be expensive.
-            self._level_type = ds[0]._get_fast("vertical.level_type")
+            self._level_type = ds[0]._get_fast(self._LEVEL_TYPE_KEY)
 
             # store the field to be able to access raw ecCodes keys if needed
             self._field = ds[0]
