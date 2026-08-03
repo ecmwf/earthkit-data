@@ -62,6 +62,8 @@ class MetadataCacheHandler:
                 cache_id = (key, default, astype, raise_on_missing)
                 if cache_id in self._cache:
                     return self._cache[cache_id]
+                elif key in self._cache:
+                    return self._cache[key]
 
                 v = func(self, key, default=default, astype=astype, raise_on_missing=raise_on_missing)
                 self._cache[cache_id] = v
@@ -152,6 +154,12 @@ class GribMetadata:
             return self.message()
         elif key == "handle":
             return self._handle
+
+        # print(f"GribMetadata.get: key={key}, astype={astype}, kwargs={_kwargs}")
+        # print(f"{self._cache=}")
+        # raise AssertionError("Debugging GribMetadata.get")
+
+        # print(f"GribMetadata.get: key={key}, astype={astype}, kwargs={_kwargs}")
 
         v = self._handle.get(key, ktype=astype, **_kwargs)
 

@@ -92,7 +92,7 @@ class IndexGeographyBuilder:
     @staticmethod
     def build(handle):
         grid_spec = handle.get("gridSpec", None)
-        print(f"IndexGeographyBuilder: grid_spec={grid_spec}")
+        # print(f"IndexGeographyBuilder: grid_spec={grid_spec}")
         if grid_spec is not None:
             from earthkit.data.field.component.geography import GridsSpecBasedGeography
             from earthkit.data.field.handler.geography import GeographyFieldComponentHandler

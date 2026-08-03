@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+
 from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.indexing.simple import SimpleFieldListBase
@@ -185,7 +186,7 @@ class IndexedGribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
     def __init__(
         self,
         path,
-        db=None,
+        grib_index=None,
         parts=None,
         positions=None,
         grib_handle_policy=None,
@@ -195,7 +196,7 @@ class IndexedGribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
         assert isinstance(path, str), path
         GRIBReaderBase.__init__(self, self, path)
         # self.path = path
-        self._db = db
+        self._db = grib_index
         self._file_parts = parts
         self.__positions = positions
 
@@ -240,6 +241,12 @@ class IndexedGribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
 
         from earthkit.data.field.grib.metadata import GribMetadata
 
+        d["number"] = None
+        d["name"] = d["shortName"] if "shortName" in d else None
+        d["chemId"] = None
+        d["mars.wavelength"] = None
+        d["directionNumber"] = None
+        d["frequencyNumber"] = None
         metadata = GribMetadata(handle, cache=d)
 
         field = create_grib_field(metadata, handle, data=None, values=None, geography=None, reference_field=None)
@@ -361,8 +368,18 @@ class GRIBReader(Source, GRIBReaderBase):
 
         GRIBReaderBase.__init__(self, source, path)
 
-    def to_fieldlist(self, *args, **kwargs):
-        return GribFieldListInFile(self.path, **self._kwargs, **kwargs)
+    def to_fieldlist(self, *args, grib_index=False, **kwargs):
+        if grib_index:
+            from .index import GribIndex
+
+            if isinstance(grib_index, bool):
+                grib_index = GribIndex.from_file(self.path)
+            elif isinstance(grib_index, str):
+                grib_index = GribIndex.from_file(self.path, db_path=grib_index)
+
+            return IndexedGribFieldListInFile(self.path, grib_index=grib_index, **self._kwargs, **kwargs)
+        else:
+            return GribFieldListInFile(self.path, **self._kwargs, **kwargs)
 
     def to_xarray(self, *args, **kwargs):
         return self.to_fieldlist().to_xarray(*args, **kwargs)

@@ -241,7 +241,7 @@ class GribIndex:
         """
         assert self.update
 
-        print(f"Adding grib record: {kwargs}")
+        # print(f"Adding grib record: {kwargs}")
 
         try:
             self.cursor.execute(
@@ -331,7 +331,7 @@ class GribIndex:
             Path to the GRIB file to add.
         """
         path_id = self._path_id(path)
-        print(f"Indexing {path} (path_id={path_id})")
+        # print(f"Indexing {path} (path_id={path_id})")
 
         fields = ekd.from_source("file", path).to_fieldlist()
         if self.flavour is not None:
@@ -343,7 +343,65 @@ class GribIndex:
             ctx = GribIndexerContext()
             field._get_grib_context(ctx)
             ctx.pop("handle", None)
-            print(f"Field {i + 1}: {ctx=}")
+            # print(f"Field {i + 1}: {ctx=}")
+
+            keys = ctx
+
+            # keys = field._serialise()
+
+            # keys = field.get(collections="metadata.mars", default={}).copy()
+            # keys.update({k: field.get(f"metadata.{k}", default=None) for k in self.keys})
+
+            # keys.setdefault("param", keys.get("shortName", keys.get("paramId")))
+
+            # keys = {k: v for k, v in keys.items() if v is not None}
+
+            # if keys.get("param") in (0, "unknown"):
+            #     param = (
+            #         field.get("metadata.discipline", default=None),
+            #         field.get("metadata.parameterCategory", default=None),
+            #         field.get("metadata.parameterNumber", default=None),
+            #     )
+            #     if param not in self.warnings:
+            #         self._unknown(path, field, i, param)
+            #         self.warnings[param] = True
+
+            #     continue
+
+            self._ensure_columns(list(keys.keys()))
+
+            self._add_grib(
+                _path_id=path_id,
+                _offset=field.metadata("offset"),
+                _length=field.metadata("totalLength"),
+                **keys,
+            )
+
+        self._commit()
+
+    def add_grib_fieldlist(self, fieldlist) -> None:
+        """Add a GRIB file to the database.
+
+        Parameters
+        ----------
+        path : str
+            Path to the GRIB file to add.
+        """
+        path = fieldlist.path
+        path_id = self._path_id(path)
+        # print(f"Indexing {path} (path_id={path_id})")
+
+        fields = fieldlist
+        if self.flavour is not None:
+            fields = self.flavour.map(fields)
+
+        from earthkit.data.field.grib.context import GribIndexerContext
+
+        for i, field in enumerate(tqdm.tqdm(fields, leave=False)):
+            ctx = GribIndexerContext()
+            field._get_grib_context(ctx)
+            ctx.pop("handle", None)
+            # print(f"Field {i + 1}: {ctx=}")
 
             keys = ctx
 
@@ -654,6 +712,37 @@ class GribIndex:
             # print("description", self.cursor.description)
             # print("type(d)", type(d))
             yield d
+
+    @classmethod
+    def from_file(cls, path: str, db_path: str | None = None) -> "GribIndex":
+        from earthkit.data import from_source
+
+        fieldlist = from_source("file", path).to_fieldlist()
+        return cls.from_fieldlist(fieldlist, db_path=db_path)
+
+    @classmethod
+    def from_fieldlist(cls, fieldlist, db_path: str | None = None) -> "GribIndex":
+        import pathlib as p
+
+        if not db_path:
+            from earthkit.data.core.caching import auxiliary_cache_file
+
+            path = fieldlist.path
+            db_path = auxiliary_cache_file(
+                "grib-index",
+                path,
+                content="null",
+                extension=".sqlite",
+            )
+
+        db_path_p = p.Path(db_path)
+        if db_path_p.exists() and db_path_p.stat().st_size > 0:
+            grib_index = cls(db_path_p, update=False)
+        else:
+            grib_index = cls(db_path_p, update=True)
+            grib_index.add_grib_fieldlist(fieldlist)
+
+        return grib_index
 
 
 # @source_registry.register("grib-index")
