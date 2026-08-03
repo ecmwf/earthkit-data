@@ -170,7 +170,7 @@ class ForcingMaker:
         return self.cos_solar_zenith_angle(date)
 
     def toa_incident_solar_radiation(self, date, copy=True):
-        from earthkit.data.utils.meteo import toa_incident_solar_radiation
+        from earthkit.data.utils.meteo.solar import toa_incident_solar_radiation
 
         date = to_datetime(date)
         result = toa_incident_solar_radiation(
@@ -183,7 +183,7 @@ class ForcingMaker:
         return result.flatten()
 
     def cos_solar_zenith_angle(self, date, copy=True):
-        from earthkit.data.utils.meteo import cos_solar_zenith_angle
+        from earthkit.data.utils.meteo.solar import cos_solar_zenith_angle
 
         date = to_datetime(date)
         result = cos_solar_zenith_angle(
@@ -194,7 +194,7 @@ class ForcingMaker:
         return result.flatten()
 
     def distance_to_moon(self, date, copy=True):
-        from earthkit.data.utils.lunar import distance_to_moon
+        from earthkit.data.utils.meteo.lunar import distance_to_moon
 
         date = to_datetime(date)
         result = distance_to_moon(
@@ -205,7 +205,7 @@ class ForcingMaker:
         return result.flatten()
 
     def delta_distance_to_moon(self, date, copy=True):
-        from earthkit.data.utils.lunar import delta_distance_to_moon
+        from earthkit.data.utils.meteo.lunar import delta_distance_to_moon
 
         date = to_datetime(date)
         result = delta_distance_to_moon(
@@ -216,7 +216,7 @@ class ForcingMaker:
         return result.flatten()
 
     def singular_distance_to_moon(self, date, copy=True):
-        from earthkit.data.utils.lunar import singular_distance_to_moon
+        from earthkit.data.utils.meteo.lunar import singular_distance_to_moon
 
         date = to_datetime(date)
         result = singular_distance_to_moon(
