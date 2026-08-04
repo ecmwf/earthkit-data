@@ -11,7 +11,7 @@
 from earthkit.data.field.component.parameter import create_parameter
 from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
 
-from .collector import GribContextCollector, GribIndexerCollector
+from .collector import GribEncoderCollector, GribIndexerCollector
 from .core import GribFieldComponentHandler
 
 
@@ -182,7 +182,7 @@ class GribParameterBuilder:
         return d
 
 
-class GribParameterEncoderCollector(GribContextCollector):
+class GribParameterEncoderCollector(GribEncoderCollector):
     """Collector for extracting GRIB context keys from parameter components."""
 
     # _ALL_INDEXER_KEYS = [
@@ -275,25 +275,25 @@ class GribParameterEncoderCollector(GribContextCollector):
 
 class GribParameterIndexerCollector(GribIndexerCollector):
     @staticmethod
-    def collect(handle, result):
+    def _collect(handle, result):
         keys = ["shortName", "name", "units", "cfName", "edition"]
 
-        chem_id = handle.get("chemId", None)
+        chem_id = handle.get("chemId", default=None)
         if chem_id is not None and chem_id != -1:
             result["chemId"] = chem_id
             keys.extend(["chemShortName", "parameter.chemShortName", "chemName"])
 
-        wavelength = handle.get("mars.wavelength", None)
+        wavelength = handle.get("mars.wavelength", default=None)
         if wavelength is not None:
             result["mars.wavelength"] = wavelength
             keys.extend(["mars.firstWavelength", "mars.secondWavelength"])
 
-        direction_number = handle.get("directionNumber", None)
+        direction_number = handle.get("directionNumber", default=None)
         if direction_number is not None:
             result["directionNumber"] = direction_number
             keys.extend(["numberOfDirections", "directionScalingFactor", "scaledDirections"])
 
-        frequency_number = handle.get("frequencyNumber", None)
+        frequency_number = handle.get("frequencyNumber", default=None)
         if frequency_number is not None:
             result["frequencyNumber"] = frequency_number
             keys.extend(["numberOfFrequencies", "frequencyScalingFactor", "scaledFrequencies"])
@@ -302,7 +302,7 @@ class GribParameterIndexerCollector(GribIndexerCollector):
 
 
 COLLECTOR = GribParameterEncoderCollector()
-INDEXER_COLLECTOR = GribParameterIndexerCollector()
+PARAMETER_INDEXER_COLLECTOR = GribParameterIndexerCollector()
 
 
 class GribParameter(GribFieldComponentHandler):

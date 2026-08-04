@@ -437,7 +437,7 @@ class GribVerticalIndexerCollector(GribIndexerCollector):
 
 
 COLLECTOR = GribVerticalEncoderCollector()
-PARAMETER_INDEXER_COLLECTOR = GribVerticalIndexerCollector()
+VERTICAL_INDEXER_COLLECTOR = GribVerticalIndexerCollector()
 
 
 class GribVertical(GribFieldComponentHandler):

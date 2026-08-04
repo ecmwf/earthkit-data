@@ -136,12 +136,6 @@ class CodesMessagePositionIndex:
         self.offsets = offsets
         self.lengths = lengths
 
-    # def load(self):
-    #     self._load()
-
-    # def scan(self):
-    #     yield from self._get_message_positions(self.path, self.parts)
-
     def _load(self):
         if CACHE.policy.use_message_position_index_cache():
             self._cache_file = auxiliary_cache_file(
@@ -188,6 +182,10 @@ class CodesMessagePositionIndex:
 
         return False
 
+    def __iter__(self):
+        for offset, length in zip(self.offsets, self.lengths):
+            yield offset, length
+
 
 class CodesHandle(eccodes.Message):
     MISSING_VALUE = np.finfo(np.float32).max
@@ -202,6 +200,11 @@ class CodesHandle(eccodes.Message):
     @classmethod
     def from_sample(cls, name):
         return cls(eccodes.codes_new_from_samples(name, cls.PRODUCT_ID), None, None)
+
+    @classmethod
+    def _from_file(cls, fp):
+        handle = eccodes.codes_new_from_file(fp, cls.PRODUCT_ID)
+        return cls(handle, None, None) if handle is not None else None
 
     @classmethod
     def _from_raw_handle(cls, handle, clone=False):

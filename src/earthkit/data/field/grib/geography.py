@@ -311,7 +311,7 @@ class GribGeographyEncoderCollector(GribEncoderCollector):
 class GribGeographyIndexerCollector(GribIndexerCollector):
     @staticmethod
     def _collect(handle, context):
-        if (grid_spec := handle.get("gridSpec", None)) is not None:
+        if (grid_spec := handle.get("gridSpec", default=None)) is not None:
             r = {
                 "gridSpec": grid_spec,
             }

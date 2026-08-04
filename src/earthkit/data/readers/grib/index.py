@@ -41,43 +41,6 @@ KEYS2 = ("shortName", "paramId", "level", "step", "number", "date", "time", "val
 KEYS = KEYS1 + KEYS2
 
 
-_PARAM_KEYS = (
-    "variable",
-    "standard_name",
-    "long_name",
-    "units",
-    "chem",
-    "chem_long_name",
-    "wavelength",
-    "wavelength_bounds",
-    "wavelength_units",
-    "wave_direction",
-    "wave_direction_index",
-    "wave_direction_bounds",
-    "wave_direction_units",
-    "wave_frequency",
-    "wave_frequency_index",
-    "wave_frequency_bounds",
-    "wave_frequency_units",
-)
-
-PARAM_KEYS = (
-    "shortName",
-    "units",
-    "paramId",
-    "param",
-    "cfName",
-    "chemId",
-    "chemName",
-    "wavelength",
-    "waveDirection",
-    "waveFrequency",
-)
-LEVEL_KEYS = ("level", "typeOfLevel", "topLevel", "bottomLevel", "NV")
-TIME_KEYS = ("dataDate", "dataTime", "step", "endStep", "forecastMonth", "indexingDate", "indexingTime")
-ENSEMBLE_KEYS = ("number", "perturbationNumber")
-
-
 class GribIndex:
     def __init__(
         self,
@@ -167,15 +130,16 @@ class GribIndex:
         # We don't use NULL as a default because NULL is considered a different value
         # in UNIQUE INDEX constraints (https://www.sqlite.org/lang_createindex.html)
 
-        self.cursor.execute(f"""
+        self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS grib_index (
             _id INTEGER PRIMARY KEY,
             _path_id INTEGER not null,
             _offset INTEGER not null,
             _length INTEGER not null,
-            {", ".join(f"{self._quote_column(key)} TEXT not null default ''" for key in columns)},
             FOREIGN KEY(_path_id) REFERENCES paths(id))
         """)  # ,
+
+        # {", ".join(f"{self._quote_column(key)} TEXT not null default ''" for key in columns)},
 
         self.cursor.execute("""
         CREATE UNIQUE INDEX IF NOT EXISTS idx_grib_index_path_offset
@@ -333,79 +297,105 @@ class GribIndex:
         path_id = self._path_id(path)
         # print(f"Indexing {path} (path_id={path_id})")
 
-        from .handle import GribHandle
-        from .scan import GribCodesMessagePositionIndex
+        from earthkit.data.core.field import Field
 
-        positions = GribCodesMessagePositionIndex(path)
+        from .scan import GribHandleScanner
+
+        # positions = GribCodesMessagePositionIndex(path)
 
         keys = ["shortName", "paramId", "level", "step", "number", "date", "time", "valid_datetime", "levelist"]
 
-        with open(path, "rb") as f:
-            for i, (offset, length) in enumerate(tqdm.tqdm(positions, leave=False)):
-                f.seek(offset)
-                data = f.read(length)
-                handle = GribHandle.from_message(data)
-
-                ctx = {}
-                from earthkit.data.core.field import Field
-
-                Field._get_grib_indexer_context(handle, ctx)
-                keys = ctx
-
-                self._ensure_columns(keys)
-
-                self._add_grib(
-                    _path_id=path_id,
-                    _offset=handle.metadata("offset"),
-                    _length=handle.metadata("totalLength"),
-                    **{k: handle.metadata(k) for k in keys},
-                )
-
-        fields = ekd.from_source("file", path).to_fieldlist()
-        if self.flavour is not None:
-            fields = self.flavour.map(fields)
-
-        from earthkit.data.field.grib.context import GribIndexerContext
-
-        for i, field in enumerate(tqdm.tqdm(fields, leave=False)):
-            ctx = GribIndexerContext()
-            field._get_grib_context(ctx)
-            ctx.pop("handle", None)
-            # print(f"Field {i + 1}: {ctx=}")
-
+        for i, (handle, offset, length) in enumerate(tqdm.tqdm(GribHandleScanner(path).scan(), leave=False)):
+            ctx = {}
+            Field._get_grib_indexer_context(handle, ctx)
             keys = ctx
 
-            # keys = field._serialise()
+            # print(f"Field {i + 1}: {ctx=}", flush=True)
 
-            # keys = field.get(collections="metadata.mars", default={}).copy()
-            # keys.update({k: field.get(f"metadata.{k}", default=None) for k in self.keys})
-
-            # keys.setdefault("param", keys.get("shortName", keys.get("paramId")))
-
-            # keys = {k: v for k, v in keys.items() if v is not None}
-
-            # if keys.get("param") in (0, "unknown"):
-            #     param = (
-            #         field.get("metadata.discipline", default=None),
-            #         field.get("metadata.parameterCategory", default=None),
-            #         field.get("metadata.parameterNumber", default=None),
-            #     )
-            #     if param not in self.warnings:
-            #         self._unknown(path, field, i, param)
-            #         self.warnings[param] = True
-
-            #     continue
-
-            self._ensure_columns(list(keys.keys()))
+            self._ensure_columns(keys)
 
             self._add_grib(
                 _path_id=path_id,
-                _offset=field.metadata("offset"),
-                _length=field.metadata("totalLength"),
+                _offset=offset,
+                _length=length,
                 **keys,
             )
 
         self._commit()
+        # return
+
+        # with open(path, "rb") as f:
+        #     for i, (offset, length) in enumerate(tqdm.tqdm(positions, leave=False)):
+        #         f.seek(offset)
+        #         data = f.read(length)
+        #         handle = GribCodesHandle.from_message(data)
+
+        #         ctx = {}
+        #         from earthkit.data.core.field import Field
+
+        #         Field._get_grib_indexer_context(handle, ctx)
+        #         keys = ctx
+
+        #         # print(f"Field {i + 1}: {ctx=}", flush=True)
+
+        #         self._ensure_columns(keys)
+
+        #         self._add_grib(
+        #             _path_id=path_id,
+        #             # _offset=handle.get("offset"),
+        #             # _length=handle.get("totalLength"),
+        #             _offset=offset,
+        #             _length=length,
+        #             **keys,
+        #         )
+        # self._commit()
+        # return
+
+        # fields = ekd.from_source("file", path).to_fieldlist()
+        # if self.flavour is not None:
+        #     fields = self.flavour.map(fields)
+
+        # from earthkit.data.field.grib.context import GribIndexerContext
+
+        # for i, field in enumerate(tqdm.tqdm(fields, leave=False)):
+        #     ctx = GribIndexerContext()
+        #     field._get_grib_context(ctx)
+        #     ctx.pop("handle", None)
+        #     # print(f"Field {i + 1}: {ctx=}")
+
+        #     keys = ctx
+
+        #     # keys = field._serialise()
+
+        #     # keys = field.get(collections="metadata.mars", default={}).copy()
+        #     # keys.update({k: field.get(f"metadata.{k}", default=None) for k in self.keys})
+
+        #     # keys.setdefault("param", keys.get("shortName", keys.get("paramId")))
+
+        #     # keys = {k: v for k, v in keys.items() if v is not None}
+
+        #     # if keys.get("param") in (0, "unknown"):
+        #     #     param = (
+        #     #         field.get("metadata.discipline", default=None),
+        #     #         field.get("metadata.parameterCategory", default=None),
+        #     #         field.get("metadata.parameterNumber", default=None),
+        #     #     )
+        #     #     if param not in self.warnings:
+        #     #         self._unknown(path, field, i, param)
+        #     #         self.warnings[param] = True
+
+        #     #     continue
+
+        #     self._ensure_columns(list(keys.keys()))
+
+        #     self._add_grib(
+        #         _path_id=path_id,
+        #         _offset=field.metadata("offset"),
+        #         _length=field.metadata("totalLength"),
+        #         **keys,
+        #     )
+
+        # self._commit()
 
     def add_grib_fieldlist(self, fieldlist) -> None:
         """Add a GRIB file to the database.
@@ -743,10 +733,33 @@ class GribIndex:
 
     @classmethod
     def from_file(cls, path: str, db_path: str | None = None) -> "GribIndex":
-        from earthkit.data import from_source
+        import pathlib as p
 
-        fieldlist = from_source("file", path).to_fieldlist()
-        return cls.from_fieldlist(fieldlist, db_path=db_path)
+        if not db_path:
+            from earthkit.data.core.caching import auxiliary_cache_file
+
+            db_path = auxiliary_cache_file(
+                "grib-index",
+                path,
+                content="null",
+                extension=".sqlite",
+            )
+
+        db_path_p = p.Path(db_path)
+        if db_path_p.exists() and db_path_p.stat().st_size > 0:
+            grib_index = cls(db_path_p, update=False)
+        else:
+            grib_index = cls(db_path_p, update=True)
+            grib_index.add_grib_file(path)
+        return grib_index
+
+        # grib_index = cls(db_path, update=True)
+        # grib_index.add_grib_file(path)
+        # return grib_index
+        # from earthkit.data import from_source
+
+        # fieldlist = from_source("file", path).to_fieldlist()
+        # return cls.from_fieldlist(fieldlist, db_path=db_path)
 
     @classmethod
     def from_fieldlist(cls, fieldlist, db_path: str | None = None) -> "GribIndex":

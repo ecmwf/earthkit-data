@@ -79,3 +79,61 @@ class GribCodesMessagePositionIndex(CodesMessagePositionIndex):
                     return
 
             offset = os.lseek(fd, offset + length, os.SEEK_SET)
+
+
+class GribHandleScanner:
+    def __init__(self, path, parts=None, max_count=None):
+        self.path = path
+        self.parts = parts
+        self.max_count = max_count
+
+    def scan(self):
+        if self.parts is not None:
+            yield from self._scan_parts()
+        else:
+            yield from self._scan()
+
+    def _scan(self):
+        from .handle import GribCodesHandle
+
+        cnt = 0
+        with open(self.path, "rb") as fp:
+            while True:
+                handle = GribCodesHandle._from_file(fp)
+                if handle is None:
+                    break
+
+                offset = handle.get("offset")
+                length = handle.get("totalLength")
+
+                yield handle, offset, length
+
+                if self.max_count is not None:
+                    if cnt >= self.max_count:
+                        break
+                    cnt += 1
+
+    def _scan_parts(self):
+        from .handle import GribCodesHandle
+
+        cnt = 0
+        with open(self.path, "rb") as fp:
+            for part in self.parts:
+                offset = part[0]
+                # end_pos = part[0] + part[1] if part[1] > 0 else -1
+
+                if os.lseek(fp, offset, os.SEEK_SET) != offset:
+                    break
+
+                handle = GribCodesHandle._from_file(fp)
+                if handle is None:
+                    break
+
+                length = handle.get("totalLength")
+
+                yield handle, offset, length
+
+                if self.max_count is not None:
+                    if cnt >= self.max_count:
+                        break
+                    cnt += 1
