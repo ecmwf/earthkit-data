@@ -133,7 +133,7 @@ def test_fdb_userconfig_deprecated_alias():
         "param": [167],
     }
 
-    with pytest.warns(FutureWarning, match="userconfig"):
+    with pytest.warns(DeprecationWarning, match="userconfig"):
         from_source("fdb", request=request, config={"a": 1}, userconfig={"b": 2}, stream=False)
 
 
@@ -153,8 +153,34 @@ def test_fdb_user_config_no_warning():
     }
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
+        warnings.simplefilter("error", DeprecationWarning)
         from_source("fdb", request=request, config={"a": 1}, user_config={"b": 2}, stream=False)
+
+
+@pytest.mark.skipif(NO_FDB, reason="No access to FDB")
+def test_fdb_userconfig_and_user_config_error():
+    request = {
+        "class": "od",
+        "expver": "0001",
+        "stream": "oper",
+        "date": "20200513",
+        "time": 1200,
+        "domain": "g",
+        "type": "an",
+        "levtype": "sfc",
+        "step": 0,
+        "param": [167],
+    }
+
+    with pytest.raises(ValueError, match="Specify only one"):
+        from_source(
+            "fdb",
+            request=request,
+            config={"a": 1},
+            userconfig={"old": 1},
+            user_config={"new": 1},
+            stream=False,
+        )
 
 
 if __name__ == "__main__":

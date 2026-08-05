@@ -36,13 +36,16 @@ class FDBSource(Source):
             if k in kwargs:
                 raise ValueError(f"Invalid argument '{k}' for FDBSource. Deprecated since 0.8.0.")
 
+        if userconfig is not None and user_config is not None:
+            raise ValueError("Specify only one of 'userconfig' or 'user_config', not both.")
+
         if userconfig is not None:
             warnings.warn(
                 "'userconfig' is deprecated, use 'user_config' instead",
-                FutureWarning,
+                DeprecationWarning,
+                stacklevel=2,  # Point the warning at the user's call site
             )
-            if user_config is None:
-                user_config = userconfig
+            user_config = userconfig
 
         self.lazy = lazy
         self._fdb_kwargs = {}
