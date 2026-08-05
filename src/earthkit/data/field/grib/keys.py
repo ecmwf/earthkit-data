@@ -1,3 +1,4 @@
+from .data import DATA_INDEXER_COLLECTOR
 from .ensemble import ENSEMBLE_INDEXER_COLLECTOR
 from .geography import GEOGRAPHY_INDEXER_COLLECTOR
 from .parameter import PARAMETER_INDEXER_COLLECTOR
@@ -12,9 +13,12 @@ _COLLECTORS = [
     VERTICAL_INDEXER_COLLECTOR,
     GEOGRAPHY_INDEXER_COLLECTOR,
     PROC_INDEXER_COLLECTOR,
+    DATA_INDEXER_COLLECTOR,
 ]
 
 
 def collect(handle, context):
+    context["edition"] = handle.get("edition", default=None)
+
     for collector in _COLLECTORS:
         collector._collect(handle, context)

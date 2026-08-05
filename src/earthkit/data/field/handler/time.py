@@ -33,8 +33,5 @@ class TimeFieldComponentHandler(SimpleFieldComponentHandler):
     def create_empty(cls) -> "TimeFieldComponentHandler":
         return EMPTY_TIME_HANDLER
 
-    def _serialise(self):
-        return {f"{self.NAME}.{k}": v for k, v in self.component.to_dict().items() if v is not None}
-
 
 EMPTY_TIME_HANDLER = TimeFieldComponentHandler(EmptyTime())

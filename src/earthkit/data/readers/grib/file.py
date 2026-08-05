@@ -436,10 +436,10 @@ class MultiGRIBReader(Source, GRIBReaderBase):
             else:
                 yield s
 
-    def to_fieldlist(self):
+    def to_fieldlist(self, grib_index=False):
         from earthkit.data.mergers import make_merger
 
-        merged = make_merger(None, self.sources).to_fieldlist()
+        merged = make_merger(None, self.sources).to_fieldlist(grib_index=grib_index)
         if merged is not None:
             return merged.mutate()
 

@@ -2069,13 +2069,3 @@ class Field(Base):
         self.__init__(**components)
         private = state.get("private", {})
         self._private = private
-
-    def _serialise(self):
-        """Return a serialisable representation of the field."""
-        d = dict()
-        for c in self._components:
-            if hasattr(self._components[c], "_serialise"):
-                s = self._components[c]._serialise()
-                if s:
-                    d.update(s)
-        return d

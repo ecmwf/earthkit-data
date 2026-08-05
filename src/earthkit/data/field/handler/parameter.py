@@ -32,8 +32,5 @@ class ParameterFieldComponentHandler(SimpleFieldComponentHandler):
     def create_empty(cls) -> "ParameterFieldComponentHandler":
         return EMPTY_PARAMETER_HANDLER
 
-    def _serialise(self):
-        return {f"{self.NAME}.{k}": v for k, v in self.component.to_dict().items() if v is not None}
-
 
 EMPTY_PARAMETER_HANDLER = ParameterFieldComponentHandler(EmptyParameter())
