@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 import logging
 import os
 import shutil
@@ -17,7 +18,13 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.utils.testing import earthkit_examples_file, make_tgz, make_zip, preserve_cwd
+from earthkit.data.utils.testing import (
+    earthkit_examples_file,
+    earthkit_test_data_file,
+    make_tgz,
+    make_zip,
+    preserve_cwd,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -343,6 +350,64 @@ def test_file_netcdf_zip_with_single_file_2():
 
         # print(f"{ds=}")
         assert os.path.basename(ds.path) == "a.nc"
+
+
+def test_file_netcdf_multi_directory():
+    s1 = from_source("file", earthkit_test_data_file("era5_2t_1.nc"))
+    s2 = from_source("file", earthkit_test_data_file("era5_2t_2.nc"))
+
+    with temp_directory() as tmpdir1:
+        s1.to_target("file", os.path.join(tmpdir1, "a.nc"))
+        s2.to_target("file", os.path.join(tmpdir1, "b.nc"))
+
+        with temp_directory() as tmpdir2:
+            s1.to_target("file", os.path.join(tmpdir2, "a.nc"))
+            s2.to_target("file", os.path.join(tmpdir2, "b.nc"))
+
+            ds = from_source("file", [tmpdir1, tmpdir2]).to_fieldlist()
+            assert len(ds) == 4, len(ds)
+
+            ref = [
+                ("t2m", datetime.datetime(2021, 3, 1, 12, 0)),
+                ("t2m", datetime.datetime(2021, 3, 2, 12, 0)),
+                ("t2m", datetime.datetime(2021, 3, 1, 12, 0)),
+                ("t2m", datetime.datetime(2021, 3, 2, 12, 0)),
+            ]
+
+            assert ds.get(("parameter.variable", "time.valid_datetime")) == ref
+
+
+def test_file_netcdf_multi_tar():
+    s1 = from_source("file", earthkit_test_data_file("era5_2t_1.nc"))
+    s2 = from_source("file", earthkit_test_data_file("era5_2t_2.nc"))
+
+    with temp_directory() as tmpdir1:
+        s1.to_target("file", os.path.join(tmpdir1, "a.nc"))
+        s2.to_target("file", os.path.join(tmpdir1, "b.nc"))
+
+        paths = [os.path.join(tmpdir1, f) for f in ["a.nc", "b.nc"]]
+        make_tgz(tmpdir1, "test.tar.gz", paths)
+
+        with temp_directory() as tmpdir2:
+            s1.to_target("file", os.path.join(tmpdir2, "a.nc"))
+            s2.to_target("file", os.path.join(tmpdir2, "b.nc"))
+
+            paths = [os.path.join(tmpdir2, f) for f in ["a.nc", "b.nc"]]
+            make_tgz(tmpdir2, "test.tar.gz", paths)
+
+            ds = from_source(
+                "file", [os.path.join(tmpdir1, "test.tar.gz"), os.path.join(tmpdir2, "test.tar.gz")]
+            ).to_fieldlist()
+            assert len(ds) == 4, len(ds)
+
+            ref = [
+                ("t2m", datetime.datetime(2021, 3, 1, 12, 0)),
+                ("t2m", datetime.datetime(2021, 3, 2, 12, 0)),
+                ("t2m", datetime.datetime(2021, 3, 1, 12, 0)),
+                ("t2m", datetime.datetime(2021, 3, 2, 12, 0)),
+            ]
+
+            assert ds.get(("parameter.variable", "time.valid_datetime")) == ref
 
 
 if __name__ == "__main__":

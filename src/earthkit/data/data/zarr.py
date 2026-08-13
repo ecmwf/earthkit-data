@@ -41,10 +41,17 @@ class ZarrData(SourceData):
         """
         from earthkit.data.utils.summary import DataDescriber
 
-        return DataDescriber(title="Zarr", path=self._reader.path, types=self.available_types)
+        return DataDescriber(title="Zarr", path=self.path, types=self.available_types)
+
+    @property
+    def path(self) -> str | list[str] | None:
+        try:
+            return self._reader.path
+        except Exception:
+            return None
 
     def __repr__(self) -> str:
-        return f"ZarrData(path={self._reader.path})"
+        return f"ZarrData(path={self.path})"
 
     def _repr_html_(self) -> str:
         return self.describe()._repr_html_()
@@ -52,7 +59,7 @@ class ZarrData(SourceData):
     def to_fieldlist(self, *args, **kwargs):
         """Convert into a FieldList.
 
-        This method first converting the Zarr data into an Xarray dataset with :func:`to_xarray`
+        This method first converts the Zarr data into an Xarray dataset with :func:`to_xarray`
         and then converting the resulting Xarray dataset into
         a FieldList.
 

@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 class ODBData(SourceData):
     """
-    Represents data in the ODB format.
+    Represent data in the ODB format.
 
     :xref:`odb` is a bespoke format developed at ECMWF to store observations.
 
@@ -49,10 +49,17 @@ class ODBData(SourceData):
         """
         from earthkit.data.utils.summary import DataDescriber
 
-        return DataDescriber(title="ODB file", path=self._reader.path, types=self.available_types)
+        return DataDescriber(title="ODB file", path=self.path, types=self.available_types)
+
+    @property
+    def path(self) -> str | list[str] | None:
+        try:
+            return self._reader.path
+        except Exception:
+            return None
 
     def __repr__(self) -> str:
-        return f"ODBData(path={self._reader.path})"
+        return f"ODBData(path={self.path})"
 
     def _repr_html_(self) -> str:
         return self.describe()._repr_html_()

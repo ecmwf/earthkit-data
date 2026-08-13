@@ -27,10 +27,17 @@ class NetCDFData(SourceData):
         """
         from earthkit.data.utils.summary import DataDescriber
 
-        return DataDescriber(title="NetCDF file", path=self._reader.path, types=self.available_types)
+        return DataDescriber(title="NetCDF file", path=self.path, types=self.available_types)
+
+    @property
+    def path(self) -> str | list[str] | None:
+        try:
+            return self._reader.path
+        except Exception:
+            return None
 
     def __repr__(self) -> str:
-        return f"NetCDFData(path={self._reader.path})"
+        return f"NetCDFData(path={self.path})"
 
     def _repr_html_(self) -> str:
         return self.describe()._repr_html_()
@@ -55,7 +62,7 @@ class NetCDFData(SourceData):
     def to_xarray(self, *args, xarray_open_mfdataset_kwargs=None, **kwargs):
         """Convert into an Xarray dataset.
 
-        The conversion is performed by using :py:func:`xarray.open_mfdataset` for a
+        The conversion is performed by using :py:func:`xarray.open_dataset` for a
         single file and :py:func:`xarray.open_mfdataset` for multiple files.
 
         Parameters

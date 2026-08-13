@@ -2,6 +2,29 @@ Deprecations
 =============
 
 
+.. _deprecated-1.1.0:
+
+Version 1.1.0
+-----------------
+
+.. _deprecated-levtype-grib-encoder:
+
+
+The usage of the ``levtype`` ecCodes key is deprecated in the :ref:`grib_encoder`
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The usage of the ``levtype`` ecCodes key is deprecated in the :ref:`grib_encoder`. It has been read-only since ecCodes 2.33.0 and its use is discouraged. Use ``typeOfLevel`` instead. For backwards compatibility, the values ``'sfc'``, ``'pl'``, ``'ml'``, ``'pt'``, and ``'pv'`` are still accepted and silently mapped to the equivalent ``typeOfLevel`` value,
+but this mapping will be removed in a future release.
+
+
+.. _deprecated-multi-data-sources:
+
+``MultiData.sources`` is deprecated
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The ``sources`` property of the :py:class:`earthkit.data.data.multi.MultiData` class is deprecated and will be removed in a future release. Access to the underlying sources in MultiData is no longer part of the public API.
+
+
 .. _deprecated-0.15.0:
 
 Version 0.15.0

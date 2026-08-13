@@ -7,10 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-# TODO: This code was copied from earthkit.meteo.solar.array to avoid
-# dependency on earthkit.meteo and circular imports. It should be refactored
-# to avoid code duplication.
-
+# NOTE: These methods are identical to the ones in earthkit-meteo, but they are duplicated here
+# to provide a fallback when earthkit-meteo is not installed.
+# See the comments in src/earthkit/data/utils/meteo/__init__.py for more details.
 
 import datetime
 

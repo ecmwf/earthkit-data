@@ -145,6 +145,10 @@ class MultiNetCDFReader(Source, NetCDFReaderBase):
         NetCDFReaderBase.__init__(self, self, "")
         self.sources = list(self._flatten(sources))
 
+    @property
+    def path(self):
+        return [s.path for s in self.sources]
+
     def _flatten(self, sources):
         for s in sources:
             if isinstance(s, MultiNetCDFReader):
@@ -178,6 +182,11 @@ class MultiNetCDFReader(Source, NetCDFReaderBase):
         from earthkit.data.data.netcdf import NetCDFData
 
         return NetCDFData(self)
+
+    @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(s, MultiNetCDFReader) for s in sources)
+        return MultiNetCDFReader(sources)
 
     def _encode(self, encoder, hints=None, **kwargs):
         return encoder._encode_xarray(self.to_xarray(), **kwargs)

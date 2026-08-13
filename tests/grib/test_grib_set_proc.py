@@ -12,13 +12,12 @@
 import datetime
 
 import pytest
-
-# from earthkit.data.specs.time_span import TimeSpan
-# from earthkit.data.specs.time_span import TimeSpanMethod
 from grib_fixtures import load_grib_data  # noqa: E402
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
+
+# TODO: to be re-enabled when setting the proc component is implemented
 
 
 # @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])

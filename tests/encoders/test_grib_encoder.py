@@ -430,3 +430,291 @@ def test_grib_encoder_field_labels_1(_args, _kwargs):
     assert np.allclose(f.values, f_r.values)
     assert f.get("parameter.variable") == f_r.get("parameter.variable")
     assert f.get("labels.my_label") == "val"
+
+
+@pytest.mark.parametrize(
+    "_kwargs,ref_source,ref_result",
+    [
+        (
+            dict(metadata={"level": 500}),
+            {
+                "vertical.level": 1000,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 1000,
+                "metadata.level": 1000,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+            {
+                "vertical.level": 500,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 500,
+                "metadata.level": 500,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+        ),
+        (
+            dict(metadata={"levelist": 500}),
+            {
+                "vertical.level": 1000,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 1000,
+                "metadata.level": 1000,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+            {
+                "vertical.level": 500,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 500,
+                "metadata.level": 500,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+        ),
+        (
+            dict(metadata={"level": 500, "levtype": "pl"}),
+            {
+                "vertical.level": 1000,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 1000,
+                "metadata.level": 1000,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+            {
+                "vertical.level": 500,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 500,
+                "metadata.level": 500,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+        ),
+        (
+            dict(metadata={"level": 500, "typeOfLevel": "isobaricInhPa"}),
+            {
+                "vertical.level": 1000,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 1000,
+                "metadata.level": 1000,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+            {
+                "vertical.level": 500,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 500,
+                "metadata.level": 500,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+        ),
+        (
+            dict(metadata={"vertical.level": 500, "vertical.level_type": "pressure"}),
+            {
+                "vertical.level": 1000,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 1000,
+                "metadata.level": 1000,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+            {
+                "vertical.level": 500,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 500,
+                "metadata.level": 500,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+        ),
+        (
+            dict(metadata={"levelist": 500, "levtype": "pl"}),
+            {
+                "vertical.level": 1000,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 1000,
+                "metadata.level": 1000,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+            {
+                "vertical.level": 500,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 500,
+                "metadata.level": 500,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+        ),
+        (
+            dict(metadata={"levelist": 500, "typeOfLevel": "isobaricInhPa"}),
+            {
+                "vertical.level": 1000,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 1000,
+                "metadata.level": 1000,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+            {
+                "vertical.level": 500,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 500,
+                "metadata.level": 500,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+        ),
+        (
+            dict(metadata={"level": 320, "typeOfLevel": "theta"}),
+            {
+                "vertical.level": 1000,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 1000,
+                "metadata.level": 1000,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+            {
+                "vertical.level": 320,
+                "vertical.level_type": "potential_temperature",
+                "parameter.variable": "t",
+                "metadata.levelist": 320,
+                "metadata.level": 320,
+                "metadata.levtype": "pt",
+                "metadata.typeOfLevel": "theta",
+            },
+        ),
+        (
+            dict(metadata={"levelist": 320, "typeOfLevel": "theta"}),
+            {
+                "vertical.level": 1000,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 1000,
+                "metadata.level": 1000,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+            {
+                "vertical.level": 320,
+                "vertical.level_type": "potential_temperature",
+                "parameter.variable": "t",
+                "metadata.levelist": 320,
+                "metadata.level": 320,
+                "metadata.levtype": "pt",
+                "metadata.typeOfLevel": "theta",
+            },
+        ),
+        (
+            dict(metadata={"level": 320, "levtype": "pt"}),
+            {
+                "vertical.level": 1000,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 1000,
+                "metadata.level": 1000,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+            {
+                "vertical.level": 320,
+                "vertical.level_type": "potential_temperature",
+                "parameter.variable": "t",
+                "metadata.levelist": 320,
+                "metadata.level": 320,
+                "metadata.levtype": "pt",
+                "metadata.typeOfLevel": "theta",
+            },
+        ),
+        (
+            dict(metadata={"levelist": 320, "levtype": "pt"}),
+            {
+                "vertical.level": 1000,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 1000,
+                "metadata.level": 1000,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+            {
+                "vertical.level": 320,
+                "vertical.level_type": "potential_temperature",
+                "parameter.variable": "t",
+                "metadata.levelist": 320,
+                "metadata.level": 320,
+                "metadata.levtype": "pt",
+                "metadata.typeOfLevel": "theta",
+            },
+        ),
+        (
+            dict(metadata={"levtype": "sfc"}),
+            {
+                "vertical.level": 1000,
+                "vertical.level_type": "pressure",
+                "parameter.variable": "t",
+                "metadata.levelist": 1000,
+                "metadata.level": 1000,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
+            },
+            {
+                "vertical.level": 0,
+                "vertical.level_type": "surface",
+                "parameter.variable": "t",
+                "metadata.levelist": None,
+                "metadata.level": 1000,
+                "metadata.levtype": "sfc",
+                "metadata.typeOfLevel": "surface",
+            },
+        ),
+    ],
+)
+def test_grib_encoder_level_keys_ok(_kwargs, ref_source, ref_result):
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()[0]
+
+    encoder = create_encoder("grib")
+    r = encoder.encode(data=f, **_kwargs)
+
+    f_r = r.to_field()
+    assert f is not f_r
+
+    assert f.get(list(ref_source.keys()), output=dict) == ref_source
+    assert f_r.get(list(ref_result.keys()), output=dict) == ref_result
+
+
+@pytest.mark.parametrize(
+    "_kwargs,error",
+    [
+        (dict(metadata={"level": 500, "levtype": "pl", "typeOfLevel": "theta"}), ValueError),
+        (dict(metadata={"levelist": 500, "levtype": "pl", "typeOfLevel": "theta"}), ValueError),
+        (dict(metadata={"level": 500, "levtype": "hl"}), ValueError),
+        (dict(metadata={"levelist": 500, "levtype": "hl"}), ValueError),
+    ],
+)
+def test_grib_encoder_level_keys_bad(_kwargs, error):
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()[0]
+
+    encoder = create_encoder("grib")
+
+    with pytest.raises(error):
+        encoder.encode(data=f, **_kwargs)
