@@ -11,6 +11,7 @@
 from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.indexing.simple import SimpleFieldListBase
+from earthkit.data.readers.grib.index import GribIndex
 from earthkit.data.sources import Source
 from earthkit.data.utils.parts import Part
 
@@ -196,7 +197,11 @@ class IndexedGribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
         assert isinstance(path, str), path
         GRIBReaderBase.__init__(self, self, path)
         # self.path = path
-        self._db = grib_index
+        assert grib_index is not None, "grib_index must be provided"
+
+        self._db_path = grib_index if isinstance(grib_index, str) else grib_index.path
+        assert self._db_path is not None, "grib_index must have a path"
+
         self._file_parts = parts
         self.__positions = positions
 
@@ -217,9 +222,12 @@ class IndexedGribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
 
             handle_cache = GribHandleCache(cache_size=self.handle_cache_size)
 
-        keys = self._db._all_columns()
+        db = GribIndex(self._db_path)
+
+        keys = db._all_columns()
         res = []
-        for row in self._db._iterate():
+
+        for row in db._iterate(path=self.path):
             d = dict(zip(keys, row[2:]))
             offset = row[0]
             length = row[1]
@@ -229,7 +237,7 @@ class IndexedGribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
 
         # return [self._create_field(i, handle_cache) for i in range(self.number_of_parts())]
 
-    def _create_field(self, d, offset, length, handle_cache):
+    def _create_field_raw(self, d, offset, length, handle_cache):
         from earthkit.data.field.grib_index.create import create_grib_field
         from earthkit.data.utils.parts import Part
 
@@ -250,6 +258,37 @@ class IndexedGribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
         metadata = GribMetadata(handle, cache=d)
 
         field = create_grib_field(metadata, handle, data=None, values=None, geography=None, reference_field=None)
+        return field
+
+    def _create_field(self, d, offset, length, handle_cache):
+        from earthkit.data.utils.parts import Part
+
+        from .handle import FileGribHandle
+
+        part = Part(self.path, offset, length)
+        # part = self.part(n)
+        handle = FileGribHandle.from_part(part, self.handle_policy, handle_cache)
+
+        from earthkit.data.core.field import Field
+
+        field = Field._from_flat_dict(d)
+
+        from earthkit.data.field.grib.metadata import GribMetadata
+
+        grib = GribMetadata(handle)
+        field._set_private_data("metadata", grib)
+
+        # from earthkit.data.field.grib.metadata import GribMetadata
+
+        # d["number"] = None
+        # d["name"] = d["shortName"] if "shortName" in d else None
+        # d["chemId"] = None
+        # d["mars.wavelength"] = None
+        # d["directionNumber"] = None
+        # d["frequencyNumber"] = None
+        # metadata = GribMetadata(handle, cache=d)
+
+        # field = create_grib_field(d, handle, data=None, values=None, geography=None, reference_field=None)
         return field
 
     @property
@@ -366,9 +405,13 @@ class GRIBReader(Source, GRIBReaderBase):
         ]:
             self._kwargs[k] = source._kwargs.get(k, None)
 
+        self._grib_index = source._kwargs.get("grib_index", None)
+
         GRIBReaderBase.__init__(self, source, path)
 
-    def to_fieldlist(self, *args, grib_index=False, **kwargs):
+    def to_fieldlist(self, *args, **kwargs):
+        grib_index = self._grib_index
+
         if grib_index:
             from .index import GribIndex
 

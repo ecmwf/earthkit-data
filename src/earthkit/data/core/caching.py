@@ -1108,6 +1108,7 @@ def auxiliary_cache_file(
     index=0,
     content=None,
     extension=".cache",
+    extra=None,
 ):
     r"""Create an auxiliary cache file.
 
@@ -1131,6 +1132,7 @@ def auxiliary_cache_file(
             stat.st_mtime,
             stat.st_size,
             index,
+            extra,
         ),
         extension=extension,
     )

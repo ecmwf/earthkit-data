@@ -17,6 +17,7 @@ from earthkit.utils.decorators import thread_safe_cached_property
 from earthkit.data.core import Base
 from earthkit.data.core.order import Patch, Remapping, build_remapping
 from earthkit.data.decorators import normalise
+from earthkit.data.field.handler.labels import SimpleLabels
 from earthkit.data.utils.args import metadata_argument_new
 from earthkit.data.utils.array import flatten_array, outer_indexing, reshape_array, target_shape
 from earthkit.data.utils.compute import wrap_maths
@@ -77,7 +78,6 @@ class _ComponentMaker:
         from earthkit.data.field.handler.data import DataFieldComponentHandler
         from earthkit.data.field.handler.ensemble import EnsembleFieldComponentHandler
         from earthkit.data.field.handler.geography import GeographyFieldComponentHandler
-        from earthkit.data.field.handler.labels import SimpleLabels
         from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
         from earthkit.data.field.handler.proc import ProcFieldComponentHandler
         from earthkit.data.field.handler.time import TimeFieldComponentHandler
@@ -454,6 +454,18 @@ class Field(Base):
         # labels = SimpleLabels(d)
 
         # return cls(**components, labels=labels)
+
+    @classmethod
+    def _from_flat_dict(cls, d):
+        d_c = {}
+        for k, v in d.items():
+            if "." in k:
+                c, n = k.split(".", 1)
+                if c not in d_c:
+                    d_c[c] = {}
+                d_c[c][n] = v
+
+        return cls.from_dict(d_c)
 
     @classmethod
     def from_components(

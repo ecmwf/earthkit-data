@@ -8,7 +8,7 @@
 #
 
 
-from .collector import GribEncoderCollector, GribIndexerCollector
+from .collector import GribEncoderCollector, GribIndexerCollector, GribIndexerFieldKeysCollector, MultiCollector
 from .core import GribFieldComponentHandler
 
 
@@ -68,6 +68,13 @@ class GribEnsembleEncoderCollector(GribEncoderCollector):
     #     return GribEnsembleContextCollector._ALL_INDEXER_KEYS
 
 
+class GribEnsembleIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
+    @staticmethod
+    def _collect(handler, context):
+        component = handler.component
+        context["ensemble.member"] = component.member()
+
+
 class GribEnsembleIndexerCollector(GribIndexerCollector):
     @staticmethod
     def _collect(handle, context):
@@ -79,7 +86,7 @@ class GribEnsembleIndexerCollector(GribIndexerCollector):
         return ["perturbationNumber"]
 
 
-COLLECTOR = GribEnsembleEncoderCollector()
+COLLECTOR = MultiCollector(encoder=GribEnsembleEncoderCollector(), indexer=GribEnsembleIndexerFieldKeysCollector())
 ENSEMBLE_INDEXER_COLLECTOR = GribEnsembleIndexerCollector()
 
 

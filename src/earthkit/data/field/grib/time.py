@@ -9,7 +9,7 @@
 
 from earthkit.data.utils.dates import datetime_from_grib, datetime_to_grib, step_to_grib, to_timedelta
 
-from .collector import GribEncoderCollector, GribIndexerCollector
+from .collector import GribEncoderCollector, GribIndexerCollector, GribIndexerFieldKeysCollector, MultiCollector
 from .core import GribFieldComponentHandler
 
 ZERO_TIMEDELTA = to_timedelta(0)
@@ -111,6 +111,25 @@ class GribTimeEncoderCollector(GribEncoderCollector):
     #     return GribTimeContextCollector._ALL_INDEXER_KEYS
 
 
+class GribTimeIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
+    @staticmethod
+    def _collect(handler, context):
+        component = handler.component
+        r = {}
+
+        for key in [
+            "base_datetime",
+            "step",
+            "forecast_month",
+            "indexing_datetime",
+        ]:
+            v = getattr(component, key)()
+            if v is not None:
+                context[f"time.{key}"] = v
+
+        context.update(r)
+
+
 class GribTimeIndexerCollector(GribIndexerCollector):
     @staticmethod
     def _collect(handle, context):
@@ -122,7 +141,7 @@ class GribTimeIndexerCollector(GribIndexerCollector):
         return ["dataDate", "dataTime", "step", "endStep", "forecastMonth", "indexingDate", "indexingTime"]
 
 
-COLLECTOR = GribTimeEncoderCollector()
+COLLECTOR = MultiCollector(encoder=GribTimeEncoderCollector(), indexer=GribTimeIndexerFieldKeysCollector())
 TIME_INDEXER_COLLECTOR = GribTimeIndexerCollector()
 
 

@@ -10,7 +10,7 @@
 
 from earthkit.data.field.handler.data import DataFieldComponentHandler
 
-from .collector import GribEncoderCollector, GribIndexerCollector
+from .collector import GribEncoderCollector, GribIndexerCollector, GribIndexerFieldKeysCollector, MultiCollector
 
 
 class GribDataEncoderCollector(GribEncoderCollector):
@@ -24,6 +24,12 @@ class GribDataEncoderCollector(GribEncoderCollector):
         context.update(r)
 
 
+class GribDataIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
+    @staticmethod
+    def _collect(handler, context):
+        pass
+
+
 class GribDataIndexerCollector(GribIndexerCollector):
     @staticmethod
     def _collect(handle, context):
@@ -35,7 +41,7 @@ class GribDataIndexerCollector(GribIndexerCollector):
         return ["bitsPerValue"]
 
 
-COLLECTOR = GribDataEncoderCollector()
+COLLECTOR = MultiCollector(encoder=GribDataEncoderCollector(), indexer=GribDataIndexerFieldKeysCollector())
 DATA_INDEXER_COLLECTOR = GribDataIndexerCollector()
 
 

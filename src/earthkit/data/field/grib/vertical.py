@@ -19,7 +19,7 @@ from earthkit.data.field.component.level_type import (
     LevelTypes,
 )
 
-from .collector import GribEncoderCollector, GribIndexerCollector
+from .collector import GribEncoderCollector, GribIndexerCollector, GribIndexerFieldKeysCollector, MultiCollector
 from .core import GribFieldComponentHandler
 
 
@@ -425,6 +425,16 @@ class GribVerticalEncoderCollector(GribEncoderCollector):
     #     return GribVerticalContextCollector._ALL_INDEXER_KEYS
 
 
+class GribVerticalIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
+    @staticmethod
+    def _collect(handler, context):
+        component = handler.component
+        d = component.to_dict()
+        for k, v in d.items():
+            if v is not None:
+                context[f"vertical.{k}"] = v
+
+
 class GribVerticalIndexerCollector(GribIndexerCollector):
     @staticmethod
     def _collect(handle, context):
@@ -436,7 +446,7 @@ class GribVerticalIndexerCollector(GribIndexerCollector):
         return ["typeOfLevel", "level", "topLevel", "bottomLevel", "NV"]
 
 
-COLLECTOR = GribVerticalEncoderCollector()
+COLLECTOR = MultiCollector(encoder=GribVerticalEncoderCollector(), indexer=GribVerticalIndexerFieldKeysCollector())
 VERTICAL_INDEXER_COLLECTOR = GribVerticalIndexerCollector()
 
 

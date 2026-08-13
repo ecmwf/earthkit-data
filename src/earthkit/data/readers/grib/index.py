@@ -7,6 +7,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
+import datetime
 import logging
 import os
 import pathlib
@@ -38,18 +39,21 @@ class GribIndex:
         update = False
 
         if overwrite:
-            assert update
             if os.path.exists(path):
                 os.remove(path)
 
-        if not os.path.exists(path) and pathlib.Path(path).stat().st_size == 0:
-            LOG.warning(f"Database {path} is empty, overwriting")
+        if not os.path.exists(path) or pathlib.Path(path).stat().st_size == 0:
+            # LOG.warning(f"Database {path} is empty, overwriting")
             update = True
 
         self.conn = sqlite3.connect(path)
         self.cursor = self.conn.cursor()
 
+        update = update or not self.is_empty()
+
         self._columns = None
+
+        print("GribIndex update", update)
 
         if update:
             self._create_tables()
@@ -164,8 +168,6 @@ class GribIndex:
         **kwargs : Any
             Key-value pairs representing the GRIB record fields.
         """
-        assert self.update
-
         # print(f"Adding grib record: {kwargs}")
 
         try:
@@ -259,13 +261,70 @@ class GribIndex:
         else:
             raise ValueError(f"Path {path} already exists in the database with path_id {path_id}")
 
-        from earthkit.data.core.field import Field
+        import datetime
+
+        from earthkit.data.field.grib.context import GribIndexerContext
+        from earthkit.data.field.grib.create import create_grib_field
 
         from .scan import GribHandleScanner
 
+        print(f"Adding GRIB file {path} to index with path_id {path_id}")
+
         for _, (handle, offset, length) in enumerate(tqdm.tqdm(GribHandleScanner(path).scan(), leave=False)):
+            ctx = GribIndexerContext()
+            # Field._get_grib_indexer_context(handle, ctx)
+            field = create_grib_field(handle)
+            field._get_grib_context(ctx)
+            ctx.pop("handle", None)
+
+            def _convert(data):
+                r = {}
+                for k, v in data.items():
+                    if isinstance(v, datetime.datetime):
+                        v = v.isoformat()
+                    elif isinstance(v, datetime.timedelta):
+                        v = v.total_seconds()
+                    r[k] = v
+                return r
+
+            keys = _convert(ctx)
+
+            print(keys)
+
+            self._ensure_columns(keys)
+
+            self._add_grib(
+                _path_id=path_id,
+                _offset=offset,
+                _length=length,
+                **keys,
+            )
+
+        self._commit()
+
+    def add_fieldlist(self, fieldlist: Any) -> None:
+        """Add a FieldList to the database.
+
+        Parameters
+        ----------
+        fieldlist : FieldList
+            FieldList object containing GRIB fields to add.
+        """
+        for field in tqdm.tqdm(fieldlist, leave=False):
+            g = field._get_grib(strict=False)
+            if g is None:
+                raise ValueError(f"Field {field} does not have a GRIB handle")
+            handle = g.handle
+
+            path = handle.path
+            if path is None:
+                raise ValueError(f"Field {field} does not have a path")
+
+            path_id = self._get_path(path)
+            offset = handle.offset
+            length = handle.length
             ctx = {}
-            Field._get_grib_indexer_context(handle, ctx)
+            field._get_grib_indexer_context(handle, ctx)
             keys = ctx
 
             self._ensure_columns(keys)
@@ -330,36 +389,129 @@ class GribIndex:
             # print("d", d)
             # print("description", self.cursor.description)
             # print("type(d)", type(d))
+
             yield d
 
+    def _iterate(self, path: str | None = None):
+        # with self.cursor as db:
+        # print("description", self.cursor.description)
+
+        where = ""
+        if path is not None:
+            path_id = self._path_id(path, insert=False)
+            if path_id is None:
+                raise ValueError(f"Path {path} does not exist in the database")
+            where = f"WHERE _path_id = {path_id}"
+
+        keys = ["_offset", "_length"] + self._all_columns()
+
+        keys_str = ", ".join([self._quote_column(k) for k in keys])
+
+        # keys = (
+        #     self._quote_column("_offset")
+        #     + ", "
+        #     + self._quote_column("_length")
+        #     + ", "
+        #     + ", ".join([self._quote_column(c) for c in self._all_columns()])
+        # )
+
+        for d in self.cursor.execute(f"SELECT {keys_str} FROM grib_index {where}"):
+            # print("d", d)
+            # print("description", self.cursor.description)
+            # print("type(d)", type(d))
+            def _convert(data):
+                r = []
+                for k, v in zip(keys, data):
+                    # print(f"{k=}")
+                    if k.endswith("_datetime"):
+                        v = datetime.datetime.fromisoformat(v)
+                    elif k == "time.step":
+                        v = datetime.timedelta(seconds=float(v))
+                    r.append(v)
+
+                return r
+
+            yield _convert(d)
+
+    def count(self) -> int:
+        self.cursor.execute("SELECT count(*) FROM grib_index")
+        return self.cursor.fetchone()[0]
+
+    def is_empty(self) -> bool:
+        try:
+            self.cursor.execute("SELECT EXISTS(SELECT 1 FROM grib_index LIMIT 1)")
+            return self.cursor.fetchone()[0] == 0
+        except Exception:
+            return True
+
     @classmethod
-    def from_file(cls, path: str, db_path: str | None = None) -> "GribIndex":
-        # the db is stored in the cache
+    def from_file(
+        cls,
+        path: str,
+        db_path: str | None = None,
+        keys: str | list | tuple | None = None,
+        extra_keys: str | list | None = None,
+        overwrite: bool = False,
+    ) -> "GribIndex":
+        # The db is stored in the earthkit-data cache if db_path is not provided.
         if not db_path:
+            from earthkit.data.core.caching import CACHE
+
+            if not CACHE.policy.managed():
+                raise ValueError(
+                    "Cannot create GribIndex from file when cache is not managed. Please provide a db_path."
+                )
+
             from earthkit.data.core.caching import auxiliary_cache_file
 
-            # this will create an empty file if it does not exist
+            if keys is None:
+                keys = "field"
+
+            if extra_keys is not None:
+                if isinstance(extra_keys, str):
+                    extra_keys = [extra_keys]
+                    sorted(extra_keys)
+                keys = list(keys) + list(extra_keys)
+
+            # This will create an empty file if it does not exist.
+            # It also invalidates the cache field if the source file is modified or the keys changed.
             db_path = auxiliary_cache_file(
                 "grib-index",
                 path,
-                content="null",
+                content=None,
                 extension=".sqlite",
+                extra=keys,
             )
 
-        grib_index = None
-        if os.path.exists(db_path) and pathlib.Path(db_path).stat().st_size > 0:
-            grib_index = cls(db_path)
-            if grib_index._path_id(path) is None:
-                grib_index.add_grib_file(path)
-            return grib_index
+        if overwrite:
+            db = cls(db_path, overwrite=True)
+            db.add_grib_file(path)
+            return db
+        else:
+            if os.path.exists(db_path) and pathlib.Path(db_path).stat().st_size > 0:
+                db = cls(db_path)
+                if not db.is_empty():
+                    if db._path_id(path) is None:
+                        db.add_grib_file(path)
+                    return db
 
-        grib_index = cls(db_path, overwrite=True)
-        grib_index.add_grib_file(path)
-
-        return grib_index
+        db = cls(db_path, overwrite=True)
+        db.add_grib_file(path)
+        return db
 
     @classmethod
     def from_fieldlist(cls, fieldlist, db_path: str | None = None) -> "GribIndex":
+        """Create a GribIndex from a fieldlist.
+
+        Parameters
+        ----------
+        fieldlist : FieldList
+            The fieldlist to create the GribIndex from.
+        db_path : str, optional
+            Path to the SQLite database file. If it is not provided, it will be created in the earthkit-data cache
+            directory. But this is not possible if the fieldlist is built from multiple files or has no path. In
+            that case, a valid ``db_path`` must be provided.
+        """
         if hasattr(fieldlist, "path"):
             path = fieldlist.path
             return cls.from_file(path, db_path=db_path)
@@ -383,3 +535,33 @@ class GribIndex:
                 return grib_index
 
         return None
+
+    @staticmethod
+    def _find_db_in_cache(path: str) -> str | None:
+        """Find the database file in the cache for a given path.
+
+        Parameters
+        ----------
+        path : str
+            The path to find the database for.
+
+        Returns
+        -------
+        str | None
+            The path to the database file if found, otherwise None.
+        """
+        from earthkit.data.core.caching import CACHE
+
+        if not CACHE.policy.managed():
+            return None
+
+        from earthkit.data.core.caching import auxiliary_cache_file
+
+        db_path = auxiliary_cache_file(
+            "grib-index",
+            path,
+            content=None,
+            extension=".sqlite",
+        )
+
+        return GribIndex(db_path)

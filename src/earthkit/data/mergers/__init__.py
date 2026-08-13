@@ -94,7 +94,7 @@ class Merger:
 
 class DefaultMerger(Merger):
     def to_fieldlist(self, **kwargs):
-        fs = [s.to_fieldlist() for s in self.sources]
+        fs = [s.to_fieldlist(**kwargs) for s in self.sources]
         merged = merge_by_class(fs)
         return merged
 

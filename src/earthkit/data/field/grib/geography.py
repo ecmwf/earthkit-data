@@ -16,7 +16,7 @@ from earthkit.data.field.component.component import _normalise_set_kwargs
 from earthkit.data.field.component.geography import GeographyBase, _create_geography_from_dict
 from earthkit.data.utils.grid import ECKIT_GRID_SUPPORT
 
-from .collector import GribEncoderCollector, GribIndexerCollector
+from .collector import GribEncoderCollector, GribIndexerCollector, GribIndexerFieldKeysCollector, MultiCollector
 from .core import GribFieldComponentHandler
 
 LOG = logging.getLogger(__name__)
@@ -308,6 +308,29 @@ class GribGeographyEncoderCollector(GribEncoderCollector):
     #     return GribGeographyContextCollector._ALL_INDEXER_KEYS
 
 
+class GribGeographyIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
+    @staticmethod
+    def _collect(handler, context):
+        component = handler.component
+        if (grid_spec := component.grid_spec()) is not None:
+            if isinstance(grid_spec, dict):
+                import json
+
+                grid_spec = json.dumps(grid_spec)
+
+            r = {
+                "geography.grid_spec": grid_spec,
+            }
+            context.update(r)
+            return
+
+    # component = handler.component
+    #     d = component.to_dict()
+    #     for k, v in d.items():
+    #         if v is not None:
+    #             context[f"geography.{k}"] = v
+
+
 class GribGeographyIndexerCollector(GribIndexerCollector):
     @staticmethod
     def _collect(handle, context):
@@ -335,7 +358,7 @@ class GribGeographyIndexerCollector(GribIndexerCollector):
             GribIndexerCollector._collect_keys(keys, handle, context)
 
 
-COLLECTOR = GribGeographyEncoderCollector()
+COLLECTOR = MultiCollector(encoder=GribGeographyEncoderCollector(), indexer=GribGeographyIndexerFieldKeysCollector())
 GEOGRAPHY_INDEXER_COLLECTOR = GribGeographyIndexerCollector()
 
 

@@ -9,11 +9,27 @@
 
 from abc import ABCMeta, abstractmethod
 
+from .context import GribEncoderContext, GribIndexerContext
+
 
 class GribContextCollector(metaclass=ABCMeta):
     @abstractmethod
     def collect(self, data, context):
         pass
+
+
+class MultiCollector:
+    def __init__(self, encoder=None, indexer=None):
+        self._collectors = {
+            "encoder": encoder,
+            "indexer": indexer,
+        }
+
+    def collect(self, handler, context):
+        if isinstance(context, GribEncoderContext):
+            self._collectors["encoder"].collect(handler, context)
+        elif isinstance(context, GribIndexerContext):
+            self._collectors["indexer"].collect(handler, context)
 
 
 class GribEncoderCollector(GribContextCollector):
@@ -79,6 +95,29 @@ class GribEncoderCollector(GribContextCollector):
     # @staticmethod
     # @property
     # def all_indexer_keys():
+    #     pass
+
+
+class GribIndexerFieldKeysCollector(GribContextCollector):
+    def collect(self, handler, context):
+        self._collect(handler, context)
+
+    @staticmethod
+    @abstractmethod
+    def _collect(handler, context):
+        pass
+
+    @staticmethod
+    def _collect_keys(keys, handle, result):
+        for k in keys:
+            if k not in result:
+                v = handle.get(k, default=None)
+                if v is not None:
+                    result[k] = v
+
+    # @staticmethod
+    # @abstractmethod
+    # def collect(handle, context):
     #     pass
 
 

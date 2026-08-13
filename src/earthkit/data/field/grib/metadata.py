@@ -155,9 +155,9 @@ class GribMetadata:
         elif key == "handle":
             return self._handle
 
-        # print(f"GribMetadata.get: key={key}, astype={astype}, kwargs={_kwargs}")
+        print(f"GribMetadata.get: key={key}, astype={astype}, kwargs={_kwargs}")
         # print(f"{self._cache=}")
-        # raise AssertionError("Debugging GribMetadata.get")
+        raise AssertionError("Debugging GribMetadata.get")
 
         # print(f"GribMetadata.get: key={key}, astype={astype}, kwargs={_kwargs}")
 

@@ -23,7 +23,7 @@ from earthkit.data.field.component.parameter import (
     Parameter,
     WaveSpectraParameter,
 )
-from earthkit.data.field.grib.parameter import GribParameterContextCollector
+from earthkit.data.field.grib.parameter import GribParameterEncoderCollector
 from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
 
 
@@ -35,7 +35,7 @@ def _make_handler(component):
 def _collect(handler):
     """Run collect_keys and return the resulting context dict."""
     context = {}
-    GribParameterContextCollector.collect_keys(handler, context)
+    GribParameterEncoderCollector.collect_keys(handler, context)
     return context
 
 

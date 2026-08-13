@@ -11,7 +11,7 @@
 from earthkit.data.field.component.parameter import create_parameter
 from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
 
-from .collector import GribEncoderCollector, GribIndexerCollector
+from .collector import GribEncoderCollector, GribIndexerCollector, GribIndexerFieldKeysCollector, MultiCollector
 from .core import GribFieldComponentHandler
 
 
@@ -273,6 +273,16 @@ class GribParameterEncoderCollector(GribEncoderCollector):
     #     return GribParameterContextCollector.ALL_INDEXER_KEYS
 
 
+class GribParameterIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
+    @staticmethod
+    def _collect(handler, context):
+        component = handler.component
+        d = component.to_dict()
+        for k, v in d.items():
+            if v is not None:
+                context[f"parameter.{k}"] = v
+
+
 class GribParameterIndexerCollector(GribIndexerCollector):
     @staticmethod
     def _collect(handle, result):
@@ -301,7 +311,7 @@ class GribParameterIndexerCollector(GribIndexerCollector):
         GribIndexerCollector._collect_keys(keys, handle, result)
 
 
-COLLECTOR = GribParameterEncoderCollector()
+COLLECTOR = MultiCollector(encoder=GribParameterEncoderCollector(), indexer=GribParameterIndexerFieldKeysCollector())
 PARAMETER_INDEXER_COLLECTOR = GribParameterIndexerCollector()
 
 
