@@ -240,6 +240,10 @@ class MultiGRIBReader(Source, GRIBReaderBase):
         GRIBReader.__init__(self, self, "")
         self.sources = list(self._flatten(sources))
 
+    @property
+    def path(self):
+        return [s.path for s in self.sources]
+
     def _flatten(self, sources):
         for s in sources:
             if isinstance(s, MultiGRIBReader):

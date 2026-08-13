@@ -31,6 +31,16 @@ class FeatureListData(SourceData):
         """
         return f"FeatureList data with {len(self._featurelist)} features"
 
+    @property
+    def path(self) -> str | list[str] | None:
+        try:
+            if hasattr(self._reader, "path"):
+                return self._reader.path
+            else:
+                return None
+        except Exception:
+            return None
+
     def to_featurelist(self, *args, **kwargs):
         """Convert into a FeatureList.
 

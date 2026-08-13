@@ -9,34 +9,33 @@ Installing from PyPI
 Minimal installation
 +++++++++++++++++++++++++
 
-Install the latest release with python3 (>= 3.10 ) and ``pip`` as follows:
+Install the latest release with Python >= 3.10 and ``pip``:
 
 .. code-block:: bash
 
-    python3 -m pip install earthkit-data
+    pip install earthkit-data
 
 The package installed like this is **minimal** supporting only GRIB and NetCDF data and cannot access remote services other than URLs. If you want to use more data types or remote services you need to install the optional Python packages.
 
-Installing all the optional packages
+Installing all optional packages
 ++++++++++++++++++++++++++++++++++++++++
 
-You can install **earthkit-data** with all the optional packages (with the exception of the "geotiff" and "zarr" dependencies, see below) in one go by using:
+You can install **earthkit-data** with all optional packages (with the exception of the "geotiff" and "zarr" dependencies, see below):
 
 .. code-block:: bash
 
-    python3 -m pip install earthkit-data[all]
+    pip install "earthkit-data[all]"
 
-Please note in **zsh** you need to use quotes around the square brackets:
 
-.. code-block:: bash
+.. note::
 
-    python3 -m pip install "earthkit-data[all]"
+   Some shells (e.g. **zsh**) require quotes around the square brackets, as shown above.
 
 
 Installing individual optional packages
 +++++++++++++++++++++++++++++++++++++++++
 
-Alternatively, you can install the following components:
+The following optional extras are available:
 
     - cds: provides access to the :ref:`data-sources-cds` and :ref:`data-sources-ads` sources
     - covjsonkit: provides access to CoverageJSON data served by the :ref:`data-sources-polytope` source
@@ -54,17 +53,18 @@ Alternatively, you can install the following components:
     - wekeo: provides access to the :ref:`data-sources-wekeo` and :ref:`data-sources-wekeocds` sources
     - zarr: provides access to the :ref:`data-sources-zarr` source (new in version *0.15.0*). Please note that this is not included in the ``[all]`` option and has to be invoked separately.
 
-E.g. to add :ref:`data-sources-mars`  support you can use:
+
+To install a single extra, for example ``mars``:
 
 .. code-block:: bash
 
-    python3 -m pip install earthkit-data[mars]
+    pip install "earthkit-data[mars]"
 
-List of optional dependencies can also be specified :
+Multiple extras can be combined in a single command:
 
 .. code-block:: bash
 
-    python3 -m pip install earthkit-data[cds,mars]
+    pip install "earthkit-data[cds,mars]"
 
 
 
@@ -77,7 +77,7 @@ FDB
 For FDB (Fields DataBase) access FDB5 must be installed on the system. See the `FDB documentation <https://fields-database.readthedocs.io/en/latest/>`_ for details.
 
 
-GribJump
-++++++++++++
+GribJump (experimental)
+++++++++++++++++++++++++++++
 
 For FDB access with GribJump, both FDB5 and GribJump must be installed on the system. See the `GribJump project <https://github.com/ecmwf/gribjump>`_ for details.

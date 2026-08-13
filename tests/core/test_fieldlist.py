@@ -13,7 +13,8 @@ import numpy as np
 import pytest
 from earthkit.utils.array.testing.testing import NO_TORCH
 
-from earthkit.data import SimpleFieldList, create_fieldlist
+from earthkit.data import SimpleFieldList, create_fieldlist, from_source
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 def _create_empty_fieldlist(mode):
@@ -98,3 +99,16 @@ def test_empty_fieldlist_to_array_torch(mode):
     v = ds.to_array(array_namespace="torch")
     assert isinstance(v, torch.Tensor)
     assert v.shape == (0,)
+
+
+def test_create_fieldlist_from_iterable():
+    fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+
+    def _fields():
+        for f in fl:
+            yield f
+
+    fl2 = create_fieldlist(_fields())
+    print(fl2)
+
+    assert len(fl2) == len(fl)
