@@ -14,7 +14,7 @@ import subprocess
 from earthkit.data.core.config import CONFIG
 from earthkit.data.core.temporary import temp_file
 
-from .ecmwf_api import ECMWFApi, MARSAPIKeyPrompt
+from .ecmwf_api import ECMWFAPI, MARSAPIKeyPrompt
 
 LOG = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ def _no_log(msg):
     pass
 
 
-class StandaloneMarsClient:
+class StandaloneMARSClient:
     def __init__(self, log="default"):
         self.log = log
 
@@ -63,14 +63,14 @@ class StandaloneMarsClient:
     @staticmethod
     def enabled():
         return CONFIG.get("use-standalone-mars-client-when-available") and os.path.exists(
-            StandaloneMarsClient.command()
+            StandaloneMARSClient.command()
         )
 
 
-class MarsRetriever(ECMWFApi):
+class MARSRetriever(ECMWFAPI):
     def service(self):
-        if StandaloneMarsClient.enabled():
-            return StandaloneMarsClient(self.log)
+        if StandaloneMARSClient.enabled():
+            return StandaloneMARSClient(self.log)
 
         kwargs = {}
         if self.log is None:
@@ -102,4 +102,4 @@ class MarsRetriever(ECMWFApi):
         return ecmwfapi.ECMWFService("mars", **kwargs)
 
 
-source = MarsRetriever
+source = MARSRetriever
