@@ -82,9 +82,9 @@ EXTENSIONS = {
 }
 
 
-class CdsRetriever(FileSource):
+class CDSRetriever(FileSource):
     sphinxdoc = """
-    CdsRetriever
+    CDSRetriever
     """
 
     def __init__(self, dataset, *args, request=None, prompt=True, **kwargs):
@@ -129,4 +129,4 @@ class CdsRetriever(FileSource):
         return client(self.prompt)
 
 
-source = CdsRetriever
+source = CDSRetriever
