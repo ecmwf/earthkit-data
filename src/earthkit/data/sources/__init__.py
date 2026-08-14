@@ -9,6 +9,7 @@
 
 import os
 import re
+import warnings
 import weakref
 from importlib import import_module
 from typing import TYPE_CHECKING
@@ -91,14 +92,26 @@ class SourceLoader:
 class SourceMaker:
     SOURCES = {}
 
+    ALIASES = {
+        "wekeo-cds": "wekeocds",
+    }
+
     def __call__(self, name, *args, **kwargs):
         loader = SourceLoader()
 
-        if name in self.SOURCES:
-            klass = self.SOURCES[name]
+        if name in self.ALIASES.values() and name not in self.ALIASES:
+            preferred = next(k for k, v in self.ALIASES.items() if v == name)
+            warnings.warn(
+                f"Source name '{name}' is deprecated, use '{preferred}' instead",
+                FutureWarning,
+            )
+
+        lookup_name = self.ALIASES.get(name, name)
+        if lookup_name in self.SOURCES:
+            klass = self.SOURCES[lookup_name]
         else:
-            klass = find_plugin(os.path.dirname(__file__), name, loader)
-            self.SOURCES[name] = klass
+            klass = find_plugin(os.path.dirname(__file__), lookup_name, loader)
+            self.SOURCES[lookup_name] = klass
 
         source = klass(*args, **kwargs)
 
@@ -291,6 +304,17 @@ def from_source(
 @overload
 def from_source(
     name: Literal["wekeocds"],
+    dataset: str,
+    *args,
+    request: Union[dict, list[dict], tuple[dict]] = None,
+    prompt: bool = True,
+    **kwargs,
+) -> "Data": ...
+
+
+@overload
+def from_source(
+    name: Literal["wekeo-cds"],
     dataset: str,
     *args,
     request: Union[dict, list[dict], tuple[dict]] = None,

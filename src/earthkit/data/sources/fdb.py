@@ -10,6 +10,7 @@
 import logging
 import os
 import shutil
+import warnings
 
 try:
     import pyfdb
@@ -26,19 +27,32 @@ LOG = logging.getLogger(__name__)
 
 
 class FDBSource(Source):
-    def __init__(self, *args, request=None, stream=True, config=None, userconfig=None, lazy=False, **kwargs):
+    def __init__(
+        self, *args, request=None, stream=True, config=None, userconfig=None, user_config=None, lazy=False, **kwargs
+    ):
         super().__init__()
 
         for k in ["group_by", "batch_size"]:
             if k in kwargs:
                 raise ValueError(f"Invalid argument '{k}' for FDBSource. Deprecated since 0.8.0.")
 
+        if userconfig is not None and user_config is not None:
+            raise ValueError("Specify only one of 'userconfig' or 'user_config', not both.")
+
+        if userconfig is not None:
+            warnings.warn(
+                "'userconfig' is deprecated, use 'user_config' instead",
+                DeprecationWarning,
+                stacklevel=2,  # Point the warning at the user's call site
+            )
+            user_config = userconfig
+
         self.lazy = lazy
         self._fdb_kwargs = {}
         if config is not None:
             self._fdb_kwargs["config"] = config
-        if userconfig is not None:
-            self._fdb_kwargs["userconfig"] = userconfig
+        if user_config is not None:
+            self._fdb_kwargs["userconfig"] = user_config
 
         self._stream_kwargs = dict()
         for k in ["read_all"]:
@@ -58,7 +72,7 @@ class FDBSource(Source):
 
         self.request = self.request[0]
 
-        if not (config or userconfig):
+        if not (config or user_config):
             self._check_env()
 
     def _check_env(self):
