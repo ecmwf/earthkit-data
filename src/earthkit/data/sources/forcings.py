@@ -215,14 +215,12 @@ class ForcingMaker:
         )
         return result.flatten()
 
-    def singular_distance_to_moon(self, date, copy=True):
-        from earthkit.data.utils.meteo.lunar import singular_distance_to_moon
+    def distance_from_earth_centre_to_moon(self, date, copy=True):
+        from earthkit.data.utils.meteo.lunar import distance_from_earth_centre_to_moon
 
         date = to_datetime(date)
-        result = singular_distance_to_moon(
+        result = distance_from_earth_centre_to_moon(
             date,
-            self._latitude(),
-            self._longitude(),
         )
         return result.flatten()
 
