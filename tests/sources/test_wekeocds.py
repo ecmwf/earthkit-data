@@ -22,9 +22,9 @@ CDS_TIMEOUT = pytest.CDS_TIMEOUT
 @pytest.mark.skipif(NO_HDA, reason="No access to WEKEO")
 @pytest.mark.timeout(CDS_TIMEOUT)
 @pytest.mark.parametrize("prompt", [True, False])
-def test_wekeo_grib_1_prompt(prompt):
+def test_wekeo_cds_grib_1_prompt(prompt):
     s = from_source(
-        "wekeocds",
+        "wekeo-cds",
         "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS",
         variable=["2m_temperature", "mean_sea_level_pressure"],
         product_type=["monthly_averaged_reanalysis_by_hour_of_day"],
@@ -42,9 +42,9 @@ def test_wekeo_grib_1_prompt(prompt):
 @pytest.mark.download
 @pytest.mark.skipif(NO_HDA, reason="No access to CDS")
 @pytest.mark.timeout(CDS_TIMEOUT)
-def test_wekeo_grib_2():
+def test_wekeo_cds_grib_2():
     s = from_source(
-        "wekeocds",
+        "wekeo-cds",
         "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS",
         variable=["2m_temperature", "mean_sea_level_pressure"],
         product_type=["monthly_averaged_reanalysis_by_hour_of_day"],
@@ -62,9 +62,9 @@ def test_wekeo_grib_2():
 @pytest.mark.download
 @pytest.mark.skipif(NO_HDA, reason="No access to CDS")
 @pytest.mark.timeout(CDS_TIMEOUT)
-def test_wekeo_grib_3():
+def test_wekeo_cds_grib_3():
     s = from_source(
-        "wekeocds",
+        "wekeo-cds",
         "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS",
         variable=["2m_temperature", "mean_sea_level_pressure"],
         product_type=["monthly_averaged_reanalysis_by_hour_of_day"],
@@ -81,9 +81,9 @@ def test_wekeo_grib_3():
 @pytest.mark.download
 @pytest.mark.skipif(NO_HDA, reason="No access to CDS")
 @pytest.mark.timeout(CDS_TIMEOUT)
-def test_wekeo_netcdf():
+def test_wekeo_cds_netcdf():
     s = from_source(
-        "wekeocds",
+        "wekeo-cds",
         "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS",
         variable=["2m_temperature", "mean_sea_level_pressure"],
         product_type=["monthly_averaged_reanalysis_by_hour_of_day"],

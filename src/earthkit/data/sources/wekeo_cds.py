@@ -25,7 +25,7 @@ LOG = logging.getLogger(__name__)
 
 
 class APIClient(WekeoClient):
-    name = "wekeocds"
+    name = "wekeo-cds"
 
     def __int__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
