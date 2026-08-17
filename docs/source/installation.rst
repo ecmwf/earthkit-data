@@ -50,7 +50,7 @@ The following optional extras are available:
     - projection: adds projection support
     - polytope: provides access to the :ref:`data-sources-polytope` source
     - s3: provides access to non-public :ref:`s3 <data-sources-s3>` buckets (new in version *0.11.0*)
-    - wekeo: provides access to the :ref:`data-sources-wekeo` and :ref:`data-sources-wekeocds` sources
+    - wekeo: provides access to the :ref:`data-sources-wekeo` and :ref:`data-sources-wekeo-cds` sources
     - zarr: provides access to the :ref:`data-sources-zarr` source (new in version *0.15.0*). Please note that this is not included in the ``[all]`` option and has to be invoked separately.
 
 
