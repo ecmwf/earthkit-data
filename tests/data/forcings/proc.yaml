@@ -74,3 +74,7 @@ delta_distance_to_moon:
   first: 508.20
   last: 1223.54
   mean: 1446.716
+distance_from_earth_centre_to_moon:
+  first: 393644.80648543383
+  last: 393644.80648543383
+  mean: 393644.80648543383

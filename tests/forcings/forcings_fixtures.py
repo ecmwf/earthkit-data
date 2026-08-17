@@ -35,6 +35,7 @@ all_params = [
     "cos_solar_zenith_angle",
     "distance_to_moon",
     "delta_distance_to_moon",
+    "distance_from_earth_centre_to_moon",
 ]
 
 
