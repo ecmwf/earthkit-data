@@ -219,10 +219,11 @@ class ForcingMaker:
         from earthkit.data.utils.meteo.lunar import distance_from_earth_centre_to_moon
 
         date = to_datetime(date)
-        result = distance_from_earth_centre_to_moon(
-            date,
-        )
-        return result.flatten()
+        result = distance_from_earth_centre_to_moon(date)
+        # the distance does not depend on the location, so the single value
+        # has to be broadcast onto all the grid points
+        value = np.asarray(result).reshape(-1)[0]
+        return np.full((np.prod(self.field.shape),), value)
 
     def __getattr__(self, name):
         if "+" not in name and "-" not in name:
