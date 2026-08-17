@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import inspect
 import logging
 import os
 import shutil
@@ -27,6 +28,10 @@ LOG = logging.getLogger(__name__)
 
 
 class FDBSource(Source):
+    # pyfdb renamed the "userconfig" option of FDB() to "user_config". True when the
+    # installed pyfdb uses the new name. Lazily determined by _use_user_config_option().
+    _has_user_config_option = None
+
     def __init__(
         self, *args, request=None, stream=True, config=None, userconfig=None, user_config=None, lazy=False, **kwargs
     ):
@@ -52,7 +57,7 @@ class FDBSource(Source):
         if config is not None:
             self._fdb_kwargs["config"] = config
         if user_config is not None:
-            self._fdb_kwargs["userconfig"] = user_config
+            self._fdb_kwargs["user_config" if self._use_user_config_option() else "userconfig"] = user_config
 
         self._stream_kwargs = dict()
         for k in ["read_all"]:
@@ -74,6 +79,26 @@ class FDBSource(Source):
 
         if not (config or user_config):
             self._check_env()
+
+    @classmethod
+    def _use_user_config_option(cls):
+        """Tell whether pyfdb.FDB() takes the user config as "user_config" or as "userconfig".
+
+        Returns
+        -------
+        bool
+            True if pyfdb.FDB() accepts "user_config" (pyfdb >= 5), False if it only
+            accepts the legacy "userconfig" option.
+        """
+        if cls._has_user_config_option is None:
+            try:
+                params = inspect.signature(pyfdb.FDB.__init__).parameters
+                cls._has_user_config_option = "user_config" in params
+            except (TypeError, ValueError):
+                # the signature is not introspectable, assume the legacy option
+                cls._has_user_config_option = False
+
+        return cls._has_user_config_option
 
     def _check_env(self):
         fdb_home = os.environ.get("FDB_HOME", None)
