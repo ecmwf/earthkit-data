@@ -3,6 +3,13 @@
 Version 1.1 Updates
 ///////////////////////
 
+Version 1.1.1
+==============
+
+Fixes
+++++++++++++
+
+- Added a temporary workaround for an ``eckit 2.1.0.21`` bug where ORCA grid shapes are returned with swapped dimensions. ``earthkit-data`` now automatically detects and corrects the incorrect dimension ordering for all currently supported ORCA grids. This fix will have no effect once the issue is resolved upstream in ``eckit`` (:pr:`1098`).
 
 Version 1.1.0
 ==============

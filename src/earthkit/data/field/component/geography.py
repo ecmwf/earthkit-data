@@ -20,6 +20,8 @@ from earthkit.data.utils.projections import Projection
 
 from .component import SimpleFieldComponent, component_keys, mark_get_key
 
+_SWAPPED_ORCA_GRID_SHAPES = {(182, 149), (362, 292), (362, 332), (1442, 1021), (1442, 1207), (4322, 3059), (4322, 3606)}
+
 
 def _create_geography_from_array(
     latitudes=None,
@@ -909,6 +911,13 @@ class GridsSpecBasedGeography(GeographyBase):
         -------
         tuple
         """
+        grid_type = self._grid.type
+        # temporary fix for ORCA grids, which are returned Grid as (Ni, Nj) instead of (Nj, Ni)
+        if grid_type and "ORCA" in grid_type:
+            shape = self._grid.shape
+            if shape is not None and shape in _SWAPPED_ORCA_GRID_SHAPES:
+                shape = (shape[1], shape[0])
+                return shape
         return self._grid.shape
 
     def unique_grid_id(self) -> str:
