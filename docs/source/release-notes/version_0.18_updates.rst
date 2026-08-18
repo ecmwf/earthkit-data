@@ -81,7 +81,7 @@ with:
 
 The logic applied to build the requests is described :doc:`here </concepts/misc/request_args>`.
 
-This is implemented for the following sources: :ref:`data-sources-ads`, :ref:`data-sources-cds`, :ref:`data-sources-fdb`, :ref:`data-sources-mars`, :ref:`data-sources-eod`, :ref:`data-sources-polytope`, :ref:`data-sources-wekeo`, and :ref:`data-sources-wekeocds`.
+This is implemented for the following sources: :ref:`data-sources-ads`, :ref:`data-sources-cds`, :ref:`data-sources-fdb`, :ref:`data-sources-mars`, :ref:`data-sources-eod`, :ref:`data-sources-polytope`, :ref:`data-sources-wekeo`, and :ref:`data-sources-wekeo-cds`.
 
 The following exceptions apply:
 

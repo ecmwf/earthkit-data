@@ -71,8 +71,10 @@ from_source
       - retrieve data from Amazon S3 buckets
     * - :ref:`data-sources-wekeo`
       - retrieve data from `WEkEO`_ using the WEkEO grammar
-    * - :ref:`data-sources-wekeocds`
+    * - :ref:`data-sources-wekeo-cds`
       - retrieve `CDS <https://cds.climate.copernicus.eu/>`_ data stored on `WEkEO`_ using the `cdsapi`_ grammar
+    * - :ref:`data-sources-wekeocds-deprecated`
+      - deprecated, use :ref:`data-sources-wekeo-cds` instead
     * - :ref:`data-sources-zarr`
       - load data from a `Zarr <https://zarr.readthedocs.io/en/stable/>`_ store
 
@@ -1203,15 +1205,17 @@ wekeo
       - :ref:`/tutorials/source/wekeo.ipynb`
 
 
-.. _data-sources-wekeocds:
+.. _data-sources-wekeo-cds:
 
-wekeocds
---------
+wekeo-cds
+---------
 
-.. py:function:: from_source("wekeocds", dataset, *args, request=None, prompt=True, **kwargs)
+*Added in version 1.2.0 replacing the deprecated* ``wekeocds`` *source.*
+
+.. py:function:: from_source("wekeo-cds", dataset, *args, request=None, prompt=True, **kwargs)
   :noindex:
 
-  `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeocds`` source provides access to `Copernicus Climate Data Store`_ (CDS) datasets served on `WEkEO`_ using the `cdsapi`_ grammar. The retrieval is based on the hda_ Python API.
+  `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeo-cds`` source provides access to `Copernicus Climate Data Store`_ (CDS) datasets served on `WEkEO`_ using the `cdsapi`_ grammar. The retrieval is based on the hda_ Python API.
 
   :param str dataset: the name of the WEkEO dataset
   :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
@@ -1234,9 +1238,9 @@ wekeocds
       import earthkit.data as ekd
 
       d = ekd.from_source(
-          "wekeocds",
+          "wekeo-cds",
           "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS_MONTHLY_MEANS",
-          requewst=dict(
+          request=dict(
               variable=["2m_temperature", "mean_sea_level_pressure"],
               product_type=["monthly_averaged_reanalysis_by_hour_of_day"],
               year=["2012"],
@@ -1256,6 +1260,12 @@ wekeocds
       - :ref:`/tutorials/source/wekeo.ipynb`
 
 
+.. _data-sources-wekeocds-deprecated:
+
+wekeocds
+---------
+
+This is a deprecated source since version 1.2.0 and will be removed in a future release. Please use the :ref:`data-sources-wekeo-cds` source instead.
 
 .. _data-sources-zarr:
 

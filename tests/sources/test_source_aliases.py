@@ -16,25 +16,15 @@ import pytest
 from earthkit.data.sources import get_source
 
 
-class _DummySource:
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def mutate(self):
-        return self
-
-
 def test_wekeocds_alias_old_name_warns():
-    get_source.SOURCES["wekeocds"] = _DummySource
     with pytest.warns(FutureWarning, match="wekeocds"):
-        get_source("wekeocds")
+        get_source._lookup("wekeocds")
 
 
 def test_wekeocds_alias_new_name_no_warning():
-    get_source.SOURCES["wekeocds"] = _DummySource
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
-        get_source("wekeo-cds")
+        get_source._lookup("wekeo-cds")
 
 
 if __name__ == "__main__":
