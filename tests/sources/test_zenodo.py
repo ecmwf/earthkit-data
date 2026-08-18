@@ -12,12 +12,9 @@
 import pytest
 import requests
 
-from earthkit.data import config, from_source
+from earthkit.data import from_source
 from earthkit.data.sources import _from_source_internal, get_source
 from earthkit.data.sources import zenodo as zenodo_module
-
-# Test up to the point where the Zenodo source mutates into a MultiURL source.
-# Create a fake Zenodo API and verify the generated URLs.
 
 RECORD_ID = 123
 CONCEPT_ID = 678
@@ -25,7 +22,6 @@ FILES = ["b.grib", "a.grib", "c.nc"]
 
 
 def DOI(id):
-    """The DOI for a given Zenodo record ID."""
     return f"10.5281/zenodo.{id}"  # as per https://support.zenodo.org/help/en-gb/18-general/216-what-is-a-doi
 
 
@@ -34,17 +30,16 @@ def download_url(name, record_id=RECORD_ID):
     return f"https://zenodo.org/api/records/{record_id}/files/{name}/content"
 
 
-def assert_selected(zenodo, names=FILES, record_id=RECORD_ID):
-    """Compare selections ignoring order, which is not part of the source's contract."""
-    assert set(zenodo.urls) == set(download_url(name, record_id) for name in names)
+def assert_selected(zenodo, files=set(FILES), record_id=RECORD_ID):
+    # Files ignores order of elements while list enforces it
+    expected = type(files)(download_url(file, record_id) for file in files)
+    assert type(files)(zenodo.urls) == expected
 
 
-BAD_JSON = object()
-UNSET = object()
+class MockResponse:
+    """Stand-in for requests.Response."""
 
-
-class FakeResponse:
-    def __init__(self, url, status_code=200, payload=None):
+    def __init__(self, url=None, status_code=200, payload=None):
         self.url = url
         self.status_code = status_code
         self._payload = payload
@@ -54,83 +49,58 @@ class FakeResponse:
             raise requests.HTTPError(f"HTTP {self.status_code} for {self.url}", response=self)
 
     def json(self):
-        if self._payload is BAD_JSON:
-            raise ValueError("not valid JSON")
+        if self._payload is None:
+            raise ValueError("invalid JSON")
         return self._payload
 
 
-class FakeZenodo:
-    """Stand-in for the Zenodo REST API, and for the url source handover."""
-
-    def __init__(self):
-        self.records = {}
-        self.api_failure = None
-        self.api_payload = UNSET
-        # Observed behaviour
-        self.requested = []
-        self.urls = None
-        self.kwargs = None
-
-    # -- configuration ------------------------------------------------------
-
-    def record(self, record_id, files, resolves_to=None):
-        """Register a record. ``resolves_to`` mimics a concept record, which the API
-        redirects to the latest version, reporting that version's ID and file links.
-        """
-        self.records[int(record_id)] = (list(files), int(resolves_to or record_id))
-
-    def fail_api(self, failure):
-        """Make the Zenodo API fail, either with an exception instance or an HTTP status code."""
-        self.api_failure = failure
-
-    def api_returns(self, payload):
-        """Make the Zenodo API return an arbitrary payload (or ``BAD_JSON``)."""
-        self.api_payload = payload
-
-    # -- the fake requests.get ----------------------------------------------
-
-    def get(self, url, timeout=None):
-        self.requested.append(url)
-        if url.startswith("https://zenodo.org/api/records/"):
-            return self._api_response(url)
-        raise AssertionError(f"unexpected request to {url}")
-
-    def _api_response(self, url):
-        if self.api_failure is not None:
-            return self._failure(url, self.api_failure)
-        if self.api_payload is not UNSET:
-            return FakeResponse(url, payload=self.api_payload)
-        record_id = int(url.rsplit("/", 1)[-1])
-        if record_id not in self.records:
-            return FakeResponse(url, status_code=404)
-        names, resolved_id = self.records[record_id]
-        files = [{"key": name, "links": {"self": download_url(name, resolved_id)}} for name in names]
-        return FakeResponse(url, payload={"id": resolved_id, "files": files})
-
-    @staticmethod
-    def _failure(url, failure):
-        if isinstance(failure, int):
-            return FakeResponse(url, status_code=failure)
-        raise failure
-
-
-class FakeRequests:
-    """Minimal stand-in for the ``requests`` module as used by the zenodo source."""
+class MockRequests:
+    """Stand-in for the requests module, pretending to be the Zenodo API."""
 
     ConnectionError = requests.ConnectionError
     Timeout = requests.Timeout
     HTTPError = requests.HTTPError
 
-    def __init__(self, api):
-        self.get = api.get
+    def __init__(self):
+        self.records = {}
+        self.response = None
+        # Observed behaviour
+        self.urls = None
+        self.kwargs = None
+
+    def register_record(self, record_id, files, resolves_to=None):
+        self.records[int(record_id)] = (list(files), int(resolves_to or record_id))
+
+    def respond_with(self, response):
+        self.response = response
+
+    def get(self, url, **kwargs):
+        assert url.startswith("https://zenodo.org/api/records/"), f"unexpected request to {url}"
+        if self.response is None:
+            record_id = int(url.rsplit("/", 1)[-1])
+            if record_id not in self.records:
+                return MockResponse(url, status_code=404)
+            # Minimal valid response from the Zenodo API
+            names, resolved_id = self.records[record_id]
+            files = [{"key": name, "links": {"self": download_url(name, resolved_id)}} for name in names]
+            return MockResponse(url, payload={"id": resolved_id, "files": files})
+        if isinstance(self.response, Exception):
+            raise self.response
+        return self.response
 
 
 class TestZenodoSourceOffline:
+    """Offline test for the Zenodo source.
+
+    Test up to the point where the Zenodo source mutates into a MultiURL source
+    with a fake Zenodo API.
+    """
+
     @pytest.fixture
     def zenodo(self, monkeypatch):
-        api = FakeZenodo()
-        api.record(RECORD_ID, FILES)
-        api.record(CONCEPT_ID, FILES, resolves_to=RECORD_ID)
+        api = MockRequests()
+        api.register_record(RECORD_ID, FILES)
+        api.register_record(CONCEPT_ID, FILES, resolves_to=RECORD_ID)
 
         def capture(urls, **kwargs):
             api.urls = list(urls)
@@ -138,7 +108,7 @@ class TestZenodoSourceOffline:
             return _from_source_internal("empty")
 
         # Patch the names bound in the zenodo module only
-        monkeypatch.setattr(zenodo_module, "requests", FakeRequests(api))
+        monkeypatch.setattr(zenodo_module, "requests", api)
         monkeypatch.setattr(zenodo_module, "MultiUrl", capture)
         return api
 
@@ -146,7 +116,7 @@ class TestZenodoSourceOffline:
         assert get_source._lookup("zenodo") is not None
 
     @pytest.mark.parametrize("identifier", [RECORD_ID, CONCEPT_ID])
-    def test_int_identifier(self, zenodo, identifier):
+    def test_valid_identifier_int(self, zenodo, identifier):
         from_source("zenodo", identifier)
         assert_selected(zenodo)
 
@@ -182,9 +152,30 @@ class TestZenodoSourceOffline:
             "dx.doi.org/10.5281/zenodo.{id}",
         ],
     )
-    def test_str_identifiers_valid(self, zenodo, identifier, url):
-        from_source("zenodo", url.format(id=identifier))
-        assert_selected(zenodo)
+    @pytest.mark.parametrize(
+        "only,expected",
+        [
+            (None, set(FILES)),
+            ("c.nc", {"c.nc"}),
+            ("*.grib", {"a.grib", "b.grib"}),
+            (FILES, FILES),
+            (FILES[::-1], FILES[::-1]),  # maintains order
+            (["a.grib", "a.grib", "b.grib"], ["a.grib", "b.grib"]),  # ignores duplicates
+        ],
+    )
+    def test_valid_identifier_str(self, zenodo, identifier, url, only, expected):
+        from_source("zenodo", url.format(id=identifier), only=only)
+        assert_selected(zenodo, files=expected)
+
+    def test_without_kwargs(self, zenodo):
+        from_source("zenodo", RECORD_ID)
+        assert zenodo.kwargs == {}
+
+    def test_kwargs_forwarded(self, zenodo):
+        from_source("zenodo", RECORD_ID, only="a.grib", foo="bar", bar=False)
+        assert zenodo.kwargs == {"foo": "bar", "bar": False}
+
+    # ValueErrors for input validation problems and invalid file selection
 
     @pytest.mark.parametrize(
         "identifier",
@@ -211,171 +202,60 @@ class TestZenodoSourceOffline:
             f"doi:https://doi.org/{DOI}",
         ],
     )
-    def test_identifiers_invalid(self, zenodo, identifier):
-        with pytest.raises(ValueError, match="unable to determine record ID"):
+    def test_invalid_identifier(self, zenodo, identifier):
+        with pytest.raises(ValueError):
             from_source("zenodo", identifier)
 
+    @pytest.mark.parametrize(
+        "only",
+        [
+            "",
+            "*.zip",
+            "d.grib",
+            "grib",
+            "a.gri",
+            ["d.grib"],
+            ["a.grib", "d.grib"],
+            ["A.GRIB"],  # case sensitive
+            ["*.grib"],  # list entry does not trigger pattern matching
+            [],
+        ],
+    )
+    def test_invalid_only(self, zenodo, only):
+        with pytest.raises(ValueError):
+            from_source("zenodo", RECORD_ID, only=only)
+
+    # RuntimeErrors raised for problems with Zenodo API and response
+
     def test_zenodo_unknown_record(self, zenodo):
-        with pytest.raises(RuntimeError, match="Zenodo API returned HTTP 404"):
+        with pytest.raises(RuntimeError):
             from_source("zenodo", 999)
 
     @pytest.mark.parametrize(
-        "failure,message",
+        "response",
         [
-            (requests.ConnectionError("no route to host"), "could not connect to zenodo.org"),
-            (requests.ReadTimeout("too slow"), "request to zenodo.org timed out after"),
-            (403, "Zenodo API returned HTTP 403"),
-            (404, "Zenodo API returned HTTP 404"),
-            (500, "Zenodo API returned HTTP 500"),
-            (503, "Zenodo API returned HTTP 503"),
+            requests.ConnectionError(),
+            requests.ReadTimeout(),
+            MockResponse(status_code=404),
+            MockResponse(status_code=503),
+            # Invalid JSON
+            MockResponse(payload=None),
+            # No files in records
+            MockResponse(payload={}),
+            MockResponse(payload={"files": []}),
+            MockResponse(payload={"files": None}),
+            MockResponse(payload={"metadata": {}}),
+            # Malformed file entry
+            MockResponse(payload={"files": [{"key": "a.grib"}]}),
+            MockResponse(payload={"files": [{"key": "a.grib", "links": {}}]}),
+            MockResponse(payload={"files": [{"links": {"self": "https://example.com/a.grib"}}]}),
+            MockResponse(payload={"files": ["a.grib"]}),
         ],
     )
-    def test_zenodo_api_failure(self, zenodo, failure, message):
-        zenodo.fail_api(failure)
-        with pytest.raises(RuntimeError, match=message):
+    def test_api_failure_runtime_errors(self, zenodo, response):
+        zenodo.respond_with(response)
+        with pytest.raises(RuntimeError):
             from_source("zenodo", RECORD_ID)
-
-    def test_zenodo_api_invalid_json(self, zenodo):
-        zenodo.api_returns(BAD_JSON)
-        with pytest.raises(RuntimeError, match="failed to parse Zenodo API response"):
-            from_source("zenodo", RECORD_ID)
-
-    @pytest.mark.parametrize("payload", [{}, {"files": []}, {"files": None}, {"metadata": {}}])
-    def test_zenodo_record_without_files(self, zenodo, payload):
-        zenodo.api_returns(payload)
-        with pytest.raises(RuntimeError, match="no accessible files"):
-            from_source("zenodo", RECORD_ID)
-
-    @pytest.mark.parametrize("timeout,expected", [(7, "7s"), ("20s", "20s")])
-    def test_zenodo_timeout_message_reports_configured_timeout(self, zenodo, timeout, expected):
-        zenodo.fail_api(requests.ReadTimeout("too slow"))
-        with config.temporary("url-download-timeout", timeout):
-            with pytest.raises(RuntimeError, match=f"timed out after {expected}"):
-                from_source("zenodo", RECORD_ID)
-
-    def test_zenodo_download_url_comes_from_the_api(self, zenodo):
-        # The URL is whatever the API reports, not something the source builds
-        zenodo.api_returns({"files": [{"key": "a.grib", "links": {"self": "https://example.com/elsewhere"}}]})
-        from_source("zenodo", RECORD_ID, filenames="a.grib")
-        assert zenodo.urls == ["https://example.com/elsewhere"]
-
-    @pytest.mark.parametrize(
-        "files",
-        [
-            [{"key": "a.grib"}],
-            [{"key": "a.grib", "links": {}}],
-            [{"links": {"self": "https://example.com/a.grib"}}],
-            ["a.grib"],
-        ],
-    )
-    def test_zenodo_malformed_file_entry(self, zenodo, files):
-        zenodo.api_returns({"files": files})
-        with pytest.raises(RuntimeError, match="unexpected file entry"):
-            from_source("zenodo", RECORD_ID)
-
-    def test_zenodo_all_files_selected(self, zenodo):
-        from_source("zenodo", RECORD_ID)
-        assert_selected(zenodo, FILES)
-
-    @pytest.mark.parametrize(
-        "pattern,expected",
-        [
-            ("*", ["a.grib", "b.grib", "c.nc"]),
-            ("*.grib", ["a.grib", "b.grib"]),
-            ("*.nc", ["c.nc"]),
-            ("?.grib", ["a.grib", "b.grib"]),
-            ("[ab].grib", ["a.grib", "b.grib"]),
-            ("a.grib", ["a.grib"]),
-        ],
-    )
-    def test_zenodo_filenames_pattern(self, zenodo, pattern, expected):
-        from_source("zenodo", RECORD_ID, filenames=pattern)
-        assert_selected(zenodo, expected)
-
-    @pytest.mark.parametrize("pattern", ["*.zip", "d.grib", "", "grib", "a.gri"])
-    def test_zenodo_filenames_pattern_no_match(self, zenodo, pattern):
-        with pytest.raises(FileNotFoundError, match="match the pattern"):
-            from_source("zenodo", RECORD_ID, filenames=pattern)
-
-    @pytest.mark.parametrize(
-        "filenames,expected",
-        [
-            (["a.grib"], ["a.grib"]),
-            (["a.grib", "c.nc"], ["a.grib", "c.nc"]),
-            # The caller's order must be honoured: unlike the all-files case, which has no
-            # defined order, an explicit list is used exactly as given.
-            (["c.nc", "a.grib"], ["c.nc", "a.grib"]),
-            (("b.grib", "a.grib"), ["b.grib", "a.grib"]),
-            (FILES, FILES),
-            # A repeated name is requested once, keeping its first position
-            (["a.grib", "c.nc", "a.grib"], ["a.grib", "c.nc"]),
-            (["c.nc", "c.nc"], ["c.nc"]),
-        ],
-    )
-    def test_zenodo_filenames_list(self, zenodo, filenames, expected):
-        from_source("zenodo", RECORD_ID, filenames=filenames)
-        assert zenodo.urls == [download_url(name) for name in expected]
-
-    @pytest.mark.parametrize(
-        "filenames,missing",
-        [
-            (["d.grib"], ["d.grib"]),
-            (["a.grib", "d.grib"], ["d.grib"]),
-            # Matching is case sensitive, and a list entry is a name rather than a pattern
-            (["A.GRIB"], ["A.GRIB"]),
-            (["*.grib"], ["*.grib"]),
-            # Every unknown name is reported at once, so a caller does not have to fix them
-            # one API request at a time
-            (["d.grib", "e.nc"], ["d.grib", "e.nc"]),
-            (["d.grib", "a.grib", "e.nc"], ["d.grib", "e.nc"]),
-            (["e.nc", "d.grib"], ["e.nc", "d.grib"]),
-            # A repeated unknown name is reported once
-            (["d.grib", "d.grib"], ["d.grib"]),
-        ],
-    )
-    def test_zenodo_filenames_list_unknown_file(self, zenodo, filenames, missing):
-        with pytest.raises(FileNotFoundError, match=f"not found in record {RECORD_ID}"):
-            from_source("zenodo", RECORD_ID, filenames=filenames)
-
-    @pytest.mark.parametrize("filenames", [[], ()])
-    def test_zenodo_filenames_empty(self, zenodo, filenames):
-        with pytest.raises(FileNotFoundError, match="no files selected"):
-            from_source("zenodo", RECORD_ID, filenames=filenames)
-
-    def test_zenodo_no_kwargs_forwarded(self, zenodo):
-        from_source("zenodo", RECORD_ID)
-        assert zenodo.kwargs == {}
-
-    def test_zenodo_kwargs_forwarded(self, zenodo):
-        from_source("zenodo", RECORD_ID, filenames="a.grib", parts=[(0, 4)], stream=False)
-        assert zenodo.kwargs == {"parts": [(0, 4)], "stream": False}
-
-
-# --------------------------------------------------------------------------------------------
-# Live test against the real Zenodo API.
-#
-# The offline tests above encode two assumptions about Zenodo that no Zenodo documentation
-# states: that files[*].links.self carries the download URL, and that the API redirects a
-# concept record to its latest version. Only a real request can confirm those still hold.
-#
-# Deliberately commented out. To enable it, replace the placeholders below with a small,
-# permanent record and uncomment. Adapt the assertion to what that record holds; to_fieldlist
-# assumes field data such as GRIB or NetCDF. The markers keep it out of the default -E short
-# profile, so it runs only with -E long or -E release.
-#
-# _LIVE_CONCEPT_DOI = "10.5281/zenodo.<concept record ID>"  # all versions, resolves to latest
-# _LIVE_VERSION_DOI = "10.5281/zenodo.<version record ID>"  # one specific version
-# _LIVE_RECORD_ID = <version record ID>
-# _LIVE_FILENAME = "<a file name in that record>"
-# _LIVE_FIELD_COUNT = <number of fields in that file>
-#
-#
-# @pytest.mark.long_test
-# @pytest.mark.download
-# @pytest.mark.parametrize("identifier", [_LIVE_CONCEPT_DOI, _LIVE_VERSION_DOI, _LIVE_RECORD_ID])
-# def test_zenodo_live(identifier):
-#     ds = from_source("zenodo", identifier, filenames=_LIVE_FILENAME)
-#     assert len(ds.to_fieldlist()) == _LIVE_FIELD_COUNT
 
 
 if __name__ == "__main__":

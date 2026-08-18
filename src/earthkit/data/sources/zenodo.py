@@ -65,14 +65,14 @@ class Zenodo(Source):
     ----------
     identifier : int | str
         Record ID, Zenodo URL or DOI. A DOI may also be given as a doi.org URL.
-    filenames : str | Sequence[str] | None, optional
+    only : str | Sequence[str] | None, optional
         File selection with a glob string or an explicit list of file names.
         By default, all files are selected.
     **kwargs
         Additional keyword arguments forwarded to the URL source.
     """
 
-    def __init__(self, identifier, filenames=None, **kwargs):
+    def __init__(self, identifier, only=None, **kwargs):
         super().__init__()
         self._kwargs = kwargs
 
@@ -99,23 +99,23 @@ class Zenodo(Source):
         record_files = _get_record_files(self.record_id)
 
         # No filenames specified -> select all
-        if filenames is None:
+        if only is None:
             self._file_urls = record_files
         # Match filenames with provided pattern
-        elif isinstance(filenames, str):
-            matched = fnmatch.filter(record_files.keys(), filenames)
+        elif isinstance(only, str):
+            matched = fnmatch.filter(record_files.keys(), only)
             if not matched:
-                raise FileNotFoundError(f"no files in record {self.record_id} match the pattern: {filenames!r}")
+                raise ValueError(f"no files in record {self.record_id} match the pattern: {only!r}")
             self._file_urls = {name: record_files[name] for name in matched}
         # Select filenames based on provided list
         else:
-            filenames = list(dict.fromkeys(filenames))  # deduplicate while preserving order
-            if not filenames:
-                raise FileNotFoundError(f"no files selected from record {self.record_id}")
-            self._file_urls = {name: record_files[name] for name in filenames if name in record_files}
-            if len(self._file_urls) != len(filenames):
-                missing = ", ".join(repr(name) for name in filenames if name not in record_files)
-                raise FileNotFoundError(f"file(s) not found in record {self.record_id}: " + missing)
+            only = list(dict.fromkeys(only))  # deduplicate while preserving order
+            if not only:
+                raise ValueError(f"no files selected from record {self.record_id}")
+            self._file_urls = {name: record_files[name] for name in only if name in record_files}
+            if len(self._file_urls) != len(only):
+                missing = ", ".join(repr(name) for name in only if name not in record_files)
+                raise ValueError(f"file(s) not found in record {self.record_id}: " + missing)
 
         selected = ", ".join(self._file_urls.keys())
         LOG.info(f"Selected {len(self._file_urls)} file(s) from record {self.record_id}: {selected}")
