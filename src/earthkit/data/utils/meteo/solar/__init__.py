@@ -7,9 +7,14 @@
 # nor does it submit to any jurisdiction.
 #
 
-import importlib
+"""Solar computations served from earthkit-meteo or from the local fallback.
 
-from earthkit.data.utils.meteo.registry import _register
+See :mod:`earthkit.data.utils.meteo` for details.
+"""
+
+from earthkit.data.utils.meteo.registry import _resolve
+
+from . import local as _EKD_MODULE
 
 _EKM_MODULE_NAME = "solar"
 _METHOD_NAMES = [
@@ -20,7 +25,6 @@ _METHOD_NAMES = [
     "toa_incident_solar_radiation",
 ]
 
-_EKD_MODULE = importlib.import_module("earthkit.data.utils.meteo.solar.local")
+globals().update(_resolve(_EKM_MODULE_NAME, _EKD_MODULE, _METHOD_NAMES))
 
-for method in _register(_EKM_MODULE_NAME, _EKD_MODULE, _METHOD_NAMES):
-    globals()[method.__name__] = method
+__all__ = list(_METHOD_NAMES)

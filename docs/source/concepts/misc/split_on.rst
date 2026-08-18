@@ -11,7 +11,7 @@ The majority of the request-based retrieval **sources**  supports the ``split_on
 - :ref:`data-sources-mars`
 - :ref:`data-sources-polytope`
 - :ref:`data-sources-wekeo`
-- :ref:`data-sources-wekeocds`
+- :ref:`data-sources-wekeo-cds`
 
 When ``split_on`` is present in the request, it instructs the source to split the request into multiple parts, which are then executed independently and the resulting data will be stored in different files. However, the actual storage is hidden from the users and they can still work with the results as a single object.
 

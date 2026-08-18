@@ -80,6 +80,15 @@ def make_fdb_config(path):
     return config
 
 
+def _create_fdb_with_grib_data(config, ds):
+    import pyfdb
+
+    fdb = pyfdb.FDB(config=config)
+    for f in ds:
+        fdb.archive(f.message())
+    fdb.flush()
+
+
 @pytest.mark.skipif(NO_FDB, reason="No access to FDB")
 @pytest.mark.parametrize("use_kwargs", [True, False])
 def test_fdb_grib_write(monkeypatch, use_kwargs):
@@ -119,42 +128,83 @@ def test_fdb_grib_write(monkeypatch, use_kwargs):
 
 
 @pytest.mark.skipif(NO_FDB, reason="No access to FDB")
-def test_fdb_userconfig_deprecated_alias():
-    request = {
-        "class": "od",
-        "expver": "0001",
-        "stream": "oper",
-        "date": "20200513",
-        "time": 1200,
-        "domain": "g",
-        "type": "an",
-        "levtype": "sfc",
-        "step": 0,
-        "param": [167],
-    }
+def test_fdb_user_config_core():
+    with temp_directory() as tmpdir:
+        config = make_fdb_config(os.path.join(tmpdir, "_fdb"))
+        ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+        _create_fdb_with_grib_data(config, ds)
 
-    with pytest.warns(DeprecationWarning, match="userconfig"):
-        from_source("fdb", request=request, config={"a": 1}, userconfig={"b": 2}, stream=False)
+        request = {
+            "class": "od",
+            "expver": "0001",
+            "stream": "oper",
+            "date": "20200513",
+            "time": 1200,
+            "domain": "g",
+            "type": "an",
+            "levtype": "sfc",
+            "step": 0,
+            "param": [167],
+        }
+
+        user_config = {"engine": "toc"}
+
+        fl = from_source("fdb", request=request, stream=False, config=config, user_config=user_config).to_fieldlist()
+        assert len(fl) == 1
+        assert fl.get("parameter.variable") == ["2t"]
+
+
+@pytest.mark.skipif(NO_FDB, reason="No access to FDB")
+def test_fdb_userconfig_deprecated_alias():
+    with temp_directory() as tmpdir:
+        config = make_fdb_config(os.path.join(tmpdir, "_fdb"))
+        ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+        _create_fdb_with_grib_data(config, ds)
+
+        request = {
+            "class": "od",
+            "expver": "0001",
+            "stream": "oper",
+            "date": "20200513",
+            "time": 1200,
+            "domain": "g",
+            "type": "an",
+            "levtype": "sfc",
+            "step": 0,
+            "param": [167],
+        }
+
+        user_config = {"engine": "toc"}
+
+        with pytest.warns(DeprecationWarning, match="userconfig"):
+            from_source("fdb", request=request, stream=False, config=config, userconfig=user_config).to_fieldlist()
 
 
 @pytest.mark.skipif(NO_FDB, reason="No access to FDB")
 def test_fdb_user_config_no_warning():
-    request = {
-        "class": "od",
-        "expver": "0001",
-        "stream": "oper",
-        "date": "20200513",
-        "time": 1200,
-        "domain": "g",
-        "type": "an",
-        "levtype": "sfc",
-        "step": 0,
-        "param": [167],
-    }
+    with temp_directory() as tmpdir:
+        config = make_fdb_config(os.path.join(tmpdir, "_fdb"))
+        ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+        _create_fdb_with_grib_data(config, ds)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", DeprecationWarning)
-        from_source("fdb", request=request, config={"a": 1}, user_config={"b": 2}, stream=False)
+        request = {
+            "class": "od",
+            "expver": "0001",
+            "stream": "oper",
+            "date": "20200513",
+            "time": 1200,
+            "domain": "g",
+            "type": "an",
+            "levtype": "sfc",
+            "step": 0,
+            "param": [167],
+        }
+
+        user_config = {"engine": "toc"}
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            from_source("fdb", request=request, config=config, user_config=user_config, stream=False)
 
 
 @pytest.mark.skipif(NO_FDB, reason="No access to FDB")

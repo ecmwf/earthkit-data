@@ -7,7 +7,7 @@ Version 0.4.0
 New features
 ++++++++++++++++
 
-- added new sources :ref:`data-sources-wekeo` and :ref:`data-sources-wekeocds` to retrieve data from `WEkEO <https://www.wekeo.eu/>`_. See the :ref:`/tutorials/source/wekeo.ipynb` notebook example.
+- added new sources :ref:`data-sources-wekeo` and :ref:`data-sources-wekeo-cds` to retrieve data from `WEkEO <https://www.wekeo.eu/>`_. See the :ref:`/tutorials/source/wekeo.ipynb` notebook example.
 - added new source :ref:`data-sources-polytope` to retrieve data from the `Polytope web services <https://polytope-client.readthedocs.io/en/latest/>`_. See the :ref:`/tutorials/source/polytope.ipynb` notebook example.
 - added the ``append`` option to :meth:`FieldList.save() <earthkit.data.core.fieldlist.FieldList.save>`.
 - added the ``dtype`` option to the ``to_data()``, ``to_latlon()`` and ``to_points()`` methods both on a :class:`~earthkit.data.core.field.Field` or :class:`~earthkit.data.core.fieldlist.FieldList`.
