@@ -95,35 +95,35 @@ class SourceMaker:
     A source is implemented either as a module in this package or as a plugin. Calling
     the maker resolves the source class by name (:meth:`_lookup`) and instantiates it.
     The lookup itself is performed by :func:`find_plugin` and its result is cached in
-    :attr:`SOURCES`, so each source is only looked up once per session.
+    :attr:`_SOURCES`, so each source is only looked up once per session.
 
     The single instance created at module level is used by :func:`from_source`, which is
     the public entry point. Direct use is not needed in user code.
 
     Attributes
     ----------
-    SOURCES : dict of str to class
+    _SOURCES : dict of str to class
         Cache of the source classes already looked up, keyed by the resolved (i.e.
         non-aliased) source name. Shared by all the instances of :class:`SourceMaker`
         and populated on demand by :meth:`_lookup`.
-    ALIASES : dict of str to str
+    _ALIASES : dict of str to str
         Maps alternative source names to the name the source is registered under. Used to
         resolve the name before the lookup, so both the alias and the resolved name yield
         the same source class.
-    DEPRECATED : set of str
+    _DEPRECATED : set of str
         The source names that are deprecated. Using one of them emits a ``FutureWarning``.
-        When the deprecated name is also a key in :attr:`ALIASES`, the warning names the
+        When the deprecated name is also a key in :attr:`_ALIASES`, the warning names the
         alias target as the preferred name to use instead.
 
     """
 
-    SOURCES = {}
+    _SOURCES = {}
 
-    ALIASES = {
+    _ALIASES = {
         "wekeocds": "wekeo-cds",
     }
 
-    DEPRECATED = {"wekeocds"}
+    _DEPRECATED = {"wekeocds"}
 
     def __call__(self, name, *args, **kwargs):
         """Create the source called ``name``.
@@ -131,7 +131,7 @@ class SourceMaker:
         Parameters
         ----------
         name : str
-            The name of the source. Can be an alias, see :attr:`ALIASES`.
+            The name of the source. Can be an alias, see :attr:`_ALIASES`.
         *args : tuple
             Positional arguments passed to the source class.
         **kwargs : dict, optional
@@ -151,7 +151,7 @@ class SourceMaker:
         Warns
         -----
         FutureWarning
-            If ``name`` is deprecated, see :attr:`DEPRECATED`.
+            If ``name`` is deprecated, see :attr:`_DEPRECATED`.
 
         """
         klass = self._lookup(name)
@@ -166,15 +166,15 @@ class SourceMaker:
     def _lookup(self, name):
         """Resolve a source name to the source class implementing it.
 
-        The name is first mapped through :attr:`ALIASES`, then looked up in
-        :attr:`SOURCES`. On a cache miss the source is located by :func:`find_plugin`,
+        The name is first mapped through :attr:`_ALIASES`, then looked up in
+        :attr:`_SOURCES`. On a cache miss the source is located by :func:`find_plugin`,
         which searches the modules of this package as well as the registered plugins,
-        and the result is added to :attr:`SOURCES`.
+        and the result is added to :attr:`_SOURCES`.
 
         Parameters
         ----------
         name : str
-            The name of the source. Can be an alias, see :attr:`ALIASES`.
+            The name of the source. Can be an alias, see :attr:`_ALIASES`.
 
         Returns
         -------
@@ -189,14 +189,14 @@ class SourceMaker:
         Warns
         -----
         FutureWarning
-            If ``name`` is deprecated, see :attr:`DEPRECATED`.
+            If ``name`` is deprecated, see :attr:`_DEPRECATED`.
 
         """
         loader = SourceLoader()
 
-        if name in self.DEPRECATED:
-            if name in self.ALIASES:
-                preferred = self.ALIASES.get(name)
+        if name in self._DEPRECATED:
+            if name in self._ALIASES:
+                preferred = self._ALIASES.get(name)
                 warnings.warn(
                     f"Source name '{name}' is deprecated, use '{preferred}' instead",
                     FutureWarning,
@@ -204,12 +204,12 @@ class SourceMaker:
             else:
                 warnings.warn(f"Source name '{name}' is deprecated", FutureWarning)
 
-        lookup_name = self.ALIASES.get(name, name)
-        if lookup_name in self.SOURCES:
-            klass = self.SOURCES[lookup_name]
+        lookup_name = self._ALIASES.get(name, name)
+        if lookup_name in self._SOURCES:
+            klass = self._SOURCES[lookup_name]
         else:
             klass = find_plugin(os.path.dirname(__file__), lookup_name, loader)
-            self.SOURCES[lookup_name] = klass
+            self._SOURCES[lookup_name] = klass
 
         return klass
 
