@@ -1,8 +1,10 @@
+dependency_cmake_options: |
+  ecmwf/eccodes: "-DENABLE_ECKIT_GEO=ON"
 dependencies: |
   ecmwf/ecbuild
   MathisRosenhauer/libaec@refs/tags/v1.1.3
-  ecmwf/eccodes
   ecmwf/eckit
+  ecmwf/eccodes
   ecmwf/odc
   ecmwf/metkit
   ecmwf/fdb
