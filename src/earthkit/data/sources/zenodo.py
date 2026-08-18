@@ -13,35 +13,16 @@ import re
 import requests
 
 from earthkit.data.core.config import CONFIG
-from earthkit.data.sources import Source, from_source_internal
+from earthkit.data.sources import Source
+from earthkit.data.sources.multi_url import MultiUrl
 
 LOG = logging.getLogger(__name__)
 
-_DOI_PATTERN = re.compile(r"^(?:doi:\s*)?(10\.5281/zenodo\.\d+)$", flags=re.IGNORECASE)
+_DOI_PATTERN = re.compile(
+    r"^(?:doi:\s*|(?:https?:\/\/)?(?:dx\.)?doi\.org\/)?10\.5281/zenodo\.(\d+)\/?$",
+    flags=re.IGNORECASE,
+)
 _URL_PATTERN = re.compile(r"^(?:https?:\/\/)?zenodo\.org\/records?\/(\d+)\/?(?:\?.*)?$")
-
-
-def _resolve_doi(doi):
-    timeout = CONFIG.get("url-download-timeout")
-
-    LOG.debug("Resolving DOI %s", doi)
-    try:
-        r = requests.get(f"https://doi.org/{doi}", timeout=timeout)
-        r.raise_for_status()
-    except requests.ConnectionError as e:
-        raise RuntimeError("Could not connect to doi.org") from e
-    except requests.Timeout as e:
-        raise RuntimeError(f"request to doi.org timed out after {timeout}s") from e
-    except requests.HTTPError as e:
-        raise RuntimeError(f"doi.org returned HTTP {r.status_code}") from e
-
-    resolved_url = r.url
-    LOG.debug(f"DOI {doi} resolved to {resolved_url}")
-
-    match = _URL_PATTERN.match(resolved_url)
-    if not match:
-        raise ValueError(f"DOI '{doi}' resolved to an unexpected URL: {resolved_url}. Expected a Zenodo record URL.")
-    return int(match.group(1))
 
 
 def _get_record_files(record_id):
@@ -67,11 +48,14 @@ def _get_record_files(record_id):
     if "files" not in data or not data["files"]:
         raise RuntimeError(f"Record {record_id} has no accessible files. The record may be restricted or embargoed.")
 
-    files = [f["key"] for f in data["files"]]
-    LOG.debug(f"Record {record_id} contains {len(files)} file(s): {files!r}")
+    try:
+        # URLs from API response, works for record and concept IDs
+        file_urls = {f["key"]: f["links"]["self"] for f in data["files"]}
+    except (KeyError, TypeError) as e:
+        raise RuntimeError(f"unexpected file entry in the Zenodo API response for record {record_id}") from e
 
-    # Map of file name to its download URL, sorted by file name
-    return {name: f"https://zenodo.org/records/{record_id}/files/{name}?download=1" for name in sorted(files)}
+    LOG.debug(f"Record {record_id} contains {len(file_urls)} file(s): {list(file_urls)!r}")
+    return file_urls
 
 
 class Zenodo(Source):
@@ -80,12 +64,12 @@ class Zenodo(Source):
     Parameters
     ----------
     identifier : int | str
-        Record ID, Zenodo URL or DOI.
+        Record ID, Zenodo URL or DOI. A DOI may also be given as a doi.org URL.
     filenames : str | Sequence[str] | None, optional
         File selection with a glob string or an explicit list of file names.
         By default, all files are selected.
     **kwargs
-        Additional keyword arguments forwarded to the  URL source.
+        Additional keyword arguments forwarded to the URL source.
     """
 
     def __init__(self, identifier, filenames=None, **kwargs):
@@ -95,11 +79,11 @@ class Zenodo(Source):
         if isinstance(identifier, str):
             identifier = identifier.strip()
 
-        # Resolve DOI to record ID
+        # A Zenodo DOI is 10.5281/zenodo.<record ID>, so no lookup via doi.org is needed.
+        # For a concept DOI this is the concept record's ID, which the API redirects to the
+        # latest version, and the file URLs then refer to that version.
         if isinstance(identifier, str) and (match := _DOI_PATTERN.match(identifier)):
-            doi = match.group(1)
-            self.record_id = _resolve_doi(doi)
-        # Treat everything else as a record ID
+            self.record_id = int(match.group(1))
         elif isinstance(identifier, int):
             self.record_id = identifier
         elif isinstance(identifier, str) and (match := _URL_PATTERN.match(identifier)):
@@ -121,22 +105,24 @@ class Zenodo(Source):
         elif isinstance(filenames, str):
             matched = fnmatch.filter(record_files.keys(), filenames)
             if not matched:
-                raise FileNotFoundError(f"no files in record {self.record_id} matched the pattern: {filenames!r}")
+                raise FileNotFoundError(f"no files in record {self.record_id} match the pattern: {filenames!r}")
             self._file_urls = {name: record_files[name] for name in matched}
         # Select filenames based on provided list
         else:
-            for name in filenames:
-                if name not in record_files:
-                    raise FileNotFoundError(f"file {name!r} not found in record {self.record_id}")
-            self._file_urls = {name: record_files[name] for name in filenames}
+            filenames = list(dict.fromkeys(filenames))  # deduplicate while preserving order
+            if not filenames:
+                raise FileNotFoundError(f"no files selected from record {self.record_id}")
+            self._file_urls = {name: record_files[name] for name in filenames if name in record_files}
+            if len(self._file_urls) != len(filenames):
+                missing = ", ".join(repr(name) for name in filenames if name not in record_files)
+                raise FileNotFoundError(f"file(s) not found in record {self.record_id}: " + missing)
 
-        LOG.info(
-            f"Selected {len(self._file_urls)} file(s) from record {self.record_id}:, ".join(self._file_urls.keys())
-        )
+        selected = ", ".join(self._file_urls.keys())
+        LOG.info(f"Selected {len(self._file_urls)} file(s) from record {self.record_id}: {selected}")
 
     def mutate(self):
         urls = list(self._file_urls.values())
-        return from_source_internal("url", urls, **self._kwargs)
+        return MultiUrl(urls, **self._kwargs)
 
 
 source = Zenodo
