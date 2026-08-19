@@ -29,7 +29,7 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
     def _reader():
         from .reader import CovjsonReader
 
-        return CovjsonReader(source, path)
+        return CovjsonReader(source, path, **kwargs)
 
     if _match_content_type(content_type) or _match_magic(magic, deeper_check):
         return _reader()
