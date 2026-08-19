@@ -1,6 +1,25 @@
 Deprecations
 =============
 
+.. _deprecated-1.1.1:
+
+Version 1.1.1
+-----------------
+
+.. _deprecated-wekeocds:
+
+The ``wekecds`` source has been renamed to ``wekeo-cds``
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+This ``wekeocds`` source has been renamed to ``wekeo-cds``. The old name is still available for backward compatibility but will be removed in a future release. Users are encouraged to migrate the code to use the new name instead. See :ref:`here <data-sources-wekeo-cds>` for details on how to use the new source.
+
+.. _deprecated-fdb-userconfig:
+
+The ``userconfig`` option of the ``fdb`` source has been renamed to ``user_config``
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The ``userconfig`` kwarg of the ``fdb`` source has been renamed to ``user_config``. The old kwarg is still available for backward compatibility but is deprecated and will be removed in a future release. Users are encouraged to update their code to avoid using this kwarg. See :ref:`here <data-sources-fdb>` for details on how to use the new kwarg.
+
 
 .. _deprecated-1.1.0:
 
