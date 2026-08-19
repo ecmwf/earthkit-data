@@ -75,6 +75,5 @@ class CovJSONList(IndexFeatureListBase):
         pass
 
     def to_data_object(self):
-        from earthkit.data.data.geojson import GeoJSONData
 
         return CovJSONList(self)
