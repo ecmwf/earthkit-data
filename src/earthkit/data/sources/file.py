@@ -98,12 +98,7 @@ class FileSource(Source, Encodable, os.PathLike):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = reader(
-                self,
-                self.path,
-                content_type=self.content_type,
-                **self._kwargs
-            )
+            self._reader_ = reader(self, self.path, content_type=self.content_type, **self._kwargs)
         return self._reader_
 
     # def __iter__(self):
