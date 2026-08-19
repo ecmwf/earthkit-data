@@ -207,19 +207,19 @@
   distinct_ll: false
 - file: eORCA025_T.grib
   dims:
-    y: 1442
-    x: 1207
+    y: 1207
+    x: 1442
   coords:
     latitude:
     - - y
       - x
-    - - 1442
-      - 1207
+    - - 1207
+      - 1442
     longitude:
     - - y
       - x
-    - - 1442
-      - 1207
+    - - 1207
+      - 1442
   distinct_ll: false
 - file: icon_ch1.grib2
   dims:
