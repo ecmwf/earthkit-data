@@ -124,12 +124,12 @@ def is_csv(path, probe_size=4096, compression=None):
     return dialect is not None
 
 
-def reader(source, path, *, magic=None, deeper_check=False, fwf=False, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     kind, compression = mimetypes.guess_type(path)
 
     if kind == "text/csv":
         from .reader import CSVReader
 
-        return CSVReader(source, path, compression=compression)
+        return CSVReader(source, path, compression=compression, **kwargs)
 
 READER = reader
