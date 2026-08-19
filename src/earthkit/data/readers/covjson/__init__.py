@@ -61,10 +61,6 @@ def stream_reader(
     **kwargs,
 ):
     if _match_content_type(content_type) or _match_magic(magic, deeper_check):
-        # if memory:
-        #     from .reader import CovjsonMemoryReader
-
-        #     return CovjsonMemoryReader._from_stream(stream)
         from .reader import CovJSONStreamReader
 
         return CovJSONStreamReader(stream)
