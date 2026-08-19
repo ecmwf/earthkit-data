@@ -180,11 +180,24 @@ class GribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
 
 
 class GRIBReader(Source, GRIBReaderBase):
-    def __init__(self, source, path, parts=None, positions=None, grib_handle_policy=None, grib_handle_cache_size=None, use_grib_metadata_cache=None):
+    def __init__(
+        self,
+        source,
+        path,
+        parts=None,
+        positions=None,
+        grib_handle_policy=None,
+        grib_handle_cache_size=None,
+        use_grib_metadata_cache=None,
+    ):
         self._ori_source = source
-        self._kwargs = {"parts": parts, "positions": positions,
-                        "grib_handle_policy": grib_handle_policy, "grib_handle_cache_size": grib_handle_cache_size,
-                        "use_grib_metadata_cache": use_grib_metadata_cache}
+        self._kwargs = {
+            "parts": parts,
+            "positions": positions,
+            "grib_handle_policy": grib_handle_policy,
+            "grib_handle_cache_size": grib_handle_cache_size,
+            "use_grib_metadata_cache": use_grib_metadata_cache,
+        }
 
         GRIBReaderBase.__init__(self, source, path)
 

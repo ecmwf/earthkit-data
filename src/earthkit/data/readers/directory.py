@@ -111,7 +111,7 @@ class DirectoryReader(Reader):
         return None
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs): 
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if (
         magic is None
         and os.path.isdir(path)

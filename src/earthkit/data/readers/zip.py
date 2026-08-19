@@ -82,7 +82,7 @@ class ZIPReader(ArchiveReader):
 EXTENSIONS_TO_SKIP = (".npz",)  # Numpy arrays
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs): 
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if magic is None:  # Bypass check and force
         return ZIPReader(source, path, **kwargs)
 
