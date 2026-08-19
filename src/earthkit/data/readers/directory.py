@@ -44,10 +44,10 @@ def make_file_filter(filter, top):
 
 
 class DirectoryReader(Reader):
-    def __init__(self, source, path):
+    def __init__(self, source, path, **kwargs):
         super().__init__(source, path)
         self._content = []
-        self._source_kwargs = source._kwargs
+        self._source_kwargs = kwargs
 
         filter = make_file_filter(self.filter, self.path)
 
@@ -111,7 +111,7 @@ class DirectoryReader(Reader):
         return None
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs): 
     if (
         magic is None
         and os.path.isdir(path)
@@ -122,7 +122,7 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
             or os.path.exists(os.path.join(path, ".zattrs"))
         )
     ):
-        return DirectoryReader(source, path)
+        return DirectoryReader(source, path, **kwargs)
 
 
 READER = reader
