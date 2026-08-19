@@ -134,6 +134,27 @@ def test_time_dims_frt_only(pl_fl, lazy_load, allow_holes):
     assert ds.coords["valid_time"].shape == (4,)
 
 
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_single_valid_time_is_scalar_aux_coord(pl_fl, lazy_load, allow_holes):
+    """A single valid_time should be retained as a scalar auxiliary coordinate."""
+    fl_single_step = pl_fl.sel({
+        "metadata.step": 0,
+        "metadata.base_datetime": "2024-06-03T00:00:00",
+    })[0]
+
+    ds = fl_single_step.to_xarray(
+        profile="earthkit",
+        add_valid_time_coord=True,
+        lazy_load=lazy_load,
+        allow_holes=allow_holes,
+    )
+
+    assert "valid_time" in ds.coords
+    assert "valid_time" not in ds.sizes
+    assert ds.coords["valid_time"].dims == ()
+
+
 # -------------------------------------------------------------------------
 # Custom dim_roles (GRIB metadata keys)
 # -------------------------------------------------------------------------

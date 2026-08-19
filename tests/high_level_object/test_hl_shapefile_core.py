@@ -21,6 +21,7 @@ def test_hl_shapefile_single_core():
 
     assert d._TYPE_NAME == "Shapefile"
     assert "geopandas" in d.available_types
+    assert isinstance(d.path, str)
 
     df = d.to_pandas()
     assert len(df) == 2010

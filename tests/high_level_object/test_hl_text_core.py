@@ -9,19 +9,19 @@
 # nor does it submit to any jurisdiction.
 #
 
-import pytest
-
 from earthkit.data import from_source
-from earthkit.data.utils.testing import NO_IRIS, earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
-@pytest.mark.skipif(NO_IRIS, reason="Iris or ncdata not installed")
-def test_hl_pp_file():
-    ds = from_source("file", earthkit_examples_file("air_temp.pp"))
-    assert ds._TYPE_NAME == "PP"
+def test_hl_text_single_core():
+    ds = from_source("file", earthkit_test_data_file("test.txt"))
+
+    assert ds._TYPE_NAME == "Text"
     assert ds.is_stream() is False
-    assert "xarray" in ds.available_types
+    assert ds.available_types is None
     assert isinstance(ds.path, str)
 
-    a = ds.to_xarray()
-    assert "air_temperature" in a.data_vars
+    import pytest
+
+    with pytest.raises(NotImplementedError):
+        ds.to_pandas()

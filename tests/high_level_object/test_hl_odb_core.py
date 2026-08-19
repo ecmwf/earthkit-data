@@ -24,6 +24,7 @@ def test_hl_odb_single_core():
     assert ds._TYPE_NAME == "ODB"
     assert ds.is_stream() is False
     assert "pandas" in ds.available_types
+    assert isinstance(ds.path, str)
 
     df = ds.to_pandas()
     assert len(df) == 717

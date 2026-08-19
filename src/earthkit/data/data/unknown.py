@@ -13,9 +13,6 @@ from .source import SourceData
 class UnknownData(SourceData):
     _TYPE_NAME = "Unknown"
 
-    # def __init__(self, reader):
-    #     self._reader = reader
-
     @property
     def available_types(self):
         """list[str] or None: Return the list of available types that this data object can be converted to."""
@@ -29,4 +26,17 @@ class UnknownData(SourceData):
         str
             A description of the unknown data including the file path.
         """
-        return f"Unknown data from {self._reader.path}"
+        return f"Unknown data from {self.path}"
+
+    @property
+    def path(self) -> str | list[str] | None:
+        try:
+            return self._reader.path
+        except Exception:
+            return None
+
+    def __repr__(self) -> str:
+        return f"UnknownData(path={self.path})"
+
+    def _repr_html_(self) -> str:
+        return f"<p>{self.describe()}</p>"

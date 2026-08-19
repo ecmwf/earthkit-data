@@ -19,9 +19,9 @@ from earthkit.data.utils import ensure_dict, ensure_iterable
 LOG = logging.getLogger(__name__)
 
 
-GEO_KEYS = ["md5GridSection"]
+GEO_KEYS = ["geography.unique_grid_id"]
 MANDATORY_KEYS = GEO_KEYS
-IGNORE_ATTRS = ["md5GridSection"]
+IGNORE_ATTRS = ["geography.unique_grid_id"]
 
 
 class RemappingBuilder:
