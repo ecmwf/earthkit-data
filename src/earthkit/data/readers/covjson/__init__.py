@@ -26,18 +26,21 @@ def _match_magic(magic, deeper_check):
 
 
 def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
-    from .reader import CovjsonReader
+    def _reader():
+        from .reader import CovjsonReader
+
+        return CovjsonReader(source, path, **kwargs)
 
     if _match_content_type(content_type) or _match_magic(magic, deeper_check):
-        return CovjsonReader(source, path, **kwargs)
+        return _reader()
 
     extension = pathlib.Path(path).suffix
     if extension == ".covjson":
-        return CovjsonReader(source, path, **kwargs)
+        return _reader()
 
     kind, _ = mimetypes.guess_type(path)
     if kind in ["application/prs.cov+json"]:
-        return CovjsonReader(source, path, **kwargs)
+        return _reader()
 
 
 def memory_reader(source, buffer, *, magic=None, deeper_check=False, content_type=None, **kwargs):
