@@ -128,6 +128,7 @@ class TestZenodoSourceOffline:
             " {id}",
             "https://zenodo.org/record/{id}",
             "https://zenodo.org/records/{id}",
+            "https://ZENODO.ORG/records/{id}",
             "https://zenodo.org/records/{id}/",
             "https://zenodo.org/records/{id}?download=1",
             "  https://zenodo.org/records/{id}?download=1",
@@ -199,7 +200,7 @@ class TestZenodoSourceOffline:
             # The host must be matched, not merely found at the end of another one
             "https://mydoi.org/10.5281/zenodo.12345",
             # The doi: prefix and the URL form are alternatives, not combinable
-            f"doi:https://doi.org/{DOI}",
+            "doi:https://doi.org/10.5281/zenodo.12345",
         ],
     )
     def test_invalid_identifier(self, zenodo, identifier):
@@ -238,8 +239,8 @@ class TestZenodoSourceOffline:
             requests.ReadTimeout(),
             MockResponse(status_code=404),
             MockResponse(status_code=503),
-            # Invalid JSON
-            MockResponse(payload=None),
+            MockResponse(payload=None),  # invalid JSON
+            MockResponse(payload=5),  # not dict-typed
             # No files in records
             MockResponse(payload={}),
             MockResponse(payload={"files": []}),

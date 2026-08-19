@@ -22,7 +22,7 @@ _DOI_PATTERN = re.compile(
     r"^(?:doi:\s*|(?:https?:\/\/)?(?:dx\.)?doi\.org\/)?10\.5281/zenodo\.(\d+)\/?$",
     flags=re.IGNORECASE,
 )
-_URL_PATTERN = re.compile(r"^(?:https?:\/\/)?zenodo\.org\/records?\/(\d+)\/?(?:\?.*)?$")
+_URL_PATTERN = re.compile(r"^(?:https?:\/\/)?zenodo\.org\/records?\/(\d+)\/?(?:\?.*)?$", flags=re.IGNORECASE)
 
 
 def _get_record_files(record_id):
@@ -45,7 +45,9 @@ def _get_record_files(record_id):
     except ValueError as e:
         raise RuntimeError("failed to parse Zenodo API response") from e
 
-    if "files" not in data or not data["files"]:
+    if not isinstance(data, dict) or "files" not in data:
+        raise RuntimeError(f"unexpected Zenodo API response for record {record_id}")
+    if not data["files"]:
         raise RuntimeError(f"Record {record_id} has no accessible files. The record may be restricted or embargoed.")
 
     try:
