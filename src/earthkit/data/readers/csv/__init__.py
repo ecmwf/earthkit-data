@@ -132,11 +132,4 @@ def reader(source, path, *, magic=None, deeper_check=False, fwf=False, **kwargs)
 
         return CSVReader(source, path, compression=compression)
 
-    if deeper_check and False:
-        if is_csv(path):
-            from .reader import CSVReader
-
-            return CSVReader(source, path)
-
-
 READER = reader
