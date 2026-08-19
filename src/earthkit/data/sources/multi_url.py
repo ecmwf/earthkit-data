@@ -35,7 +35,6 @@ class MultiUrl(MultiSource):
                 force=force,
                 # Load lazily so we can do parallel downloads
                 lazily=lazily,
-                # **x["kwargs"]
             )
             for x in url_spec
         ]
