@@ -17,7 +17,7 @@ LOG = logging.getLogger(__name__)
 
 
 class TarReader(ArchiveReader):
-    def __init__(self, source, path, compression=None):
+    def __init__(self, source, path):
         super().__init__(source, path)
 
         with tarfile.open(path) as tar:
@@ -32,9 +32,9 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
     # We don't use tarfile.is_tarfile() because is
     # returns true given a file of zeros
 
-    kind, compression = mimetypes.guess_type(path)
+    kind, _ = mimetypes.guess_type(path)
     if kind == "application/x-tar":
-        return TarReader(source, path, compression, **kwargs)
+        return TarReader(source, path, **kwargs)
 
 
 READER = reader
