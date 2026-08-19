@@ -71,8 +71,10 @@ from_source
       - retrieve data from Amazon S3 buckets
     * - :ref:`data-sources-wekeo`
       - retrieve data from `WEkEO`_ using the WEkEO grammar
-    * - :ref:`data-sources-wekeocds`
+    * - :ref:`data-sources-wekeo-cds`
       - retrieve `CDS <https://cds.climate.copernicus.eu/>`_ data stored on `WEkEO`_ using the `cdsapi`_ grammar
+    * - :ref:`data-sources-wekeocds-deprecated`
+      - deprecated, use :ref:`data-sources-wekeo-cds` instead
     * - :ref:`data-sources-zarr`
       - load data from a `Zarr <https://zarr.readthedocs.io/en/stable/>`_ store
 
@@ -715,7 +717,7 @@ ecmwf-open-data
 fdb
 ---
 
-.. py:function:: from_source("fdb", *args, config=None, userconfig=None, request=None, stream=True, lazy=False, **kwargs)
+.. py:function:: from_source("fdb", *args, config=None, user_config=None, userconfig=None, request=None, stream=True, lazy=False, **kwargs)
   :noindex:
 
   The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. Earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
@@ -723,7 +725,8 @@ fdb
   :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries, but current only one request is supported.
   :param dict,str config: the FDB configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 0.11.0*
-  :param dict,str userconfig: the FDB user configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 0.11.0*
+  :param dict,str user_config: the FDB user configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 1.2.0*
+  :param dict,str userconfig: deprecated alias for ``user_config`` and will be removed in a future release. When both ``user_config`` and ``userconfig`` are provided a ValueError is raised. *Deprecated in version 1.2.0*
   :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests, but current only one request is supported. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
@@ -733,7 +736,7 @@ fdb
     - metadata related calls (e.g. :func:`metadata` or :func:`sel`) work without retrieving the GRIB data
     - :meth:`~earthkit.data.core.fieldlist.FieldList.to_xarray` works without retrieving the GRIB data
     - the retrieved GRIB data is not cached (either in memory or on disk) but gets deleted as soon as the data values are extracted. Repeated request for the data values will trigger a new retrieval.
-    - the resulting :py:class:`FieldList` always retrives one GRIB field as a reference and stores it in memory throughout the lifetime of the :py:class:`FieldList`. This is managed internally.
+    - the resulting :py:class:`FieldList` always retrieves one GRIB field as a reference and stores it in memory throughout the lifetime of the :py:class:`FieldList`. This is managed internally.
 
     When ``lazy=True`` the ``stream`` option is ignored. Please note that this is an **experimental** feature. *New in version 0.14.0*
   :param dict **kwargs: other keyword arguments specifying the request
@@ -1202,15 +1205,17 @@ wekeo
       - :ref:`/tutorials/source/wekeo.ipynb`
 
 
-.. _data-sources-wekeocds:
+.. _data-sources-wekeo-cds:
 
-wekeocds
---------
+wekeo-cds
+---------
 
-.. py:function:: from_source("wekeocds", dataset, *args, request=None, prompt=True, **kwargs)
+*Added in version 1.2.0 replacing the deprecated* ``wekeocds`` *source.*
+
+.. py:function:: from_source("wekeo-cds", dataset, *args, request=None, prompt=True, **kwargs)
   :noindex:
 
-  `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeocds`` source provides access to `Copernicus Climate Data Store`_ (CDS) datasets served on `WEkEO`_ using the `cdsapi`_ grammar. The retrieval is based on the hda_ Python API.
+  `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeo-cds`` source provides access to `Copernicus Climate Data Store`_ (CDS) datasets served on `WEkEO`_ using the `cdsapi`_ grammar. The retrieval is based on the hda_ Python API.
 
   :param str dataset: the name of the WEkEO dataset
   :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
@@ -1233,9 +1238,9 @@ wekeocds
       import earthkit.data as ekd
 
       d = ekd.from_source(
-          "wekeocds",
+          "wekeo-cds",
           "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS_MONTHLY_MEANS",
-          requewst=dict(
+          request=dict(
               variable=["2m_temperature", "mean_sea_level_pressure"],
               product_type=["monthly_averaged_reanalysis_by_hour_of_day"],
               year=["2012"],
@@ -1255,6 +1260,12 @@ wekeocds
       - :ref:`/tutorials/source/wekeo.ipynb`
 
 
+.. _data-sources-wekeocds-deprecated:
+
+wekeocds
+---------
+
+This is a deprecated source since version 1.2.0 and will be removed in a future release. Please use the :ref:`data-sources-wekeo-cds` source instead.
 
 .. _data-sources-zarr:
 

@@ -20,6 +20,7 @@ def test_hl_netcdf_single_core():
     assert ds.is_stream() is False
     assert "xarray" in ds.available_types
     assert "fieldlist" in ds.available_types
+    assert isinstance(ds.path, str)
 
     a = ds.to_xarray()
     assert "t2m" in a.data_vars
@@ -40,6 +41,8 @@ def test_hl_netcdf_multi_core():
     assert ds.is_stream() is False
     assert "xarray" in ds.available_types
     assert "fieldlist" in ds.available_types
+    assert isinstance(ds.path, list)
+    assert all(isinstance(p, str) for p in ds.path)
 
     a = ds.to_xarray()
     assert "t2m" in a.data_vars

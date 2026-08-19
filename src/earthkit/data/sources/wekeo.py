@@ -57,7 +57,7 @@ class HDAAPIKeyPrompt(APIKeyPrompt):
         return yaml.safe_load(file.read())
 
 
-class ApiClient(hda.Client):
+class APIClient(hda.Client):
     name = "wekeo"
 
     def __int__(self, *args, **kwargs):
@@ -107,7 +107,7 @@ class WekeoRetriever(FileSource):
             prompt.check()
 
             try:
-                return ApiClient()
+                return APIClient()
             except Exception as e:
                 # if no rc file is available hda throws
                 # ConfigurationError: Missing or incomplete configuration
@@ -115,10 +115,10 @@ class WekeoRetriever(FileSource):
                     LOG.warning(e)
                     LOG.exception(f"Could not load hda client. {e}")
                     prompt.ask_user_and_save()
-                    return ApiClient()
+                    return APIClient()
                 raise
         else:
-            return ApiClient()
+            return APIClient()
 
     def _retrieve_one(self, request, dataset):
         def retrieve(target, args):

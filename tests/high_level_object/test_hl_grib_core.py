@@ -19,6 +19,7 @@ def test_hl_grib_single_core():
     assert ds._TYPE_NAME == "GRIB"
     assert ds.is_stream() is False
     assert "fieldlist" in ds.available_types
+    assert isinstance(ds.path, str)
 
     fl = ds.to_fieldlist()
     assert len(fl) == 2
@@ -55,6 +56,7 @@ def test_hl_grib_stream_1():
     assert ds._TYPE_NAME == "StreamFieldList"
     assert ds.is_stream() is True
     assert "fieldlist" in ds.available_types
+    assert ds.path is None
 
     fl = ds.to_fieldlist()
     cnt = 0
@@ -71,6 +73,7 @@ def test_hl_grib_stream_memory():
     assert ds._TYPE_NAME == "StreamFieldList"
     assert ds.is_stream() is True
     assert "fieldlist" in ds.available_types
+    assert ds.path is None
 
     fl = ds.to_fieldlist(read_all=True)
     assert len(fl) == 2
@@ -84,6 +87,7 @@ def test_hl_grib_multi_core():
     assert ds._TYPE_NAME == "GRIB"
     assert ds.is_stream() is False
     assert "fieldlist" in ds.available_types
+    assert all(isinstance(p, str) for p in ds.path)
 
     fl = ds.to_fieldlist()
     assert len(fl) == 6

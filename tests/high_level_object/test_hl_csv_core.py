@@ -19,6 +19,7 @@ def test_hl_csv_single_core():
     assert ds._TYPE_NAME == "CSV"
     assert ds.is_stream() is False
     assert "pandas" in ds.available_types
+    assert isinstance(ds.path, str)
 
     df = ds.to_pandas()
     assert len(df) == 6
@@ -34,6 +35,7 @@ def test_hl_csv_multi_core():
     assert "pandas" in ds.available_types
     assert "xarray" in ds.available_types
     assert "fieldlist" not in ds.available_types
+    assert all(isinstance(p, str) for p in ds.path)
 
     df = ds.to_pandas()
     assert len(df) == 12

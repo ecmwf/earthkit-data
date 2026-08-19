@@ -46,6 +46,11 @@ class GribParameterBuilder:
             v = _get("param", None)
         variable = v
         standard_name = _get("cfName", None)
+
+        if standard_name == "unknown":
+            # ecCodes may return "unknown" for unresolved cfName. None is safer downstream
+            standard_name = None
+
         long_name = _get("name", None)
 
         units = _get("units", None)

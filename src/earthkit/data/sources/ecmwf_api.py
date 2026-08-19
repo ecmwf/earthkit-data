@@ -44,7 +44,7 @@ class MARSAPIKeyPrompt(APIKeyPrompt):
     config_env = ("ECMWF_API_KEY", "ECMWF_API_URL")
 
 
-class ECMWFApi(FileSource):
+class ECMWFAPI(FileSource):
     def __init__(self, *args, request=None, prompt=True, log="default", **kwargs):
         super().__init__()
 
@@ -62,7 +62,7 @@ class ECMWFApi(FileSource):
         self.request = request_builder.requests
 
         if len(self.request) == 0:
-            raise ValueError("ECMWFApi: no requests to process")
+            raise ValueError("ECMWFAPI: no requests to process")
 
         self.expect_any = False
         for k, v in self.request[0].items():
