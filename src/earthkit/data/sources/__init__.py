@@ -480,37 +480,3 @@ def from_source_lazily(name, *args, **kwargs):
 
 def register(name, proc):
     register_plugin("source", name, proc)
-
-
-def from_file(
-    path: str,
-    expand_user: Union[bool, list, tuple] = True,
-    expand_vars: bool = False,
-    unix_glob: bool = True,
-    recursive_glob: bool = True,
-    filter: Union[str, Callable] = None,
-    parts: list = None,
-    stream: bool = False,
-    merger: Any = None,
-    **kwargs,
-):
-    from .file import FileSource
-
-    prev = None
-    src = FileSource(
-        path=path,
-        expand_user=expand_user,
-        expand_vars=expand_vars,
-        unix_glob=unix_glob,
-        recursive_glob=recursive_glob,
-        filter=filter,
-        parts=parts,
-        stream=stream,
-        merger=merger,
-        **kwargs,
-    )
-    while src is not prev:
-        prev = src
-        src = src.mutate()
-
-    return src
