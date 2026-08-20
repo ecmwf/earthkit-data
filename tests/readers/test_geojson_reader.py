@@ -45,6 +45,11 @@ def test_geojson_bounding_box():
 # assert mimetypes.guess_type("x.geojson.bz2") == ("application/geo+json", "bzip2")
 
 
+def test_invalid_kwargs():
+    with pytest.raises(TypeError):
+        from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.geojson"), grib_handle_policy=None)
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 
