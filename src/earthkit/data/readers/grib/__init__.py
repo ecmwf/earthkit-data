@@ -38,12 +38,12 @@ def is_grib_file(path):
     return _match_magic(magic, True)
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic, deeper_check):
         from .file import GRIBReader
 
         parts = source.parts if hasattr(source, "parts") else None
-        return GRIBReader(source, path, parts=parts)
+        return GRIBReader(source, path, parts=parts, **kwargs)
 
 
 def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):

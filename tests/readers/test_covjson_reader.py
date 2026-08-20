@@ -94,6 +94,11 @@ def test_covjson_stream_1():
 #     assert len(a.data_vars) == 1
 
 
+def test_invalid_kwargs():
+    with pytest.raises(TypeError):
+        from_source("file", earthkit_test_data_file("time_series.covjson"), grib_handle_policy=None)
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

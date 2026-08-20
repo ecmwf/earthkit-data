@@ -13,7 +13,7 @@ from .core import PPReaderBase
 
 
 class PPReader(Source, PPReaderBase):
-    def __init__(self, source, path, **kwargs):
+    def __init__(self, source, path):
         PPReaderBase.__init__(self, source, path)
 
     def mutate_source(self):

@@ -14,7 +14,7 @@ from earthkit.utils.decorators import thread_safe_cached_property
 from earthkit.data.featurelist.simple import IndexFeatureListBase
 
 
-class CovjsonList(IndexFeatureListBase):
+class CovJSONList(IndexFeatureListBase):
     def __init__(self, path):
         self._path = path
 
@@ -75,6 +75,5 @@ class CovjsonList(IndexFeatureListBase):
         pass
 
     def to_data_object(self):
-        from earthkit.data.data.geojson import GeoJsonData
 
-        return GeoJsonData(self)
+        return CovJSONList(self)

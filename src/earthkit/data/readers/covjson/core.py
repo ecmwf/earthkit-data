@@ -10,7 +10,7 @@
 from .. import Reader
 
 
-class CovJsonReaderBase(Reader):
+class CovJSONReaderBase(Reader):
     _format = "covjson"
     _binary = False
     _appendable = False

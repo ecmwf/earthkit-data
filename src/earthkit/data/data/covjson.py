@@ -10,7 +10,7 @@
 from .source import SourceData
 
 
-class CovJsonData(SourceData):
+class CovJSONData(SourceData):
     """Represent CoverageJSON data.
 
     CoverageJSON is a format for encoding multi-dimensional gridded data, often used in geospatial
