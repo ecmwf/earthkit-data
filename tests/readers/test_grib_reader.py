@@ -7,7 +7,8 @@
 # In applying this licence, ECMWF does not waive the privileges and immunities
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
-#
+
+import pytest
 
 from earthkit.data import from_source
 from earthkit.data.utils.testing import earthkit_examples_file, earthkit_test_data_file
@@ -43,7 +44,12 @@ def test_dummy_grib():
     assert len(s) == 8
 
 
+def test_invalid_kwargs():
+    with pytest.raises(TypeError):
+        from_source("file", earthkit_examples_file("tuv_pl.grib"), banana=True)
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 
-    main()
+    main(__file__)
