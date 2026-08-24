@@ -15,7 +15,7 @@ except ImportError:
 
 import yaml
 
-from .cds import CdsRetriever
+from .cds import CDSRetriever
 from .prompt import APIKeyPrompt
 
 
@@ -63,13 +63,13 @@ EXTENSIONS = {
 }
 
 
-class AdsRetriever(CdsRetriever):
+class ADSRetriever(CDSRetriever):
     sphinxdoc = """
-    AdsRetriever
+    ADSRetriever
     """
 
     def client(self):
         return client()
 
 
-source = AdsRetriever
+source = ADSRetriever

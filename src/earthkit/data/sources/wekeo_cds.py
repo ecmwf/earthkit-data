@@ -19,13 +19,13 @@ from earthkit.data.utils.request import FileRequestRetriever, RequestBuilder
 
 from .file import FileSource
 from .wekeo import EXTENSIONS, HDAAPIKeyPrompt
-from .wekeo import ApiClient as WekeoClient
+from .wekeo import APIClient as WekeoClient
 
 LOG = logging.getLogger(__name__)
 
 
-class ApiClient(WekeoClient):
-    name = "wekeocds"
+class APIClient(WekeoClient):
+    name = "wekeo-cds"
 
     def __int__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
@@ -45,9 +45,9 @@ class ApiClient(WekeoClient):
         return super().retrieve(name, request, target)
 
 
-class WekeoCdsRetriever(FileSource):
+class WekeoCDSRetriever(FileSource):
     sphinxdoc = """
-    WekeoCdsRetriever
+    WekeoCDSRetriever
     """
 
     def __init__(self, dataset, *args, request=None, prompt=True, **kwargs):
@@ -86,7 +86,7 @@ class WekeoCdsRetriever(FileSource):
             prompt.check()
 
             try:
-                return ApiClient()
+                return APIClient()
             except Exception as e:
                 # if no rc file is available hda throws
                 # ConfigurationError: Missing or incomplete configuration
@@ -94,10 +94,10 @@ class WekeoCdsRetriever(FileSource):
                     LOG.warning(e)
                     LOG.exception(f"Could not load hda client. {e}")
                     prompt.ask_user_and_save()
-                    return ApiClient()
+                    return APIClient()
                 raise
         else:
-            return ApiClient()
+            return APIClient()
 
 
-source = WekeoCdsRetriever
+source = WekeoCDSRetriever
