@@ -165,13 +165,42 @@ class XArrayFieldList(IndexFieldListBase):
         def _skip_attr(v: Any, attr_name: str) -> None:
             attr_val: str = getattr(v, attr_name, "")
             if isinstance(attr_val, str):
-                skip.update(attr_val.split(" "))
+                v = attr_val.split(" ")
+                if v:
+                    skip.update(v)
 
         for name in ds.data_vars:
             variable = ds[name]
             _skip_attr(variable, "coordinates")
             _skip_attr(variable, "bounds")
             _skip_attr(variable, "grid_mapping")
+
+        # Handle lat_vertices and lon_vertices in the CORDEX dataset.
+        # The current algorithm cannot skip these vars, so it has to be done
+        # manually.
+        #
+        # Example data.:
+        # Dimensions:                   (time: 31, bnds: 2, rlat: 19, rlon: 15,
+        #                                 vertices: 4)
+        # Coordinates:
+        # * time                        (time) datetime64[ns] 248B 2006-01-01T12:00:0...
+        # * rlat                        (rlat) float64 152B -10.56 -10.45 ... -8.58
+        # * rlon                        (rlon) float64 120B -5.77 -5.66 ... -4.34 -4.23
+        #   lat                         (rlat, rlon) float32 1kB ...
+        #   lon                         (rlat, rlon) float32 1kB ...
+        #   height                      float64 8B ...
+        # Dimensions without coordinates: bnds, vertices
+        # Data variables:
+        #   time_bnds                   (time, bnds) datetime64[ns] 496B ...
+        #   rotated_latitude_longitude  int32 4B ...
+        #   lat_vertices                (rlat, rlon, vertices) float32 5kB ...
+        #   lon_vertices                (rlat, rlon, vertices) float32 5kB ...
+        #   sfcWind                     (time, rlat, rlon) float32 35kB ...
+
+        for name in ["lat_vertices", "lon_vertices"]:
+            if name in ds.data_vars:
+                if list(ds.data_vars[name].sizes.keys()) == ["rlat", "rlon", "vertices"]:
+                    skip.add(name)
 
         LOG.debug("Xarray data_vars: %s", ds.data_vars)
 
