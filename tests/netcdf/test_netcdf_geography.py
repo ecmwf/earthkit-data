@@ -452,6 +452,44 @@ def test_netcdf_geography_1d_2(lat_name, lon_name):
         assert np.allclose(lon, lon.data)
 
 
+def test_netcdf_geography_cordex():
+    ds = from_source("file", earthkit_test_data_file("cordex.nc")).to_fieldlist()
+
+    assert len(ds) == 2
+
+    pos = [(0, 0), (0, -1), (-1, 0), (-1, -1)]
+
+    # we must check multiple fields
+    for idx in range(2):
+        lat, lon = ds[idx].geography.latlons()
+
+        # lon
+        assert isinstance(lon, np.ndarray)
+        assert lon.shape == (19, 15)
+
+        ref = np.array([
+            10.598002,
+            12.565728,
+            10.328211,
+            12.366973,
+        ])
+        for i, point in enumerate(pos):
+            assert np.isclose(lon[point], ref[i]), f"{i=}, {point=}"
+
+        # lat
+        assert isinstance(lat, np.ndarray)
+        assert lat.shape == (19, 15)
+
+        ref = np.array([
+            39.901478,
+            40.034794,
+            41.870953,
+            42.009117,
+        ])
+        for i, point in enumerate(pos):
+            assert np.isclose(lat[point], ref[i]), f"{i=}, {point=}"
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

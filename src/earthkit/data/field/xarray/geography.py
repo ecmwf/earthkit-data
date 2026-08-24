@@ -22,9 +22,13 @@ class XArrayGeography(GeographyBase):
         # By now, the only dimensions should be latitude and longitude
         self._shape = tuple(list(self.selection.shape)[-2:])
         if math.prod(self._shape) != math.prod(self.selection.shape):
-            # print(self.selection.ndim, self.selection.shape)
-            # print(self.selection)
-            raise ValueError("Invalid shape for selection")
+            name = self.owner.name if self.owner and hasattr(self.owner, "name") else None
+            raise ValueError(
+                (
+                    f"Invalid shape for selection for variable={name}. Expected only two dimensions, "
+                    "got sizes {self.selection.shape}"
+                )
+            )
 
     def latitudes(self, dtype=None):
         lat, _ = self.owner.grid.latlons
