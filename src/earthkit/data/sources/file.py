@@ -76,14 +76,12 @@ class FileSource(Source, Encodable, os.PathLike):
                     merger=self.merger,
                 )
 
-        # Give a chance to directories and zip files
+        # Convert from source to reader or
+        # give a chance to directories and zip files
         # to return a multi-source
         source = self._reader.mutate_source()
-        if source not in (None, self):
-            source._parent = self
-            return source
-
-        return self
+        source._parent = self
+        return source
 
     def ignore(self):
         return self._reader.ignore()
