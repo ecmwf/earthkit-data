@@ -3,6 +3,18 @@
 Version 1.2 Updates
 ///////////////////////
 
+
+Version 1.2.1
+==============
+
+Fixes
+++++++++++++
+
+- Fixed issue when NetCDF data downloaded from a CORDEX dataset in the :ref:`data-sources-cds` source could not be converted to a fieldlist (:pr:`1114`)
+- Fixed issue when fields created from Xarray or NetCDF data did not show the geography component in ``describe()`` (:pr:`1116`)
+- Fixed issue when ``geography.grid_type`` was always ``None`` for fields created from Xarray or NetCDF data (:pr:`1116`)
+
+
 Version 1.2.0
 ==============
 
