@@ -355,7 +355,7 @@ class CoordinateGuesser(ABC):
                 LOG.warning(f"Using '{candidate}' as 'grid_mapping'")
                 grid_mapping = candidate
             else:
-                LOG.warning("Could not fine a candidate for 'grid_mapping'")
+                LOG.warning("Could not find a candidate for 'grid_mapping'")
 
         if grid_mapping is None:
             if "crs" in self.ds[variable.name].attrs:
@@ -387,7 +387,7 @@ class CoordinateGuesser(ABC):
             self._grid_cache[(x.name, y.name, dim_vars)] = grid
             return grid
 
-        LOG.error("Could not fine a candidate for 'grid_mapping'")
+        LOG.error("Could not find a candidate for 'grid_mapping'")
 
         if strict:
             raise NotImplementedError(f"Unstructured grid {x.name} {y.name}")
