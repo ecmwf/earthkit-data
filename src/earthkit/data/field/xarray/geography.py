@@ -75,7 +75,7 @@ class XArrayGeography(GeographyBase):
 
     def grid_type(self):
         r"""Return the grid specification."""
-        pass
+        return self.owner.grid.grid_type
 
     def area(self):
         r"""Return the area of the grid."""
@@ -109,8 +109,8 @@ class XArrayGeography(GeographyBase):
         else:
             raise ValueError("XArrayGeography: points not available")
 
-    def to_dict(self):
-        return dict()
+    # def to_dict(self):
+    #     return dict()
 
     def __getstate__(self):
         pass

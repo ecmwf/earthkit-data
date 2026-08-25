@@ -104,7 +104,7 @@ def test_netcdf_points_2():
         assert np.isclose(y[y_idx, x_idx], 57)
 
 
-def test_netcdf_latlon():
+def test_netcdf_latlon_core():
     ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
 
     assert len(ds) == 2
@@ -114,6 +114,11 @@ def test_netcdf_latlon():
     xr_ds = xr.open_dataset(earthkit_examples_file("test.nc"))
 
     for f in ds:
+        assert f.geography.shape() == (8, 13)
+        assert ds.geography.shape() == (8, 13)
+        assert f.shape == (8, 13)
+        assert f.geography.to_dict()["grid_type"] == "regular-ll"
+
         lat, lon = f.geography.latlons()
 
         # lon
@@ -218,6 +223,10 @@ def test_netcdf_latlon_laea():
 
     # we must check multiple fields
     for idx in range(2):
+        assert ds[idx].geography.shape() == (950, 1000)
+        assert ds[idx].shape == (950, 1000)
+        assert ds[idx].geography.to_dict()["grid_type"] == "unstructured"
+
         lat, lon = ds[idx].geography.latlons()
 
         # lon
@@ -459,8 +468,14 @@ def test_netcdf_geography_cordex():
 
     pos = [(0, 0), (0, -1), (-1, 0), (-1, -1)]
 
+    assert ds.geography.shape() == (19, 15)
+
     # we must check multiple fields
     for idx in range(2):
+        assert ds[idx].geography.shape() == (19, 15)
+        assert ds[idx].shape == (19, 15)
+        assert ds[idx].geography.to_dict()["grid_type"] == "unstructured"
+
         lat, lon = ds[idx].geography.latlons()
 
         # lon
