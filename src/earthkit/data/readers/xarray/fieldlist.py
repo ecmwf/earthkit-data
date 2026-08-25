@@ -137,8 +137,14 @@ class XArrayFieldList(IndexFieldListBase):
         XarrayFieldList
             The created XarrayFieldList.
         """
-        if patch is not None:
-            ds = patch_dataset(ds, patch)
+        if patch is None:
+            patch = {}
+
+        if "levelist" not in patch:
+            patch["levelist"] = None
+
+        assert patch
+        ds = patch_dataset(ds, patch)
 
         variables: List[Variable] = []
 
@@ -241,6 +247,7 @@ class XArrayFieldList(IndexFieldListBase):
                    * level    (level) int64 16B 700 500
                      lat      (values) int64 72B 50 50 50 40 40 40 30 30 30
                      lon      (values) int64 72B 0 10 20 0 10 20 0 10 20
+                     values   (values) int64 72B 0 1 2 3 4 5 6 7 8
                  Dimensions without coordinates: values
                  Data variables:
                      a        (level, values) int64 144B 11 12 13 21 22 23 ... 24 25 26 34 35 36
@@ -250,7 +257,7 @@ class XArrayFieldList(IndexFieldListBase):
 
                 g = [c for c in coordinates if c.is_grid]
 
-                for i, c in enumerate(coordinates):
+                for c in coordinates:
                     if c.is_dim and isinstance(c, UnsupportedCoordinate):
                         for cx in g:
                             if c.name in cx.variable.sizes:

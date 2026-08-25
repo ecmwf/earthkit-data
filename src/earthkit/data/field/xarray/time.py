@@ -17,12 +17,13 @@ from earthkit.data.readers.xarray.coordinates import extract_single_value, is_sc
 
 def from_xarray(owner, selection):
     _coords = {}
-    for coord_name, coord_value in selection.coords.items():
-        if is_scalar(coord_value):
-            # Extract the single value from the scalar dimension
-            # and store it in the metadata
-            coordinate = owner.by_name[coord_name]
-            _coords[coord_name] = coordinate.normalise(extract_single_value(coord_value))
+
+    for coord in owner.coordinates:
+        if coord.is_time or coord.is_step:
+            name = coord.name
+            v = selection.coords.get(name, None)
+            if v is not None and is_scalar(v):
+                _coords[name] = coord.normalise(extract_single_value(v))
 
     return owner.time.spec(_coords)
 
@@ -34,16 +35,3 @@ class XArrayTimeHandler(TimeFieldComponentHandler):
 
         part = create_time(from_xarray(owner, selection))
         super().__init__(part)
-
-    # @thread_safe_cached_property
-    # def spec(self):
-    #     """Return the time specification."""
-    #     _coords = {}
-    #     for coord_name, coord_value in self.selection.coords.items():
-    #         if is_scalar(coord_value):
-    #             # Extract the single value from the scalar dimension
-    #             # and store it in the metadata
-    #             coordinate = self.owner.by_name[coord_name]
-    #             _coords[coord_name] = coordinate.normalise(extract_single_value(coord_value))
-
-    #     return self.owner.time.spec(_coords)

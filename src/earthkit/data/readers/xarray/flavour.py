@@ -794,7 +794,8 @@ class DefaultCoordinateGuesser(CoordinateGuesser):
             return LevelCoordinate(c, "pl")
 
         if attributes.name in ("level", "levelist"):
-            return LevelCoordinate(c, "pl")
+            levtype = c.attrs.get("levtype", "pl")
+            return LevelCoordinate(c, levtype)
 
         if attributes.name == "vertical" and attributes.units == "hPa":
             return LevelCoordinate(c, "pl")

@@ -28,13 +28,21 @@ def test_covjson_to_xarray_time_series():
     a = ds.to_xarray()
     assert len(a.data_vars) == 1
 
-    # ds1 = from_object(a).to_fieldlist()
-    # assert ds1
-    # assert len(ds1) == 9
-    # assert ds1.get("parameter.variable") == ["2t"] * 9
 
-    # assert ds1[0].vertical.level() == 0
-    # assert ds1[0].vertical.level_type() == "surface"
+@pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")
+def test_covjson_to_fieldlist_time_series():
+    ds = from_source("file", earthkit_test_data_file("time_series.covjson"))
+    assert ds
+
+    a = ds.to_xarray()
+
+    fl = from_object(a).to_fieldlist()
+    assert fl
+    assert len(fl) == 9
+    assert fl.get("parameter.variable") == ["2t"] * 9
+
+    assert fl[0].vertical.level() == 0
+    assert fl[0].vertical.level_type() == "surface"
 
 
 @pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")
@@ -44,10 +52,17 @@ def test_covjson_to_xarray_points():
     a = ds.to_xarray()
     assert len(a.data_vars) == 2
 
-    ds1 = from_object(a).to_fieldlist()
-    assert ds1
-    assert len(ds1) == 2
-    assert ds1.get("parameter.variable") == ["10u", "2t"]
+
+@pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")
+def test_covjson_to_fieldlist_points():
+    ds = from_source("file", earthkit_test_data_file("points.covjson"))
+    assert ds
+    a = ds.to_xarray()
+
+    fl = from_object(a).to_fieldlist()
+    assert fl
+    assert len(fl) == 2
+    assert fl.get("parameter.variable") == ["10u", "2t"]
 
 
 @pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")
