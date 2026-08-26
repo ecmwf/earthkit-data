@@ -259,6 +259,73 @@ def patch_rolling_operation(
     return ds
 
 
+def patch_levelist(ds: xr.Dataset, *args) -> xr.Dataset:
+    """Patch the levelist coordinate of the dataset.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        The dataset to patch.
+    *args : Any
+        Additional positional arguments (not used).
+
+    Returns
+    -------
+    xr.Dataset
+        The patched dataset.
+
+    Notes
+    -----
+    This function handles the special case of the 'levelist' coordinate when it does not
+    have the standard_name or long_name attributes. It checks for the 'levtype' attribute in the
+    dataset's attributes, which indicates the type of vertical coordinate (e.g., 'pl' for pressure levels,
+    'ml' for model levels, etc.) and add it to the 'levelist' coordinate. It also handles cases where
+    the 'levelist' coordinate has values which may contain string values like 'sfc' (surface). It converts
+    such values to numeric representations (e.g., 0 for 'sfc').
+
+    The rationale behind this is that in the ECMWF MARS archive levelist is used for the list of levels
+    in a field, while levtype defines the level type, its default value is "pl". Therefore if the levelist
+    coordinate is present we assume the dataset uses the MARS vocabulary.
+
+    Using the str `sfc` as a level value occurs when covjson data retrieved from a polytope service
+    is converted to Xarray. The `sfc` value is not a valid numeric level, so it is converted to 0 in
+    this patch.
+
+    An example of a dataset with a 'levelist' coordinate that may require this patch is
+    shown below::
+
+        Dimensions:   (latitude: 1, longitude: 1, levelist: 1, number: 1, datetime: 1, t: 9)
+        Coordinates:
+          * levelist   (levelist) <U3 12B 'sfc'
+          ...
+        Data variables:
+            2t         (latitude, longitude, levelist, number, datetime, t) float64 72B ...
+
+        Global attributes:
+            levtype:        sfc
+
+    """
+    if "levelist" in ds.coords:
+        coord = ds.coords["levelist"]
+        if not any(x in coord.attrs for x in ["standard_name", "long_name"]):
+            levtype = ds.attrs.get("levtype", None)
+            if levtype is not None:
+                coord.attrs["levtype"] = levtype
+
+            if coord.values is not None and len(coord.values) > 0:
+                if "sfc" in coord.values:
+                    attrs = dict(coord.attrs)
+                    if levtype is None:
+                        attrs["levtype"] = "sfc"
+
+                    # levelist is a dimension coordinate, so its values cannot be
+                    # assigned directly, assign_coords() has to be used instead
+                    values = [0 if v == "sfc" else v for v in coord.values]
+                    ds = ds.assign_coords(levelist=xr.DataArray(values, dims="levelist", attrs=attrs))
+
+    return ds
+
+
 PATCHES = {
     "attributes": patch_attributes,
     "coordinates": patch_coordinates,
@@ -267,6 +334,7 @@ PATCHES = {
     "analysis_lead_to_valid_time": patch_analysis_lead_to_valid_time,
     "rolling_operation": patch_rolling_operation,
     "subset_dataset": patch_subset_dataset,
+    "levelist": patch_levelist,
 }
 
 
@@ -293,6 +361,7 @@ def patch_dataset(ds: xr.Dataset, patch: dict[str, dict[str, Any]]) -> Any:
         "subset_dataset",
         "analysis_lead_to_valid_time",
         "rolling_operation",
+        "levelist",
     ]
     for what, values in sorted(patch.items(), key=lambda x: ORDER.index(x[0])):
         if what not in PATCHES:
