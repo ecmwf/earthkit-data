@@ -27,6 +27,8 @@ class ECFSRetriever(FileSource):
         super().__init__(url, **kwargs)
 
         extension = "".join(pathlib.Path(url).suffixes)
+        if not extension:
+            extension = None
 
         self.path = self._cache_file(self._fetch, url, force=force, extension=extension)
 
