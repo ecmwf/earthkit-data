@@ -259,13 +259,15 @@ def patch_rolling_operation(
     return ds
 
 
-def patch_levelist(ds: xr.Dataset, *args, **kwargs) -> xr.Dataset:
+def patch_levelist(ds: xr.Dataset, *args) -> xr.Dataset:
     """Patch the levelist coordinate of the dataset.
 
     Parameters
     ----------
     ds : xr.Dataset
         The dataset to patch.
+    *args : Any
+        Additional positional arguments (not used).
 
     Returns
     -------
@@ -275,11 +277,19 @@ def patch_levelist(ds: xr.Dataset, *args, **kwargs) -> xr.Dataset:
     Notes
     -----
     This function handles the special case of the 'levelist' coordinate when it does not
-    have standard_name or long_name attributes. It checks for the 'levtype' attribute in the
+    have the standard_name or long_name attributes. It checks for the 'levtype' attribute in the
     dataset's attributes, which indicates the type of vertical coordinate (e.g., 'pl' for pressure levels,
     'ml' for model levels, etc.) and add it to the 'levelist' coordinate. It also handles cases where
     the 'levelist' coordinate has values which may contain string values like 'sfc' (surface). It converts
     such values to numeric representations (e.g., 0 for 'sfc').
+
+    The rationale behind this is that in the ECMWF MARS archive levelist is used for the list of levels
+    in a field, while levtype defines the level type, its default value is "pl". Therefore if the levelist
+    coordinate is present we assume the dataset uses the MARS vocabulary.
+
+    Using the str `sfc` as a level value occurs when covjson data retrieved from a polytope service
+    is converted to Xarray. The `sfc` value is not a valid numeric level, so it is converted to 0 in
+    this patch.
 
     An example of a dataset with a 'levelist' coordinate that may require this patch is
     shown below::
