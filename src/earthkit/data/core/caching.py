@@ -1042,6 +1042,8 @@ def cache_file(
             ),
         )
 
+        print(f"1 Creating temporary file {path}")
+
         record = CACHE._register_cache_file(path, owner, args)
         if os.path.exists(path):
             if callable(force):
@@ -1085,6 +1087,8 @@ def cache_file(
                 extension,
             ),
         )
+
+        print(f"2 Creating temporary file {path}")
 
         if not os.path.exists(path):
             from filelock import FileLock
