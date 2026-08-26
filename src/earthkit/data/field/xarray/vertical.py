@@ -40,9 +40,9 @@ def get_level(coord, selection):
 
     v = selection[name].values
     if len(v.shape) == 0:
-        return v.item()
+        return coord.normalise(v.item())
     else:
-        return v[0]
+        return coord.normalise(v[0])
 
 
 def get_level_type(coord):
