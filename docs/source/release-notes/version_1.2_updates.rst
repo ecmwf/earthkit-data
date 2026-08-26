@@ -4,6 +4,16 @@ Version 1.2 Updates
 ///////////////////////
 
 
+
+Version 1.2.2
+==============
+
+Fixes
+++++++++++++
+
+- Fixed issue when the :ref:`data-sources-ecfs` source could not retrieve tar files  (:pr:`1122`)
+
+
 Version 1.2.1
 ==============
 
