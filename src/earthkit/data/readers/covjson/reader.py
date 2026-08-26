@@ -35,7 +35,15 @@ class GeojsonMixIn:
         return decoder.to_geojson()
 
 
-class CovjsonReader(XarrayMixIn, GeojsonMixIn, CovJsonReaderBase):
+class FieldlistMixIn:
+    def to_fieldlist(self, **kwargs):
+        from earthkit.data.data.wrappers import from_object
+
+        ds = from_object(self.to_xarray())
+        return ds.to_fieldlist(**kwargs)
+
+
+class CovjsonReader(XarrayMixIn, GeojsonMixIn, FieldlistMixIn, CovJsonReaderBase):
     def __init__(self, source, path):
         CovJsonReaderBase.__init__(self, source, path)
 
@@ -127,7 +135,7 @@ class CovjsonMemoryReader(Source):
     #     return encoder._encode_xarray(self.to_xarray(), **kwargs)
 
 
-class CovjsonInMemory(Source, XarrayMixIn, Encodable):
+class CovjsonInMemory(Source, XarrayMixIn, GeojsonMixIn, FieldlistMixIn, Encodable):
     def __init__(self, data):
         self.data = data
 
