@@ -80,10 +80,11 @@ EXTENSIONS_TO_SKIP = (".npz",)  # Numpy arrays
 
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
-    _, extension = os.path.splitext(path)
+    if magic is not None:
+        _, extension = os.path.splitext(path)
 
-    if magic[:4] == b"PK\x03\x04" and extension not in EXTENSIONS_TO_SKIP:
-        return ZIPReader(source, path)
+        if magic[:4] == b"PK\x03\x04" and extension not in EXTENSIONS_TO_SKIP:
+            return ZIPReader(source, path)
 
 
 READER = reader
