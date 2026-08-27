@@ -57,9 +57,6 @@ class ZIPReader(ArchiveReader):
                     self._mutate = CSVReader(source, path, compression="zip")
                     return  # Pandas can read zipped files directly
 
-            if ".zattrs" in members:
-                return  # Zarr can read zipped files directly
-
             self.expand(zip, members)
 
     def check(self, member):
