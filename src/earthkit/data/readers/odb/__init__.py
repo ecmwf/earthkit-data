@@ -12,7 +12,7 @@ def _match_magic(magic, deeper_check):
     if magic is not None:
         type_id = b"\xff\xffODA"
         if not deeper_check:
-            return len(magic) >= 5 and magic[:5] == type_id
+            return magic[:5] == type_id
         else:
             return type_id in magic
     return False
