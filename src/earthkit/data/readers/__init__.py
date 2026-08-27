@@ -178,16 +178,6 @@ def _unknown(method_name, source, path_or_data, **kwargs):
     return unknowns[method_name](source, path_or_data, **kwargs)
 
 
-def _non_existing(source, path, **kwargs):
-    if hasattr(source, "empty_reader"):
-        return source.empty_reader(path, **kwargs)
-
-
-def _empty(source, path, **kwargs):
-    if hasattr(source, "empty_reader"):
-        return source.empty_reader(path, **kwargs)
-
-
 def reader(source, path, **kwargs):
     """Create the reader for a file/directory specified by path."""
     assert isinstance(path, str), source
@@ -203,9 +193,6 @@ def reader(source, path, **kwargs):
         raise TypeError("Provided reader must be a callable or a string, not %s" % type(reader))
 
     if not os.path.exists(path):
-        r = _non_existing(source, path, **kwargs)
-        if r is not None:
-            return r
         raise FileNotFoundError(f"No such file exists: '{path}'")
 
     LOG.debug("Reader for %s", path)
@@ -214,10 +201,6 @@ def reader(source, path, **kwargs):
         magic = None
     else:
         if os.path.getsize(path) == 0:
-            r = _empty(source, path, **kwargs)
-            if r is not None:
-                return r
-
             from earthkit.data.utils.exceptions import EmptyFileError
 
             raise EmptyFileError(f"File is empty: '{path}'")

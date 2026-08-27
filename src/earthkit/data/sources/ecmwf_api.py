@@ -111,8 +111,8 @@ class ECMWFAPI(FileSource):
             **kwargs,
         )
 
-    def empty_reader(self, *args, **kwargs):
-        if self.expect_any:
-            from .empty import EmptySource
+    # def empty_reader(self, *args, **kwargs):
+    #     if self.expect_any:
+    #         from .empty import EmptySource
 
-            return EmptySource()
+    #         return EmptySource()
