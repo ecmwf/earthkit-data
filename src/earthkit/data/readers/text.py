@@ -39,15 +39,6 @@ class TextReader(Reader):
         # Used by multi-source
         return True
 
-    def mutate(self):
-        from .csv import is_csv
-        from .csv.reader import CSVReader
-
-        if is_csv(self.path):
-            return CSVReader(self.source, self.path)
-
-        return self
-
     def to_data_object(self, **kwargs):
         from earthkit.data.data.text import TextData
 

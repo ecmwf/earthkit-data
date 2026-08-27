@@ -35,11 +35,11 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
         return _reader()
 
     extension = pathlib.Path(path).suffix
-    if extension in [".covjson"]:
+    if extension == ".covjson":
         return _reader()
 
     kind, _ = mimetypes.guess_type(path)
-    if kind in ["application/prs.cov+json"]:
+    if kind == "application/prs.cov+json":
         return _reader()
 
 
