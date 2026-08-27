@@ -11,16 +11,17 @@
 from . import Reader
 
 
-def is_text(path, prob_lines=1000, probe_size=4096):
+def is_probably_text(path, probe_size=4096):
     try:
         with open(path, "rb") as f:
-            if 0x0 in f.read(probe_size):
-                return False
+            data = f.read(probe_size)
 
-        with open(path, "r", encoding="utf-8") as f:
-            for i, _ in enumerate(f):
-                if i > prob_lines:
-                    break
+        # if NUL byte, probably binary
+        # and not text
+        if 0x0 in data:
+            return False
+
+        data.decode("utf-8")
         return True
     except UnicodeDecodeError:
         return False
@@ -58,7 +59,7 @@ class TextReader(Reader):
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if deeper_check:
-        if is_text(path):
+        if is_probably_text(path):
             return TextReader(source, path)
 
 
