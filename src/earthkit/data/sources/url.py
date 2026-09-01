@@ -168,6 +168,7 @@ class UrlBase(FileSource):
         fake_headers=None,  # When HEAD is not allowed but you know the size
         stream=False,
         auth=None,
+        session=None,
         **kwargs,
     ):
         super().__init__(filter=filter, merger=merger)
@@ -185,6 +186,7 @@ class UrlBase(FileSource):
                 http_headers=http_headers,
                 fake_headers=fake_headers,
                 auth=auth,
+                session=session,
             )
             self.url_spec = UrlSpec.from_urls(url, **url_kwargs)
 
