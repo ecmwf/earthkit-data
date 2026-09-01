@@ -9,7 +9,7 @@
 
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
-    if path.endswith(".pp"):
+    if magic is not None and path.endswith(".pp"):
         from .reader import PPReader
 
         return PPReader(source, path)

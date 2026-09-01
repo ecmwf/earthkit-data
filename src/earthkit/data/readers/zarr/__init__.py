@@ -12,10 +12,11 @@ import os
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if (
-        os.path.exists(os.path.join(path, ".zarray"))
+        magic is None and
+        (os.path.exists(os.path.join(path, ".zarray"))
         or os.path.exists(os.path.join(path, ".zgroup"))
         or os.path.exists(os.path.join(path, ".zmetadata"))
-        or os.path.exists(os.path.join(path, ".zattrs"))
+        or os.path.exists(os.path.join(path, ".zattrs")))
     ):
         from .reader import ZarrReader
 

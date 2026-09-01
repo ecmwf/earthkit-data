@@ -15,7 +15,7 @@ def _match_magic(magic, deeper_check):
     if magic is not None and len(magic) > 0:
         type_id = b"GRIB"
         if not deeper_check:
-            return len(magic) >= 4 and magic[:4] == type_id
+            return magic[:4] == type_id
         else:
             return type_id in magic
     return False
