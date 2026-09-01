@@ -12,6 +12,7 @@
 import os
 
 import earthkit.data
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 def test_unknown_reader():
@@ -19,7 +20,6 @@ def test_unknown_reader():
         "file",
         os.path.join(os.path.dirname(__file__), "unknown_file.unknown_ext"),
     )
-    print(s)
     assert isinstance(s._reader, earthkit.data.readers.unknown.UnknownReader)
 
 
@@ -28,8 +28,30 @@ def test_text_reader():
         "file",
         os.path.join(os.path.dirname(__file__), "unknown_text_file.unknown_ext"),
     )
-    print(s)
     assert isinstance(s._reader, earthkit.data.readers.text.TextReader)
+
+
+def test_unknown_reader_from_tar_1():
+    d = earthkit.data.from_source(
+        "file",
+        earthkit_test_data_file("binary_unknown.tar"),
+    )
+
+    print(f"test_unknown_reader_from_tar: d={d}")
+
+    assert d
+
+
+def test_unknown_reader_from_tar_2():
+    d = earthkit.data.from_source(
+        "file",
+        earthkit_test_data_file("binary_unknown.tar"),
+        merger=False,
+    )
+
+    print(f"test_unknown_reader_from_tar: d={d}")
+
+    assert d
 
 
 if __name__ == "__main__":

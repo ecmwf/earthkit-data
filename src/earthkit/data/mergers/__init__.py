@@ -44,6 +44,7 @@ def _flatten(sources):
 
 def merge_by_class(sources):
     common = _nearest_common_class(sources)
+    print(f"merge_by_class: common={common}")  # --- IGNORE ---
     return common.merge(sources)
 
 

@@ -7,9 +7,30 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.data.sources import Source
 
-from earthkit.data.indexing.empty import EmptyFieldList
+# EmptySource = EmptyFieldList
 
-EmptySource = EmptyFieldList
+
+class EmptySource(Source):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def mutate(self):
+        return self
+
+    def ignore(self):
+        return True
+
+    def to_fieldlist(self, *args, **kwargs):
+        from earthkit.data.indexing.empty import EmptyFieldList
+
+        return EmptyFieldList()
+
+    def to_data_object(self):
+        from earthkit.data.data.empty import EmptyData
+
+        return EmptyData()
+
 
 source = EmptySource

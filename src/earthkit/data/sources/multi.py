@@ -27,7 +27,17 @@ class MultiSource(Source):
             sources = sources[0]
 
         sources = self._from_sources(sources)
-        self.sources = [s.mutate() for s in self._flatten(sources) if not s.ignore()]
+
+        for s in sources:
+            print(f"1 {s} type={type(s)}")  # --- IGNORE ---
+
+        if merger is False:
+            self.sources = [s.mutate() for s in self._flatten(sources)]
+        else:
+            self.sources = [s.mutate() for s in self._flatten(sources) if not s.ignore()]
+
+        for s in self.sources:
+            print(f"2 {s} type={type(s)}")  # --- IGNORE ---
 
         self.filter = filter
         self.merger = merger
@@ -44,6 +54,7 @@ class MultiSource(Source):
         return len(self.sources) == 0
 
     def mutate(self):
+        print(f"MultiSource: mutate: {len(self.sources)} sources")  # --- IGNORE ---
         if len(self.sources) == 1:
             return self.sources[0].mutate()
 
@@ -51,12 +62,15 @@ class MultiSource(Source):
             return EmptySource()
 
         if self.merger is None:
+            print(f"MultiSource: trying to merge {len(self.sources)} sources")  # --- IGNORE ---
             try:
                 merged = merge_by_class(self.sources)
                 if merged is not None:
                     return merged.mutate()
             except Exception:
                 pass
+
+        print(f"MultiSource: could not merge {len(self.sources)} sources")  # --- IGNORE ---
         return self
 
     # def _set_dataset(self, dataset):

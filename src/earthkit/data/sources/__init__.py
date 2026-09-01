@@ -465,9 +465,11 @@ def _from_source_internal(name: str, *args, lazily=False, **kwargs) -> Source:
 
     prev = None
     src = get_source(name, *args, **kwargs)
+    print(f"from_source: start -> type={type(src)}")  # --- IGNORE ---
     while src is not prev:
         prev = src
         src = src.mutate()
+        print(f"from_source: after mutate -> type={type(src)}")  # --- IGNORE ---
 
     return src
 
