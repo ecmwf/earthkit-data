@@ -34,3 +34,14 @@ def test_pp_file_2():
     assert isinstance(ds[1], Field)
     assert ds[0].metadata("standard_name") == "x_wind"
     assert ds[1].metadata("standard_name") == "y_wind"
+
+
+def test_invalid_kwargs():
+    with pytest.raises(TypeError):
+        from_source("file", earthkit_examples_file("air_temp.pp"), grib_handle_policy=None)
+
+
+if __name__ == "__main__":
+    from earthkit.data.utils.testing import main
+
+    main(__file__)

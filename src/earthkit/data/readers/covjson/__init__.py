@@ -27,15 +27,15 @@ def _match_magic(magic, deeper_check):
 
 def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     def _reader():
-        from .reader import CovjsonReader
+        from .reader import CovJSONReader
 
-        return CovjsonReader(source, path)
+        return CovJSONReader(source, path, **kwargs)
 
     if _match_content_type(content_type) or _match_magic(magic, deeper_check):
         return _reader()
 
     extension = pathlib.Path(path).suffix
-    if extension in [".covjson"]:
+    if extension == ".covjson":
         return _reader()
 
     kind, _ = mimetypes.guess_type(path)
@@ -45,9 +45,9 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
 
 def memory_reader(source, buffer, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_content_type(content_type) or _match_magic(magic, deeper_check):
-        from .reader import CovjsonMemoryReader
+        from .reader import CovJSONMemoryReader
 
-        return CovjsonMemoryReader(buffer)
+        return CovJSONMemoryReader(buffer)
 
 
 def stream_reader(
@@ -61,13 +61,9 @@ def stream_reader(
     **kwargs,
 ):
     if _match_content_type(content_type) or _match_magic(magic, deeper_check):
-        # if memory:
-        #     from .reader import CovjsonMemoryReader
+        from .reader import CovJSONStreamReader
 
-        #     return CovjsonMemoryReader._from_stream(stream)
-        from .reader import CovjsonStreamReader
-
-        return CovjsonStreamReader(stream)
+        return CovJSONStreamReader(stream)
 
 
 READER = reader

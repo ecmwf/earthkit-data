@@ -18,11 +18,11 @@ def _match_magic(magic, deeper_check):
     return False
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic, deeper_check):
         from .reader import ODBReader
 
-        return ODBReader(source, path)
+        return ODBReader(source, path, **kwargs)
 
 
 READER = reader

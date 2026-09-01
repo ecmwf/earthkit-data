@@ -10,7 +10,7 @@
 import os
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if (
         os.path.exists(os.path.join(path, ".zarray"))
         or os.path.exists(os.path.join(path, ".zgroup"))
@@ -19,7 +19,7 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     ):
         from .reader import ZarrReader
 
-        return ZarrReader(source, path)
+        return ZarrReader(source, path, **kwargs)
 
 
 READER = reader

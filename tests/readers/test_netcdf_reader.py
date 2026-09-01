@@ -257,6 +257,11 @@ def test_netcdf_lazy_fieldlist_scan():
     assert len(ds) == 2
 
 
+def test_invalid_kwargs():
+    with pytest.raises(TypeError):
+        from_source("file", earthkit_test_data_file("hovexp_vert_area.nc"), grib_handle_policy=None)
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

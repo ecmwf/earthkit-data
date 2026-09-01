@@ -56,10 +56,10 @@ class TextReader(Reader):
         return None
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if deeper_check:
         if is_text(path):
-            return TextReader(source, path)
+            return TextReader(source, path, **kwargs)
 
 
 READER = reader
