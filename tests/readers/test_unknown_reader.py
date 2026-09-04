@@ -39,7 +39,8 @@ def test_unknown_reader_from_tar_1():
 
     print(f"test_unknown_reader_from_tar: d={d}")
 
-    assert d
+    assert d.available_types == ["fieldlist"]
+    assert len(d.to_fieldlist()) == 0
 
 
 def test_unknown_reader_from_tar_2():
@@ -51,10 +52,5 @@ def test_unknown_reader_from_tar_2():
 
     print(f"test_unknown_reader_from_tar: d={d}")
 
-    assert d
-
-
-if __name__ == "__main__":
-    from earthkit.data.utils.testing import main
-
-    main(__file__)
+    assert d.available_types == []
+    assert len(d.path) == 2

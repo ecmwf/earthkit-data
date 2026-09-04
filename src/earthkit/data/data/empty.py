@@ -22,7 +22,7 @@ class EmptyData(SimpleData):
     @property
     def available_types(self):
         """list[str] or None: Return the list of available types that this data object can be converted to."""
-        return self._FIELDLIST
+        return [self._FIELDLIST]
 
     def describe(self):
         """Provide a description of the data.

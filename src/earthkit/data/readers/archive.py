@@ -63,7 +63,11 @@ class ArchiveReader(Reader):
             for member in tqdm(iterable=members, total=len(members), leave=False):
                 if not self.check(member):
                     continue
+
+                print("Extracting member:", member.name, "to target:", target)
                 archive.extract(member=member, path=target, **kwargs)
+
+        print("MEMBERS", members)
 
         try:
             r = os.stat(self.path)
@@ -73,6 +77,7 @@ class ArchiveReader(Reader):
             fsize = 0
             mtime = 0
 
+        print("TAR creating cache for:", self.path)  # --- IGNORE ---
         self.path = self._cache_file(
             unpack,
             [self.path, fsize, mtime],

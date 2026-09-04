@@ -56,6 +56,7 @@ class MultiData(SimpleData):
         types = set()
         try:
             for d in self._datas():
+                print(d, "available_types:", d.available_types)
                 types.update(d.available_types)
             return sorted(types)
         except Exception:
@@ -128,15 +129,23 @@ class MultiData(SimpleData):
         NotImplementedError
             If conversion to FieldList is not implemented for this combination of sources.
         """
-        if "fieldlist" not in self.available_types:
-            raise NotImplementedError("Cannot convert this MultiData object to a fieldlist")
+        # if "fieldlist" not in self.available_types:
+        #     raise NotImplementedError("Cannot convert this MultiData object to a fieldlist")
 
         # TODO: review this merger usage
         data = self._datas()
-        fs = [d.to_fieldlist(*args, **kwargs) for d in data]
+        fl = []
+        for d in data:
+            if "fieldlist" not in d.available_types:
+                continue
+            fl.append(d.to_fieldlist(*args, **kwargs))
+
+        print("fl", fl)
+
+        # fs = [d.to_fieldlist(*args, **kwargs) for d in data]
         from earthkit.data.mergers import merge_by_class
 
-        merged = merge_by_class(fs)
+        merged = merge_by_class(fl)
         if merged is not None:
             return merged.mutate()
 
