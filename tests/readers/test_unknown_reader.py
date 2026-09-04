@@ -15,20 +15,14 @@ import earthkit.data
 from earthkit.data.utils.testing import earthkit_test_data_file
 
 
-def test_unknown_reader():
-    s = earthkit.data.from_source(
+def test_unknown_reader_from_file():
+    d = earthkit.data.from_source(
         "file",
         os.path.join(os.path.dirname(__file__), "unknown_file.unknown_ext"),
     )
-    assert isinstance(s._reader, earthkit.data.readers.unknown.UnknownReader)
 
-
-def test_text_reader():
-    s = earthkit.data.from_source(
-        "file",
-        os.path.join(os.path.dirname(__file__), "unknown_text_file.unknown_ext"),
-    )
-    assert isinstance(s._reader, earthkit.data.readers.text.TextReader)
+    assert d._TYPE_NAME == "Unknown"
+    assert isinstance(d._reader, earthkit.data.readers.unknown.UnknownReader)
 
 
 def test_unknown_reader_from_tar_1():
@@ -36,8 +30,6 @@ def test_unknown_reader_from_tar_1():
         "file",
         earthkit_test_data_file("binary_unknown.tar"),
     )
-
-    print(f"test_unknown_reader_from_tar: d={d}")
 
     assert d.available_types == ["fieldlist"]
     assert len(d.to_fieldlist()) == 0

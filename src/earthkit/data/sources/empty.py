@@ -9,9 +9,6 @@
 
 from earthkit.data.sources import Source
 
-# EmptySource = EmptyFieldList
-
-
 class EmptySource(Source):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

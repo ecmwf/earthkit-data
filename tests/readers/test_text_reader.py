@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 
 # (C) Copyright 2020 ECMWF.
 #
@@ -15,8 +15,10 @@ import earthkit.data
 
 
 def test_text_reader():
-    s = earthkit.data.from_source(
+    d = earthkit.data.from_source(
         "file",
         os.path.join(os.path.dirname(__file__), "unknown_text_file.unknown_ext"),
     )
-    assert isinstance(s._reader, earthkit.data.readers.text.TextReader)
+
+    assert d._TYPE_NAME == "Text"
+    assert isinstance(d._reader, earthkit.data.readers.text.TextReader)
