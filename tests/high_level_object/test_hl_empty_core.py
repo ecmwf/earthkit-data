@@ -13,15 +13,10 @@ from earthkit.data import from_source
 from earthkit.data.utils.testing import earthkit_test_data_file
 
 
-def test_hl_text_single_core():
-    ds = from_source("file", earthkit_test_data_file("test.txt"))
+def test_hl_empty_core():
+    ds = from_source("file", [earthkit_test_data_file("binary_1"), earthkit_test_data_file("binary_2")])
 
-    assert ds._TYPE_NAME == "Text"
+    assert ds._TYPE_NAME == "Empty"
     assert ds.is_stream() is False
-    assert ds.available_types == []
-    assert isinstance(ds.path, str)
-
-    import pytest
-
-    with pytest.raises(NotImplementedError):
-        ds.to_pandas()
+    assert ds.available_types == ["fieldlist"]
+    assert ds.path is None

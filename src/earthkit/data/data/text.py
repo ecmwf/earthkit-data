@@ -26,7 +26,7 @@ class TextData(SourceData):
     @property
     def available_types(self):
         """list[str] or None: Return the list of available types that this data object can be converted to."""
-        return None
+        return []
 
     def describe(self) -> Any:
         """Provide a description of the Text data.

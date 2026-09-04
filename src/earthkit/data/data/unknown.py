@@ -15,8 +15,8 @@ class UnknownData(SourceData):
 
     @property
     def available_types(self):
-        """list[str] or None: Return the list of available types that this data object can be converted to."""
-        return None
+        """list[str]: Return the list of available types that this data object can be converted to."""
+        return []
 
     def describe(self):
         """Provide a description of the unknown data.
