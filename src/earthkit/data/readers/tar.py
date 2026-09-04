@@ -21,6 +21,7 @@ class TarReader(ArchiveReader):
         super().__init__(source, path)
 
         with tarfile.open(path) as tar:
+            print(f"Opening tar file: {path}")  # --- IGNORE ---
             self.expand(
                 tar,
                 tar.getmembers(),

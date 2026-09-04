@@ -19,13 +19,44 @@ LOG = logging.getLogger(__name__)
 # since version 0.20, xarray checks the class and change os.PathLike to
 # strings. We don't want that, as we want to keep our objects
 class WrappedSource:
+    """Opaque wrapper protecting a :class:`Source` from xarray's ``os.PathLike`` handling.
+
+    xarray (since 0.20) converts any ``os.PathLike`` argument to a plain string before it reaches a
+    backend's ``open_dataset``. Since :class:`earthkit.data.sources.file.FileSource` is itself
+    ``os.PathLike``, wrapping it in a plain object lets :class:`EKDEngine` receive the original source.
+    """
+
     def __init__(self, source):
+        """Initialize the WrappedSource.
+
+        Parameters
+        ----------
+        source : :class:`earthkit.data.sources.Source`
+            The source to wrap.
+        """
         self.source = source
 
 
 class EKDEngine(BackendEntrypoint):
+    """xarray backend entry point that opens a wrapped earthkit-data source via its ``to_xarray`` method."""
+
     @classmethod
     def open_dataset(cls, filename_or_obj, *args, **kwargs):
+        """Open a :class:`WrappedSource` as an xarray dataset.
+
+        Parameters
+        ----------
+        filename_or_obj : :class:`WrappedSource`
+            The wrapped source to open. Must be a :class:`WrappedSource` instance.
+        *args
+            Unused.
+        **kwargs
+            Unused.
+
+        Returns
+        -------
+        xarray.Dataset
+        """
         assert isinstance(filename_or_obj, WrappedSource)
         return filename_or_obj.source.to_xarray()
 
@@ -36,6 +67,25 @@ def infer_open_mfdataset_kwargs(
     reader_class=None,
     user_kwargs={},
 ):
+    """Compute the keyword arguments to pass to ``xarray.open_mfdataset``.
+
+    Parameters
+    ----------
+    sources : list of :class:`earthkit.data.sources.Source`, optional
+        The sources being merged. Currently unused (the inference logic below it is disabled).
+    paths : list of str, optional
+        The file paths being merged. Currently unused.
+    reader_class : type, optional
+        The common reader class of the sources, if any. Currently unused.
+    user_kwargs : dict, optional
+        User-supplied keyword arguments; ``user_kwargs["xarray_open_mfdataset_kwargs"]`` is merged into the
+        result, taking precedence over any inferred options.
+
+    Returns
+    -------
+    dict
+        The keyword arguments to pass to ``xarray.open_mfdataset``.
+    """
     result = {}
     result.update(user_kwargs.get("xarray_open_mfdataset_kwargs", {}))
     if False:
@@ -55,6 +105,29 @@ def merge(
     reader_class=None,
     **kwargs,
 ):
+    """Merge ``sources`` into a single xarray dataset.
+
+    Prefers, in order: a ``to_xarray_multi_from_sources``/``to_xarray_multi_from_paths`` method on
+    ``reader_class`` if available; otherwise ``xarray.open_mfdataset`` on ``paths`` if available; otherwise
+    ``xarray.open_mfdataset`` on the sources themselves, wrapped (see :class:`WrappedSource`) and opened
+    through the :class:`EKDEngine` backend.
+
+    Parameters
+    ----------
+    sources : list of :class:`earthkit.data.sources.Source`, optional
+        The sources to merge. Must not be empty.
+    paths : list of str, optional
+        The file paths of ``sources``, if they could be resolved.
+    reader_class : type, optional
+        The common reader class of ``sources``, if it could be resolved.
+    **kwargs
+        Additional keyword arguments. ``xarray_open_mfdataset_kwargs`` is used to build the options passed
+        to ``xarray.open_mfdataset`` (see :func:`infer_open_mfdataset_kwargs`).
+
+    Returns
+    -------
+    xarray.Dataset
+    """
     assert sources
 
     options = infer_open_mfdataset_kwargs(

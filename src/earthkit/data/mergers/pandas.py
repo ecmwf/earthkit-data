@@ -14,6 +14,29 @@ def merge(
     reader_class=None,
     **kwargs,
 ):
+    """Merge ``sources`` into a single pandas DataFrame.
+
+    Each source is converted with ``to_pandas()`` and the results are concatenated with
+    ``pandas.concat``.
+
+    Parameters
+    ----------
+    sources : list of :class:`earthkit.data.sources.Source`, optional
+        The sources to merge.
+    paths : list of str, optional
+        Unused.
+    reader_class : type, optional
+        Unused.
+    **kwargs
+        Additional keyword arguments. ``pandas_read_csv_kwargs``, if present, is forwarded as-is to each
+        source's ``to_pandas()`` call instead of being merged into the ``pandas.concat`` options; otherwise
+        all of ``kwargs`` is forwarded for that purpose. Any other keys are passed to ``pandas.concat``,
+        overriding the default ``ignore_index=True``.
+
+    Returns
+    -------
+    pandas.DataFrame
+    """
     import pandas as pd
 
     options = dict(ignore_index=True)  # Renumber all indices
