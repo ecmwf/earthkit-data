@@ -12,7 +12,7 @@
 import os
 
 import earthkit.data
-from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file, earthkit_test_data_file
 
 
 def test_unknown_reader_from_file():
@@ -42,7 +42,36 @@ def test_unknown_reader_from_tar_2():
         merger=False,
     )
 
-    print(f"test_unknown_reader_from_tar: d={d}")
+    assert d.available_types == []
+    assert len(d.path) == 2
+
+
+def test_unknown_reader_from_url_file():
+    d = earthkit.data.from_source(
+        "url",
+        earthkit_remote_test_data_file("binary_1"),
+    )
+
+    assert d._TYPE_NAME == "Unknown"
+    assert isinstance(d._reader, earthkit.data.readers.unknown.UnknownReader)
+
+
+def test_unknown_reader_from_url_tar_1():
+    d = earthkit.data.from_source(
+        "url",
+        earthkit_remote_test_data_file("binary_unknown.tar"),
+    )
+
+    assert d.available_types == ["fieldlist"]
+    assert len(d.to_fieldlist()) == 0
+
+
+def test_unknown_reader_from_url_tar_2():
+    d = earthkit.data.from_source(
+        "url",
+        earthkit_remote_test_data_file("binary_unknown.tar"),
+        merger=False,
+    )
 
     assert d.available_types == []
     assert len(d.path) == 2
