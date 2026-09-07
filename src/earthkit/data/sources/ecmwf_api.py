@@ -110,3 +110,9 @@ class ECMWFAPI(FileSource):
             # odc_read_odb_kwargs=odc_read_odb_kwargs,
             **kwargs,
         )
+
+    def empty_reader(self, *args, **kwargs):
+        if self.expect_any:
+            from .empty import EmptySource
+
+            return EmptySource()
