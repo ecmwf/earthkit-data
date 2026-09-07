@@ -11,7 +11,7 @@
 def _match_magic(magic, deeper_check):
     if magic is not None:
         type_id = (b"\x89HDF", b"CDF\x01", b"CDF\x02")
-        return len(magic) >= 4 and magic[:4] in type_id
+        return magic[:4] in type_id
     return False
 
 
