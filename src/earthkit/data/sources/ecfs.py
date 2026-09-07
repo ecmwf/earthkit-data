@@ -8,6 +8,7 @@
 #
 
 import logging
+import pathlib
 import subprocess
 
 from .file import FileSource
@@ -25,11 +26,11 @@ class ECFSRetriever(FileSource):
     ):
         super().__init__(url, **kwargs)
 
-        self.path = self._cache_file(
-            self._fetch,
-            url,
-            force=force,
-        )
+        extension = "".join(pathlib.Path(url).suffixes)
+        if not extension:
+            extension = None
+
+        self.path = self._cache_file(self._fetch, url, force=force, extension=extension)
 
     def _fetch(self, target, url):
         if not url.startswith("ec:"):

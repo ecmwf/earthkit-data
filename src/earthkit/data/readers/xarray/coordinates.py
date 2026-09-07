@@ -354,8 +354,12 @@ class LevelCoordinate(Coordinate):
             The normalised value.
         """
         # Some netcdf have pressure levels in float
-        if int(value) == value:
-            return int(value)
+        try:
+            if (v := int(value)) == value:
+                return v
+        except Exception as e:
+            raise ValueError(f"Cannot normalise value {value} for level coordinate {self.name}. {e}") from e
+
         return value
 
 

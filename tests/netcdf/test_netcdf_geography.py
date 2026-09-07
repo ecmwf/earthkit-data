@@ -104,7 +104,7 @@ def test_netcdf_points_2():
         assert np.isclose(y[y_idx, x_idx], 57)
 
 
-def test_netcdf_latlon():
+def test_netcdf_latlon_core():
     ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
 
     assert len(ds) == 2
@@ -114,6 +114,11 @@ def test_netcdf_latlon():
     xr_ds = xr.open_dataset(earthkit_examples_file("test.nc"))
 
     for f in ds:
+        assert f.geography.shape() == (8, 13)
+        assert ds.geography.shape() == (8, 13)
+        assert f.shape == (8, 13)
+        assert f.geography.to_dict()["grid_type"] == "regular-ll"
+
         lat, lon = f.geography.latlons()
 
         # lon
@@ -218,6 +223,10 @@ def test_netcdf_latlon_laea():
 
     # we must check multiple fields
     for idx in range(2):
+        assert ds[idx].geography.shape() == (950, 1000)
+        assert ds[idx].shape == (950, 1000)
+        assert ds[idx].geography.to_dict()["grid_type"] == "unstructured"
+
         lat, lon = ds[idx].geography.latlons()
 
         # lon
@@ -450,6 +459,50 @@ def test_netcdf_geography_1d_2(lat_name, lon_name):
         assert lon.shape == (9,)
         assert np.allclose(lat, lat.data)
         assert np.allclose(lon, lon.data)
+
+
+def test_netcdf_geography_cordex():
+    ds = from_source("file", earthkit_test_data_file("cordex.nc")).to_fieldlist()
+
+    assert len(ds) == 2
+
+    pos = [(0, 0), (0, -1), (-1, 0), (-1, -1)]
+
+    assert ds.geography.shape() == (19, 15)
+
+    # we must check multiple fields
+    for idx in range(2):
+        assert ds[idx].geography.shape() == (19, 15)
+        assert ds[idx].shape == (19, 15)
+        assert ds[idx].geography.to_dict()["grid_type"] == "unstructured"
+
+        lat, lon = ds[idx].geography.latlons()
+
+        # lon
+        assert isinstance(lon, np.ndarray)
+        assert lon.shape == (19, 15)
+
+        ref = np.array([
+            10.598002,
+            12.565728,
+            10.328211,
+            12.366973,
+        ])
+        for i, point in enumerate(pos):
+            assert np.isclose(lon[point], ref[i]), f"{i=}, {point=}"
+
+        # lat
+        assert isinstance(lat, np.ndarray)
+        assert lat.shape == (19, 15)
+
+        ref = np.array([
+            39.901478,
+            40.034794,
+            41.870953,
+            42.009117,
+        ])
+        for i, point in enumerate(pos):
+            assert np.isclose(lat[point], ref[i]), f"{i=}, {point=}"
 
 
 if __name__ == "__main__":
