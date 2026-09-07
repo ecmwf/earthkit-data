@@ -29,11 +29,7 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
     def _reader():
         from .reader import CovJSONReader
 
-<<<<<<< HEAD
         return CovJSONReader(source, path, **kwargs)
-=======
-        return CovJSONReader(source, path)
->>>>>>> e9d871db (chore: renaming)
 
     if _match_content_type(content_type) or _match_magic(magic, deeper_check):
         return _reader()
@@ -67,12 +63,6 @@ def stream_reader(
     if _match_content_type(content_type) or _match_magic(magic, deeper_check):
         from .reader import CovJSONStreamReader
 
-<<<<<<< HEAD
-=======
-        #     return CovjsonMemoryReader._from_stream(stream)
-        from .reader import CovJSONStreamReader
-
->>>>>>> e9d871db (chore: renaming)
         return CovJSONStreamReader(stream)
 
 

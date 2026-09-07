@@ -16,10 +16,14 @@ from .core import GeoJSONReaderBase
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 class GeoJSONReader(Source, GeoJSONReaderBase):
 =======
 class GeojsonReader(Source, GeoJSONReaderBase):
 >>>>>>> e9d871db (chore: renaming)
+=======
+class GeoJSONReader(Source, GeoJSONReaderBase):
+>>>>>>> 0d62d9a5 (fix: rename)
     def __init__(self, source, path):
         self._ori_source = source
         GeoJSONReaderBase.__init__(self, source, path)

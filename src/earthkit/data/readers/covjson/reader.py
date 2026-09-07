@@ -45,6 +45,7 @@ class FieldlistMixIn:
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 class CovJSONReader(XarrayMixIn, GeoJSONMixIn, FieldlistMixIn, CovJSONReaderBase):
 =======
 class CovJSONReader(XarrayMixIn, GeojsonMixIn, CovJSONReaderBase):
@@ -52,6 +53,9 @@ class CovJSONReader(XarrayMixIn, GeojsonMixIn, CovJSONReaderBase):
 =======
 class CovJSONReader(XarrayMixIn, GeojsonMixIn, FieldlistMixIn, CovJSONReaderBase):
 >>>>>>> e9d871db (chore: renaming)
+=======
+class CovJSONReader(XarrayMixIn, GeoJSONMixIn, FieldlistMixIn, CovJSONReaderBase):
+>>>>>>> 0d62d9a5 (fix: rename)
     def __init__(self, source, path):
         CovJSONReaderBase.__init__(self, source, path)
 
@@ -145,6 +149,7 @@ class CovJSONMemoryReader(Source):
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 class CovJSONInMemory(Source, XarrayMixIn, GeoJSONMixIn, FieldlistMixIn, Encodable):
 =======
 class CovJSONInMemory(Source, XarrayMixIn, Encodable):
@@ -152,6 +157,9 @@ class CovJSONInMemory(Source, XarrayMixIn, Encodable):
 =======
 class CovJSONInMemory(Source, XarrayMixIn, GeojsonMixIn, FieldlistMixIn, Encodable):
 >>>>>>> e9d871db (chore: renaming)
+=======
+class CovJSONInMemory(Source, XarrayMixIn, GeoJSONMixIn, FieldlistMixIn, Encodable):
+>>>>>>> 0d62d9a5 (fix: rename)
     def __init__(self, data):
         self.data = data
 
