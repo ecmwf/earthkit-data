@@ -15,7 +15,11 @@ from earthkit.data.sources import Source
 from .core import GeoJSONReaderBase
 
 
+<<<<<<< HEAD
 class GeoJSONReader(Source, GeoJSONReaderBase):
+=======
+class GeojsonReader(Source, GeoJSONReaderBase):
+>>>>>>> e9d871db (chore: renaming)
     def __init__(self, source, path):
         self._ori_source = source
         GeoJSONReaderBase.__init__(self, source, path)
