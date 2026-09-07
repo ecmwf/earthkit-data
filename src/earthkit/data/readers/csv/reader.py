@@ -22,11 +22,8 @@ class CSVReader(Reader):
     r"""Class representing CSV data"""
 
     def __init__(self, source, path, compression=None):
-        from . import probe_csv
-
         super().__init__(source, path)
         self.compression = compression
-        self.dialect, self.has_header = probe_csv(path, compression=compression)
 
     def to_pandas(self, comment="#", pandas_read_csv_kwargs=None):
         """Convert CSV data into a :py:class:`pandas.DataFrame` using :py:func:`pandas.read_csv`.
