@@ -7,12 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-import csv
-import io
 import logging
 import mimetypes
-import os
-import zipfile
 
 LOG = logging.getLogger(__name__)
 
