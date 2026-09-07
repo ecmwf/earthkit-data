@@ -127,9 +127,9 @@ class CovJSONMemoryReader(Source):
         return CovJSONMemoryReader(d)
 
     def to_data_object(self):
-        from earthkit.data.data.covjson import CovJsonData
+        from earthkit.data.data.covjson import CovJSONData
 
-        return CovJsonData(self)
+        return CovJSONData(self)
 
     # def _encode_default(self, encoder, **kwargs):
     #     return encoder._encode_xarray(self.to_xarray(), **kwargs)
