@@ -258,7 +258,7 @@ def test_netcdf_lazy_fieldlist_scan():
 
 
 def test_invalid_kwargs():
-    with pytest.raises(TypeError):
+    with pytest.warns(UserWarning):
         from_source("file", earthkit_test_data_file("hovexp_vert_area.nc"), grib_handle_policy=None)
 
 

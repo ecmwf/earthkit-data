@@ -45,7 +45,7 @@ def test_dummy_grib():
 
 
 def test_invalid_kwargs():
-    with pytest.raises(TypeError):
+    with pytest.warns(UserWarning):
         from_source("file", earthkit_examples_file("tuv_pl.grib"), banana=True)
 
 

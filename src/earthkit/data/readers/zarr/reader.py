@@ -8,6 +8,8 @@
 #
 
 
+import warnings
+
 from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
 
 from .core import ZarrReaderBase
@@ -15,6 +17,14 @@ from .core import ZarrReaderBase
 
 class ZarrReader(XArrayFieldList, ZarrReaderBase):
     def __init__(self, source, path, **kwargs):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the Zarr reader.",
+                UserWarning,
+                stacklevel=2,
+            )
+
         ZarrReaderBase.__init__(self, source, path)
 
     def mutate_source(self):

@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import warnings
+
 from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.indexing.simple import SimpleFieldListBase
@@ -189,7 +191,15 @@ class GRIBReader(Source, GRIBReaderBase):
         grib_handle_policy=None,
         grib_handle_cache_size=None,
         use_grib_metadata_cache=None,
+        **kwargs,
     ):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the GRIB reader.",
+                UserWarning,
+                stacklevel=2,
+            )
         self._ori_source = source
         self._kwargs = {
             "parts": parts,

@@ -8,6 +8,7 @@
 #
 
 import os
+import warnings
 
 import numpy as np
 
@@ -15,7 +16,14 @@ from . import Reader
 
 
 class NumpyReader(Reader):
-    def __init__(self, source, path):
+    def __init__(self, source, path, **kwargs):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the NumPy reader.",
+                UserWarning,
+                stacklevel=2,
+            )
         super().__init__(source, path)
 
     def to_numpy(self, numpy_load_kwargs={}):
@@ -26,7 +34,14 @@ class NumpyReader(Reader):
 
 
 class NumpyZipReader(Reader):
-    def __init__(self, source, path):
+    def __init__(self, source, path, **kwargs):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the NumPy ZIP reader.",
+                UserWarning,
+                stacklevel=2,
+            )
         super().__init__(source, path)
 
     def to_numpy(self, numpy_load_kwargs={}):

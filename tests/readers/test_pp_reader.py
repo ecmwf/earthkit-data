@@ -37,7 +37,7 @@ def test_pp_file_2():
 
 
 def test_invalid_kwargs():
-    with pytest.raises(TypeError):
+    with pytest.warns(UserWarning):
         from_source("file", earthkit_examples_file("air_temp.pp"), grib_handle_policy=None)
 
 
