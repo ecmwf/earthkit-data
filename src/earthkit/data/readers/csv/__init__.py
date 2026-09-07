@@ -130,11 +130,7 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
     if kind == "text/csv":
         from .reader import CSVReader
 
-<<<<<<< HEAD
         return CSVReader(source, path, compression=compression, **kwargs)
-=======
-        return CSVReader(source, path, compression=compression)
->>>>>>> 4a255edd (chore: kill dead code)
 
 
 READER = reader

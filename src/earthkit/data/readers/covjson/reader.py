@@ -35,7 +35,6 @@ class GeoJSONMixIn:
         return decoder.to_geojson()
 
 
-<<<<<<< HEAD
 class FieldlistMixIn:
     def to_fieldlist(self, **kwargs):
         from earthkit.data.data.wrappers import from_object
@@ -44,27 +43,12 @@ class FieldlistMixIn:
         return ds.to_fieldlist(**kwargs)
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 class CovJSONReader(XarrayMixIn, GeoJSONMixIn, FieldlistMixIn, CovJSONReaderBase):
-=======
-class CovJSONReader(XarrayMixIn, GeojsonMixIn, CovJSONReaderBase):
->>>>>>> 1b673843 (chore: standardise naming)
-=======
-class CovJSONReader(XarrayMixIn, GeojsonMixIn, FieldlistMixIn, CovJSONReaderBase):
->>>>>>> e9d871db (chore: renaming)
-=======
-class CovJSONReader(XarrayMixIn, GeoJSONMixIn, FieldlistMixIn, CovJSONReaderBase):
->>>>>>> 0d62d9a5 (fix: rename)
     def __init__(self, source, path):
         CovJSONReaderBase.__init__(self, source, path)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.path})"
-
-    # def mutate_source(self):
-    #     # A Covjson is a source itself
-    #     return self
 
     def _json(self):
         import json
@@ -143,23 +127,8 @@ class CovJSONMemoryReader(Source):
 
         return CovJSONData(self)
 
-    # def _encode_default(self, encoder, **kwargs):
-    #     return encoder._encode_xarray(self.to_xarray(), **kwargs)
 
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 class CovJSONInMemory(Source, XarrayMixIn, GeoJSONMixIn, FieldlistMixIn, Encodable):
-=======
-class CovJSONInMemory(Source, XarrayMixIn, Encodable):
->>>>>>> 1b673843 (chore: standardise naming)
-=======
-class CovJSONInMemory(Source, XarrayMixIn, GeojsonMixIn, FieldlistMixIn, Encodable):
->>>>>>> e9d871db (chore: renaming)
-=======
-class CovJSONInMemory(Source, XarrayMixIn, GeoJSONMixIn, FieldlistMixIn, Encodable):
->>>>>>> 0d62d9a5 (fix: rename)
     def __init__(self, data):
         self.data = data
 
