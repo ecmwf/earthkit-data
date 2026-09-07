@@ -64,10 +64,7 @@ class ArchiveReader(Reader):
                 if not self.check(member):
                     continue
 
-                print("Extracting member:", member.name, "to target:", target)
                 archive.extract(member=member, path=target, **kwargs)
-
-        print("MEMBERS", members)
 
         try:
             r = os.stat(self.path)
