@@ -14,7 +14,7 @@ from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.featurelist.simple import IndexFeatureListBase
 
-from .core import GeoJsonReaderBase
+from .core import GeoJSONReaderBase
 
 
 class GeoPandasListBase(IndexFeatureListBase):
@@ -97,9 +97,9 @@ class GeoPandasList(GeoPandasListBase):
         return self._gdf
 
 
-class GeoJsonList(GeoPandasListBase, GeoJsonReaderBase):
+class GeoJsonList(GeoPandasListBase, GeoJSONReaderBase):
     def __init__(self, path):
-        GeoJsonReaderBase.__init__(self, self, path)
+        GeoJSONReaderBase.__init__(self, self, path)
 
     @thread_safe_cached_property
     def _df(self):
