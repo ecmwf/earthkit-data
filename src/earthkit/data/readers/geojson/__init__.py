@@ -17,9 +17,9 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     geojson_extensions = ["geojson"]
     geojson_mimetypes = ["application/geo+json"]
     if ext in geojson_extensions or kind in geojson_mimetypes:
-        from .reader import GeojsonReader
+        from .reader import GeoJSONReader
 
-        return GeojsonReader(source, path)
+        return GeoJSONReader(source, path)
 
 
 READER = reader
