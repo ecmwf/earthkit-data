@@ -24,7 +24,7 @@ class XarrayMixIn:
         return decoder.to_xarray()
 
 
-class GeojsonMixIn:
+class GeoJSONMixIn:
     def to_geojson(self, **kwargs):
         try:
             from covjsonkit.api import Covjsonkit
@@ -43,7 +43,7 @@ class FieldlistMixIn:
         return ds.to_fieldlist(**kwargs)
 
 
-class CovJSONReader(XarrayMixIn, GeojsonMixIn, FieldlistMixIn, CovJSONReaderBase):
+class CovJSONReader(XarrayMixIn, GeoJSONMixIn, FieldlistMixIn, CovJSONReaderBase):
     def __init__(self, source, path):
         CovJSONReaderBase.__init__(self, source, path)
 
@@ -135,7 +135,7 @@ class CovJSONMemoryReader(Source):
     #     return encoder._encode_xarray(self.to_xarray(), **kwargs)
 
 
-class CovJSONInMemory(Source, XarrayMixIn, GeojsonMixIn, FieldlistMixIn, Encodable):
+class CovJSONInMemory(Source, XarrayMixIn, GeoJSONMixIn, FieldlistMixIn, Encodable):
     def __init__(self, data):
         self.data = data
 

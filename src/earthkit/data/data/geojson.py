@@ -121,7 +121,7 @@ class GeoJSONData(SourceData):
 
         Returns
         -------
-        :py:class:`earthkit.data.readers.geojson.file.GeoJsonList`
-            A GeoJsonList containing the GeoJSON data.
+        :py:class:`earthkit.data.readers.geojson.file.GeoJSONList`
+            A GeoJSONList containing the GeoJSON data.
         """
         return self._reader.to_featurelist()

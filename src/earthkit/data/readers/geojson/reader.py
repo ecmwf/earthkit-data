@@ -15,7 +15,7 @@ from earthkit.data.sources import Source
 from .core import GeoJSONReaderBase
 
 
-class GeojsonReader(Source, GeoJSONReaderBase):
+class GeoJSONReader(Source, GeoJSONReaderBase):
     def __init__(self, source, path):
         self._ori_source = source
         GeoJSONReaderBase.__init__(self, source, path)
@@ -32,9 +32,9 @@ class GeojsonReader(Source, GeoJSONReaderBase):
         return self.to_pandas(**kwargs).to_xarray()
 
     def to_featurelist(self, *args, **kwargs):
-        from .file import GeoJsonList
+        from .file import GeoJSONList
 
-        return GeoJsonList(self.path)
+        return GeoJSONList(self.path)
 
     def mutate_source(self):
         # A Geojson is a source itself

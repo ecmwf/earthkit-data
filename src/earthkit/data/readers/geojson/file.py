@@ -97,7 +97,7 @@ class GeoPandasList(GeoPandasListBase):
         return self._gdf
 
 
-class GeoJsonList(GeoPandasListBase, GeoJSONReaderBase):
+class GeoJSONList(GeoPandasListBase, GeoJSONReaderBase):
     def __init__(self, path):
         GeoJSONReaderBase.__init__(self, self, path)
 
