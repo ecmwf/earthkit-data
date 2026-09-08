@@ -9,7 +9,47 @@
 
 
 def concat(*args):
-    """Concatenate multiple data objects into a single one."""
+    """Concatenate multiple objects into a single one, preserving their level of abstraction.
+
+    Internally, this combines the inputs using the ``"multi"`` source (see
+    :class:`~earthkit.data.sources.multi.MultiSource` and :ref:`mergers`), then adjusts the result to match the
+    level of abstraction of the inputs: if any input was a :ref:`Data object <data-object>`, the result is
+    a ``Data`` object too; if all inputs were lower-level :class:`~earthkit.data.core.field.Field` or
+    :class:`~earthkit.data.sources.Source` objects (e.g. a :class:`~earthkit.data.core.fieldlist.FieldList`,
+    which is itself a ``Source``), the result is unwrapped back to a plain ``Source``.
+
+    Parameters
+    ----------
+    *args : Field, Data object, or Source
+        The objects to concatenate, at least one. Passing a single argument returns it unchanged, whatever
+        its type. With more than one argument, each item must be one of:
+
+        - a :class:`~earthkit.data.core.field.Field`, converted to a single-field
+          :class:`~earthkit.data.core.fieldlist.FieldList` before concatenation;
+        - a :ref:`Data object <data-object>` (e.g. as returned by :func:`earthkit.data.from_source`),
+          unwrapped to its underlying :class:`~earthkit.data.sources.Source` via its ``_source`` attribute;
+        - a :class:`~earthkit.data.sources.Source` (e.g. a ``FieldList``), used as is.
+
+        An argument of any other type is silently ignored.
+
+    Returns
+    -------
+    :class:`~earthkit.data.sources.Source` or :ref:`Data object <data-object>`
+        A single object combining all the inputs. It is a ``Data`` object if at least one input was one;
+        otherwise it is the underlying ``Source``.
+
+    Raises
+    ------
+    ValueError
+        If no arguments are given, if a ``Data`` argument has no ``_source`` attribute to unwrap it with,
+        or if the combined result could not be resolved to a valid object.
+
+    Examples
+    --------
+    >>> ds = concat(from_source("file", "a.grib"), from_source("file", "b.grib"))
+
+    >>> fl = concat(from_source("file", "a.grib").to_fieldlist(), from_source("file", "b.grib").to_fieldlist())
+    """
     if len(args) == 0:
         raise ValueError("concat requires at least one argument")
 

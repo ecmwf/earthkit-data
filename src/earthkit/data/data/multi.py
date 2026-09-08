@@ -26,18 +26,25 @@ if TYPE_CHECKING:
 
 
 class MultiData(SimpleData):
-    _TYPE_NAME = "Multi"
+    """Represent multiple sources that cannot be reduced to a single, type-specific ``Data`` object.
 
-    """Represent multiple sources that cannot be represented by a single Data object.
+    When :func:`earthkit.data.from_source` combines multiple inputs (e.g. a list of files), it first
+    attempts to mutate them into a single, type-specific :class:`~earthkit.data.data.Data` object (e.g.
+    ``GribData`` for a set of GRIB files) -- see :ref:`mergers` for how this merging works. A
+    ``MultiData`` is returned instead whenever that is not possible, which happens in two situations:
 
-    When :py:func:`earthkit.data.from_source` is called with multiple input files, earthkit-data attempts to
-    return a single, type-specific Data object (e.g. ``GribData`` for a set of GRIB files). A ``MultiData``
-    object is returned instead in two situations:
+    - the inputs are of mixed types and cannot be merged into a single typed object (e.g. one GRIB file
+      and one NetCDF file);
+    - the inputs are all of the same type, but that type does not support merging multiple inputs into
+      one object (e.g. ``CSVData`` wraps a single reader per file, so multiple CSV files always yield a
+      ``MultiData``).
 
-    - the source type does not support multiple input files (e.g. ``CSVData`` handles only one file at a time,
-      so multiple CSV files yield a ``MultiData``);
-    - the input files are of mixed types and cannot be merged into a single typed object.
+    A ``MultiData`` wraps the underlying :class:`~earthkit.data.sources.multi.MultiSource` (see
+    :obj:`_source`) and, for each conversion, builds the corresponding ``Data`` object of every
+    sub-source (see :obj:`_data_objects`) and merges those, rather than merging the raw sources directly.
     """
+
+    _TYPE_NAME = "Multi"
 
     def __init__(self, sources):
         """Initialize a MultiData object.
@@ -55,8 +62,7 @@ class MultiData(SimpleData):
         """list[str]: Return the list of available types that this data object can be converted to."""
         types = set()
         try:
-            for d in self._datas():
-                print(d, "available_types:", d.available_types)
+            for d in self._data_objects():
                 types.update(d.available_types)
             return sorted(types)
         except Exception:
@@ -77,13 +83,43 @@ class MultiData(SimpleData):
         """Deprecated. Access to the underlying sources is no longer part of the public API."""
         return self._sources_legacy
 
-    def _datas(self):
+    def _data_objects(self, match: str | None = None):
+        res = []
+        for s in self._source.sources:
+            if not isinstance(s, (Data)):
+                d = s.to_data_object()
+            else:
+                d = s
+
+            if isinstance(d, Data):
+                if match is None or match in s.available_types:
+                    res.append(d)
+            # else:
+            #     d = s.to_data_object()
+            #     if match is None or match in d.available_types:
+            #         res.append(d)
+
+        return res
+
+    def _data_sources(self, match: str | None = None):
         res = []
         for s in self._source.sources:
             if isinstance(s, Data):
-                res.append(s)
+                d = s
             else:
-                res.append(s.to_data_object())
+                d = s.to_data_object()
+
+            if isinstance(d, Data):
+                if match is None or match in d.available_types:
+                    res.append(s)
+
+            else:
+                if match is None:
+                    res.append(s)
+            # else:
+            #     d = s.to_data_object()
+            #     if match is None or match in d.available_types:
+            #         res.append(d)
 
         return res
 
@@ -100,7 +136,7 @@ class MultiData(SimpleData):
     @property
     def path(self) -> str | list[str] | None:
         r = []
-        for s in self._datas():
+        for s in self._data_objects():
             try:
                 p = s.path
                 r.append(p)
@@ -129,27 +165,44 @@ class MultiData(SimpleData):
         NotImplementedError
             If conversion to FieldList is not implemented for this combination of sources.
         """
-        # if "fieldlist" not in self.available_types:
-        #     raise NotImplementedError("Cannot convert this MultiData object to a fieldlist")
+        if "fieldlist" not in self.available_types:
+            raise ValueError(
+                "Cannot convert this MultiData object to a FieldList. None of the objects support FieldList conversion."
+            )
+        sources = self._data_sources(match="fieldlist")
+        if not sources:
+            raise ValueError("No suitable sources available for conversion.")
 
-        # TODO: review this merger usage
-        data = self._datas()
-        fl = []
-        for d in data:
-            if "fieldlist" not in d.available_types:
-                continue
-            fl.append(d.to_fieldlist(*args, **kwargs))
+        print("Sources for fieldlist conversion:", sources)
+        for s in sources:
+            print("Source:", s)
 
-        print("fl", fl)
+        print("merger:", self._source.merger)
 
-        # fs = [d.to_fieldlist(*args, **kwargs) for d in data]
-        from earthkit.data.mergers import merge_by_class
+        from earthkit.data.mergers import make_merger
 
-        merged = merge_by_class(fl)
+        merged = make_merger(self._source.merger, sources).to_fieldlist(**kwargs)
         if merged is not None:
             return merged.mutate()
 
-        raise NotImplementedError("Cannot convert this MultiData object to a fieldlist")
+        raise ValueError("Cannot convert this MultiData object to a fieldlist")
+
+        # fl = []
+        # for d in data:
+        #     if "fieldlist" not in d.available_types:
+        #         continue
+        #     fl.append(d.to_fieldlist(*args, **kwargs))
+
+        # print("fl", fl)
+
+        # # fs = [d.to_fieldlist(*args, **kwargs) for d in data]
+        # from earthkit.data.mergers import merge_by_class
+
+        # merged = merge_by_class(fl)
+        # if merged is not None:
+        #     return merged.mutate()
+
+        # raise NotImplementedError("Cannot convert this MultiData object to a fieldlist")
 
     def to_xarray(self, *args, xarray_open_mfdataset_kwargs=None, **kwargs) -> "xarray.Dataset":
         """Convert into an Xarray dataset.
@@ -176,23 +229,37 @@ class MultiData(SimpleData):
         :py:class:`xarray.Dataset`
             An Xarray dataset containing data from all objects in the MultiData.
         """
+        if "xarray" not in self.available_types:
+            raise ValueError(
+                "Cannot convert this MultiData object to Xarray. None of the objects support Xarray conversion."
+            )
+
+        sources = self._data_sources(match="xarray")
+        if not sources:
+            raise ValueError("No suitable sources available for conversion.")
+
         if xarray_open_mfdataset_kwargs:
             options = dict(xarray_open_mfdataset_kwargs=xarray_open_mfdataset_kwargs)
         else:
-            options = dict()
+            options = dict(kwargs)
 
-        if "xarray" not in self.available_types:
-            raise NotImplementedError(
-                "Cannot convert this MultiData object to Xarray. Not all objects support Xarray conversion."
+        from earthkit.data.mergers import make_merger
+
+        merger = self._source.merger
+        if merger and options:
+            import warnings
+
+            warnings.warn(
+                "There seems to be a merger defined for the source, but additional options were provided. "
+                "These options might be ignored."
             )
 
-        # TODO: review this merger usage
-        return self._source.to_xarray(*args, **options, **kwargs)
+        return make_merger(merger, sources).to_xarray(**options)
 
     def to_pandas(self, comment="#", pandas_read_csv_kwargs=None) -> "pandas.DataFrame":
         """Convert into a Pandas DataFrame.
 
-        Parameters
+        Parameterss
         ----------
         comment: str
             Character that represents a comment line in a CSV file. This value is ignored if the
@@ -213,7 +280,7 @@ class MultiData(SimpleData):
             )
 
         # TODO: review this merger usage
-        data = self._datas()
+        data = self._data_objects()
 
         from earthkit.data.mergers import make_merger
 

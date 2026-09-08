@@ -8,6 +8,7 @@
 #
 
 import logging
+from abc import ABCMeta, abstractmethod
 
 from earthkit.data.readers import Reader
 from earthkit.data.sources import Source
@@ -16,7 +17,11 @@ from earthkit.data.utils import string_to_args
 
 LOG = logging.getLogger(__name__)
 
-FORWARDS = ("to_xarray", "to_pandas")
+FORWARDS = (
+    "to_xarray",
+    "to_pandas",
+    "to_fieldlist",
+)
 
 
 def _nearest_common_class(objects):
@@ -45,10 +50,12 @@ def _nearest_common_class(objects):
 
 
 def _flatten(sources):
-    """Recursively expand MultiSources that have no merger into a flat iterator of leaf sources.
+    """Recursively expand MultiSources with no explicit merger into a flat iterator of leaf sources.
 
-    A :class:`earthkit.data.sources.multi.MultiSource` whose ``merger`` is not None is left as a single
-    unit, since it will use its own merger rather than being merged together with its siblings.
+    A :class:`earthkit.data.sources.multi.MultiSource` whose ``merger`` is None or False is expanded into
+    its own sub-sources, since it has no merging behaviour of its own to preserve. A MultiSource with an
+    explicit merger, by contrast, is left as a single unit, since it will use its own merger rather than
+    being merged together with its siblings.
 
     Parameters
     ----------
@@ -86,12 +93,17 @@ def merge_by_class(sources):
     return common.merge(sources)
 
 
-class Merger:
-    """Base class providing ``to_fieldlist``/``to_xarray``/``to_pandas`` for a list of sources.
+class Merger(metaclass=ABCMeta):
+    """Abstract base class providing ``to_fieldlist``/``to_xarray``/``to_pandas`` for a list of sources.
 
     A Merger does not merge sources itself; it holds a list of sources and exposes conversion methods
     (implemented by subclasses) that each build a single object of the requested target type
     (:class:`FieldList`, ``xarray.Dataset``, or ``pandas.DataFrame``) out of them.
+
+    ``to_fieldlist``, ``to_xarray`` and ``to_pandas`` are abstract methods: a subclass that does not
+    override all three cannot be instantiated (``TypeError``). :class:`DefaultMerger` is the concrete
+    subclass providing a default implementation for all of them; most other subclasses build on it rather
+    than on ``Merger`` directly.
 
     On construction, the sources are flattened (see :func:`_flatten`) and, when they share a common
     :class:`FileSource`, :class:`Reader`, or :class:`Source` class, their file paths and reader class are
@@ -166,6 +178,7 @@ class Merger:
             return self.paths
         return self.sources
 
+    @abstractmethod
     def to_xarray(self, **kwargs):
         """Convert the sources to a single xarray object.
 
@@ -180,6 +193,7 @@ class Merger:
         """
         raise NotImplementedError("Subclasses must implement to_xarray()")
 
+    @abstractmethod
     def to_pandas(self, **kwargs):
         """Convert the sources to a single pandas DataFrame.
 
@@ -194,6 +208,7 @@ class Merger:
         """
         raise NotImplementedError("Subclasses must implement to_pandas()")
 
+    @abstractmethod
     def to_fieldlist(self, **kwargs):
         """Convert the sources to a single fieldlist.
 
@@ -218,7 +233,7 @@ class DefaultMerger(Merger):
     """
 
     def to_fieldlist(self, **kwargs):
-        """Merge the sources' fieldlists.
+        """Merge the sources into a single fieldlist.
 
         Parameters
         ----------
@@ -227,13 +242,13 @@ class DefaultMerger(Merger):
 
         Returns
         -------
-        :class:`earthkit.data.core.fieldlist.FieldList`
-            The result of merging the ``to_fieldlist()`` output of each source by their nearest common
-            class (see :func:`merge_by_class`).
+        :class:`earthkit.data.core.fieldlist.FieldList` or None
+            The result of :func:`earthkit.data.mergers.fieldlist.merge`, which merges the ``to_fieldlist()``
+            output of each source by their nearest common class (see :func:`merge_by_class`).
         """
-        fs = [s.to_fieldlist() for s in self.sources]
-        merged = merge_by_class(fs)
-        return merged
+        from .fieldlist import merge
+
+        return merge(sources=self.sources, paths=self.paths, reader_class=self.reader_class)
 
     def to_pandas(self, **kwargs):
         """Merge the sources into a single pandas object.
@@ -278,22 +293,22 @@ class DefaultMerger(Merger):
         )
 
 
-class ObjMerger(Merger):
-    """Merger that delegates conversion to a user-supplied object.
+class ObjMerger(DefaultMerger):
+    """Merger that delegates conversion to a user-supplied object, falling back to :class:`DefaultMerger`.
 
     ``obj`` is selected as the merger (see :func:`make_merger`) when it exposes at least one of
-    ``to_xarray``/``to_pandas`` (the methods listed in :data:`FORWARDS`); once selected, its
-    ``to_fieldlist``/``to_xarray``/``to_pandas`` methods are all forwarded to as needed.
+    ``to_xarray``/``to_pandas``/``to_fieldlist`` (the methods listed in :data:`FORWARDS`). Once selected,
+    each conversion checks whether ``obj`` implements the matching method: if it does, the call is
+    forwarded to it; otherwise it falls back to the inherited :class:`DefaultMerger` behaviour for that
+    conversion. This means ``obj`` only needs to implement the conversions it actually wants to customise.
 
-    Each of these methods on ``obj`` is called with the same signature: ``obj.to_xarray(paths_or_sources,
-    **kwargs)`` (and likewise for ``to_fieldlist``/``to_pandas``), where:
-
-    - ``paths_or_sources`` is passed positionally and is :obj:`Merger.paths_or_sources` — the list of file
-      paths of the sources being merged, or the sources themselves when paths could not be resolved. The
-      method must accept this single positional argument, whichever form it takes.
-    - ``**kwargs`` are the keyword arguments given to the corresponding ``MultiSource.to_fieldlist`` /
-      ``to_xarray`` / ``to_pandas`` call, forwarded unchanged. The method only needs to accept the keyword
-      arguments it actually expects to receive.
+    ``to_xarray``/``to_pandas`` call ``obj`` as ``obj.to_xarray(paths_or_sources, **kwargs)`` (and
+    likewise for ``to_pandas``), where ``paths_or_sources`` is :obj:`Merger.paths_or_sources` -- the list
+    of file paths of the sources being merged, or the sources themselves when paths could not be resolved.
+    ``to_fieldlist``, however, calls ``obj.to_fieldlist(sources, **kwargs)`` with the raw :obj:`sources`
+    list instead, since a fieldlist conversion typically needs the sources' fields rather than their file
+    paths. In both cases ``**kwargs`` are the keyword arguments given to the corresponding
+    ``MultiSource.to_fieldlist``/``to_xarray``/``to_pandas`` call, forwarded unchanged.
     """
 
     def __init__(self, obj, sources, *args, **kwargs):
@@ -302,9 +317,11 @@ class ObjMerger(Merger):
         Parameters
         ----------
         obj : object
-            An object with ``to_fieldlist``, ``to_xarray`` and/or ``to_pandas`` methods. Each such method
-            must accept :obj:`Merger.paths_or_sources` as its single positional argument, plus whatever
-            keyword arguments it wants to support (see the class docstring).
+            An object with ``to_fieldlist``, ``to_xarray`` and/or ``to_pandas`` methods. ``to_xarray`` and
+            ``to_pandas`` must accept :obj:`Merger.paths_or_sources` as their single positional argument;
+            ``to_fieldlist`` must accept :obj:`sources` instead. Each also accepts whatever keyword
+            arguments it wants to support (see the class docstring). Any of the three may be omitted, in
+            which case that conversion falls back to :class:`DefaultMerger`.
         sources : list of :class:`earthkit.data.sources.Source`
             The sources to merge.
         *args
@@ -316,7 +333,10 @@ class ObjMerger(Merger):
         self.obj = obj
 
     def to_fieldlist(self, **kwargs):
-        """Call ``obj.to_fieldlist`` with the merged paths-or-sources.
+        """Call ``obj.to_fieldlist`` with the merged sources, or fall back to :class:`DefaultMerger`.
+
+        Unlike :obj:`to_xarray`/:obj:`to_pandas`, this passes the raw :obj:`sources` list rather than
+        :obj:`paths_or_sources`.
 
         Parameters
         ----------
@@ -326,42 +346,48 @@ class ObjMerger(Merger):
         Returns
         -------
         object
-            Whatever ``obj.to_fieldlist`` returns.
+            Whatever ``obj.to_fieldlist`` returns, or the result of ``DefaultMerger.to_fieldlist`` if
+            ``obj`` has no ``to_fieldlist`` method.
         """
-        return self.obj.to_fieldlist(self.paths_or_sources, **kwargs)
+        if not hasattr(self.obj, "to_fieldlist"):
+            return super().to_fieldlist(**kwargs)
+        return self.obj.to_fieldlist(self.sources, **kwargs)
 
-    def to_xarray(self, *args, **kwargs):
-        """Call ``obj.to_xarray`` with the merged paths-or-sources.
+    def to_xarray(self, **kwargs):
+        """Call ``obj.to_xarray`` with the merged paths-or-sources, or fall back to :class:`DefaultMerger`.
 
         Parameters
         ----------
-        *args
-            Unused.
         **kwargs
             Keyword arguments passed to ``obj.to_xarray``.
 
         Returns
         -------
         object
-            Whatever ``obj.to_xarray`` returns.
+            Whatever ``obj.to_xarray`` returns, or the result of ``DefaultMerger.to_xarray`` if ``obj`` has
+            no ``to_xarray`` method.
         """
+        if not hasattr(self.obj, "to_xarray"):
+            return super().to_xarray(**kwargs)
+
         return self.obj.to_xarray(self.paths_or_sources, **kwargs)
 
-    def to_pandas(self, *args, **kwargs):
-        """Call ``obj.to_pandas`` with the merged paths-or-sources.
+    def to_pandas(self, **kwargs):
+        """Call ``obj.to_pandas`` with the merged paths-or-sources, or fall back to :class:`DefaultMerger`.
 
         Parameters
         ----------
-        *args
-            Unused.
         **kwargs
             Keyword arguments passed to ``obj.to_pandas``.
 
         Returns
         -------
         object
-            Whatever ``obj.to_pandas`` returns.
+            Whatever ``obj.to_pandas`` returns, or the result of ``DefaultMerger.to_pandas`` if ``obj`` has
+            no ``to_pandas`` method.
         """
+        if not hasattr(self.obj, "to_pandas"):
+            return super().to_pandas(**kwargs)
         return self.obj.to_pandas(self.paths_or_sources, **kwargs)
 
 
@@ -390,13 +416,11 @@ class CallableMerger(Merger):
         super().__init__(sources)
         self.func = func
 
-    def _call_func(self, *args, **kwargs):
+    def _call_func(self, **kwargs):
         """Call :obj:`func` with the merged paths-or-sources.
 
         Parameters
         ----------
-        *args
-            Unused.
         **kwargs
             Keyword arguments passed to :obj:`func`.
 
@@ -412,8 +436,11 @@ class CallableMerger(Merger):
     to_pandas = _call_func
 
 
-class XarrayGenericMerger(Merger):
+class XarrayGenericMerger(DefaultMerger):
     """Merger that combines the sources' file paths using ``xarray.open_mfdataset``.
+
+    Only ``to_xarray`` is overridden; ``to_fieldlist`` and ``to_pandas`` are inherited unchanged from
+    :class:`DefaultMerger` (nearest-common-class fieldlist merging and ``pandas.concat``, respectively).
 
     This is a base class, not directly reachable through :func:`make_merger`/:data:`MERGERS` — it factors
     out the ``open_mfdataset`` call shared by its subclasses, which supply :obj:`default_options` and are
@@ -440,13 +467,11 @@ class XarrayGenericMerger(Merger):
         super().__init__(sources)
         self.options = options
 
-    def to_xarray(self, *args, **kwargs):
+    def to_xarray(self, **kwargs):
         """Open and combine the sources' file paths with ``xarray.open_mfdataset``.
 
         Parameters
         ----------
-        *args
-            Unused.
         **kwargs
             Keyword arguments to pass to ``xarray.open_mfdataset``, taking precedence over both
             :obj:`default_options` and :obj:`options`.
@@ -542,9 +567,10 @@ def make_merger(merger, sources):
     Parameters
     ----------
     merger : object, str, tuple, or None
-        The merger specification. See :class:`earthkit.data.sources.multi.MultiSource` for the accepted
-        values: an object exposing ``to_xarray``/``to_pandas`` becomes an :class:`ObjMerger`; a callable
-        becomes a :class:`CallableMerger`; a string (optionally with ``key=value`` arguments, parsed by
+        The merger specification. Must not already be a :class:`Merger` instance (see Raises below). See
+        :class:`earthkit.data.sources.multi.MultiSource` for the accepted values: an object exposing
+        ``to_xarray``/``to_pandas``/``to_fieldlist`` becomes an :class:`ObjMerger`; a callable becomes a
+        :class:`CallableMerger`; a string (optionally with ``key=value`` arguments, parsed by
         :func:`earthkit.data.utils.string_to_args`) or a ``(name, ...)``/``(name, {...})`` tuple is looked
         up in :data:`MERGERS`; None yields a :class:`DefaultMerger`.
     sources : list of :class:`earthkit.data.sources.Source`
@@ -557,7 +583,7 @@ def make_merger(merger, sources):
     Raises
     ------
     ValueError
-        If ``merger`` does not match any of the supported forms.
+        If ``merger`` is already a :class:`Merger` instance, or does not match any of the supported forms.
 
     Examples
     --------
@@ -593,13 +619,18 @@ def make_merger(merger, sources):
     >>> make_merger(lambda paths_or_sources: xr.open_mfdataset(paths_or_sources), sources)  # doctest: +SKIP
     <CallableMerger ...>
 
-    An object is checked first, before the plain-callable check above: if it exposes a ``to_xarray`` or
-    ``to_pandas`` method (the names in :data:`FORWARDS`), it becomes an :class:`ObjMerger`, which forwards
-    each conversion to the matching method on the object instead of calling the object itself:
+    An object is checked first, before the plain-callable check above: if it exposes a ``to_xarray``,
+    ``to_pandas`` or ``to_fieldlist`` method (the names in :data:`FORWARDS`), it becomes an
+    :class:`ObjMerger`, which forwards each conversion to the matching method on the object instead of
+    calling the object itself, falling back to :class:`DefaultMerger` for any conversion the object does
+    not implement:
 
     >>> make_merger(some_obj_with_to_xarray, sources)  # doctest: +SKIP
     <ObjMerger ...>
     """
+    if isinstance(merger, Merger):
+        raise ValueError(f"Merger is already an instance of Merger: {merger}")
+
     for fwd in FORWARDS:
         if hasattr(merger, fwd) and callable(getattr(merger, fwd)):
             LOG.debug("Merger %s has method in %s()", merger, fwd)

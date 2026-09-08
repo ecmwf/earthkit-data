@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.data.core.fieldlist import FieldList
+
 
 def merge(
     sources=None,
@@ -35,10 +37,16 @@ def merge(
     :class:`earthkit.data.core.fieldlist.FieldList` or None
         The merged fieldlist, or None if the sources could not be merged.
     """
-    fs = [s.to_fieldlist() for s in sources]
+    fl = []
+    for s in sources:
+        if isinstance(s, FieldList):
+            fl.extend(s)
+        else:
+            fl.append(s.to_fieldlist())
+
     from earthkit.data.mergers import merge_by_class
 
-    merged = merge_by_class(fs)
+    merged = merge_by_class(fl)
     if merged is not None:
         return merged.mutate()
 

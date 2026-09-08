@@ -74,7 +74,6 @@ class ArchiveReader(Reader):
             fsize = 0
             mtime = 0
 
-        print("TAR creating cache for:", self.path)  # --- IGNORE ---
         self.path = self._cache_file(
             unpack,
             [self.path, fsize, mtime],
