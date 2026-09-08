@@ -10,7 +10,6 @@
 import logging
 import mimetypes
 import tarfile
-import warnings
 
 from .archive import ArchiveReader
 
@@ -19,14 +18,7 @@ LOG = logging.getLogger(__name__)
 
 class TarReader(ArchiveReader):
     def __init__(self, source, path, **kwargs):
-        if kwargs:
-            names = ", ".join(repr(name) for name in kwargs)
-            warnings.warn(
-                f"Arguments {names} have no effect for the TAR reader.",
-                UserWarning,
-                stacklevel=2,
-            )
-        super().__init__(source, path)
+        super().__init__(source, path, **kwargs)
 
         with tarfile.open(path) as tar:
             self.expand(
