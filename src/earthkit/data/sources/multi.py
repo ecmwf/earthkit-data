@@ -157,7 +157,7 @@ class MultiSource(Source):
         from earthkit.data.utils.progbar import tqdm
 
         with SoftThreadPool(nthreads=nthreads) as pool:
-            futures = [pool.submit(_call, s, observer=pool) for s in callables]
+            futures = [pool.submit(_call, s) for s in callables]
             iterator = (f.result() for f in futures)
             sources = list(tqdm(iterator, leave=False, total=len(futures)))
 

@@ -10,13 +10,22 @@
 # The code is copied from skinnywms, and we should combile later
 
 
+import warnings
+
 from earthkit.data.sources import Source
 
 from .core import GeoJSONReaderBase
 
 
 class GeoJSONReader(Source, GeoJSONReaderBase):
-    def __init__(self, source, path):
+    def __init__(self, source, path, **kwargs):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the GeoJSON reader.",
+                UserWarning,
+                stacklevel=2,
+            )
         self._ori_source = source
         GeoJSONReaderBase.__init__(self, source, path)
 

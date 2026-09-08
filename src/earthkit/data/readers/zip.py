@@ -43,8 +43,8 @@ class InfoWrapper:
 
 
 class ZIPReader(ArchiveReader):
-    def __init__(self, source, path):
-        super().__init__(source, path)
+    def __init__(self, source, path, **kwargs):
+        super().__init__(source, path, **kwargs)
 
         self._mutate = None
 
@@ -82,14 +82,14 @@ class ZIPReader(ArchiveReader):
 EXTENSIONS_TO_SKIP = (".npz",)  # Numpy arrays
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if magic is None:  # Bypass check and force
-        return ZIPReader(source, path)
+        return ZIPReader(source, path, **kwargs)
 
     _, extension = os.path.splitext(path)
 
     if magic[:4] == b"PK\x03\x04" and extension not in EXTENSIONS_TO_SKIP:
-        return ZIPReader(source, path)
+        return ZIPReader(source, path, **kwargs)
 
 
 READER = reader
