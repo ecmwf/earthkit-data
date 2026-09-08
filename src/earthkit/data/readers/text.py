@@ -8,6 +8,8 @@
 #
 
 
+import warnings
+
 from . import Reader
 
 
@@ -31,7 +33,14 @@ class TextReader(Reader):
     _binary = False
     _appendable = True
 
-    def __init__(self, source, path):
+    def __init__(self, source, path, **kwargs):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the Text reader.",
+                UserWarning,
+                stacklevel=2,
+            )
         super().__init__(source, path)
 
     def ignore(self):
@@ -56,10 +65,10 @@ class TextReader(Reader):
         return None
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if deeper_check:
         if is_text(path):
-            return TextReader(source, path)
+            return TextReader(source, path, **kwargs)
 
 
 READER = reader

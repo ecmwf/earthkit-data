@@ -10,6 +10,7 @@
 import logging
 import mimetypes
 import tarfile
+import warnings
 
 from .archive import ArchiveReader
 
@@ -17,7 +18,14 @@ LOG = logging.getLogger(__name__)
 
 
 class TarReader(ArchiveReader):
-    def __init__(self, source, path, compression=None):
+    def __init__(self, source, path, **kwargs):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the TAR reader.",
+                UserWarning,
+                stacklevel=2,
+            )
         super().__init__(source, path)
 
         with tarfile.open(path) as tar:
@@ -28,13 +36,13 @@ class TarReader(ArchiveReader):
             )
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     # We don't use tarfile.is_tarfile() because is
     # returns true given a file of zeros
 
-    kind, compression = mimetypes.guess_type(path)
+    kind, _ = mimetypes.guess_type(path)
     if kind == "application/x-tar":
-        return TarReader(source, path, compression)
+        return TarReader(source, path, **kwargs)
 
 
 READER = reader

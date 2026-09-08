@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import warnings
 from collections import defaultdict
 
 from earthkit.data.core.index import MaskIndex, MultiIndex
@@ -521,7 +522,14 @@ class BUFRListInFile(BUFRList, BUFRReaderBase):
 
 
 class BUFRReader(Source, BUFRReaderBase):
-    def __init__(self, source, path, parts=None, positions=None):
+    def __init__(self, source, path, parts=None, positions=None, **kwargs):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the BUFR reader.",
+                UserWarning,
+                stacklevel=2,
+            )
         self._ori_source = source
         self._kwargs = {"parts": parts, "positions": positions}
 

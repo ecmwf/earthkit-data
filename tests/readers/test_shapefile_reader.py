@@ -67,6 +67,13 @@ def test_shapefile_bounding_box():
     assert np.allclose(np.array(bb.as_list()), np.array(ref.as_list()))
 
 
+# ZIP reader needs to pass kwargs along correctly first
+@pytest.mark.skip
+def test_invalid_kwargs():
+    with pytest.warns(UserWarning):
+        from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.shp.zip"), grib_handle_policy=None)
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

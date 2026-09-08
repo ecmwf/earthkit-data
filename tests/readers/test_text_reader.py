@@ -11,6 +11,8 @@
 
 import os
 
+import pytest
+
 import earthkit.data
 
 
@@ -22,3 +24,10 @@ def test_text_reader():
 
     assert d._TYPE_NAME == "Text"
     assert isinstance(d._reader, earthkit.data.readers.text.TextReader)
+
+
+def test_invalid_kwargs():
+    with pytest.warns(UserWarning):
+        earthkit.data.from_source(
+            "file", os.path.join(os.path.dirname(__file__), "unknown_text_file.unknown_ext"), grib_handle_policy=None
+        )
