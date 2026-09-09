@@ -17,8 +17,9 @@ LOG = logging.getLogger(__name__)
 
 
 class ArchiveReader(Reader):
-    def __init__(self, source, path):
+    def __init__(self, source, path, **kwargs):
         super().__init__(source, path)
+        self._source_kwargs = kwargs
 
     def check(self, member):
         # A bit of paranoia
@@ -48,7 +49,7 @@ class ArchiveReader(Reader):
 
     def mutate(self):
         if os.path.isdir(self.path):
-            return find_reader(self.source, self.path).mutate()
+            return find_reader(self.source, self.path, **self._source_kwargs).mutate()
 
         return self
 

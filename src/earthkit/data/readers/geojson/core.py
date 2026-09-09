@@ -10,7 +10,7 @@
 from .. import Reader
 
 
-class GeoJsonReaderBase(Reader):
+class GeoJSONReaderBase(Reader):
     _format = "geojson"
     _binary = False
     _appendable = False

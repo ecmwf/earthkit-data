@@ -10,15 +10,24 @@
 # The code is copied from skinnywms, and we should combile later
 
 
+import warnings
+
 from earthkit.data.sources import Source
 
-from .core import GeoJsonReaderBase
+from .core import GeoJSONReaderBase
 
 
-class GeojsonReader(Source, GeoJsonReaderBase):
-    def __init__(self, source, path):
+class GeoJSONReader(Source, GeoJSONReaderBase):
+    def __init__(self, source, path, **kwargs):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the GeoJSON reader.",
+                UserWarning,
+                stacklevel=2,
+            )
         self._ori_source = source
-        GeoJsonReaderBase.__init__(self, source, path)
+        GeoJSONReaderBase.__init__(self, source, path)
 
     def to_pandas(self, **kwargs):
         # TODO: handle multiple paths
@@ -32,9 +41,9 @@ class GeojsonReader(Source, GeoJsonReaderBase):
         return self.to_pandas(**kwargs).to_xarray()
 
     def to_featurelist(self, *args, **kwargs):
-        from .file import GeoJsonList
+        from .file import GeoJSONList
 
-        return GeoJsonList(self.path)
+        return GeoJSONList(self.path)
 
     def mutate_source(self):
         # A Geojson is a source itself
@@ -54,9 +63,9 @@ class GeojsonReader(Source, GeoJsonReaderBase):
         return geo_df.set_index(np.arange(len(geo_df)))
 
     def to_data_object(self):
-        from earthkit.data.data.geojson import GeoJsonData
+        from earthkit.data.data.geojson import GeoJSONData
 
-        return GeoJsonData(self)
+        return GeoJSONData(self)
 
     def _encode_default(self, encoder, *args, **kwargs):
         return None
