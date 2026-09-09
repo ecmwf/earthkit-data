@@ -37,15 +37,48 @@ def assert_same_xarray(x, y):
         assert np.all(xda.values == yda.values)
 
 
+def _make_netcdf_data():
+    d1 = from_source(
+        "dummy-source",
+        kind="netcdf",
+        dims=["lat", "lon", "time"],
+        variables=["a", "b"],
+        coord_values={
+            "lat": [0, 1],
+            "lon": [0, 1],
+            "time": [datetime.datetime(2021, 3, 1, 12, 0), datetime.datetime(2021, 3, 2, 12, 0)],
+        },
+    )
+    d2 = from_source(
+        "dummy-source",
+        kind="netcdf",
+        dims=["lat", "lon", "time"],
+        variables=["c", "d"],
+        coord_values={
+            "lat": [0, 1],
+            "lon": [0, 1],
+            "time": [datetime.datetime(2021, 3, 1, 12, 0), datetime.datetime(2021, 3, 2, 12, 0)],
+        },
+    )
+
+    return d1, d2
+
+
 def merger_func(paths_or_sources):
     return xr.open_mfdataset(paths_or_sources)
 
 
 class Merger_obj:
+    def __init__(self):
+        self._called_to_xarray = False
+        self._called_to_fieldlist = False
+
     def to_xarray(self, paths_or_sources, **kwargs):
+        self._called_to_xarray = True
         return xr.open_mfdataset(paths_or_sources)
 
     def to_fieldlist(self, paths_or_sources, **kwargs):
+        self._called_to_fieldlist = True
         fl = []
         for s in paths_or_sources:
             if isinstance(s, FieldList):
@@ -152,39 +185,105 @@ def test_netcdf_read_multiple_files():
 #     target2 = xr.open_mfdataset([s1.path, s2.path])
 #     assert target2.identical(merged)
 
+# @pytest.mark.parametrize("mergers", [(Merger_obj(), True), (None, False)])
+# def test_netcdf_fieldlist_merge_object_1(mergers):
+
+#     merger = mergers[0]
+#     check_call = mergers[1]
+
+#     d1 = from_source(
+#         "dummy-source",
+#         kind="netcdf",
+#         dims=["lat", "lon", "time"],
+#         variables=["a", "b"],
+#         coord_values={
+#             "lat": [0, 1],
+#             "lon": [0, 1],
+#             "time": [datetime.datetime(2021, 3, 1, 12, 0), datetime.datetime(2021, 3, 2, 12, 0)],
+#         },
+#     )
+#     fl1 = d1.to_fieldlist()
+#     ds1 = d1.to_xarray()
+
+#     d2 = from_source(
+#         "dummy-source",
+#         kind="netcdf",
+#         dims=["lat", "lon", "time"],
+#         variables=["c", "d"],
+#         coord_values={
+#             "lat": [0, 1],
+#             "lon": [0, 1],
+#             "time": [datetime.datetime(2021, 3, 1, 12, 0), datetime.datetime(2021, 3, 2, 12, 0)],
+#         },
+#     )
+#     fl2 = d2.to_fieldlist()
+#     ds2 = d2.to_xarray()
+
+#     target = xr.merge([ds1, ds2])
+
+#     d_merged = from_source("multi", [fl1, fl2], merger=merger)
+
+#     if check_call:
+#         assert d_merged._called_to_xarray is False
+#         assert d_merged._called_to_fieldlist is False
+
+#     fl_merged = d_merged.to_fieldlist()
+#     assert len(fl_merged) == len(fl1) + len(fl2)
+#     if check_call:
+#         assert d_merged._called_to_fieldlist is True
+
+#     ds_merged = d_merged.to_xarray()
+#     # ds.graph()
+#     # merged = ds.to_xarray()
+#     if check_call:
+#         assert d_merged._called_to_xarray is True
+
+#     assert target.identical(ds_merged)
+
+#     target2 = xr.open_mfdataset([d1.path, d2.path])
+#     assert target2.identical(ds_merged)
+
 
 def test_netcdf_fieldlist_merge_object():
-    d1 = from_source(
-        "dummy-source",
-        kind="netcdf",
-        dims=["lat", "lon", "time"],
-        variables=["a", "b"],
-        coord_values={
-            "lat": [0, 1],
-            "lon": [0, 1],
-            "time": [datetime.datetime(2021, 3, 1, 12, 0), datetime.datetime(2021, 3, 2, 12, 0)],
-        },
-    )
+    d1, d2 = _make_netcdf_data()
+    merger = Merger_obj()
+
     fl1 = d1.to_fieldlist()
     ds1 = d1.to_xarray()
-
-    d2 = from_source(
-        "dummy-source",
-        kind="netcdf",
-        dims=["lat", "lon", "time"],
-        variables=["c", "d"],
-        coord_values={
-            "lat": [0, 1],
-            "lon": [0, 1],
-            "time": [datetime.datetime(2021, 3, 1, 12, 0), datetime.datetime(2021, 3, 2, 12, 0)],
-        },
-    )
     fl2 = d2.to_fieldlist()
     ds2 = d2.to_xarray()
 
     target = xr.merge([ds1, ds2])
 
-    d_merged = from_source("multi", [fl1, fl2], merger=Merger_obj())
+    d_merged = from_source("multi", [fl1, fl2], merger=merger)
+
+    assert merger._called_to_xarray is False
+    assert merger._called_to_fieldlist is False
+
+    fl_merged = d_merged.to_fieldlist()
+    assert len(fl_merged) == len(fl1) + len(fl2)
+    assert merger._called_to_fieldlist is True
+
+    ds_merged = d_merged.to_xarray()
+    assert merger._called_to_xarray is True
+    assert target.identical(ds_merged)
+
+    target2 = xr.open_mfdataset([d1.path, d2.path])
+    assert target2.identical(ds_merged)
+
+
+@pytest.mark.parametrize("_kwargs", [{}, {"merger": None}])
+def test_netcdf_fieldlist_merge_default(_kwargs):
+    d1, d2 = _make_netcdf_data()
+
+    fl1 = d1.to_fieldlist()
+    ds1 = d1.to_xarray()
+    fl2 = d2.to_fieldlist()
+    ds2 = d2.to_xarray()
+
+    target = xr.merge([ds1, ds2])
+
+    d_merged = from_source("multi", [fl1, fl2], **_kwargs)
 
     fl_merged = d_merged.to_fieldlist()
     assert len(fl_merged) == len(fl1) + len(fl2)
@@ -255,33 +354,85 @@ def test_netcdf_data_merge_callable():
     assert target2.identical(merged)
 
 
-def test_netcdf_merge_var_1():
-    s1 = from_source(
-        "dummy-source",
-        kind="netcdf",
-        dims=["lat", "lon", "time"],
-        variables=["a", "b"],
-    ).to_fieldlist()
-    ds1 = s1.to_xarray()
+# def test_netcdf_fieldlist_merge_var_1():
+#     s1 = from_source(
+#         "dummy-source",
+#         kind="netcdf",
+#         dims=["lat", "lon", "time"],
+#         variables=["a", "b"],
+#          coord_values={
+#                     "lat": [0, 1],
+#                     "lon": [0, 1],
+#                     "time": [datetime.datetime(2021, 3, 1, 12, 0), datetime.datetime(2021, 3, 2, 12, 0)],
+#                 },
+#     ).to_fieldlist()
+#     ds1 = s1.to_xarray()
 
-    s2 = from_source(
-        "dummy-source",
-        kind="netcdf",
-        dims=["lat", "lon", "time"],
-        variables=["c", "d"],
-    ).to_fieldlist()
-    ds2 = s2.to_xarray()
+#     s2 = from_source(
+#         "dummy-source",
+#         kind="netcdf",
+#         dims=["lat", "lon", "time"],
+#         variables=["c", "d"],
+#         coord_values={
+#             "lat": [0, 1],
+#             "lon": [0, 1],
+#             "time": [datetime.datetime(2021, 3, 1, 12, 0), datetime.datetime(2021, 3, 2, 12, 0)],
+#         },
+#     ).to_fieldlist()
+#     ds2 = s2.to_xarray()
 
-    target = xr.merge([ds1, ds2])
-    ds = from_source("multi", [s1, s2]).to_fieldlist()
+#     target = xr.merge([ds1, ds2])
+#     ds = from_source("multi", [s1, s2]).to_fieldlist()
 
-    ds.graph()
-    merged = ds.to_xarray()
+#     ds.graph()
+#     merged = ds.to_xarray()
 
-    assert target.identical(merged)
+#     assert target.identical(merged)
 
-    target2 = xr.open_mfdataset([s1.path, s2.path])
-    assert target2.identical(merged)
+#     target2 = xr.open_mfdataset([s1.path, s2.path])
+#     assert target2.identical(merged)
+
+# def test_netcdf_data_merge_var_1():
+#     d1 = from_source(
+#         "dummy-source",
+#         kind="netcdf",
+#         dims=["lat", "lon", "time"],
+#         variables=["a", "b"],
+#          coord_values={
+#                     "lat": [0, 1],
+#                     "lon": [0, 1],
+#                     "time": [datetime.datetime(2021, 3, 1, 12, 0), datetime.datetime(2021, 3, 2, 12, 0)],
+#                 },
+#     )
+#     fl1 = d1.to_fieldlist()
+#     ds1 = d1.to_xarray()
+
+#     d2 = from_source(
+#         "dummy-source",
+#         kind="netcdf",
+#         dims=["lat", "lon", "time"],
+#         variables=["c", "d"],
+#         coord_values={
+#             "lat": [0, 1],
+#             "lon": [0, 1],
+#             "time": [datetime.datetime(2021, 3, 1, 12, 0), datetime.datetime(2021, 3, 2, 12, 0)],
+#         },
+#     )
+#     fl2 = d2.to_fieldlist()
+#     ds2 = d2.to_xarray()
+
+#     target = xr.merge([ds1, ds2])
+#     d_merged = from_source("multi", [d1, d2])
+#     d_merged.graph()
+
+#     fl_merged = d_merged.to_fieldlist()
+
+#     ds_merged = d_merged.to_xarray()
+
+#     assert target.identical(ds_merged)
+
+#     target2 = xr.open_mfdataset([d1.path, d2.path])
+#     assert target2.identical(ds_merged)
 
 
 def _merge_var_different_coords(kind1, kind2):

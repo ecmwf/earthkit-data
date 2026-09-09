@@ -40,7 +40,7 @@ def merge(
     fl = []
     for s in sources:
         if isinstance(s, FieldList):
-            fl.extend(s)
+            fl.append(s)
         else:
             fl.append(s.to_fieldlist())
 
