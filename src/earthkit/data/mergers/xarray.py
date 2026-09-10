@@ -18,7 +18,7 @@ LOG = logging.getLogger(__name__)
 # We wrap the sources because the FileSource is a os.PathLike and
 # since version 0.20, xarray checks the class and change os.PathLike to
 # strings. We don't want that, as we want to keep our objects
-class WrappedSource:
+class WrappedData:
     """Opaque wrapper protecting a :class:`Source` from xarray's ``os.PathLike`` handling.
 
     xarray (since 0.20) converts any ``os.PathLike`` argument to a plain string before it reaches a
@@ -26,15 +26,15 @@ class WrappedSource:
     ``os.PathLike``, wrapping it in a plain object lets :class:`EKDEngine` receive the original source.
     """
 
-    def __init__(self, source):
-        """Initialize the WrappedSource.
+    def __init__(self, data):
+        """Initialize the WrappedData.
 
         Parameters
         ----------
         source : :class:`earthkit.data.sources.Source`
             The source to wrap.
         """
-        self.source = source
+        self.data = data
 
 
 class EKDEngine(BackendEntrypoint):
@@ -42,12 +42,12 @@ class EKDEngine(BackendEntrypoint):
 
     @classmethod
     def open_dataset(cls, filename_or_obj, *args, **kwargs):
-        """Open a :class:`WrappedSource` as an xarray dataset.
+        """Open a :class:`WrappedData` as an xarray dataset.
 
         Parameters
         ----------
-        filename_or_obj : :class:`WrappedSource`
-            The wrapped source to open. Must be a :class:`WrappedSource` instance.
+        filename_or_obj : :class:`WrappedData`
+            The wrapped source to open. Must be a :class:`WrappedData` instance.
         *args
             Unused.
         **kwargs
@@ -57,12 +57,12 @@ class EKDEngine(BackendEntrypoint):
         -------
         xarray.Dataset
         """
-        assert isinstance(filename_or_obj, WrappedSource)
-        return filename_or_obj.source.to_xarray()
+        assert isinstance(filename_or_obj, WrappedData)
+        return filename_or_obj.data.to_xarray()
 
 
 def infer_open_mfdataset_kwargs(
-    sources=None,
+    data=None,
     paths=None,
     reader_class=None,
     user_kwargs={},
@@ -71,7 +71,7 @@ def infer_open_mfdataset_kwargs(
 
     Parameters
     ----------
-    sources : list of :class:`earthkit.data.sources.Source`, optional
+    data : list of :class:`earthkit.data.sources.Source`, optional
         The sources being merged. Currently unused (the inference logic below it is disabled).
     paths : list of str, optional
         The file paths being merged. Currently unused.
@@ -88,19 +88,11 @@ def infer_open_mfdataset_kwargs(
     """
     result = {}
     result.update(user_kwargs.get("xarray_open_mfdataset_kwargs", {}))
-    if False:
-        ds = sources[0].to_xarray()
-        # lat_dims = [s.get_lat_dim() for s in sources]
-
-        if ds.dims == ["lat", "lon", "forecast_time"]:
-            result["concat_dim"] = "forecast_time"
-
-        result.update(user_kwargs)
     return result
 
 
 def merge(
-    sources=None,
+    data=None,
     paths=None,
     reader_class=None,
     **kwargs,
@@ -114,7 +106,7 @@ def merge(
 
     Parameters
     ----------
-    sources : list of :class:`earthkit.data.sources.Source`, optional
+    data : list of :class:`earthkit.data.sources.Source`, optional
         The sources to merge. Must not be empty.
     paths : list of str, optional
         The file paths of ``sources``, if they could be resolved.
@@ -128,20 +120,20 @@ def merge(
     -------
     xarray.Dataset
     """
-    assert sources
+    assert data
 
     options = infer_open_mfdataset_kwargs(
-        sources=sources,
+        data=data,
         paths=paths,
         reader_class=reader_class,
         user_kwargs=kwargs,
     )
 
-    if reader_class is not None and hasattr(reader_class, "to_xarray_multi_from_sources"):
-        return reader_class.to_xarray_multi_from_sources(
-            sources,
-            **options,
-        )
+    # if reader_class is not None and hasattr(reader_class, "to_xarray_multi_from_sources"):
+    #     return reader_class.to_xarray_multi_from_sources(
+    #         data,
+    #         **options,
+    #     )
 
     if paths is not None:
         if reader_class is not None and hasattr(reader_class, "to_xarray_multi_from_paths"):
@@ -155,7 +147,7 @@ def merge(
 
     LOG.debug(f"xr.open_mfdataset with options= {options}")
     return xr.open_mfdataset(
-        [WrappedSource(s) for s in sources],
+        [WrappedData(d) for d in data],
         engine=EKDEngine,
         **options,
     )

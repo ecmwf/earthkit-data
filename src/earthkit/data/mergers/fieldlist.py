@@ -7,24 +7,26 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.data import from_source
+from earthkit.data.core.field import Field
 from earthkit.data.core.fieldlist import FieldList
 
 
 def merge(
-    sources=None,
+    data=None,
     paths=None,
     reader_class=None,
     **kwargs,
 ):
-    """Merge ``sources`` into a single fieldlist.
+    """Merge ``data`` into a single fieldlist.
 
     Each source's ``to_fieldlist()`` result is merged using :func:`earthkit.data.mergers.merge_by_class`,
     and the result is mutated to its final form.
 
     Parameters
     ----------
-    sources : list of :class:`earthkit.data.sources.Source`, optional
-        The sources to merge.
+    data : list of :class:`earthkit.data.sources.Source`, optional
+        The inputs to merge.
     paths : list of str, optional
         Unused.
     reader_class : type, optional
@@ -38,11 +40,15 @@ def merge(
         The merged fieldlist, or None if the sources could not be merged.
     """
     fl = []
-    for s in sources:
-        if isinstance(s, FieldList):
-            fl.append(s)
+    for d in data:
+        if isinstance(d, Field):
+            fl.append(d.to_fieldlist())
+        elif isinstance(d, FieldList):
+            fl.append(d)
+        elif isinstance(d, str):
+            fl.append(from_source("file", d).to_fieldlist(**kwargs))
         else:
-            fl.append(s.to_fieldlist())
+            fl.append(d.to_fieldlist(**kwargs))
 
     from earthkit.data.mergers import merge_by_class
 

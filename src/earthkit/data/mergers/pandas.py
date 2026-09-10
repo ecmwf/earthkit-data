@@ -9,7 +9,7 @@
 
 
 def merge(
-    sources=None,
+    data=None,
     paths=None,
     reader_class=None,
     **kwargs,
@@ -21,7 +21,7 @@ def merge(
 
     Parameters
     ----------
-    sources : list of :class:`earthkit.data.sources.Source`, optional
+    data : list of :class:`earthkit.data.sources.Source`, optional
         The sources to merge.
     paths : list of str, optional
         Unused.
@@ -45,4 +45,4 @@ def merge(
         pandas_read_csv_kwargs = options.pop("pandas_read_csv_kwargs")
     else:
         pandas_read_csv_kwargs = kwargs
-    return pd.concat([s.to_pandas(pandas_read_csv_kwargs=pandas_read_csv_kwargs) for s in sources], **options)
+    return pd.concat([d.to_pandas(pandas_read_csv_kwargs=pandas_read_csv_kwargs) for d in data], **options)

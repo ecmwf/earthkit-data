@@ -10,6 +10,9 @@
 import logging
 from abc import ABCMeta, abstractmethod
 
+import deprecation
+
+from earthkit.data.data import Data
 from earthkit.data.readers import Reader
 from earthkit.data.sources import Source
 from earthkit.data.sources.file import FileSource
@@ -121,39 +124,46 @@ class Merger(metaclass=ABCMeta):
         The nearest common class of the (unflattened) input sources.
     """
 
-    def __init__(self, sources):
+    def __init__(self, data):
         """Initialize the Merger.
 
         Parameters
         ----------
-        sources : list of :class:`earthkit.data.sources.Source`
-            The sources to convert. Must not be empty.
+        data : list of :class:`earthkit.data.sources.Source`
+            The inputs to convert. Must not be empty.
         """
-        assert sources
+        assert data
+        assert isinstance(data, (list, tuple))
 
-        self.sources = list(_flatten(sources))
-        assert self.sources, sources
+        self.data = list(_flatten(data))
+        assert self.data
 
+        # §
         self.paths = None
         self.reader_class = None
-        self.common = _nearest_common_class(sources)
+        self.common = _nearest_common_class(self.data)
         LOG.debug("nearest_common_class %s", self.common)
+        self.sources = []
+
+        # print("nearest_common_class:", self.common)
 
         if issubclass(self.common, FileSource):
             # TODO: avoid calling _ methods
-            readers = [s._reader for s in self.sources]
+            readers = [s._reader for s in self.data]
             self.reader_class = _nearest_common_class(readers)
             LOG.debug("nearest_common_class %s", self.reader_class)
-            self.paths = [s.path for s in self.sources]
+            self.paths = [s.path for s in self.data]
+            self.sources = self.data
         elif issubclass(self.common, Reader):
             self.reader_class = self.common
-            self.paths = [s.path for s in self.sources]
+            self.paths = [s.path for s in self.data]
+            self.sources = self.data
         elif issubclass(self.common, Source):
             # to enable the merging of a FieldList and a FileSource
             # needed for test_netcdf_wrong_concat_var
             readers = []
             paths = []
-            for s in self.sources:
+            for s in self.data:
                 if isinstance(s, FileSource):
                     readers.append(s._reader)
                     paths.append(s.path)
@@ -161,11 +171,30 @@ class Merger(metaclass=ABCMeta):
                     readers.append(s)
                     paths.append(s.path)
 
-            if len(readers) == len(self.sources):
+            if len(readers) == len(self.data):
                 self.reader_class = _nearest_common_class(readers)
                 self.paths = paths
+        elif issubclass(self.common, Data):
+            paths = []
+            sources = []
+            for d in self.data:
+                if isinstance(d, Data):
+                    p = d.path
+                    if isinstance(p, list):
+                        paths.extend(p)
+                    elif isinstance(p, str):
+                        paths.append(p)
+
+                    if hasattr(d, "_source"):
+                        sources.append(d._source)
+
+            if len(paths) == len(self.data):
+                self.paths = paths
+            if len(sources) == len(self.data):
+                self.sources = sources
 
     @property
+    @deprecation.deprecated(deprecated_in="1.3", removed_in=None, details="Deprecated.")
     def paths_or_sources(self):
         """Return the file paths of the sources, or the sources themselves if paths are unavailable.
 
@@ -176,7 +205,7 @@ class Merger(metaclass=ABCMeta):
         """
         if self.paths is not None:
             return self.paths
-        return self.sources
+        return self.data
 
     @abstractmethod
     def to_xarray(self, **kwargs):
@@ -248,7 +277,7 @@ class DefaultMerger(Merger):
         """
         from .fieldlist import merge
 
-        return merge(sources=self.sources, paths=self.paths, reader_class=self.reader_class)
+        return merge(data=self.data, paths=self.paths, reader_class=self.reader_class)
 
     def to_pandas(self, **kwargs):
         """Merge the sources into a single pandas object.
@@ -265,7 +294,7 @@ class DefaultMerger(Merger):
         from .pandas import merge
 
         return merge(
-            sources=self.sources,
+            data=self.data,
             paths=self.paths,
             reader_class=self.reader_class,
             **kwargs,
@@ -285,8 +314,10 @@ class DefaultMerger(Merger):
         """
         from .xarray import merge
 
+        print("Merging xarray sources:")
+
         return merge(
-            sources=self.sources,
+            data=self.data,
             paths=self.paths,
             reader_class=self.reader_class,
             **kwargs,
@@ -351,7 +382,7 @@ class ObjMerger(DefaultMerger):
         """
         if not hasattr(self.obj, "to_fieldlist"):
             return super().to_fieldlist(**kwargs)
-        return self.obj.to_fieldlist(self.sources, **kwargs)
+        return self.obj.to_fieldlist(self.data, **kwargs)
 
     def to_xarray(self, **kwargs):
         """Call ``obj.to_xarray`` with the merged paths-or-sources, or fall back to :class:`DefaultMerger`.

@@ -22,70 +22,102 @@ LOG = logging.getLogger(__name__)
 
 
 class MultiSource(Source):
-    """Combine multiple sources into a single source.
+    """Combine multiple sources or data objects into a single source.
 
-    A MultiSource holds a flat list of sub-sources and behaves as their concatenation: iterating over it or
-    indexing it yields the items of the sub-sources in order.
+    .. note::
 
-    Whether the sub-sources are actually merged into a single object is decided when :obj:`mutate` is called,
+        Users do not normally create or interact with a ``MultiSource`` directly -- it is mostly an
+        internal implementation detail, used e.g. by :func:`from_source` itself when a source is given
+        several inputs (a list of files, say). The supported, user-facing way to combine several objects
+        is :func:`earthkit.data.concat`.
+
+    A MultiSource holds a flat list of sub-items and behaves as their concatenation: iterating over it or
+    indexing it yields the items of the sub-items in order. Each sub-item is stored internally as a
+    :ref:`Data object <data-object>` (see :obj:`data`), not as a raw ``Source``: any ``Source`` passed in
+    (or produced by a callable) is mutated and converted with ``to_data_object()`` during construction,
+    while a ``Data`` object passed in directly is kept as is.
+
+    Accepting ``Data`` objects as inputs, alongside ``Source``, is a consequence of :func:`from_source`
+    itself returning a ``Data`` object rather than a ``Source`` since version 1.0: user code combining
+    several results of :func:`from_source` therefore normally has ``Data`` objects on hand, not ``Source``
+    objects, so ``MultiSource`` has to accept both. This introduces a complication, though: not every
+    ``Data`` object has an underlying ``Source`` to fall back on -- one created by
+    :func:`earthkit.data.from_object` typically does not, since it never came from reading a source in the
+    first place. Such a ``Data`` item is accepted as a sub-item like any other, but cannot be converted
+    back into a ``Source`` (see :obj:`mutate`).
+
+    Whether the sub-items are actually merged into a single object is decided when :obj:`mutate` is called,
     and is controlled by the ``merger`` parameter. See :obj:`__init__` for details.
 
     Attributes
     ----------
+    data : list of :ref:`Data object <data-object>`
+        The flattened list of sub-items, each normalized to a ``Data`` object as described above. Nested
+        MultiSources/:class:`~earthkit.data.data.multi.MultiData` are expanded when possible (see
+        :obj:`_flatten`), so this list does not normally contain one of those. Items that earthkit-data
+        could not recognise the format of are dropped from this list, unless ``merger=False`` was passed
+        to :obj:`__init__`, in which case they are kept.
     sources : list of :class:`Source`
-        The flattened list of the mutated sub-sources. Nested MultiSources are expanded, so this list never
-        contains a MultiSource itself. Sub-sources that earthkit-data could not recognise the format of are
-        dropped from this list, unless ``merger=False`` was passed to :obj:`__init__`, in which case they
-        are kept.
+        Deprecated. The underlying ``Source`` of each item in :obj:`data` that has one (via its
+        ``_source`` attribute); items without one are silently omitted, so this list can be shorter than
+        :obj:`data`. Kept only for backward compatibility -- prefer :obj:`data`.
     filter : object or None
         The filter passed to the constructor. Currently stored but not applied.
     merger : object, str, tuple, or None
         The effective merger -- anything accepted as the ``merger`` argument of
         :func:`earthkit.data.mergers.make_merger` (never a :class:`Merger` instance itself), including the
         special value None (automatic merging). Note that this is never False, even when ``merger=False``
-        was passed to :obj:`__init__`: that only changes which sub-sources end up in :obj:`sources`, and is
-        normalized to None here, so later conversions can still merge the surviving sources by nearest common
-        class, exactly as the None default does (see :obj:`__init__`). This attribute is never replaced
-        with a built :class:`Merger` instance: :obj:`mutate` only ever consults it (together with whether
-        merging was disabled at construction) to decide whether to attempt automatic merging. Building the
-        actual ``Merger`` for an explicit (non-None) value is not done by ``MultiSource`` itself: it is the
-        responsibility of the :ref:`Data object <data-object>` returned by :func:`from_source` (e.g.
-        :class:`~earthkit.data.data.multi.MultiData`), which reads this attribute directly and calls
-        :func:`~earthkit.data.mergers.make_merger` itself for each conversion, rather than through
-        :obj:`to_fieldlist`/:obj:`to_xarray`/:obj:`to_pandas`/:obj:`statistics` below -- those methods
-        remain for backward compatibility only and are deprecated.
+        was passed to :obj:`__init__`: that only changes which sub-items end up in :obj:`data`, and is
+        normalized to None here, so later conversions can still merge the surviving sub-items by nearest
+        common class, exactly as the None default does (see :obj:`__init__`). This attribute is never
+        replaced with a built :class:`Merger` instance: :obj:`mutate` only ever consults it (together with
+        whether merging was disabled at construction) to decide whether to attempt automatic merging.
+        Building the actual ``Merger`` for an explicit (non-None) value is not done by ``MultiSource``
+        itself: it is the responsibility of the :ref:`Data object <data-object>` returned by
+        :func:`from_source` (e.g. :class:`~earthkit.data.data.multi.MultiData`), which reads this
+        attribute directly and calls :func:`~earthkit.data.mergers.make_merger` itself for each
+        conversion, rather than through :obj:`to_fieldlist`/:obj:`to_xarray`/:obj:`to_pandas`/
+        :obj:`statistics` below -- those methods remain for backward compatibility only and are
+        deprecated.
     """
 
-    def __init__(self, *sources, filter=None, merger=None, **kwargs):
+    def __init__(self, *items, filter=None, merger=None, **kwargs):
         """Initialize the MultiSource.
 
         Parameters
         ----------
-        *sources
-            The sources to combine. Either a single list of sources or the sources as positional arguments.
-            Each item must be a :class:`Source`, an object with a ``_source`` attribute holding a
-            :class:`Source`, or a callable returning a source. This is what allows a :ref:`Data object
-            <data-object>` to be passed here directly instead of the underlying ``Source``: every
-            :class:`~earthkit.data.data.source.SourceData` subclass (i.e. most concrete ``Data`` classes,
-            e.g. ``GribData``, ``NetCDFData``) carries such a ``_source`` attribute, which is unwrapped
-            automatically. Callables are evaluated here, in parallel when there is more than one of them.
+        *items
+            The sources or :ref:`Data objects <data-object>` to combine. Either a single list of items or
+            the items as positional arguments. Once any callables have been evaluated (see below), each
+            item must be a :class:`Source` or a ``Data`` object -- checked with ``isinstance``, so passing
+            a ``Data`` object directly (e.g. one already returned by :func:`from_source`) is supported
+            natively, without relying on a ``_source`` attribute. Accepting ``Data`` objects here, and not
+            just ``Source`` objects, matters because :func:`from_source` itself has returned a ``Data``
+            object rather than a ``Source`` since version 1.0, so that is normally what callers have on
+            hand to combine. A ``Source`` item is mutated and converted with ``to_data_object()``; a
+            ``Data`` item is kept as is (see :obj:`data`) -- note that some ``Data`` objects, e.g. ones
+            created by :func:`earthkit.data.from_object` rather than read from a source, have no
+            underlying source at all, which :obj:`mutate` cannot always work around (see there). Items can
+            also be callables returning a ``Source`` or ``Data`` object; these are evaluated here, in
+            parallel when there is more than one of them.
         filter : optional
             The filter to apply to the sources.
         merger : object, str, tuple, None, or False
-            The merger to use for combining the sources. This is never a :class:`Merger` instance itself —
+            The merger to use for combining the sub-items. This is never a :class:`Merger` instance itself —
             it is any value accepted as the ``merger`` argument of :func:`earthkit.data.mergers.make_merger`,
             which is called to build the actual :class:`Merger` on demand. The values are interpreted as
             follows:
 
             - None (the default) requests automatic merging: when the MultiSource is mutated, it tries to
-              merge the sources by their nearest common class. If that succeeds, the MultiSource mutates
-              itself into the single merged object — e.g. when all the input files are of the same type.
-              If it fails, no merger is built and the MultiSource remains a collection of its sources.
-            - False keeps every sub-source, including ones that would otherwise be silently dropped when a
+              merge the underlying sources of the sub-items (see :obj:`data`) by their nearest common
+              class. If that succeeds, the MultiSource mutates itself into the single merged object —
+              e.g. when all the input files are of the same type. If it fails, no merger is built and the
+              MultiSource remains a collection of its sub-items.
+            - False keeps every sub-item, including ones that would otherwise be silently dropped when a
               MultiSource is created — typically ones earthkit-data assigns an UnknownReader, e.g.
-              unsupported file types (see :obj:`sources`). This does not, however, disable merging for
-              later conversions: :obj:`merger` is normalized to None once construction is complete, so a
-              conversion on the surviving sources still merges by nearest common class, exactly as with
+              unsupported file types (see :obj:`data`). This does not, however, disable merging for later
+              conversions: :obj:`merger` is normalized to None once construction is complete, so a
+              conversion on the surviving sub-items still merges by nearest common class, exactly as with
               the None default. What False actually skips is the *automatic* merge attempt made while
               mutating (see :obj:`mutate`) — which is why a MultiSource created with ``merger=False``
               surfaces as a :class:`~earthkit.data.data.multi.MultiData` rather than mutating into a
@@ -104,14 +136,20 @@ class MultiSource(Source):
         Raises
         ------
         ValueError
-            If an item in ``sources`` is neither a :class:`Source`, an object wrapping one, nor a callable.
+            If an item in ``items``, once any callables have been evaluated, is neither a :class:`Source`
+            nor a ``Data`` object.
 
         Examples
         --------
-        In all the examples below, ``ds`` is the :ref:`Data object <data-object>` returned by
-        :func:`from_source` (e.g. :class:`~earthkit.data.data.multi.MultiData`), not the underlying
-        ``MultiSource`` -- its ``to_xarray``/``to_pandas``/``to_fieldlist`` methods, unlike the deprecated
-        ones on ``MultiSource``, are the supported way to trigger the merger described here.
+        These examples use ``from_source("multi", ...)``/``from_source("file", [...], ...)`` to illustrate
+        the ``merger`` values, since that is how a ``MultiSource`` ends up being created; for combining
+        objects you already have on hand, e.g. two results of :func:`from_source`, prefer
+        :func:`earthkit.data.concat` instead of constructing a ``MultiSource`` or calling
+        ``from_source("multi", ...)`` directly. In all the examples below, ``ds`` is the :ref:`Data object
+        <data-object>` returned by :func:`from_source` (e.g. :class:`~earthkit.data.data.multi.MultiData`),
+        not the underlying ``MultiSource`` -- its ``to_xarray``/``to_pandas``/``to_fieldlist`` methods,
+        unlike the deprecated ones on ``MultiSource``, are the supported way to trigger the merger
+        described here.
 
         Keep every file as a separate source, including ones earthkit-data would otherwise ignore:
 
@@ -146,45 +184,54 @@ class MultiSource(Source):
         >>> ds = from_source("multi", [s1, s2], merger=MyMerger()).to_xarray()
         """
         super().__init__(**kwargs)
-        if len(sources) == 1 and isinstance(sources[0], list):
-            sources = sources[0]
+        if len(items) == 1 and isinstance(items[0], list):
+            items = items[0]
 
-        sources = self._from_sources(sources)
+        self._merge_in_mutate = True
+        remove_ignored = True
+        self.merger = merger
+        if self.merger is False:
+            self._merge_in_mutate = False
+            remove_ignored = False
+            self.merger = None
+        elif self.merger is not None:
+            self._merge_in_mutate = False
 
-        self._do_merge = True
-        if merger is False:
-            self._do_merge = False
-            merger = None
+        # print("MultiSource merger:", self.merger)
 
-        # include all sources that are not ignored
-        if self._do_merge:
-            self.sources = [s.mutate() for s in self._flatten(sources) if not s.ignore()]
-        # otherwise, when merging is disabled, all sources are included without ignoring any of them
-        else:
-            self.sources = [s.mutate() for s in self._flatten(sources)]
+        # print("MultiSource 1")
+        # for d in items:
+        #     print("  item:", d)
+
+        items = self._evaluate(items)
+        self.data = self._prepare(items, remove_ignored=remove_ignored)
+
+        # print(" ---> ")
+        # for d in self.data:
+        #     print("  item:", d, "source:", getattr(d, "_source", None))
+
+        # print(" merger:", self.merger)
+        # print(" merge_in_mutate:", self._merge_in_mutate)
+        # print(" remove_ignored:", remove_ignored)
+
+        # for backward compatibility, store the original sources separately
+        self._sources = [d._source for d in self.data if hasattr(d, "_source")]
+
+        # print("Original sources stored in _sources:", self._sources)
 
         self.filter = filter
-        self.merger = merger
-        self._lengths = [None] * len(self.sources)
+        self._lengths = [None] * len(items)
 
-    def _flatten(self, sources):
-        """Recursively expand nested MultiSources into a flat iterator of leaf sources.
+    @property
+    @deprecation.deprecated(deprecated_in="1.3", removed_in=None, details="Deprecated.")
+    def sources(self):
+        """List of :class:`Source`: Deprecated. See the class-level :obj:`sources` docs.
 
-        Parameters
-        ----------
-        sources : iterable of :class:`Source`
-            The sources to flatten.
-
-        Yields
-        ------
-        :class:`Source`
-            Each leaf source, i.e. a source that is not itself a MultiSource.
+        Note that most of the other methods below (:obj:`__iter__`, :obj:`__getitem__`, :obj:`__len__`,
+        :obj:`__repr__`, :obj:`graph`, :obj:`paths`, :obj:`datetime`, :obj:`bounding_box`) still read this
+        property internally rather than :obj:`data`, so using them also triggers this deprecation warning.
         """
-        for s in sources:
-            if isinstance(s, MultiSource):
-                yield from self._flatten(s.sources)
-            else:
-                yield s
+        return self._sources
 
     def ignore(self):
         """Report whether this source should be ignored when building a parent MultiSource.
@@ -192,60 +239,89 @@ class MultiSource(Source):
         Returns
         -------
         bool
-            True if this MultiSource has no sub-sources left after filtering.
+            True if this MultiSource has no sub-items left after filtering (see :obj:`data`).
         """
-        return len(self.sources) == 0
+        return len(self.data) == 0
 
     def mutate(self):
         """Attempt to collapse this MultiSource into a simpler object.
 
-        With a single sub-source, mutates into that sub-source directly. With none, returns an
-        :class:`EmptySource`. Otherwise, automatic merging by nearest common class is attempted, but only
-        when :obj:`merger` is None *and* ``merger=False`` was not passed to :obj:`__init__` (merging having
-        been disabled at construction is remembered even though it also normalizes :obj:`merger` to None,
-        see :obj:`merger`). In every other case -- an explicit merger, or merging having been disabled --
-        this leaves ``self`` unchanged: an explicit merger is only ever built later, lazily, by the
-        :ref:`Data object <data-object>` returned by :func:`from_source`.
+        Unlike the rest of this class, ``mutate`` must return a :class:`Source`, never a ``Data`` object:
+        it is part of the same ``mutate``-until-fixed-point machinery :func:`from_source` itself uses, and
+        that machinery only ever deals in ``Source`` objects, converting the final result to a ``Data``
+        object (via ``to_data_object()``) only once mutation has settled. This is where the complication
+        of :ref:`Data objects without an underlying source <data-object>` (see the class docstring) bites:
+        a sub-item like that has nothing for ``mutate`` to fall back on.
+
+        With a single sub-item (see :obj:`data`), mutates into that item's underlying source directly: if
+        the item is itself a :class:`Source`, its own :obj:`mutate` is called; if it is a ``Data`` object
+        with a ``_source`` attribute, that source is returned as is (it was already mutated when the
+        ``Data`` object was built, see :obj:`__init__`); a ``Data`` object with no ``_source`` (typically
+        one created by :func:`earthkit.data.from_object`) cannot be converted this way and raises
+        ``RuntimeError``. With no sub-items, returns an :class:`EmptySource`.
+
+        Otherwise, automatic merging by nearest common class is attempted, but only when :obj:`merger` is
+        None *and* ``merger=False`` was not passed to :obj:`__init__` (merging having been disabled at
+        construction is remembered even though it also normalizes :obj:`merger` to None, see :obj:`merger`)
+        *and* every sub-item has an underlying source to merge (see :obj:`sources`). In every other case --
+        an explicit merger, merging having been disabled, or a sub-item with no underlying source -- this
+        leaves ``self`` unchanged: an explicit merger is only ever built later, lazily, by the :ref:`Data
+        object <data-object>` returned by :func:`from_source`.
 
         Returns
         -------
         :class:`Source`
             The mutated object, which may be ``self``.
-        """
-        if len(self.sources) == 1:
-            return self.sources[0].mutate()
 
-        if len(self.sources) == 0:
+        Raises
+        ------
+        RuntimeError
+            If there is a single sub-item and it is a ``Data`` object with no underlying source.
+        """
+        if len(self.data) == 1:
+            if isinstance(self.data[0], Source):
+                return self.data[0].mutate()
+            elif hasattr(self.data[0], "_source"):
+                return self.data[0]._source
+            else:
+                raise RuntimeError("Cannot convert the single data object into a source.")
+
+        if len(self.data) == 0:
             return EmptySource()
 
         # when merger is None, attempt to merge the sources using the default merger.
-        if self._do_merge and self.merger is None:
-            try:
-                merged = merge_by_class(self.sources)
-                if merged is not None:
-                    return merged.mutate()
-            except Exception:
-                pass
+        if self._merge_in_mutate:
+            if len(self.data) == len(self._sources):
+                try:
+                    merged = merge_by_class(self._sources)
+                    if merged is not None:
+                        return merged.mutate()
+                except Exception:
+                    pass
 
         return self
 
     def __iter__(self):
-        """Iterate over the items of all sub-sources, in order, as a single flat sequence."""
+        """Iterate over the items of all sub-items' underlying sources, in order, as a flat sequence.
+
+        Note: like :obj:`__getitem__`/:obj:`__len__`/:obj:`_length` below, this relies on the deprecated
+        :obj:`sources` property rather than :obj:`data`, and so also raises its deprecation warning.
+        """
         return itertools.chain(*self.sources)
 
     def __getitem__(self, n):
-        """Get the ``n``-th item across all sub-sources.
+        """Get the ``n``-th item across all sub-items' underlying sources.
 
         Parameters
         ----------
         n : int
-            The index of the item, treating the sub-sources as one concatenated sequence. Negative indices
-            are supported and count from the end.
+            The index of the item, treating the underlying sources (see :obj:`sources`) as one
+            concatenated sequence. Negative indices are supported and count from the end.
 
         Returns
         -------
         object
-            The item at index ``n``, taken from the sub-source it falls into.
+            The item at index ``n``, taken from the source it falls into.
         """
         if n < 0:
             n = len(self) + n
@@ -256,24 +332,56 @@ class MultiSource(Source):
             i += 1
         return self.sources[i][n]
 
+    @deprecation.deprecated(
+        deprecated_in="1.3",
+        removed_in=None,
+        details="Deprecated.",
+    )
     def sel(self, *args, **kwargs):
-        """Not implemented for MultiSource."""
+        """Not implemented for MultiSource.
+
+        Deprecated.
+        """
         self._not_implemented()
 
+    @deprecation.deprecated(
+        deprecated_in="1.3",
+        removed_in=None,
+        details="Deprecated.",
+    )
     def order_by(self, *args, **kwargs):
-        """Not implemented for MultiSource."""
+        """Not implemented for MultiSource.
+
+        Deprecated.
+        """
         self._not_implemented()
 
+    @deprecation.deprecated(
+        deprecated_in="1.3",
+        removed_in=None,
+        details="Deprecated.",
+    )
     def metadata(self, *args, **kwargs):
-        """Not implemented for MultiSource."""
+        """Not implemented for MultiSource.
+
+        Deprecated.
+        """
         self._not_implemented()
 
+    @deprecation.deprecated(
+        deprecated_in="1.3",
+        removed_in=None,
+        details="Deprecated.",
+    )
     def __len__(self):
-        """Return the total number of items across all sub-sources."""
+        """Return the total number of items across all sub-items' underlying sources (see :obj:`sources`).
+
+        Deprecated.
+        """
         return sum(self._length(i) for i, _ in enumerate(self.sources))
 
     def _length(self, i):
-        """Return the (cached) length of the ``i``-th sub-source.
+        """Return the (cached) length of the ``i``-th underlying source.
 
         Parameters
         ----------
@@ -290,7 +398,7 @@ class MultiSource(Source):
         return self._lengths[i]
 
     def __repr__(self) -> str:
-        """Return a repr listing the reprs of all sub-sources."""
+        """Return a repr listing the reprs of all sub-items' underlying sources (see :obj:`sources`)."""
         string = ",".join(repr(s) for s in self.sources)
         return f"{self.__class__.__name__}({string})"
 
@@ -310,14 +418,35 @@ class MultiSource(Source):
 
         to_target(target, *args, data=self, **kwargs)
 
+    def paths(self):
+        """Return a list of paths, one per underlying source (see :obj:`sources`).
+
+        For a source exposing a callable ``paths()`` method (e.g. a nested MultiSource), its own paths are
+        extended into the result instead of a single entry.
+
+        Returns
+        -------
+        list
+            The collected paths.
+        """
+        paths = []
+        for s in self.sources:
+            if hasattr(s, "paths") and callable(s.paths):
+                paths.extend(s.paths())
+            elif hasattr(s, "path"):
+                paths.append(s.path)
+            else:
+                paths.append(s.path)
+        return paths
+
     def graph(self, depth=0):
-        """Print a tree representation of this source and its sub-sources.
+        """Print a tree representation of this source and its sub-items' underlying sources.
 
         Parameters
         ----------
         depth : int
-            The current indentation level, in characters. Each sub-source is printed with an
-            increased indentation.
+            The current indentation level, in characters. Each underlying source (see :obj:`sources`) is
+            printed with an increased indentation.
         """
         print(" " * depth, self.__class__.__name__, self.merger)
         for s in self.sources:
@@ -332,7 +461,7 @@ class MultiSource(Source):
         ),
     )
     def to_fieldlist(self, **kwargs):
-        """Convert the sub-sources into a :class:`FieldList` using :obj:`merger`.
+        """Convert the sub-items into a :class:`FieldList` using :obj:`merger`.
 
         Deprecated: kept only for backward compatibility. The :ref:`Data object <data-object>` returned by
         :func:`from_source` never calls this method -- it builds and uses its own :class:`Merger` directly
@@ -347,7 +476,7 @@ class MultiSource(Source):
         -------
         :class:`FieldList`
         """
-        return make_merger(self.merger, self.sources).to_fieldlist(**kwargs)
+        return make_merger(self.merger, self.data).to_fieldlist(**kwargs)
 
     @deprecation.deprecated(
         deprecated_in="1.3",
@@ -358,7 +487,7 @@ class MultiSource(Source):
         ),
     )
     def to_xarray(self, **kwargs):
-        """Convert the sub-sources into an xarray object using :obj:`merger`.
+        """Convert the sub-items into an xarray object using :obj:`merger`.
 
         Deprecated: kept only for backward compatibility. The :ref:`Data object <data-object>` returned by
         :func:`from_source` never calls this method -- it builds and uses its own :class:`Merger` directly
@@ -373,7 +502,7 @@ class MultiSource(Source):
         -------
         xarray.Dataset or xarray.DataArray
         """
-        return make_merger(self.merger, self.sources).to_xarray(**kwargs)
+        return make_merger(self.merger, self.data).to_xarray(**kwargs)
 
     @deprecation.deprecated(
         deprecated_in="1.3",
@@ -384,7 +513,7 @@ class MultiSource(Source):
         ),
     )
     def to_pandas(self, **kwargs):
-        """Convert the sub-sources into a pandas object using :obj:`merger`.
+        """Convert the sub-items into a pandas object using :obj:`merger`.
 
         Deprecated: kept only for backward compatibility. The :ref:`Data object <data-object>` returned by
         :func:`from_source` never calls this method -- it builds and uses its own :class:`Merger` directly
@@ -399,7 +528,7 @@ class MultiSource(Source):
         -------
         pandas.DataFrame
         """
-        return make_merger(self.merger, self.sources).to_pandas(**kwargs)
+        return make_merger(self.merger, self.data).to_pandas(**kwargs)
 
     @deprecation.deprecated(
         deprecated_in="1.3",
@@ -407,7 +536,7 @@ class MultiSource(Source):
         details="Deprecated, and currently non-functional.",
     )
     def statistics(self, **kwargs):
-        """Compute statistics over the sub-sources using :obj:`merger`.
+        """Compute statistics over the sub-items using :obj:`merger`.
 
         Deprecated and currently non-functional.
 
@@ -421,53 +550,100 @@ class MultiSource(Source):
         object
             The statistics, as returned by the merger.
         """
-        return make_merger(self.merger, self.sources).statistics(**kwargs)
+        return make_merger(self.merger, self.data).statistics(**kwargs)
 
-    def _from_sources(self, sources):
-        """Resolve ``sources`` into a list of :class:`Source` instances.
+    @deprecation.deprecated(
+        deprecated_in="1.3",
+        removed_in=None,
+        details="Deprecated.",
+    )
+    def datetime(self, **kwargs):
+        """Return the combined datetime information of all sub-items' underlying sources.
 
-        Items that are already a :class:`Source` (or wrap one in a ``_source`` attribute) are used as is.
-        Callable items are called to produce a source; when there is more than one callable, they are
-        evaluated concurrently using a thread pool, with the number of threads capped by the
-        ``number-of-download-threads`` config setting.
+        Deprecated.
 
         Parameters
         ----------
-        sources : iterable
-            The raw sources passed to :obj:`__init__`.
+        **kwargs
+            Keyword arguments passed to each sub-source's ``datetime`` method.
 
         Returns
         -------
-        list of :class:`Source`
+        dict
+            Mapping of datetime kind (e.g. "base_time", "valid_time") to a sorted list of the values found
+            across all underlying sources.
+        """
+        result = dict()
+        for s in self.sources:
+            result.update(s.datetime(**kwargs))
+        return {k: sorted(v) for k, v in result.items()}
 
-        Raises
-        ------
-        ValueError
-            If an item is neither a :class:`Source`, an object wrapping one, nor a callable.
+    @deprecation.deprecated(
+        deprecated_in="1.3",
+        removed_in=None,
+        details="Deprecated.",
+    )
+    def bounding_box(self):
+        """Return the bounding box covering all sub-items' underlying sources.
+
+        Deprecated.
+
+        Returns
+        -------
+        :class:`earthkit.data.utils.bbox.BoundingBox`
+            The union of the bounding boxes of all underlying sources.
+        """
+        return BoundingBox.union([s.bounding_box() for s in self.sources])
+
+    def to_data_object(self):
+        """Convert this source into a :class:`MultiData` object.
+
+        Passes :obj:`data` and :obj:`merger` straight through to the constructor, so the resulting
+        ``MultiData`` sees the same sub-items and effective merger as this ``MultiSource``.
+
+        Returns
+        -------
+        :class:`earthkit.data.data.multi.MultiData`
+        """
+        from earthkit.data.data.multi import MultiData
+
+        return MultiData(self.data, merger=self.merger)
+
+    def _evaluate(self, items):
+        """Evaluate any callables in ``items``, leaving every other item untouched.
+
+        Non-callable items (:class:`Source`, ``Data`` objects, or anything else) are passed through as is;
+        type validation happens later, in :obj:`_prepare`. Callable items are called to produce their
+        result; when there is more than one callable, they are evaluated concurrently using a thread pool,
+        with the number of threads capped by the ``number-of-download-threads`` config setting.
+
+        Parameters
+        ----------
+        items : iterable
+            The raw inputs passed to :obj:`__init__`.
+
+        Returns
+        -------
+        list
+            ``items``, with every callable item replaced by its result.
         """
         callables = []
         has_callables = False
-        sources_in = sources
-        sources = []
-        for s in sources_in:
-            if callable(s):
+        items_in = items
+        items = []
+        for d in items_in:
+            if callable(d):
                 has_callables = True
-                callables.append(s)
-                sources.append(s)
+                callables.append(d)
+                items.append(d)
             else:
-                if not isinstance(s, Source):
-                    if hasattr(s, "_source"):
-                        s = s._source
-                    if s is None or not isinstance(s, Source):
-                        raise ValueError(f"MultiSource: expected Source or callable, got {type(s)}")
+                items.append(d)
+                callables.append(lambda *args, **kwargs: d)
 
-                sources.append(s)
-                callables.append(lambda *args, **kwargs: s)
-
-        assert len(sources) == len(callables)
+        assert len(items) == len(callables)
 
         if not has_callables:
-            return sources
+            return items
 
         from earthkit.data.core.config import CONFIG
 
@@ -485,63 +661,89 @@ class MultiSource(Source):
         with SoftThreadPool(nthreads=nthreads) as pool:
             futures = [pool.submit(_call, s) for s in callables]
             iterator = (f.result() for f in futures)
-            sources = list(tqdm(iterator, leave=False, total=len(futures)))
+            items = list(tqdm(iterator, leave=False, total=len(futures)))
 
-        return sources
+        return items
 
-    @deprecation.deprecated(
-        deprecated_in="1.3",
-        removed_in=None,
-        details="Deprecated.",
-    )
-    def datetime(self, **kwargs):
-        """Return the combined datetime information of all sub-sources.
+    def _prepare(self, items, remove_ignored=False):
+        """Flatten ``items`` (see :obj:`_flatten`) and normalize each one into a ``Data`` object.
 
-        Deprecated.
+        A :class:`Source` item is mutated (:obj:`Source.mutate`) and converted with ``to_data_object()``;
+        a ``Data`` item is kept as is. When ``remove_ignored`` is True, an item is dropped instead if its
+        underlying source reports itself as ignorable (:obj:`Source.ignore`) -- this is what implements
+        the ``merger=False`` behaviour described in :obj:`__init__`.
 
         Parameters
         ----------
-        **kwargs
-            Keyword arguments passed to each sub-source's ``datetime`` method.
+        items : iterable of :class:`Source` or :ref:`Data object <data-object>`
+            The (already flattened-eligible) items to normalize, typically the result of :obj:`_evaluate`.
+        remove_ignored : bool, default False
+            Whether to drop items whose underlying source is ignorable.
 
         Returns
         -------
-        dict
-            Mapping of datetime kind (e.g. "base_time", "valid_time") to a sorted list of the values found
-            across all sub-sources.
+        list of :ref:`Data object <data-object>`
+            The normalized items, to be stored in :obj:`data`.
+
+        Raises
+        ------
+        ValueError
+            If an item is neither a :class:`Source` nor a ``Data`` object.
         """
-        result = dict()
-        for s in self.sources:
-            result.update(s.datetime(**kwargs))
-        return {k: sorted(v) for k, v in result.items()}
+        from earthkit.data.data import Data
 
-    @deprecation.deprecated(
-        deprecated_in="1.3",
-        removed_in=None,
-        details="Deprecated.",
-    )
-    def bounding_box(self):
-        """Return the bounding box covering all sub-sources.
+        items_in = self._flatten(items)
+        items = []
+        for d in items_in:
+            if isinstance(d, Source):
+                if remove_ignored and d.ignore():
+                    continue
+                d = d.mutate()
+                items.append(d.to_data_object())
+            elif isinstance(d, Data):
+                if remove_ignored:
+                    if hasattr(d, "_source") and d._source is not None and d._source.ignore():
+                        continue
+                items.append(d)
+            else:
+                raise ValueError(f"MultiSource: expected Source or Data, got {type(d)}")
 
-        Deprecated.
+        return items
 
-        Returns
-        -------
-        :class:`earthkit.data.utils.bbox.BoundingBox`
-            The union of the bounding boxes of all sub-sources.
-        """
-        return BoundingBox.union([s.bounding_box() for s in self.sources])
+    def _flatten(self, items):
+        """Recursively expand nested MultiSources/MultiData into a flat iterator of leaf items.
 
-    def to_data_object(self):
-        """Convert this source into a :class:`MultiData` object.
+        Expansion only happens while ``self`` itself requests automatic merging (:obj:`merger` is None);
+        if ``self`` has an explicit merger (or merging was disabled, which also normalizes :obj:`merger` to
+        None -- see :obj:`__init__`), nothing here is expanded at all, since every item is then merged
+        (or not) by ``self`` as a single unit regardless of its own nested structure. When expansion is
+        attempted, a nested :class:`MultiSource` or :class:`~earthkit.data.data.multi.MultiData` is only
+        expanded into its own items if it likewise has no explicit merger of its own (checked via its
+        ``merger``/``_merger`` attribute); otherwise it is left as a single unit, since it will use its own
+        merger rather than being merged together with its siblings.
 
-        Returns
-        -------
-        :class:`earthkit.data.data.multi.MultiData`
+        Parameters
+        ----------
+        items : iterable of :class:`Source` or :ref:`Data object <data-object>`
+            The items to flatten.
+
+        Yields
+        ------
+        :class:`Source` or :ref:`Data object <data-object>`
+            Each leaf item, or an unexpanded nested MultiSource/MultiData.
         """
         from earthkit.data.data.multi import MultiData
 
-        return MultiData(self)
+        for s in items:
+            if self.merger is None:
+                if isinstance(s, (MultiSource)) and s.merger is None:
+                    yield from self._flatten(s.data)
+                elif isinstance(s, (MultiData)) and s._merger is None:
+                    yield from self._flatten(s._data)
+                else:
+                    yield s
+            else:
+                yield s
 
 
 source = MultiSource
