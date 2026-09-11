@@ -28,7 +28,8 @@ class TarReader(ArchiveReader):
 
 
 def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
-    if tarfile.is_tarfile(path):
+    # we explicitly do not consider all zeroes files as tar
+    if tarfile.is_tarfile(path) and open(path, "rb").read(512).strip(b"\0"):
         return TarReader(source, path, **kwargs)
 
 
