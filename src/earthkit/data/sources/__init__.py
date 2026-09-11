@@ -472,6 +472,20 @@ def _from_source_internal(name: str, *args, lazily=False, **kwargs) -> Source:
     return src
 
 
+def _from_source_instance(src: Source) -> "Data":
+    prev = None
+    while src is not prev:
+        prev = src
+        src = src.mutate()
+
+    if hasattr(src, "to_data_object"):
+        data = src.to_data_object()
+        if data is not None:
+            return data
+
+    raise ValueError(f"Source {src} cannot be converted into a data object")
+
+
 def from_source_lazily(name, *args, **kwargs):
     from earthkit.data.utils.lazy import LazySource
 

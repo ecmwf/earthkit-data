@@ -116,7 +116,7 @@ def test_multi_grib_1():
     # ds.statistics()
 
 
-def test_multi_grib_mixed():
+def test_multi_grib_mixed_1():
     ds = from_source(
         "multi",
         from_source("dummy-source", kind="grib", date=20000101).to_fieldlist(),
@@ -125,6 +125,20 @@ def test_multi_grib_mixed():
     ).to_fieldlist()
 
     assert len(ds) == 2
+
+
+def test_multi_grib_mixed_2():
+    ds = from_source(
+        "multi",
+        from_source("dummy-source", kind="grib", date=20000101).to_fieldlist(),
+        from_source("dummy-source", kind="grib", date=20000102).to_fieldlist(),
+        from_source("dummy-source", kind="unknown", hello="world"),
+        merger=False,
+    )
+
+    assert len(ds.path) == 3
+    fl = ds.to_fieldlist()
+    assert len(fl) == 2
 
 
 if __name__ == "__main__":

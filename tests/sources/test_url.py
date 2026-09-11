@@ -225,7 +225,6 @@ def test_url_part_file_source():
         assert f.read() == b"GRIB7777GRIB7777"
 
 
-@pytest.mark.download
 def test_url_netcdf_source_save():
     ds = from_source(
         "url",
@@ -237,6 +236,21 @@ def test_url_netcdf_source_save():
         assert os.path.exists(tmp)
         ds_saved = from_source("file", tmp)
         assert len(ds_saved) == 2
+
+
+def test_url_grib_netcdf_mixed():
+    ds = from_source(
+        "url",
+        [
+            earthkit_remote_examples_file("test.nc"),
+            earthkit_remote_examples_file("test.grib"),
+        ],
+    )
+    # TODO: this is the consequence of the current behaviour of the url source, which
+    # concatenates multiple URLs into a single target file. Change this test if an option is
+    # added to handle multiple URLs differently.
+    assert ds._TYPE_NAME == "NetCDF"
+    assert isinstance(ds.path, str)
 
 
 if __name__ == "__main__":

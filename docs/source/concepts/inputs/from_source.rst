@@ -16,9 +16,9 @@ from_source
 
   Read data from a source.
 
-  :param str name: the source (see below)
-  :param tuple *args: specifies the data location and additional parameters to access the data
-  :param dict **kwargs: provides **additional functionalities** including caching, filtering, sorting and indexing
+  :param str name: The source (see below)
+  :param tuple *args: Specifies the data location and additional parameters to access the data
+  :param dict **kwargs: Provides **additional functionalities** including caching, filtering, sorting and indexing
   :return: a :ref:`data object <data-object>` containing the data read from the source
 
   **earthkit-data** has the following built-in sources:
@@ -85,22 +85,24 @@ from_source
 file
 ----
 
-.. py:function:: from_source("file", path, expand_user=True, expand_vars=False, unix_glob=True, recursive_glob=True, filter=None, parts=None)
+.. py:function:: from_source("file", path, expand_user=True, expand_vars=False, unix_glob=True, recursive_glob=True, filter=None, parts=None,  merger=None)
   :noindex:
 
-  The simplest source is ``file``, which can access a local file/list of files.
+  Read data from a local file/list of files.
 
-  :param path: input path(s). Each path can be a file path or a directory path. If it is a directory path, it is recursively scanned for supported files. When a path is an archive format such as ``.zip``, ``.tar``, ``.tar.gz``, etc, *earthkit-data* will attempt to open it and extract any usable files, which are then stored in the :ref:`cache <caching>`. Each filepath can contain the :ref:`parts <parts>` defining the byte ranges to read.
+  :param path: Input path(s). Each path can be a file path or a directory path. If it is a directory path, it is recursively scanned for supported files. When a path is an archive format such as ``.zip``, ``.tar``, ``.tar.gz``, etc, *earthkit-data* will attempt to open it and extract any usable files, which are then stored in the :ref:`cache <caching>`. Each filepath can contain the :ref:`parts <parts>` defining the byte ranges to read.
   :type path: str, list, tuple
-  :param bool expand_user: replace the leading ~ or ~user in ``path`` by that user's home directory. See ``os.path.expanduser``
-  :param bool expand_vars:  expand shell environment variables in ``path``. See ``os.path.expandpath``
-  :param bool unix_glob: allow UNIX globbing in ``path``
-  :param bool recursive_glob: allow recursive scanning of directories. Only used when ``uxix_glob`` is True
-  :param filter: apply filter to the files read from directories or archives. The filter can be a callable or a string. If it is a string, it is interpreted as a UNIX glob pattern. If it is a callable, it should accept the full file path as a string and return a boolean.
+  :param bool expand_user: Replace the leading ~ or ~user in ``path`` by that user's home directory. See ``os.path.expanduser``
+  :param bool expand_vars:  Expand shell environment variables in ``path``. See ``os.path.expandpath``
+  :param bool unix_glob: Allow UNIX globbing in ``path``
+  :param bool recursive_glob: Allow recursive scanning of directories. Only used when ``uxix_glob`` is True
+  :param filter: Apply filter to the files read from directories or archives. The filter can be a callable or a string. If it is a string, it is interpreted as a UNIX glob pattern. If it is a callable, it should accept the full file path as a string and return a boolean.
   :type filter: str, callable
-  :param parts: the :ref:`parts <parts>` to read from the file(s) specified by ``path``. Cannot be used when ``path`` already defines the :ref:`parts <parts>`.
+  :param parts: The :ref:`parts <parts>` to read from the file(s) specified by ``path``. Cannot be used when ``path`` already defines the :ref:`parts <parts>`.
   :type parts: pair, list or tuple of pairs, None
-  :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Directories and archives are supported. Stream based access is only available for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`. *New in version 0.11.0*
+  :param merger: When None, an attempt is made to merge multiple inputs by their classes (using the nearest common class). When False, no merging is attempted (available from *version 1.3*). Otherwise ``merger`` specifies a custom merger (see details :ref:`here <mergers-details>`), which is used in a lazy way when conversion to fieldlst, Xarray or pandas is requested. For further details about the merging process consult the :ref:`mergers` section.
+  :type merger: None, False, object, callable, str, or tuple
+  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Directories and archives are supported. Stream based access is only available for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`. *New in version 0.11.0*
 
 
   The ``path`` can be used in a flexible way:
@@ -152,6 +154,7 @@ file
     - :ref:`/tutorials/bufr/bufr_temp.ipynb`
     - :ref:`/tutorials/netcdf/netcdf.ipynb`
     - :ref:`/tutorials/odb/odb.ipynb`
+    - :ref:`/how-tos/read_file_list.ipynb`
 
 .. _data-sources-file-pattern:
 
@@ -161,14 +164,14 @@ file-pattern
 .. py:function:: from_source("file-pattern", pattern, *args, hive_partitioning=False, **kwargs)
   :noindex:
 
-  Reads data from paths specified by a :ref:`pattern <patterns>`.
+  Read data from paths specified by a :ref:`pattern <patterns>`.
 
-  :param pattern: input path pattern using ``{}`` brackets to define parameters that can be substituted. See :ref:`patterns <patterns>` for details.
+  :param pattern: Input path pattern using ``{}`` brackets to define parameters that can be substituted. See :ref:`patterns <patterns>` for details.
   :type pattern: str
-  :param tuple *args: specify the values to substitute into the parameters ``pattern``. Each parameter can be a list/tuple or a single value.
-  :param hive_partitioning: control how the ``pattern`` is interpreted. See details below.
+  :param tuple *args: Specify the values to substitute into the parameters ``pattern``. Each parameter can be a list/tuple or a single value.
+  :param hive_partitioning: Control how the ``pattern`` is interpreted. See details below.
   :type hive_partitioning: bool
-  :param dict **kwargs: other keyword arguments specifying the parameter values
+  :param dict **kwargs: Other keyword arguments specifying the parameter values
 
   The actual behaviour and the type of the returned object depend on ``hive_partitioning``:
 
@@ -263,20 +266,35 @@ hive_partioning=True
 .. _data-sources-url:
 
 url
----
+-----
 
-.. py:function:: from_source("url", url, unpack=True, parts=None, stream=False)
+.. py:function:: from_source("url", url, *  parts=None, chunk_size=1024 * 1024, verify=True, range_method="auto", http_headers=None, fake_headers=None, auth=None, session=None, update_if_out_of_date=False, force=None, stream=False, filter=None, merger=None, **kwargs)
   :noindex:
 
-  The ``url`` source will download the data from the address specified and store it in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
+  Download data from the URL(s) specified.
 
-  :param url: the URL(s) to download. Each URL can contain the :ref:`parts <parts>` defining the byte ranges to read.
-  :type url: str
-  :param bool unpack: for archive formats such as ``.zip``, ``.tar``, ``.tar.gz``, etc, *earthkit-data* will attempt to open it and extract any usable file. To keep the downloaded file as is use ``unpack=False``
-  :param parts: the :ref:`parts <parts>` to read from the resource(s) specified by ``url``. Cannot be used when ``url`` already defines the :ref:`parts <parts>`.
+  The results are stored in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above. The download is performed using the `multiurl`_ package.
+
+  .. warning::
+      When multiple URLs are specified, they are all downloaded into a **single** file in the :ref:`cache <caching>`, effectively concatenating their contents. This works well for formats that support concatenation at the file level, such as GRIB or BUFR. For formats that do not, e.g. NetCDF or TAR archives, this concatenation produces an unusable result. In such cases you need to download each URL in a separate ``from_source("url", ...)`` call.
+
+  :param url: The URL(s) to download. Each URL can contain the :ref:`parts <parts>` defining the byte ranges to read. A single url can be a str or a list/tuple of two items. The first item is the url as a str, while the second item defines the parts for the given url. In this case the ``parts`` kwargs cannot be used. Multiple urls can be provided as a list/tuple of of the single url formats above. Mixing single url formats in a list/tuple is not allowed.
+  :type url: str, list, tuple or an iterable of these
+  :param parts: The :ref:`parts <parts>` to read from the resource(s) specified by ``url``. Cannot be used when ``url`` already defines the :ref:`parts <parts>`.
   :type parts: pair, list or tuple of pairs, None
-  :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs. See details about streams :ref:`here <streams>`.
-  :param dict **kwargs: other keyword arguments specifying the request
+  :param int chunk_size: The size of the chunks to read from the URL(s). Default is 1024 * 1024 bytes. See `multiurl`_ for details.
+  :param bool verify: Whether to verify the SSL certificate for HTTPS requests. Default is True. See `multiurl`_ for details.
+  :param str range_method: The method to use for HTTP range requests. Default is "auto". See `multiurl`_ for details.
+  :param dict http_headers: Additional HTTP headers to include in the request. See `multiurl`_ for details.
+  :param dict fake_headers: Fake HTTP headers to include when the HEAD request is not allowed but you know the size. See `multiurl`_ for details.
+  :param auth: Authentication information for the request. See `multiurl`_ for details.
+  :param session: A requests session to use for the request. See `multiurl`_ for details.
+  :param bool update_if_out_of_date: If ``True``, the cached data will be updated if it is out of date. Default is False.
+  :param bool force: If ``True``, the data will be downloaded even if it is already in the cache. Default is None.
+  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs. See details about streams :ref:`here <streams>`.
+  :param filter: A filter passed to the underlying :ref:`file source <data-sources-file>` that reads the downloaded data.
+  :param merger: A merger passed to the underlying :ref:`file source <data-sources-file>` that reads the downloaded data.
+  :param dict **kwargs: Other keyword arguments.
 
   .. code-block:: python
 
@@ -318,8 +336,10 @@ url
 url-pattern
 -----------
 
-.. py:function:: from_source("url-pattern", url, unpack=True)
+.. py:function:: from_source("url-pattern", url, sort_urls=False, **kwargs)
   :noindex:
+
+  Download data from the URL(s) specified by a :ref:`pattern <patterns>`.
 
   The ``url-pattern`` source will build urls from the pattern specified,
   using the other arguments to fill the pattern. Each argument can be a list
@@ -327,6 +347,9 @@ url-pattern
   Then each url is downloaded and stored in the :ref:`cache <caching>`. The
   supported download the data from the address data formats are the same as
   for the *file* and *url* data sources above.
+
+  :param bool sort_urls: Whether to sort the generated URLs before downloading. Defaults to ``False``.
+  :param dict **kwargs: Other keyword arguments passed to the underlying :ref:`url <data-sources-url>` source.
 
   .. code-block:: python
 
@@ -363,9 +386,11 @@ sample
 .. py:function:: from_source("sample", name_or_path)
   :noindex:
 
-  The ``sample`` source will download example data prepared for earthkit and store it in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
+  Download example data prepared for earthkit.
 
-  :param name_or_path: input file name(s) or relative path(s) to the root of the remote storage folder.
+  The results are stored in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
+
+  :param name_or_path: Input file name(s) or relative path(s) to the root of the remote storage folder.
   :type name_or_path: str, list, tuple
 
   .. code-block:: python
@@ -387,9 +412,11 @@ stream
 .. py:function:: from_source("stream", stream)
   :noindex:
 
-  The ``stream`` source will read data from a stream (or streams), which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment it only works for :ref:`grib` and CoverageJson data. For more details see :ref:`here <streams>`.
+  Read data from a stream (or streams).
 
-  :param stream: the stream(s)
+  The stream (or streams) can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment it only works for :ref:`grib` and CoverageJson data. For more details see :ref:`here <streams>`.
+
+  :param stream: The stream(s)
   :type stream: stream, list, tuple
 
   In the examples below, for simplicity, we create a file stream from a :ref:`grib` file. By default :ref:`from_source() <data-sources-stream>` returns an object that can only be used as an iterator.
@@ -456,7 +483,9 @@ memory
 .. py:function:: from_source("memory", buffer)
   :noindex:
 
-  The ``memory`` source will read data from a memory buffer. Currently it only works for a ``buffer`` storing GRIB data or a single CoverageJson object. The result is a FieldList object storing all the data in memory.
+  Read data from a memory buffer.
+
+  Currently it only works for a ``buffer`` storing GRIB data or a single CoverageJson object. The result is a FieldList object storing all the data in memory.
 
   .. code-block:: python
 
@@ -496,13 +525,13 @@ forcings
 .. py:function:: from_source("forcings", source_or_dataset=None, *, request={}, **kwargs)
   :noindex:
 
-  :param source_or_dataset: the input data. It can the object returned from :py:func:`from_source` or a FieldList. If it is None a :ref:`data-sources-lod` source is built from the ``request``. The first field in this data is used a template to build the forcing fields.
-  :type source_or_dataset: Source, FieldList or None
-  :param request: specify the request
-  :type request: dict
-  :param dict **kwargs: other keyword arguments specifying the request
+  Generate forcings fields.
 
-  The ``forcings`` source generate forcings fields.
+  :param source_or_dataset: The input data. It can the object returned from :py:func:`from_source` or a FieldList. If it is None a :ref:`data-sources-lod` source is built from the ``request``. The first field in this data is used a template to build the forcing fields.
+  :type source_or_dataset: Source, FieldList or None
+  :param request: Specify the request
+  :type request: dict
+  :param dict **kwargs: Other keyword arguments specifying the request
 
 
 .. _data-sources-lod:
@@ -513,8 +542,9 @@ list-of-dicts
 .. py:function:: from_source("list-of-dicts", list_of_dicts)
   :noindex:
 
-  The ``list-of-dicts`` source will read data from a list of dictionaries. Each dictionary represents a single field and
-  the result is a FieldList.
+  Read data from a list of dictionaries.
+
+  Each dictionary represents a single field and the resulting object is a FieldList.
 
   Further examples:
 
@@ -527,38 +557,42 @@ list-of-dicts
 multi
 --------------
 
-.. py:function:: from_source("multi", *sources, merger=None, **kwargs)
+.. py:function:: from_source("multi", *data_or_sources, merger=None, **kwargs)
   :noindex:
 
-  The ``multi`` source reads multiple sources.
+  Read multiple :ref:`Data <data-object>` objects or/and sources.
 
-  :param tuple *sources: the sources
-  :param merger: if it is None an attempt is made to merge/concatenate the sources by their classes (using the nearest common class). Otherwise the sources are merged/concatenated using the merger in a lazy way. The merger can one of the following:
+  .. note::
+    The ``multi`` source is primarily used internally. To concatenate multiple Data objects, use function :ref:`concat <concat>` instead if no custom merger is needed.
 
-    - class/object implementing  the :func:`to_xarray` or :func:`to_pandas` methods
-    - callable
-    - str, describing a call either to "concat" or "merge". E.g.: "concat(concat_dim=time)"
-    - tuple with 2 elements. The fist element is a str, either "concat" or "merge", and the second element is a dict with the keyword arguments for the call. E.g.: ("concat", {"concat_dim": "time"})
-  :param dict **kwargs: other keyword arguments
+  :param tuple *data_or_sources: :ref:`Data <data-object>` objects and/or sources.
+  :param merger: When None, an attempt is made to merge the items in ``data_or_sources`` by their classes (using the nearest common class). When False, no merging is attempted (available from *version 1.3*). Otherwise ``merger`` specifies a custom merger (see details :ref:`here <mergers-details>`), which is used in a lazy way when conversion to fieldlst, Xarray or pandas is requested. For further details about the merging process consult the :ref:`mergers` section.
+  :type merger: None, False, object, callable, str, or tuple
+  :param dict **kwargs: Other keyword arguments
 
 
+.. note::
+
+    Since version 1.0.0, :func:`from_source` now always returns a :py:class:`Data <earthkit.data.data.Data>` object -- see :ref:`data-object`. So in practice, the user provided input to the ``multi`` source is most typically a :ref:`Data <data-object>` object.
 
 .. _data-sources-ads:
 
 ads
 ---
 
-.. py:function:: from_source("ads", dataset, *args, request=None,  **kwargs)
+.. py:function:: from_source("ads", dataset, *args, request=None, **kwargs)
   :noindex:
 
-  The ``ads`` source accesses the `Copernicus Atmosphere Data Store`_ (ADS), using the cdsapi_ package.
+  Retrieve data from the `Copernicus Atmosphere Data Store`_ (ADS).
 
-  :param str dataset: the name of the ADS dataset
-  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+  The retrieval is performed using the cdsapi_ package.
+
+  :param str dataset: The name of the ADS dataset
+  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
-  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
-  :param dict **kwargs: other keyword arguments specifying the request
+  :param dict **kwargs: Other keyword arguments specifying the request
 
   .. note::
 
@@ -609,19 +643,21 @@ cds
 .. py:function:: from_source("cds", dataset, *args, request=None, prompt=True, **kwargs)
   :noindex:
 
-  The ``cds`` source accesses the `Copernicus Climate Data Store`_ (CDS), using the cdsapi_ package.
+  Retrieve data from the `Copernicus Climate Data Store`_ (CDS).
 
-  :param str dataset: the name of the CDS dataset
-  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+  The retrieval is performed using the cdsapi_ package.
+
+  :param str dataset: The name of the CDS dataset
+  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
-  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
-  :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for cdsapi_ and write them into the default RC file ``~/.cdsapirc``. The prompt only appears when:
+  :param bool prompt: If ``True``, it can offer a prompt to specify the credentials for cdsapi_ and write them into the default RC file ``~/.cdsapirc``. The prompt only appears when:
 
     - no cdsapi_ RC file exists at the default location ``~/.cdsapirc``
     - no cdsapi_ RC file exists at the location specified via the ``CDSAPI_RC`` environment variable
     - no credentials specified via the ``CDSAPI_URL`` and ``CDSAPI_KEY`` environment variables
-  :param dict **kwargs: other keyword arguments specifying the request
+  :param dict **kwargs: Other keyword arguments specifying the request
 
   .. note::
 
@@ -661,12 +697,16 @@ cds
 ecfs
 -------------------
 
-.. py:function:: from_source("ecfs", path)
+.. py:function:: from_source("ecfs", path, **kwargs)
   :noindex:
 
-  The ``ecfs`` source provides access to `ECMWF's File Storage system <https://confluence.ecmwf.int/display/UDOC/ECFS+user+documentation>`_. This service is only available at ECMWF.
+  Retrieve data from the `ECMWF's File Storage system <https://confluence.ecmwf.int/display/UDOC/ECFS+user+documentation>`_.
 
-  The ``path`` has to start with ``ec:`` followed by the path to the file to retrieve.
+  .. warning::
+    This service is only available at ECMWF.
+
+  :param str path: The path to read. It must start with ``ec:`` followed by the path to the file to retrieve.
+  :param dict **kwargs: Other keyword arguments passed to the underlying :ref:`file source <data-sources-file>` that reads the retrieved data.
 
 
 .. _data-sources-eod:
@@ -677,15 +717,17 @@ ecmwf-open-data
 .. py:function:: from_source("ecmwf-open-data", *args, source="ecmwf", model="ifs", request=None,**kwargs)
   :noindex:
 
-  The ``ecmwf-open-data`` source provides access to the `ECMWF open data`_, which is a subset of ECMWF real-time forecast data made available to the public free of charge.  It uses the `ecmwf-opendata <https://github.com/ecmwf/ecmwf-opendata>`_ package.
+  Retrieve data from the `ECMWF open data`_ service.
 
-  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+  `ECMWF open data`_ is a subset of ECMWF real-time forecast data made available to the public free of charge.  It uses the `ecmwf-opendata <https://github.com/ecmwf/ecmwf-opendata>`_ package.
+
+  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
-  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
-  :param str source: either the name of the server to contact or a fully qualified URL. Possible values are "ecmwf" to access ECMWF's servers, or "azure" to access data hosted on Microsoft's Azure. Default is "ecmwf".
-  :param str model: name of the model that produced the data. Use "ifs" for the physics-driven model and "aifs" for the data-driven model. Please note that "aifs" is currently experimental and only produces a small subset of fields. Default is "ifs".
-  :param dict **kwargs: other keyword arguments specifying the request
+  :param str source: Either the name of the server to contact or a fully qualified URL. Possible values are "ecmwf" to access ECMWF's servers, or "azure" to access data hosted on Microsoft's Azure. Default is "ecmwf".
+  :param str model: Name of the model that produced the data. Use "ifs" for the physics-driven model and "aifs" for the data-driven model. Please note that "aifs" is currently experimental and only produces a small subset of fields. Default is "ifs".
+  :param dict **kwargs: Other keyword arguments specifying the request
 
   .. note::
 
@@ -720,17 +762,19 @@ fdb
 .. py:function:: from_source("fdb", *args, config=None, user_config=None, userconfig=None, request=None, stream=True, lazy=False, **kwargs)
   :noindex:
 
-  The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. Earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
+  Retrieve data from the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_.
 
-  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+  ``FDB`` is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. Earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
+
+  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries, but current only one request is supported.
-  :param dict,str config: the FDB configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 0.11.0*
-  :param dict,str user_config: the FDB user configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 1.2.0*
-  :param dict,str userconfig: deprecated alias for ``user_config`` and will be removed in a future release. When both ``user_config`` and ``userconfig`` are provided a ValueError is raised. *Deprecated in version 1.2.0*
-  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests, but current only one request is supported. *New in version 0.18.0*
+  :param dict,str config: The FDB configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 0.11.0*
+  :param dict,str user_config: The FDB user configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 1.2.0*
+  :param dict,str userconfig: Deprecated alias for ``user_config`` and will be removed in a future release. When both ``user_config`` and ``userconfig`` are provided a ValueError is raised. *Deprecated in version 1.2.0*
+  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests, but current only one request is supported. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
-  :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
-  :param bool lazy: if ``True``, the data is read in a lazy way. This means the following:
+  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
+  :param bool lazy: If ``True``, the data is read in a lazy way. This means the following:
 
     - GRIB data is not retrieved until it is explicitly/implictly requested for a given field
     - metadata related calls (e.g. :func:`metadata` or :func:`sel`) work without retrieving the GRIB data
@@ -739,7 +783,7 @@ fdb
     - the resulting :py:class:`FieldList` always retrieves one GRIB field as a reference and stores it in memory throughout the lifetime of the :py:class:`FieldList`. This is managed internally.
 
     When ``lazy=True`` the ``stream`` option is ignored. Please note that this is an **experimental** feature. *New in version 0.14.0*
-  :param dict **kwargs: other keyword arguments specifying the request
+  :param dict **kwargs: Other keyword arguments specifying the request
 
   .. note::
 
@@ -819,8 +863,9 @@ gribjump
 
   *New in version 0.17.0*
 
-  The ``gribjump`` source enables fast retrieval of GRIB message subsets from the `FDB (Fields DataBase)`_ using the `gribjump <https://github.com/ecmwf/gribjump/>`_ library.
-  Both `pygribjump <https://pypi.org/project/pygribjump/>`_ and `pyfdb`_ must be installed. The `pygribjump`_ package uses `findlibs <https://github.com/ecmwf/findlibs>`_ to locate an installation of the `gribjump`_ library.
+  Retrieve GRIB data from the `FDB (Fields DataBase)`_ using the `gribjump <https://github.com/ecmwf/gribjump/>`_ library.
+
+  The ``gribjump`` source enables fast retrieval of GRIB message subsets from the `FDB (Fields DataBase)`_. Both `pygribjump <https://pypi.org/project/pygribjump/>`_ and `pyfdb`_ must be installed. The `pygribjump`_ package uses `findlibs <https://github.com/ecmwf/findlibs>`_ to locate an installation of the `gribjump`_ library.
   If the library is not available on your system, you can install it via the `gribjumplib <https://pypi.org/project/gribjumplib/>`_ wheel from PyPI.
   Installing `gribjumplib` from PyPI will also automatically install `fdb5lib <https://pypi.org/project/fdb5lib/>`_ and other dependencies, which may take priority over any existing installations on your system.
 
@@ -834,23 +879,23 @@ gribjump
 
   Exactly one of the parameters ``ranges``, ``mask`` or ``indices`` must be specified at a time.
 
-  :param request: the FDB request as a dictionary. GribJump requires strict value formatting
+  :param request: The FDB request as a dictionary. GribJump requires strict value formatting
       (e.g., hdates as "YYYYMMDD", not "YYYY-MM-DD"). Format errors may result in "DataNotFound" errors.
   :type request: dict
-  :param ranges: a list of tuples specifying the ranges of 1D grid indices to retrieve in the form
+  :param ranges: A list of tuples specifying the ranges of 1D grid indices to retrieve in the form
       [(start1, end1), (start2, end2), ...]. Ranges are exclusive, meaning that the end index is not included in the range.
   :type ranges: list[tuple[int, int]], optional
-  :param mask: a 1D boolean mask specifying which grid points to retrieve
+  :param mask: A 1D boolean mask specifying which grid points to retrieve
   :type mask: numpy.array, optional
-  :param indices: a 1D array of grid indices to retrieve
+  :param indices: A 1D array of grid indices to retrieve
   :type indices: numpy.array, optional
-  :param fetch_coords_from_fdb: if ``True``, loads the first field's metadata from
+  :param fetch_coords_from_fdb: If ``True``, loads the first field's metadata from
       the FDB to extract the coordinates at the specified indices. If ``False``, the
       coordinates are not loaded and no separate FDB request is made.
       Default is ``False``. Please note that no validation is performed to
       ensure that all fields in the requests share the same grid.
   :type fetch_coords_from_fdb: bool, optional
-  :param fdb_kwargs: only used when ``fetch_coords_from_fdb=True``. A dict of
+  :param fdb_kwargs: Only used when ``fetch_coords_from_fdb=True``. A dict of
       keyword arguments passed to the `pyfdb.FDB` constructor. This allows to
       specify the FDB configuration, user configuration, etc. If not provided,
       the default configuration is used. These arguments are only passed to the
@@ -898,18 +943,18 @@ mars
 .. py:function:: from_source("mars", *args, request=None, prompt=True, log="default", **kwargs)
   :noindex:
 
-  The ``mars`` source retrieves data from the ECMWF `MARS <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_ (Meteorological Archival and Retrieval System) archive.
+  Retrieve data from the ECMWF `MARS <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_ (Meteorological Archival and Retrieval System)  archive.
 
-  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
-  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
-  :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for `web API`_ and write them into the default RC file ``~/.ecmwfapirc``. The prompt only appears when:
+  :param bool prompt: If ``True``, it can offer a prompt to specify the credentials for `web API`_ and write them into the default RC file ``~/.ecmwfapirc``. The prompt only appears when:
 
     - no `web API`_ RC file exists at the default location ``~/.ecmwfapirc``
     - no `web API`_ RC file exists at the location specified via the ``ECMWF_API_RC_FILE`` environment variable
     - no credentials specified via the ``ECMWF_API_URL`` and ``ECMWF_API_KEY``  environment variables
-  :param log: control the logging of the retrieval. The behaviour depends on the underlying MARS client used:
+  :param log: Control the logging of the retrieval. The behaviour depends on the underlying MARS client used:
 
     - `web API`_ based access:
 
@@ -936,7 +981,7 @@ mars
       - dict specifying the "stdout" or/and the "stderr" kwargs for Pythons's ``subrocess.run()`` method
 
   :type log: str, None, callable, dict
-  :param dict **kwargs: other keyword arguments specifying the request
+  :param dict **kwargs: Other keyword arguments specifying the request
 
   .. include:: misc/request_args.rst
 
@@ -981,9 +1026,11 @@ opendap
 .. py:function:: from_source("opendap", url)
   :noindex:
 
-  The ``opendap`` source accesses NetCDF data from `OPeNDAP <https://en.wikipedia.org/wiki/OPeNDAP>`_ services. OPenDAP is an acronym for "Open-source Project for a Network Data Access Protocol".
+  Retrieve NetCDF data from `OPeNDAP <https://en.wikipedia.org/wiki/OPeNDAP>`_ services.
 
-  :param str url: the url of the remote NetCDF file
+  OPenDAP is an acronym for "Open-source Project for a Network Data Access Protocol".
+
+  :param str url: The url of the remote NetCDF file
 
   Examples:
 
@@ -998,17 +1045,19 @@ polytope
 .. py:function:: from_source("polytope", collection, *args, address=None, user_email=None, user_key=None, request=None, stream=True,  **kwargs)
   :noindex:
 
-  The ``polytope`` source accesses the `Polytope web services <https://polytope.readthedocs.io/en/latest/>`_ , using the polytope-client_ package.
+  Retrieve data from the the `Polytope web services <https://polytope.readthedocs.io/en/latest/>`_.
 
-  :param str collection: the name of the polytope collection
-  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or a list/tuple of dictionaries
-  :param str address: specify the address of the polytope service
-  :param str user_email: specify the user email credential. Must be used together with ``user_key``. This is an alternative to using the ``POLYTOPE_USER_EMAIL`` environment variable. *New in version 0.7.0*
-  :param str user_key: specify the user key credential. Must be used together with ``user_email``. This is an alternative to using the ``POLYTOPE_USER_KEY`` environment variable. *New in version 0.7.0*
-  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+  The retrieval is performed using the polytope-client_ package.
+
+  :param str collection: The name of the polytope collection
+  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or a list/tuple of dictionaries
+  :param str address: Specify the address of the polytope service
+  :param str user_email: Specify the user email credential. Must be used together with ``user_key``. This is an alternative to using the ``POLYTOPE_USER_EMAIL`` environment variable. *New in version 0.7.0*
+  :param str user_key: Specify the user key credential. Must be used together with ``user_email``. This is an alternative to using the ``POLYTOPE_USER_KEY`` environment variable. *New in version 0.7.0*
+  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
-  :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
-  :param dict **kwargs: other keyword arguments, these can include options passed to the polytope-client_
+  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
+  :param dict **kwargs: Other keyword arguments, these can include options passed to the polytope-client_
 
   The following logic is applied to build the **requests**:
 
@@ -1061,17 +1110,17 @@ s3
 
   *New in version 0.11.0*
 
-  The ``s3`` source provides access to `Amazon S3 buckets <https://aws.amazon.com/s3/>`_.
+  Retrieve data from `Amazon S3 <https://aws.amazon.com/s3/>`_ buckets.
 
-  :param tuple *args: positional arguments specifying the request(s). Each request is represented by a dict. See detailed description below. A sequence of dicts can also be used to specify multiple requests.
-  :param bool anon: if ``True`` use anonymous access, this will only work for public buckets. If ``False``, use the ``aws_access_key``, ``aws_secret_access_key`` and ``aws_token`` credentials. These can also be specified as part of the request (request values override the kwargs). If no credentials provided use :xref:`botocore` to load the `aws credentials`_ from:
+  :param tuple *args: Positional arguments specifying the request(s). Each request is represented by a dict. See detailed description below. A sequence of dicts can also be used to specify multiple requests.
+  :param bool anon: If ``True`` use anonymous access, this will only work for public buckets. If ``False``, use the ``aws_access_key``, ``aws_secret_access_key`` and ``aws_token`` credentials. These can also be specified as part of the request (request values override the kwargs). If no credentials provided use :xref:`botocore` to load the `aws credentials`_ from:
 
     - `environment variables <https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html#using-environment-variables>`_
     - `a configuration file <https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html#using-a-configuration-file>`_. Note that this does not include :xref:`s3cmd` configuration files (e.g. ".s3cfg").
-  :param str aws_access_key: the AWS access key. Can be overridden in a request. Used when ``anon=False``.
-  :param str aws_secret_access_key: the AWS secret access key. Can be overridden in a request. Used when ``anon=False``.
-  :param str aws_token: the AWS token only used for AWS Security Token Service (AWS STS) temporary credentials. Can be overridden in a request. Used when ``anon=False``.
-  :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
+  :param str aws_access_key: The AWS access key. Can be overridden in a request. Used when ``anon=False``.
+  :param str aws_secret_access_key: The AWS secret access key. Can be overridden in a request. Used when ``anon=False``.
+  :param str aws_token: The AWS token only used for AWS Security Token Service (AWS STS) temporary credentials. Can be overridden in a request. Used when ``anon=False``.
+  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
 
 
   A **request** is a dictionary describing a single or multiple objects in a given bucket. It has the following format:
@@ -1163,19 +1212,21 @@ wekeo
 .. py:function:: from_source("wekeo", dataset, *args, request=None, prompt=True, **kwargs)
   :noindex:
 
+  Retrieve data from the `WEkEO`_ service.
+
   `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeo`` source provides access to `WEkEO`_ using the WEkEO grammar. The retrieval is based on the hda_ Python API.
 
-  :param str dataset: the name of the WEkEO dataset
-  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+  :param str dataset: The name of the WEkEO dataset
+  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
-  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
-  :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
+  :param bool prompt: If ``True``, it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
 
     - no hda_ RC file exists at the default location ``~/.hdarc``
     - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
     - no credentials specified via the ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
-  :param dict **kwargs: other keyword arguments specifying the request
+  :param dict **kwargs: Other keyword arguments specifying the request
 
   .. include:: misc/request_args.rst
 
@@ -1215,19 +1266,21 @@ wekeo-cds
 .. py:function:: from_source("wekeo-cds", dataset, *args, request=None, prompt=True, **kwargs)
   :noindex:
 
+  Retrieve data from the `Copernicus Climate Data Store`_ (CDS) datasets via the `WEkEO`_ service.
+
   `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeo-cds`` source provides access to `Copernicus Climate Data Store`_ (CDS) datasets served on `WEkEO`_ using the `cdsapi`_ grammar. The retrieval is based on the hda_ Python API.
 
-  :param str dataset: the name of the WEkEO dataset
-  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+  :param str dataset: The name of the WEkEO dataset
+  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
-  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in  version 0.18.0*
+  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in  version 0.18.0*
   :type request: dict, list/tuple of dicts, None
-  :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
+  :param bool prompt: If ``True``, it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
 
     - no hda_ RC file exists at the default location ``~/.hdarc``
     - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
     - no credentials specified via the ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
-  :param dict **kwargs: other keyword arguments specifying the request
+  :param dict **kwargs: Other keyword arguments specifying the request
 
   .. include:: misc/request_args.rst
 
@@ -1277,9 +1330,11 @@ zarr
 
   *New in version 0.15.0*
 
-  The ``zarr`` source accesses data from a `Zarr <https://zarr.readthedocs.io/en/stable/>`_ store. Internally the data is loaded via the :py:meth:`xarray.open_zarr` method,  so only Zarr data supported by Xarray can be accessed. Requires ``zarr >= 3`` version.
+  Read data from a `Zarr <https://zarr.readthedocs.io/en/stable/>`_  store.
 
-  :param str path: path or URL to the Zarr store
+  Internally the data is loaded via the :py:meth:`xarray.open_zarr` method,  so only Zarr data supported by Xarray can be accessed. Requires ``zarr >= 3`` version.
+
+  :param str path: Path or URL to the Zarr store
 
 
 
@@ -1301,3 +1356,5 @@ zarr
 .. _polytope-client: https://pypi.org/project/polytope-client
 
 .. _aws credentials: http://boto3.readthedocs.io/en/latest/guide/configuration.html#configuring-credentials
+
+.. _multiurl: https://github.com/ecmwf/multiurl

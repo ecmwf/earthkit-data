@@ -33,7 +33,10 @@ class SourceData(SimpleData):
         self._source = None
         self._reader = None
 
+        # print("Initializing SourceData with:", source_or_reader)
+
         if isinstance(source_or_reader, Source):
+            # print("Detected Source instance.")
             self._source = source_or_reader
             if isinstance(source_or_reader, Reader):
                 self._reader = source_or_reader
