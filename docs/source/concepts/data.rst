@@ -128,7 +128,7 @@ There a complex cases with mixed input data types when the returned object might
     Returned when :func:`from_source` combines several inputs (e.g. a list of files) that cannot be merged
     into a single, type-specific ``Data`` object -- either because they are of different types, or because
     ``merger=False`` was requested. Wraps the underlying sources and forwards conversions to them. See
-    :ref:`mergers-and-data-objects` for details.
+    :ref:`mergers` for details.
 
 :py:class:`earthkit.data.data.fieldlist.FieldListData`
     Returned when a source already directly exposes a :ref:`fieldlist <fieldlist_concept>` rather than one

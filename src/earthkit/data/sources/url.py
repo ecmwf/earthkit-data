@@ -297,7 +297,6 @@ class Url(UrlBase):
                 f" _kwargs={self._kwargs}"
             )
         )
-
         self.downloader = Downloader(
             self.url_spec.zipped(),
             timeout=CONFIG.get("url-download-timeout"),
@@ -317,6 +316,8 @@ class Url(UrlBase):
 
         self.path = self.downloader.local_path()
 
+        print("Local path", self.path)
+
         if self.path is not None:
             return
 
@@ -324,6 +325,7 @@ class Url(UrlBase):
             self.force = self.out_of_date
 
         def download(target, _):
+            print("Downloading target", target)
             self.downloader.download(target)
             return self.downloader.cache_data()
 
@@ -333,6 +335,8 @@ class Url(UrlBase):
             extension=extension,
             force=self.force,
         )
+
+        print("Cache file", self.path)
 
         # cache data may contain the result of the http HEAD request
         h = self.downloader.cache_data()

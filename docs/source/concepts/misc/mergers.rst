@@ -4,8 +4,7 @@ Merging multiple sources
 ==========================
 
 When *earthkit-data* reads more than one input at once (e.g. a list of files, or multiple sources
-explicitly combined with the ``multi`` source) the result is a single object made up of several
-sub-sources. What that combined object actually looks like, and whether it collapses into one single
+explicitly combined with the :ref:`data-sources-multi` source), it combines them into a single object. What that combined object actually looks like, and whether it collapses into one single
 object of a definite type, is controlled by the **merger** concept described on this page.
 
 .. note::
@@ -13,44 +12,36 @@ object of a definite type, is controlled by the **merger** concept described on 
     As explained in :ref:`data-object`, :func:`from_source` never returns a raw ``Source`` object, it
     always returns a :py:class:`Data <earthkit.data.data.Data>` object. The ``Source``/``MultiSource``
     objects and the mergers described below are the internal machinery that decides *what kind* of
-    ``Data`` object comes out the other end -- see :ref:`mergers-and-data-objects` for how the two relate.
+    ``Data`` object comes out the other end.
+
+.. note::
+
+    To combine two or more Data objects, use :func:`~earthkit.data.utils.concat.concat`
+    -- see :ref:`concat`. Note that the ``merger`` keyword is not yet supported there.
+
+
+.. _mergers-details:
 
 The merger concept
 --------------------
 
 Whenever *earthkit-data* ends up with more than one source to represent as one object, it wraps them
-internally in a :class:`~earthkit.data.sources.multi.MultiSource`. A ``MultiSource`` behaves like the
-concatenation of its sub-sources (e.g. iterating over it yields the items of each sub-source in turn), but
-on its own it does not know how to combine them into, say, a single :ref:`fieldlist <fieldlist_concept>`,
-an ``xarray.Dataset`` or a ``pandas.DataFrame``. That is the job of a **merger**.
+internally in a :class:`~earthkit.data.sources.multi.MultiSource`. How these sub-sources are combined into
+a single result is determined by the ``merger`` keyword argument, which can be set in the
+:ref:`data-sources-multi` source, but also transparently in the :ref:`data-sources-file` source (or any
+other source accepting multiple inputs).
 
-A merger is an object that knows how to turn a list of sources into a single result of a given target
-type. It is only invoked lazily, when one of the conversion methods is actually called:
-
-- :func:`~earthkit.data.sources.multi.MultiSource.to_fieldlist`
-- :func:`~earthkit.data.sources.multi.MultiSource.to_xarray`
-- :func:`~earthkit.data.sources.multi.MultiSource.to_pandas`
-
-Which merger is used is controlled by the ``merger`` keyword argument, accepted wherever a
-``MultiSource`` can be created — most notably in the :ref:`data-sources-multi` source, but also
-transparently whenever the :ref:`data-sources-file` source (or any other source accepting multiple inputs)
-is given more than one input, see :ref:`mergers-multi-file` below.
-
-``merger`` can take the following values. The examples below assume ``d1`` and ``d2`` are
-:py:class:`Data <earthkit.data.data.Data>` objects, e.g. each individually obtained with
-``ekd.from_source("file", ...)`` -- see :ref:`mergers-and-data-objects` for why this is the right thing to
-pass, rather than a raw ``Source``.
+``merger`` can take the following values.
 
 ``None`` (the default)
-    Requests **automatic merging**. As the ``MultiSource`` is created, any sub-source *earthkit-data*
-    could not recognise the format of (e.g. an unsupported file type) is silently ignored and dropped from
-    the collection -- see ``False`` below for how to keep such sub-sources instead. *earthkit-data*
-    then tries to merge the remaining sub-sources by their nearest common class (e.g. when all of them are
-    GRIB fieldlists). If that succeeds, the ``MultiSource`` immediately mutates itself into the single
-    merged object, so from that point on it behaves exactly as if a single source had been read in the
-    first place. If it fails (e.g. because the sub-sources are of unrelated types), no merger is built and
-    the object remains a plain collection of its (already filtered) sub-sources, to be merged later,
-    lazily, via the ``DefaultMerger`` (see below) when one of the conversion methods is called.
+    Requests **automatic merging**. As the ``MultiSource`` is created, any item *earthkit-data*
+    could not recognise the format of (e.g. an unsupported file type) is silently dropped from
+    the collection -- see ``False`` below for how to keep such items instead. *earthkit-data*
+    then tries to merge the remaining items by their nearest common class (e.g. when all of them are
+    GRIB fieldlists). If that succeeds, the corresponding ``Data`` object is created directly. Otherwise,
+    the result is a ``MultiData`` object, and the merging is deferred until one of the conversion methods
+    is called, at which point it is attempted lazily using the built-in :ref:`DefaultMerger
+    <mergers-default-merger>`.
 
 ``False``
     **Disables merging** entirely, and additionally causes sources that would otherwise be silently
@@ -61,6 +52,14 @@ pass, rather than a raw ``Source``.
     .. note::
 
         ``merger=False`` is only available from version 1.3 onwards.
+
+Any other value for the ``merger`` keyword argument specifies a custom merger, provided as a string, tuple,
+or callable, as described in the sections below. As with automatic merging, unrecognised items are dropped
+as the ``MultiSource`` is created, but no immediate merge attempt is made: the result is always a
+``MultiData`` object, and the specified ``merger`` is applied lazily once one of the conversion methods is
+called.
+
+The following sections describe the different ways to specify a custom merger.
 
 A **string**
     Names one of the built-in mergers, optionally with ``key=value`` arguments in parentheses:
@@ -74,6 +73,8 @@ A **string**
 
         import earthkit.data as ekd
 
+        d1 = ekd.from_source("file", "a.nc")
+        d2 = ekd.from_source("file", "b.nc")
         ds = ekd.from_source("multi", [d1, d2], merger="concat(dim=time)")
         ds.to_xarray()
 
@@ -115,95 +116,53 @@ An **object**
 
         ds = ekd.from_source("multi", [d1, d2], merger=MyMerger()).to_xarray()
 
-.. note::
-
-    Whatever form ``merger`` takes, it is never a ``Merger`` object itself. *earthkit-data* builds the
-    actual :class:`~earthkit.data.mergers.Merger` instance internally from whichever of the above was
-    supplied.
 
 
-.. _mergers-and-data-objects:
+.. _mergers-class:
 
-Mergers and Data objects
----------------------------
+Mergers
+-----------
 
-:func:`from_source` always returns a :py:class:`Data <earthkit.data.data.Data>` object (see
-:ref:`data-object`), never the underlying ``Source``/``MultiSource``. When multiple sources are combined
-and the input cannot be reduced to a single, type-specific ``Data`` object, :func:`from_source` returns a
-:py:class:`~earthkit.data.data.multi.MultiData` object instead. ``MultiData`` wraps the underlying
-``MultiSource`` and forwards its own ``to_fieldlist``/``to_xarray``/``to_pandas`` calls to it, which is
-where the merger machinery described above actually runs.
-
-Conversely, when automatic merging (``merger=None``, the default) succeeds -- e.g. all the inputs are
-GRIB -- the ``MultiSource`` mutates itself into a single merged source before :func:`from_source` returns,
-so a single, type-specific ``Data`` object (e.g. ``GribData``) comes back instead of a ``MultiData``, and
-the multi-source nature of the input becomes invisible to the caller.
-
-.. code-block:: python
-
-    import earthkit.data as ekd
-
-    ds = ekd.from_source("file", ["a.grib", "b.grib"])
-    type(ds).__name__  # "GribData": automatic merging succeeded
-
-    ds = ekd.from_source("file", ["a.grib", "b.nc"])
-    type(ds).__name__  # "MultiData": mixed types, returns a MultiData
-
-A ``Data`` object such as the one returned by :func:`from_source` can itself be passed back into another
-``from_source`` call as one of the sources to combine -- ``MultiSource`` recognises it and unwraps its
-underlying ``Source`` automatically.
-
-Using mergers with multiple sources
---------------------------------------
-
-The ``merger`` kwarg can be passed to any source that ends up combining several sub-sources, most directly
-the :ref:`data-sources-multi` source, which explicitly combines a list of already created data objects:
-
-.. code-block:: python
-
-    import earthkit.data as ekd
-
-    d1 = ekd.from_source("file", "a.grib")
-    d2 = ekd.from_source("file", "b.grib")
-
-    ds = ekd.from_source("multi", [d1, d2], merger="concat(dim=time)")
-
-Nested ``multi`` sources are flattened before merging, unless a nested ``MultiSource`` has its own,
-explicit merger, in which case it is merged separately using it and treated as a single unit by the outer
-merger.
+Internally, mergers are represented by a ``Merger``, a class
+providing the ``to_fieldlist``, ``to_xarray`` and ``to_pandas`` conversion
+methods for multiple items. A given ``Merger`` only needs to implement the conversions it actually supports.
 
 
-.. _mergers-multi-file:
+.. _mergers-default-merger:
 
-Multiple input files in the file source
+The DefaultMerger
 ------------------------------------------
 
-The most common way to end up with a merger in practice is not by using ``multi`` directly, but simply by
-giving the :ref:`data-sources-file` source a list of paths instead of a single one:
+:py:class:`DefaultMerger <earthkit.data.mergers.DefaultMerger>` is the merger used whenever no explicit
+``merger`` is requested (``merger=None``). It
+builds its result by converting each item on its own and then combining those individual results. Each of
+its three conversion methods does this differently:
 
-.. code-block:: python
+``to_fieldlist()``
+    Turns each item into its own fieldlist -- a ``Field`` via its own ``to_fieldlist()``, a ``FieldList``
+    used as is, a file path read with :func:`from_source`, or (for anything else, e.g. a ``Data`` object)
+    by calling its own ``to_fieldlist()`` -- then merges the resulting fieldlists using the ``merge``
+    classmethod of their nearest common class (the same logic automatic merging uses, see
+    :ref:`mergers`).
 
-    import earthkit.data as ekd
+``to_pandas()``
+    Calls ``to_pandas()`` on each item individually, then concatenates the resulting ``DataFrame`` objects
+    with ``pandas.concat`` (``ignore_index=True`` by default).
 
-    ds = ekd.from_source("file", ["a.grib", "b.grib", "c.grib"])
+``to_xarray()``
+    Resolves the file path of each item, if possible for all of them, and opens the collection with a
+    single ``xarray.open_mfdataset(paths)`` call. If paths cannot be resolved for every item, the items
+    themselves are opened directly instead, one by one, through an internal xarray backend.
 
-Internally, when more than one path is given, the ``file`` source builds a ``multi`` source out of the
-individual per-file sources, and the ``merger`` kwarg is simply forwarded to it:
 
-.. code-block:: python
+.. _mergers-file-source:
 
-    # equivalent to the multi-path from_source call above
-    ds = ekd.from_source(
-        "multi",
-        [
-            ekd.from_source("file", "a.grib"),
-            ekd.from_source("file", "b.grib"),
-            ekd.from_source("file", "c.grib"),
-        ],
-    )
+Usage with the file source
+------------------------------------------
 
-This means the same ``merger`` values described above can be passed directly to ``from_source("file", ...)``
-when reading multiple files:
+The same ``merger`` values described above can also be passed directly to ``from_source("file", ...)``
+when reading multiple files, since the ``file`` source builds a ``multi`` source internally and forwards
+``merger`` to it:
 
 .. code-block:: python
 
@@ -216,12 +175,8 @@ when reading multiple files:
     ds = ekd.from_source("file", ["a.grib", "unsupported.bin"], merger=False)
     print(ds.path)  # ["<path>/a.grib", "<path>/unsupported.bin"]
 
-    # concatenate NetCDF files along a dimension
+    # concatenate NetCDF files along a dimension using a custom merger
+    # ds is a MultiData object
     ds = ekd.from_source("file", ["a.nc", "b.nc"], merger="concat(dim=time)")
+    # the custom merger will be used in the call to ``to_xarray()``
     ds.to_xarray()
-
-As with ``multi``, when ``merger`` is left as ``None`` (the default) and the per-file sources all resolve
-to the same class (e.g. they are all recognised as GRIB), the underlying sources merge into one straight
-away and :func:`from_source` returns a single, type-specific ``Data`` object rather than a ``MultiData``
-(see :ref:`mergers-and-data-objects`), so the multi-file nature of the input becomes invisible to the rest
-of the code.

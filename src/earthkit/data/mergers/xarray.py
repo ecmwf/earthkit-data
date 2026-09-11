@@ -31,7 +31,7 @@ class WrappedData:
 
         Parameters
         ----------
-        source : :class:`earthkit.data.sources.Source`
+        data : :class:`earthkit.data.sources.Source`
             The source to wrap.
         """
         self.data = data
@@ -47,7 +47,7 @@ class EKDEngine(BackendEntrypoint):
         Parameters
         ----------
         filename_or_obj : :class:`WrappedData`
-            The wrapped source to open. Must be a :class:`WrappedData` instance.
+            The wrapped data to open. Must be a :class:`WrappedData` instance.
         *args
             Unused.
         **kwargs
@@ -62,7 +62,7 @@ class EKDEngine(BackendEntrypoint):
 
 
 def infer_open_mfdataset_kwargs(
-    data=None,
+    items=None,
     paths=None,
     reader_class=None,
     user_kwargs={},
@@ -71,12 +71,12 @@ def infer_open_mfdataset_kwargs(
 
     Parameters
     ----------
-    data : list of :class:`earthkit.data.sources.Source`, optional
-        The sources being merged. Currently unused (the inference logic below it is disabled).
+    items : list of :class:`earthkit.data.sources.Source` or :ref:`Data object <data-object>`, optional
+        The items being merged. Currently unused (the inference logic below it is disabled).
     paths : list of str, optional
         The file paths being merged. Currently unused.
     reader_class : type, optional
-        The common reader class of the sources, if any. Currently unused.
+        The common reader class of the items, if any. Currently unused.
     user_kwargs : dict, optional
         User-supplied keyword arguments; ``user_kwargs["xarray_open_mfdataset_kwargs"]`` is merged into the
         result, taking precedence over any inferred options.
@@ -92,26 +92,26 @@ def infer_open_mfdataset_kwargs(
 
 
 def merge(
-    data=None,
+    items=None,
     paths=None,
     reader_class=None,
     **kwargs,
 ):
-    """Merge ``sources`` into a single xarray dataset.
+    """Merge ``items`` into a single xarray dataset.
 
-    Prefers, in order: a ``to_xarray_multi_from_sources``/``to_xarray_multi_from_paths`` method on
-    ``reader_class`` if available; otherwise ``xarray.open_mfdataset`` on ``paths`` if available; otherwise
-    ``xarray.open_mfdataset`` on the sources themselves, wrapped (see :class:`WrappedSource`) and opened
-    through the :class:`EKDEngine` backend.
+    Prefers, in order: a ``to_xarray_multi_from_paths`` method on ``reader_class``, if ``paths`` is
+    available and ``reader_class`` has one; otherwise plain ``xarray.open_mfdataset`` on ``paths``, if
+    available; otherwise ``xarray.open_mfdataset`` on the items themselves, wrapped (see
+    :class:`WrappedData`) and opened through the :class:`EKDEngine` backend.
 
     Parameters
     ----------
-    data : list of :class:`earthkit.data.sources.Source`, optional
-        The sources to merge. Must not be empty.
+    items : list of :class:`earthkit.data.sources.Source` or :ref:`Data object <data-object>`, optional
+        The items to merge. Must not be empty.
     paths : list of str, optional
-        The file paths of ``sources``, if they could be resolved.
+        The file paths of ``items``, if they could be resolved.
     reader_class : type, optional
-        The common reader class of ``sources``, if it could be resolved.
+        The common reader class of ``items``, if it could be resolved.
     **kwargs
         Additional keyword arguments. ``xarray_open_mfdataset_kwargs`` is used to build the options passed
         to ``xarray.open_mfdataset`` (see :func:`infer_open_mfdataset_kwargs`).
@@ -120,10 +120,10 @@ def merge(
     -------
     xarray.Dataset
     """
-    assert data
+    assert items
 
     options = infer_open_mfdataset_kwargs(
-        data=data,
+        items=items,
         paths=paths,
         reader_class=reader_class,
         user_kwargs=kwargs,
@@ -134,6 +134,8 @@ def merge(
     #         data,
     #         **options,
     #     )
+
+    print("options:", options)
 
     if paths is not None:
         if reader_class is not None and hasattr(reader_class, "to_xarray_multi_from_paths"):
@@ -147,7 +149,7 @@ def merge(
 
     LOG.debug(f"xr.open_mfdataset with options= {options}")
     return xr.open_mfdataset(
-        [WrappedData(d) for d in data],
+        [WrappedData(d) for d in items],
         engine=EKDEngine,
         **options,
     )

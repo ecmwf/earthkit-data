@@ -407,7 +407,7 @@ def make_data_repr_html(title=None, path=None, types=None):
             d["size"] = bytes(os.path.getsize(path))
         except Exception:
             pass
-    if types is not None:
+    if types is not None and types:
         d["types"] = ", ".join(types)
     return table_from_dict(d, title=title)
 

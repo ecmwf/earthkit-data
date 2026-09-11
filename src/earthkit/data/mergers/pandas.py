@@ -9,29 +9,31 @@
 
 
 def merge(
-    data=None,
+    items=None,
     paths=None,
     reader_class=None,
     **kwargs,
 ):
-    """Merge ``sources`` into a single pandas DataFrame.
+    """Merge ``items`` into a single pandas DataFrame.
 
-    Each source is converted with ``to_pandas()`` and the results are concatenated with
+    Each item is converted with its own ``to_pandas()`` and the results are concatenated with
     ``pandas.concat``.
 
     Parameters
     ----------
-    data : list of :class:`earthkit.data.sources.Source`, optional
-        The sources to merge.
+    items : list of :class:`earthkit.data.sources.Source` or :ref:`Data object <data-object>`, optional
+        The items to merge, each with a ``to_pandas()`` method.
     paths : list of str, optional
         Unused.
     reader_class : type, optional
         Unused.
     **kwargs
-        Additional keyword arguments. ``pandas_read_csv_kwargs``, if present, is forwarded as-is to each
-        source's ``to_pandas()`` call instead of being merged into the ``pandas.concat`` options; otherwise
-        all of ``kwargs`` is forwarded for that purpose. Any other keys are passed to ``pandas.concat``,
-        overriding the default ``ignore_index=True``.
+        Additional keyword arguments. If ``pandas_read_csv_kwargs`` is present, it is popped out and
+        forwarded as-is to each item's own ``to_pandas()`` call, and everything else in ``kwargs`` is
+        passed to ``pandas.concat`` (overriding the default ``ignore_index=True``). If it is absent, all
+        of ``kwargs`` is forwarded to ``to_pandas()`` as ``pandas_read_csv_kwargs`` *and* also passed to
+        ``pandas.concat`` unchanged -- so in that case every key must be one ``pandas.concat`` (not just
+        ``read_csv``) accepts.
 
     Returns
     -------
@@ -45,4 +47,4 @@ def merge(
         pandas_read_csv_kwargs = options.pop("pandas_read_csv_kwargs")
     else:
         pandas_read_csv_kwargs = kwargs
-    return pd.concat([d.to_pandas(pandas_read_csv_kwargs=pandas_read_csv_kwargs) for d in data], **options)
+    return pd.concat([d.to_pandas(pandas_read_csv_kwargs=pandas_read_csv_kwargs) for d in items], **options)

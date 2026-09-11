@@ -18,16 +18,15 @@ def concat(*args):
        :class:`~earthkit.data.core.field.Field` or a :class:`~earthkit.data.core.fieldlist.FieldList`,
        merges them via the ``"multi"`` source (see :class:`~earthkit.data.sources.multi.MultiSource` and
        :ref:`mergers`) and returns the resulting FieldList.
-    2. as a source (see :func:`_try_concat_as_source`): otherwise, if every argument is itself a
-       :class:`~earthkit.data.sources.Source`, or a :ref:`Data object <data-object>` whose ``_source``
-       attribute is one, merges those sources via the ``"multi"`` source and returns the underlying
-       ``Source`` of the result. Note that this discards the ``Data`` wrapper even when one or more
-       arguments were ``Data`` objects, as long as they all had an underlying source to fall back on.
+    2. as a source or Data object (see :func:`_try_concat_as_source`): otherwise, if every argument is
+       itself a :class:`~earthkit.data.sources.Source`, or a :ref:`Data object <data-object>` whose
+       ``_source`` attribute is one, merges those sources via the ``"multi"`` source. The result is
+       unwrapped to a plain ``Source`` only if *every* argument was one; as soon as at least one argument
+       was a ``Data`` object, the result stays a ``Data`` object.
     3. as Data objects (see :func:`_concat_as_data`): otherwise, converts every argument that is not
        already a ``Data`` object with its own ``to_data_object()``, and combines the resulting ``Data``
-       objects directly into a :class:`~earthkit.data.data.multi.MultiData` -- this is the only path that
-       reliably preserves a ``Data`` result, and is really only reached when at least one argument (e.g.
-       one created by :func:`earthkit.data.from_object`) has no underlying source at all.
+       objects directly into a :class:`~earthkit.data.data.multi.MultiData` -- reached when at least one
+       argument (e.g. one created by :func:`earthkit.data.from_object`) has no underlying source at all.
 
     Parameters
     ----------
@@ -60,31 +59,28 @@ def concat(*args):
         return first
 
     from earthkit.data import Field
-    from earthkit.data.data import Data
 
     # convert all fields to fieldlists
-    inputs = []
+    items = []
     for d in args:
         if isinstance(d, Field):
-            inputs.append(d.to_fieldlist())
+            items.append(d.to_fieldlist())
         else:
-            inputs.append(d)
+            items.append(d)
 
-    # handle the case when all the inputs are field/fieldlist
-    result = _try_concat_as_fieldlist(*inputs)
+    # handle the case when all the items are field/fieldlist
+    result = _try_concat_as_fieldlist(*items)
     if result is not None:
         return result
 
-    # handle the case when all the inputs are Source objects or compatible
+    # handle the case when all the items are Source objects or compatible
     # with Source (e.g. Data objects with a _source attribute). An existing
     # fieldlist implementation is also a source.
-    result = _try_concat_as_source(*inputs)
+    result = _try_concat_as_source(*items)
     if result is not None:
-        if isinstance(result, Data) and hasattr(result, "_source") and result._source is not None:
-            return result._source
         return result
 
-    result = _concat_as_data(*inputs)
+    result = _concat_as_data(*items)
     if result is not None:
         return result
 
@@ -128,12 +124,20 @@ def _try_concat_as_fieldlist(*args):
 
 
 def _try_concat_as_source(*args):
-    """Attempt to concatenate ``args`` as a single :class:`~earthkit.data.sources.Source`.
+    """Attempt to concatenate ``args`` at the ``Source``/``Data`` level, preserving abstraction where possible.
 
-    Succeeds only if every argument is itself a ``Source``, or a :ref:`Data object <data-object>` whose
-    ``_source`` attribute is one. On success, the underlying sources are combined via the ``"multi"``
-    source (see :class:`~earthkit.data.sources.multi.MultiSource` and :ref:`mergers`); the caller
-    (:func:`concat`) then unwraps the resulting ``Data`` object back to its own underlying ``Source``.
+    Succeeds only if every argument is itself a :class:`~earthkit.data.sources.Source`, or a :ref:`Data
+    object <data-object>` whose ``_source`` attribute is one; returns None immediately otherwise,
+    signalling the caller to fall back to combining the arguments as plain ``Data`` objects instead (see
+    :func:`concat`). On success, the underlying sources are combined via the ``"multi"`` source (see
+    :class:`~earthkit.data.sources.multi.MultiSource` and :ref:`mergers`).
+
+    Whether the result stays a ``Data`` object or is unwrapped to its underlying ``Source`` depends on
+    what the arguments actually were: the result is unwrapped only if *every* argument was a plain
+    ``Source`` (none was a ``Data`` object); as soon as at least one argument is a ``Data`` object -- even
+    mixed with plain ``Source`` arguments -- the merged ``Data`` object is returned as is. This means
+    concatenating a ``Data`` object with a plain ``Source`` still yields a ``Data`` object, matching the
+    higher level of abstraction present among the arguments rather than the lower one.
 
     Parameters
     ----------
@@ -142,25 +146,36 @@ def _try_concat_as_source(*args):
 
     Returns
     -------
-    :ref:`Data object <data-object>` or None
-        The ``Data`` object returned by ``from_source("multi", ...)`` over the underlying sources, or
-        None as soon as an argument has no usable underlying source, signalling the caller to fall back
-        to combining the arguments as plain ``Data`` objects instead (see :func:`concat`).
+    :ref:`Data object <data-object>`, :class:`~earthkit.data.sources.Source`, or None
+        The merged result, at the ``Data`` or ``Source`` level as described above, or None as soon as an
+        argument is neither a ``Source`` nor a ``Data`` object with one.
     """
+    from earthkit.data.data import Data
     from earthkit.data.sources import Source
 
     source = []
+    has_data = False
     for arg in args:
         if isinstance(arg, Source):
             source.append(arg)
-        elif hasattr(arg, "_source") and isinstance(arg._source, Source):
-            source.append(arg._source)
+
+        elif isinstance(arg, Data):
+            has_data = True
+            if hasattr(arg, "_source") and isinstance(arg._source, Source):
+                source.append(arg._source)
+            else:
+                return None
         else:
             return None
 
     from earthkit.data.sources import from_source
 
-    return from_source("multi", *source)
+    result = from_source("multi", *source)
+    if result is not None and not has_data:
+        if isinstance(result, Data) and hasattr(result, "_source") and result._source is not None:
+            return result._source
+
+    return result
 
 
 def _concat_as_data(*args):

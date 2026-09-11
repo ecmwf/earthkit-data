@@ -260,17 +260,13 @@ class MultiData(SimpleData):
         Parameters
         ----------
         *args
-            Positional arguments to pass to the reader's to_xarray method.
-            Not used currently. It is there to allow for future extensions or
-            additional parameters that may be needed for specific use cases.
-        xarray_open_mfdataset_kwargs: dict, None, optional
-            Keyword arguments passed to :py:func:`xarray.open_mfdataset`.
-            When specified, this argument takes precedence over
-            any other keyword arguments passed to the method. It is used for safe
-            parsing of kwargs via intermediate methods.
+            Unused.
+        xarray_open_mfdataset_kwargs : dict or None, optional
+            Keyword arguments passed to :py:func:`xarray.open_mfdataset`. When given (and non-empty), this
+            is used instead of ``**kwargs`` below -- see there.
         **kwargs
-            Keyword arguments passed :py:func:`xarray.open_mfdataset`.
-            Ignored if `xarray_open_mfdataset_kwargs` is specified.
+            Keyword arguments passed to :py:func:`xarray.open_mfdataset`. Ignored whenever
+            ``xarray_open_mfdataset_kwargs`` is given and non-empty.
 
         Returns
         -------
@@ -321,13 +317,11 @@ class MultiData(SimpleData):
 
         Parameters
         ----------
-        comment: str
-            Character that represents a comment line in a CSV file. This value is ignored if the
-            comment character is defined in ``pandas_read_csv_kwargs``. Applied to all the CSV data
-            sources in the current object.
-        pandas_read_csv_kwargs: dict, None, optional
-            Keyword arguments passed to :func:`pandas.read_csv`. This is used for safe parsing of
-            kwargs via intermediate methods. Applied to all the CSV data sources in the current object.
+        comment : str, default "#"
+            The character that represents a comment line in a CSV file, applied to every CSV sub-item.
+            Ignored if ``comment`` is already set in ``pandas_read_csv_kwargs``.
+        pandas_read_csv_kwargs : dict or None, optional
+            Keyword arguments passed to :func:`pandas.read_csv` for every CSV sub-item.
 
         Returns
         -------

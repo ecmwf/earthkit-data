@@ -75,7 +75,6 @@ class Merger_obj:
 
     def to_xarray(self, paths_or_sources, **kwargs):
         self._called_to_xarray = True
-        print("to_xarray called with:", paths_or_sources)
         return xr.open_mfdataset(paths_or_sources)
 
     def to_fieldlist(self, paths_or_sources, **kwargs):
