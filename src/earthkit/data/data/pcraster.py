@@ -35,7 +35,7 @@ class PCRasterData(SourceData):
     @property
     def available_types(self):
         """list[str]: Return the list of available types that this data object can be converted to."""
-        return [self._NUMPy]
+        return [self._NUMPY]
 
     def describe(self) -> Any:
         """Provide a description of the PCRaster data.
@@ -43,7 +43,7 @@ class PCRasterData(SourceData):
         Returns
         -------
         :py:class:`earthkit.data.utils.summary.DataDescriber`
-            A DataDescriber object containing a description of the CSPCRasterV data.
+            A DataDescriber object containing a description of the PCRaster data.
         """
         from earthkit.data.utils.summary import DataDescriber
 
