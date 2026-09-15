@@ -316,8 +316,6 @@ class Url(UrlBase):
 
         self.path = self.downloader.local_path()
 
-        print("Local path", self.path)
-
         if self.path is not None:
             return
 
