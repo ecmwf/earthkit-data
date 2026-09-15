@@ -297,7 +297,6 @@ class Url(UrlBase):
                 f" _kwargs={self._kwargs}"
             )
         )
-
         self.downloader = Downloader(
             self.url_spec.zipped(),
             timeout=CONFIG.get("url-download-timeout"),
@@ -316,6 +315,8 @@ class Url(UrlBase):
             extension = self.downloader.extension()
 
         self.path = self.downloader.local_path()
+
+        print("Local path", self.path)
 
         if self.path is not None:
             return
