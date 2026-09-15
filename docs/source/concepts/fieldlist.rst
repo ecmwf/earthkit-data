@@ -161,20 +161,14 @@ field metadata to dataset dimensions and coordinates:
 Concatenation
 -------------
 
-Two or more FieldLists can be concatenated with :func:`~earthkit.data.utils.concat.concat`, producing a
-new FieldList that contains all fields from every operand in order -- see :ref:`concat`.
+Two FieldLists can be concatenated with the ``+`` operator, producing a new FieldList that
+contains all fields from both operands in order:
 
 .. code-block:: python
 
-    >>> import earthkit.data as ekd
-    >>> combined = ekd.concat(ds1, ds2)
+    >>> combined = ds1 + ds2
     >>> len(combined) == len(ds1) + len(ds2)
     True
-
-.. note::
-
-    Prior to *earthkit-data* 1.0, FieldLists could be concatenated with the ``+`` operator; this has been
-    replaced by :func:`~earthkit.data.utils.concat.concat`, see :ref:`migration_1.0.0`.
 
 
 FieldList types

@@ -64,7 +64,6 @@ class ArchiveReader(Reader):
             for member in tqdm(iterable=members, total=len(members), leave=False):
                 if not self.check(member):
                     continue
-
                 archive.extract(member=member, path=target, **kwargs)
 
         try:

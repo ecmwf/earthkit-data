@@ -5,7 +5,6 @@ Miscellaneous
    :glob:
    :maxdepth: 1
 
-   mergers
    parts
-   patterns
+   pattern
    split_on
