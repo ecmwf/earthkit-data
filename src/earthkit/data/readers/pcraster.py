@@ -106,7 +106,7 @@ class PCRasterReader(Reader):
         if kwargs:
             names = ", ".join(repr(name) for name in kwargs)
             warnings.warn(
-                f"Arguments {names} have no effect for the NumPy reader.",
+                f"Arguments {names} have no effect for the PCRaster reader.",
                 UserWarning,
                 stacklevel=2,
             )
