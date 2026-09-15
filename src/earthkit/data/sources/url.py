@@ -325,7 +325,6 @@ class Url(UrlBase):
             self.force = self.out_of_date
 
         def download(target, _):
-            print("Downloading target", target)
             self.downloader.download(target)
             return self.downloader.cache_data()
 
@@ -335,8 +334,6 @@ class Url(UrlBase):
             extension=extension,
             force=self.force,
         )
-
-        print("Cache file", self.path)
 
         # cache data may contain the result of the http HEAD request
         h = self.downloader.cache_data()
