@@ -145,6 +145,13 @@ def test_csv_text_file():
     assert set(df.columns) == set(["a", "b", "c"])
 
 
+def test_csv_file_without_extension(tmp_path):
+    path = tmp_path / "data"
+    path.write_text("a,b\n1,2\n3,4\n")
+
+    assert from_source("file", path).to_pandas().to_dict("list") == {"a": [1, 3], "b": [2, 4]}
+
+
 def test_csv_with_comment():
     s = from_source(
         "dummy-source",

@@ -58,9 +58,8 @@ class TextReader(Reader):
 
 
 def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
-    if deeper_check:
-        if is_probably_text(path):
-            return TextReader(source, path)
+    if deeper_check and is_probably_text(path):
+        return TextReader(source, path)
 
 
 READER = reader
