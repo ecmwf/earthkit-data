@@ -78,7 +78,7 @@ optional-dependencies.docs = [
   "xarray"
 ]
 optional-dependencies.ecmwf-opendata = ["ecmwf-opendata>=0.3.3"]
-optional-dependencies.fdb = ["pyfdb>=0.1,<1.0"]
+optional-dependencies.fdb = ["pyfdb>=5.21,<6.0"]
 optional-dependencies.geopandas = ["geopandas"]
 optional-dependencies.geotiff = ["pyproj", "rasterio", "rioxarray"]
 optional-dependencies.gribjump = ["pyfdb>=0.1", "pygribjump"]

@@ -15,18 +15,18 @@ def _match_magic(magic, deeper_check):
     if magic is not None:
         type_id = b"BUFR"
         if not deeper_check:
-            return len(magic) >= 4 and magic[:4] == type_id
+            return magic[:4] == type_id
         else:
             return type_id in magic
     return False
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic, deeper_check):
         from .file import BUFRReader
 
         parts = source.parts if hasattr(source, "parts") else None
-        return BUFRReader(source, path, parts=parts)
+        return BUFRReader(source, path, parts=parts, **kwargs)
 
 
 READER = reader

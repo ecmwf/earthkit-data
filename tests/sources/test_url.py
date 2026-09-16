@@ -34,11 +34,37 @@ def test_url_file_source():
     assert len(s) == 2
 
 
-def test_url_source_1():
-    from_source(
-        "url",
-        earthkit_remote_examples_file("test.grib"),
-    )
+def test_url_source_session():
+    import requests
+
+    class _RecordingSession(requests.Session):
+        """A real requests session recording the requests made through it."""
+
+        def __init__(self):
+            super().__init__()
+            self.calls = []
+
+        def get(self, url, *args, **kwargs):
+            self.calls.append(("get", url))
+            return super().get(url, *args, **kwargs)
+
+        def head(self, url, *args, **kwargs):
+            self.calls.append(("head", url))
+            return super().head(url, *args, **kwargs)
+
+    url = earthkit_remote_examples_file("test.grib")
+
+    with _RecordingSession() as session:
+        # use an empty temporary (non-cached) directory where the data will be downloaded to, so
+        # that we can check that the download is performed via the session
+        with temp_directory() as tmpdir:
+            with config.temporary({"cache-policy": "off", "temporary-cache-directory-root": tmpdir}):
+                ds = from_source("url", url, session=session).to_fieldlist()
+                assert len(ds) == 2
+                assert ds.get("parameter.variable") == ["2t", "msl"]
+
+        # the download must have been performed via the session we passed in
+        assert ("get", url) in session.calls
 
 
 @pytest.mark.cache
@@ -57,6 +83,13 @@ def test_url_source_check_out_of_date():
             config.set("check-out-of-date-urls", False)
             with network_off():
                 load()
+
+
+def test_url_source_1():
+    from_source(
+        "url",
+        earthkit_remote_examples_file("test.grib"),
+    )
 
 
 def test_url_source_2():
@@ -192,7 +225,6 @@ def test_url_part_file_source():
         assert f.read() == b"GRIB7777GRIB7777"
 
 
-@pytest.mark.download
 def test_url_netcdf_source_save():
     ds = from_source(
         "url",
@@ -204,6 +236,21 @@ def test_url_netcdf_source_save():
         assert os.path.exists(tmp)
         ds_saved = from_source("file", tmp)
         assert len(ds_saved) == 2
+
+
+def test_url_grib_netcdf_mixed():
+    ds = from_source(
+        "url",
+        [
+            earthkit_remote_examples_file("test.nc"),
+            earthkit_remote_examples_file("test.grib"),
+        ],
+    )
+    # TODO: this is the consequence of the current behaviour of the url source, which
+    # concatenates multiple URLs into a single target file. Change this test if an option is
+    # added to handle multiple URLs differently.
+    assert ds._TYPE_NAME == "NetCDF"
+    assert isinstance(ds.path, str)
 
 
 if __name__ == "__main__":

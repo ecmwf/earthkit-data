@@ -15,7 +15,7 @@ def _match_magic(magic, deeper_check):
     if magic is not None and len(magic) > 0:
         type_id = b"GRIB"
         if not deeper_check:
-            return len(magic) >= 4 and magic[:4] == type_id
+            return magic[:4] == type_id
         else:
             return type_id in magic
     return False
@@ -38,12 +38,12 @@ def is_grib_file(path):
     return _match_magic(magic, True)
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic, deeper_check):
         from .file import GRIBReader
 
         parts = source.parts if hasattr(source, "parts") else None
-        return GRIBReader(source, path, parts=parts)
+        return GRIBReader(source, path, parts=parts, **kwargs)
 
 
 def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):

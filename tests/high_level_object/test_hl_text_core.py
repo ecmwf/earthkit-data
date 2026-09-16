@@ -18,7 +18,7 @@ def test_hl_text_single_core():
 
     assert ds._TYPE_NAME == "Text"
     assert ds.is_stream() is False
-    assert ds.available_types is None
+    assert ds.available_types == []
     assert isinstance(ds.path, str)
 
     import pytest
