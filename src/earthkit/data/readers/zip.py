@@ -43,8 +43,8 @@ class InfoWrapper:
 
 
 class ZIPReader(ArchiveReader):
-    def __init__(self, source, path):
-        super().__init__(source, path)
+    def __init__(self, source, path, **kwargs):
+        super().__init__(source, path, **kwargs)
 
         self._mutate = None
 

@@ -297,7 +297,6 @@ class Url(UrlBase):
                 f" _kwargs={self._kwargs}"
             )
         )
-
         self.downloader = Downloader(
             self.url_spec.zipped(),
             timeout=CONFIG.get("url-download-timeout"),
