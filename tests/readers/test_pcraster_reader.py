@@ -1,3 +1,4 @@
+from pathlib import Path
 from struct import pack, pack_into
 
 import numpy as np
@@ -19,3 +20,11 @@ def test_pcraster_reader(tmp_path):
     data = from_source("file", path)
     np.testing.assert_equal(data.to_numpy(), [[1, np.nan], [3, 4]])
     np.testing.assert_array_equal(data.to_numpy(mask=False), expected)
+
+
+def test_pcraster_reader_area():
+    result = from_source("file", Path(__file__).with_name("area.map")).to_numpy()
+
+    assert result.shape == (40, 41)
+    assert np.isnan(result).sum() == 1156
+    np.testing.assert_array_equal(result[~np.isnan(result)], np.ones(484))
