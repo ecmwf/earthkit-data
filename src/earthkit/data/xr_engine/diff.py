@@ -9,6 +9,7 @@
 
 import logging
 import math
+import numbers
 
 LOG = logging.getLogger(__name__)
 
@@ -78,7 +79,11 @@ class ListDiff:
 
     @staticmethod
     def _compare(v1, v2):
-        if isinstance(v1, float) and isinstance(v2, float):
+        if isinstance(v1, numbers.Integral) and isinstance(v2, numbers.Integral):
+            # covers mixes of native and numpy integer types (e.g. int vs numpy.int64)
+            return v1 == v2, ListDiff.VALUE_DIFF
+        elif isinstance(v1, numbers.Real) and isinstance(v2, numbers.Real):
+            # covers mixes of native and numpy floating point types (e.g. float vs numpy.float32)
             return math.isclose(v1, v2, rel_tol=1e-9), ListDiff.VALUE_DIFF
         elif v1 is None and v2 is None:
             return True, ListDiff.VALUE_DIFF
