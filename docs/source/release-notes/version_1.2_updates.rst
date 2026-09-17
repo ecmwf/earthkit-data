@@ -9,7 +9,7 @@ Version 1.2.3
 Fixes
 ++++++++++++
 
-- Fixed issue for fieldlist to Xarray conversion when `to_xarray()` did not sort level coordinates when the level values in the fields were not ``int`` or ``float`` but other types like ``numpy.int64`` etc.
+- Fixed issue when :py:meth:`~earthkit.data.core.fieldlist.FieldList.to_xarray` did not sort level coordinates numerically if the level values were NumPy scalar types (e.g. ``numpy.int64``) instead of plain ``int`` or ``float`` (:pr:`1151`)
 
 
 Version 1.2.2
