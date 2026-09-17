@@ -193,9 +193,6 @@ class UrlBase(FileSource):
         self._kwargs = kwargs
         LOG.debug(f"url={self.url} url_parts={self.url_parts} auth={auth} _kwargs={self._kwargs}")
 
-    def connect_to_mirror(self, mirror):
-        return mirror.connection_for_url(self, self.url, self.url_parts)
-
     def prepare_headers(self, url):
         headers = {}
         if self.http_headers is not None:

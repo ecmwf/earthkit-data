@@ -37,9 +37,6 @@ class EODRetriever(FileSource):
         retriever = FileRequestRetriever(self, retriever=self._retrieve_one)
         self.path = retriever.retrieve(self.request)
 
-    def connect_to_mirror(self, mirror):
-        return mirror.connection_for_eod(self)
-
     def _retrieve_one(self, request, *args):
         def retrieve(target, request):
             self.client.retrieve(request, target)
