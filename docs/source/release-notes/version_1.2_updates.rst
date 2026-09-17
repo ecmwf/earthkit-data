@@ -3,6 +3,13 @@
 Version 1.2 Updates
 ///////////////////////
 
+Version 1.2.3
+==============
+
+Fixes
+++++++++++++
+
+- Fixed issue for fieldlist to Xarray conversion when `to_xarray()` did not sort level coordinates when the level values in the fields were not ``int`` or ``float`` but other types like ``numpy.int64`` etc.
 
 
 Version 1.2.2
