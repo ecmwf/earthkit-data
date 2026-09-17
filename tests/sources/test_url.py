@@ -234,7 +234,7 @@ def test_url_netcdf_source_save():
     with temp_file() as tmp:
         ds.to_target("file", tmp)
         assert os.path.exists(tmp)
-        ds_saved = from_source("file", tmp)
+        ds_saved = from_source("file", tmp).to_fieldlist()
         assert len(ds_saved) == 2
 
 
