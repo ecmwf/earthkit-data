@@ -3,15 +3,6 @@
 Version 1.2 Updates
 ///////////////////////
 
-Version 1.2.3
-==============
-
-Fixes
-++++++++++++
-
-- Fixed issue when :py:meth:`~earthkit.data.core.fieldlist.FieldList.to_xarray` did not sort level coordinates numerically if the level values were NumPy scalar types (e.g. ``numpy.int64``) instead of plain ``int`` or ``float`` (:pr:`1151`)
-
-
 Version 1.2.2
 ==============
 
