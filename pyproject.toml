@@ -3,7 +3,7 @@ requires = ["setuptools>=77", "setuptools-scm>=8"]
 
 [project]
 authors = [
-  {name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int"}
+  { name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int" }
 ]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -42,12 +42,10 @@ dependencies = [
 ]
 description = "A format-agnostic Python interface for geospatial data"
 dynamic = ["version"]
+entry-points."xarray.backends".earthkit = "earthkit.data.xr_engine.engine:EarthkitBackendEntrypoint"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 name = "earthkit-data"
-readme = "README.md"
-requires-python = ">=3.10"
-entry-points."xarray.backends".earthkit = "earthkit.data.xr_engine.engine:EarthkitBackendEntrypoint"
 optional-dependencies.all = [
   "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geopandas,gribjump,iris,mars,odb,polytope,projection,s3,wekeo]"
 ]
@@ -102,6 +100,8 @@ optional-dependencies.test = [
 ]
 optional-dependencies.wekeo = ["hda>=2.22"]
 optional-dependencies.zarr = ["zarr>=3"]
+readme = "README.md"
+requires-python = ">=3.10"
 urls.Documentation = "https://earthkit-data.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-data/"
 urls.Issues = "https://github.com/ecmwf/earthkit-data/issues"
