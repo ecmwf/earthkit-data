@@ -8,8 +8,8 @@
 #
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
-    if path.endswith(".pp"):
+def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+    if magic is not None and path.endswith(".pp"):
         from .reader import PPReader
 
         return PPReader(source, path, **kwargs)

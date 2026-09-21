@@ -57,9 +57,6 @@ class ZIPReader(ArchiveReader):
                     self._mutate = CSVReader(source, path, compression="zip")
                     return  # Pandas can read zipped files directly
 
-            if ".zattrs" in members:
-                return  # Zarr can read zipped files directly
-
             self.expand(zip, members)
 
     def check(self, member):
@@ -82,14 +79,12 @@ class ZIPReader(ArchiveReader):
 EXTENSIONS_TO_SKIP = (".npz",)  # Numpy arrays
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
-    if magic is None:  # Bypass check and force
-        return ZIPReader(source, path, **kwargs)
+def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+    if magic is not None:
+        _, extension = os.path.splitext(path)
 
-    _, extension = os.path.splitext(path)
-
-    if magic[:4] == b"PK\x03\x04" and extension not in EXTENSIONS_TO_SKIP:
-        return ZIPReader(source, path, **kwargs)
+        if magic[:4] == b"PK\x03\x04" and extension not in EXTENSIONS_TO_SKIP:
+            return ZIPReader(source, path, **kwargs)
 
 
 READER = reader

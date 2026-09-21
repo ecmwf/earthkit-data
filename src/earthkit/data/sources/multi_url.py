@@ -13,6 +13,11 @@ from .multi import MultiSource
 
 
 class MultiUrl(MultiSource):
+    """MultiUrl source for downloading data from multiple URLs into a separate target file for each URL.
+
+    This source is only used internally and cannot be used directly by end users via :func:`from_source`.
+    """
+
     def __init__(self, urls, *args, filter=None, merger=None, force=None, lazily=True, sort_urls=False, **kwargs):
         from earthkit.data.utils.url import UrlSpec
 

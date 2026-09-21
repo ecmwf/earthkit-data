@@ -29,23 +29,13 @@ class NumpyReader(Reader):
     def to_numpy(self, numpy_load_kwargs={}):
         return np.load(self.path, **numpy_load_kwargs)
 
-    def __iter__(self):
-        return iter([self])
+    def to_data_object(self, **kwargs):
+        from earthkit.data.data.numpy import NumPyData
 
+        return NumPyData(self)
 
-class NumpyZipReader(Reader):
-    def __init__(self, source, path, **kwargs):
-        if kwargs:
-            names = ", ".join(repr(name) for name in kwargs)
-            warnings.warn(
-                f"Arguments {names} have no effect for the NumPy ZIP reader.",
-                UserWarning,
-                stacklevel=2,
-            )
-        super().__init__(source, path)
-
-    def to_numpy(self, numpy_load_kwargs={}):
-        return np.load(self.path, **numpy_load_kwargs)
+    def _encode_default(self, encoder, *args, **kwargs):
+        return None
 
 
 def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
@@ -55,7 +45,7 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
 
         _, extension = os.path.splitext(path)
         if magic[:4] == b"PK\x03\x04" and extension == ".npz":
-            return NumpyZipReader(source, path, **kwargs)
+            return NumpyReader(source, path, **kwargs)
 
 
 READER = reader
