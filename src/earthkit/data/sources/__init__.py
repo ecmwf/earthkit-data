@@ -445,6 +445,15 @@ def from_source(
 ) -> "Data": ...
 
 
+@overload
+def from_source(
+    name: Literal["zenodo"],
+    identifier: str | int,
+    only: str | list[str],
+    **kwargs,
+) -> "Data": ...
+
+
 def from_source(name: str, *args, lazily=False, **kwargs) -> "Data":
     if lazily:
         return from_source_lazily(name, *args, **kwargs)
