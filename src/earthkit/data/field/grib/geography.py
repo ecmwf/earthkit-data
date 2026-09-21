@@ -206,21 +206,19 @@ class GribGeographyBuilder:
 
         grid_type = handle.get("gridType", None)
 
+        component = None
         # Spectral data is handled differently right now
         if grid_type == "sh":
             from earthkit.data.field.component.geography import SpectralGeography
 
             shape = (handle.get("numberOfDataPoints", None),)
             component = SpectralGeography(shape=shape)
-        # "unstructured" grids are handled differently.
-        # Currently, ecCodes cannot generate lat-lon for these grids, so we need to
-        # rely on the gridSpec to reconstruct the grid with the eckit-geo Grid object.
-        # If the gridSpec is not available, we cannot handle these grids.
-        elif grid_type == "unstructured_grid":
+        # For a group of well supported cases the Grid object is used
+        elif grid_type in ("regular_ll", "reduced_gg", "regular_gg", "healpix", "unstructured_grid"):
             if not ECKIT_GRID_SUPPORT.has_ecc_grid_spec or not ECKIT_GRID_SUPPORT.has_grid:
                 raise ValueError(
                     (
-                        "GribGeographyBuilder: cannot use unstructured grid because eckit-geo"
+                        f"GribGeographyBuilder: cannot use grid_type={grid_type} because eckit-geo"
                         " grid support is not available in ecCodes"
                     )
                 )
@@ -232,13 +230,14 @@ class GribGeographyBuilder:
             else:
                 raise ValueError(
                     (
-                        "GribGeographyBuilder: cannot use unstructured grid because gridSpec"
+                        f"GribGeographyBuilder: cannot use grid_type={grid_type} because gridSpec"
                         "  is not available in the handle"
                     )
                 )
         # Other gridded data is handled with ecCodes
         else:
             component = GribGeography(handle)
+
         return GeographyFieldComponentHandler.from_component(component)
 
 

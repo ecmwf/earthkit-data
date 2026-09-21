@@ -529,7 +529,12 @@ def test_grib_healpix_grid(fl_type):
     assert r["grid_type"] == "healpix"
 
 
-if __name__ == "__main__":
-    from earthkit.data.utils.testing import main
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+def test_grib_edition_1_2_on_same_grid(fl_type):
+    ds, _ = load_grib_data("grib_1_2_on_same_grid.grib", fl_type, folder="data")
 
-    main()
+    ref_gridspec = {"grid": [30, 30]}
+
+    fl = ds.to_fieldlist()
+    for f in fl:
+        assert f.geography.grid_spec().items() >= ref_gridspec.items()

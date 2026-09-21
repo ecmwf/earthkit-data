@@ -124,3 +124,12 @@ def test_xr_engine_different_grids(allow_holes, lazy_load):
     ds = from_source("url", url).to_fieldlist()
     with pytest.raises(ValueError, match="Fields do not have the same grid geometry"):
         ds.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load)
+
+
+def test_xr_engine_grib_edition_1_2_on_same_grid():
+    d = from_source("file", earthkit_test_data_file("grib_1_2_on_same_grid.grib"))
+    fl = d.to_fieldlist()
+    ds = fl.to_xarray()
+
+    ref_gridspec = {"grid": [30, 30]}
+    assert ds.earthkit.grid_spec.items() >= ref_gridspec.items()
