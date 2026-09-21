@@ -201,6 +201,16 @@ CONFIG_AND_HELP = {
         """Timeout when downloading from an url.""",
         getter="_as_seconds",
     ),
+    "url-maximum-retries": _(
+        5,
+        """Maximum number of retries when downloading from an url. New in version 1.3""",
+        getter="_as_int",
+    ),
+    "url-retry-after": _(
+        "10s",
+        """Time to wait before retrying a failed download from an url. New in version 1.3""",
+        getter="_as_seconds",
+    ),
     "check-out-of-date-urls": _(
         True,
         "Perform a HTTP request to check if the remote version of a cache file has changed",
