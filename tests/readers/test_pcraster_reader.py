@@ -19,7 +19,7 @@ def test_pcraster_reader(tmp_path):
 
     data = from_source("file", path)
     np.testing.assert_equal(data.to_numpy(), [[1, np.nan], [3, 4]])
-    np.testing.assert_array_equal(data.to_numpy(mask=False), expected)
+    np.testing.assert_array_equal(data.to_numpy(missing_to_nan=False), expected)
 
 
 def test_pcraster_reader_area():
