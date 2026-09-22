@@ -78,7 +78,7 @@ CELLREPR = {
 }
 
 
-def _from_file(path, mask):
+def _from_file(path, missin_to_nan):
     """Load a .map file into a numpy array."""
     with open(path, "rb") as f:
         bytes = f.read()
@@ -95,7 +95,7 @@ def _from_file(path, mask):
 
     size = dtype.itemsize * nrRows * nrCols
     data = np.frombuffer(bytes[256 : 256 + size], dtype)
-    if mask:
+    if missin_to_nan:
         data = celltype["fillmv"](data.astype(np.float64), np.nan)
 
     return data.reshape((nrRows, nrCols))
@@ -112,8 +112,8 @@ class PCRasterReader(Reader):
             )
         super().__init__(source, path)
 
-    def to_numpy(self, mask=True):
-        return _from_file(self.path, mask=mask)
+    def to_numpy(self, missing_to_nan=True):
+        return _from_file(self.path, missing_to_nan=missing_to_nan)
 
     def to_data_object(self, **kwargs):
         from earthkit.data.data.pcraster import PCRasterData
