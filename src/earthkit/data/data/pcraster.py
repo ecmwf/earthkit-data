@@ -62,7 +62,7 @@ class PCRasterData(SourceData):
     def _repr_html_(self) -> str:
         return self.describe()._repr_html_()
 
-    def to_numpy(self, mask=True):
+    def to_numpy(self, missing_to_nan=True):
         """Convert into an numpy array.
 
         Parameters
@@ -75,4 +75,4 @@ class PCRasterData(SourceData):
         :py:class:`numpy.array`
             A numpy array containing the PCRaster data.
         """
-        return self._reader.to_numpy(mask=mask)
+        return self._reader.to_numpy(missing_to_nan=missing_to_nan)
