@@ -78,7 +78,7 @@ CELLREPR = {
 }
 
 
-def _from_file(path, missin_to_nan):
+def _from_file(path, missing_to_nan):
     """Load a .map file into a numpy array."""
     with open(path, "rb") as f:
         bytes = f.read()
@@ -95,7 +95,7 @@ def _from_file(path, missin_to_nan):
 
     size = dtype.itemsize * nrRows * nrCols
     data = np.frombuffer(bytes[256 : 256 + size], dtype)
-    if missin_to_nan:
+    if missing_to_nan:
         data = celltype["fillmv"](data.astype(np.float64), np.nan)
 
     return data.reshape((nrRows, nrCols))
