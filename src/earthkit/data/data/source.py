@@ -95,3 +95,215 @@ class SourceData(SimpleData):
             return self._reader.path
         except Exception:
             return None
+
+
+class DefaultSourceData(SourceData):
+    def __init__(self, source_or_reader):
+        """Initialize a DefaultSourceData object with a source or reader.
+
+        Parameters
+        ----------
+        source_or_reader : Source or Reader
+            The source or reader object that provides access to the data.
+        """
+        super().__init__(source_or_reader)
+        self._types = []
+        for name in [
+            self._XARRAY,
+            self._FIELDLIST,
+            self._PANDAS,
+            self._GEOPANDAS,
+            self._FEATURELIST,
+            self._NUMPY,
+            self._ARRAY,
+        ]:
+            if hasattr(self._reader, f"to_{name}"):
+                self._types.append(name)
+
+    def describe(self):
+        """Provide a description of the data.
+
+        Returns
+        -------
+        :py:class:`earthkit.data.utils.summary.DataDescriber`
+            A DataDescriber object containing a description of the data.
+        """
+        pass
+
+    @property
+    def available_types(self):
+        """list[str]: Return the list of available types that this data object can be converted to."""
+        return self._types
+
+    def to_fieldlist(self, *args, **kwargs):
+        """Convert into a FieldList.
+
+        Parameters
+        ----------
+        *args
+            Positional arguments to pass to the reader's to_fieldlist method.
+        **kwargs
+            Keyword arguments to pass to the reader's to_fieldlist method.
+
+        Returns
+        -------
+        :py:class:`earthkit.data.core.fieldlist.FieldList`
+            A FieldList containing the data.
+
+        Raises
+        ------
+        NotImplementedError
+            If conversion to FieldList is not supported.
+        """
+        if self._FIELDLIST in self._types:
+            return getattr(self._reader, f"to_{self._FIELDLIST}")(*args, **kwargs)
+        else:
+            self._conversion_not_implemented()
+
+    def to_xarray(self, *args, **kwargs):
+        """Convert into an Xarray dataset.
+
+        Parameters
+        ----------
+        *args
+            Positional arguments to pass to the reader's to_xarray method.
+        **kwargs
+            Keyword arguments to pass to the reader's to_xarray method.
+
+        Returns
+        -------
+        :py:class:`xarray.Dataset`
+            An Xarray dataset containing the data.
+
+        Raises
+        ------
+        NotImplementedError
+            If conversion to Xarray is not supported.
+        """
+        if self._XARRAY in self._types:
+            return getattr(self._reader, f"to_{self._XARRAY}")(*args, **kwargs)
+        else:
+            self._conversion_not_implemented()
+
+    def to_pandas(self, *args, **kwargs):
+        """Convert into a Pandas DataFrame.
+
+        Parameters
+        ----------
+        *args
+            Positional arguments to pass to the reader's to_pandas method.
+        **kwargs
+            Keyword arguments to pass to the reader's to_pandas method.
+
+        Returns
+        -------
+        :py:class:`pandas.DataFrame`
+            A Pandas DataFrame containing the data.
+
+        Raises
+        ------
+        NotImplementedError
+            If conversion to Pandas is not supported.
+        """
+        if self._PANDAS in self._types:
+            return getattr(self._reader, f"to_{self._PANDAS}")(*args, **kwargs)
+        else:
+            self._conversion_not_implemented()
+
+    def to_geopandas(self, **kwargs):
+        """Convert into a GeoPandas GeoDataFrame.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments to pass to the reader's to_geopandas method.
+
+        Returns
+        -------
+        :py:class:`geopandas.GeoDataFrame`
+            A GeoPandas GeoDataFrame containing the data.
+
+        Raises
+        ------
+        NotImplementedError
+            If conversion to GeoPandas is not supported.
+        """
+        if self._GEOPANDAS in self._types:
+            return getattr(self._reader, f"to_{self._GEOPANDAS}")(**kwargs)
+        else:
+            self._conversion_not_implemented()
+
+    def to_featurelist(self, *args, **kwargs):
+        """Convert into a FeatureList.
+
+        Parameters
+        ----------
+        *args
+            Positional arguments to pass to the reader's to_featurelist method.
+        **kwargs
+            Keyword arguments to pass to the reader's to_featurelist method.
+
+        Returns
+        -------
+        FeatureList
+            A FeatureList containing the data.
+
+        Raises
+        ------
+        NotImplementedError
+            If conversion to FeatureList is not supported.
+        """
+        if self._FEATURELIST in self._types:
+            return getattr(self._reader, f"to_{self._FEATURELIST}")(*args, **kwargs)
+        else:
+            self._conversion_not_implemented()
+
+    def to_numpy(self, *args, **kwargs):
+        """Convert into a NumPy array.
+
+        Parameters
+        ----------
+        *args
+            Positional arguments to pass to the reader's to_numpy method.
+        **kwargs
+            Keyword arguments to pass to the reader's to_numpy method.
+
+        Returns
+        -------
+        numpy.ndarray
+            A NumPy array containing the data.
+
+        Raises
+        ------
+        NotImplementedError
+            If conversion to NumPy is not supported.
+        """
+        if self._NUMPY in self._types:
+            return getattr(self._reader, f"to_{self._NUMPY}")(*args, **kwargs)
+        else:
+            self._conversion_not_implemented()
+
+    def to_array(self, *args, **kwargs):
+        """Convert into an array of a given array-like type.
+
+        Parameters
+        ----------
+        *args
+            Positional arguments to pass to the reader's to_array method.
+        **kwargs
+            Keyword arguments to pass to the reader's to_array method.
+
+        Returns
+        -------
+        ArrayLike
+            An array containing the data.
+
+        Raises
+        ------
+        NotImplementedError
+            If conversion to array is not supported.
+        """
+        if self._ARRAY in self._types:
+            return getattr(self._reader, f"to_{self._ARRAY}")(*args, **kwargs)
+        else:
+            self._conversion_not_implemented()

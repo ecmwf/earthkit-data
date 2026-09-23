@@ -68,7 +68,9 @@ class Source(Loader):
 
     def to_data_object(self):
         """Convert this source into a data object, if possible."""
-        raise Exception("Data object not implemented")
+        from earthkit.data.data.source import DefaultSourceData
+
+        return DefaultSourceData(self)
 
 
 class SourceLoader:
