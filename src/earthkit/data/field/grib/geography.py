@@ -224,18 +224,32 @@ class GribGeographyBuilder:
                         " grid support is not available in ecCodes"
                     )
                 )
-            from earthkit.data.field.component.geography import GridsSpecBasedGeography
+            try:
+                grid_spec = handle.get("gridSpec", default=None)
+            except Exception:
+                grid_spec = None
 
-            grid_spec = handle.get("gridSpec", default=None)
             if isinstance(grid_spec, str) and grid_spec != "":
+                from earthkit.data.field.component.geography import GridsSpecBasedGeography
+
                 component = GridsSpecBasedGeography(grid_spec)
             else:
-                raise ValueError(
-                    (
-                        "GribGeographyBuilder: cannot use unstructured grid because gridSpec"
-                        "  is not available in the handle"
+                grid_name = handle.get("gridName", None)
+                # this is the case for user defined grids with a custom set of lats/lons
+                if grid_name == "undefined":
+                    from earthkit.data.field.component.geography import EmptyGeography
+
+                    shape = (handle.get("numberOfDataPoints", None),)
+                    component = EmptyGeography(shape=shape)
+                # for a named grid the the grid spec should exist, otherwise we cannot handle it
+                else:
+                    raise ValueError(
+                        (
+                            "GribGeographyBuilder: cannot handle unstructured grid with gridName="
+                            f"{grid_name}. No gridSpec available"
+                        )
                     )
-                )
+
         # Other gridded data is handled with ecCodes
         else:
             component = GribGeography(handle)

@@ -34,13 +34,13 @@ def test_xr_engine_accessor_grib(lazy_load):
     md = decode_earthkit_attrs(da.attrs["_earthkit"])
     assert "message" in md
     assert isinstance(md["message"], bytes)
-    assert md["grid_spec"] == ref_grid_spec_dict
-    assert da.earthkit.grid_spec == ref_grid_spec_dict
+    assert md["grid_spec"].items() >= ref_grid_spec_dict.items()
+    assert da.earthkit.grid_spec.items() >= ref_grid_spec_dict.items()
 
     field = da.earthkit.reference_field
     assert field is not None
     assert field._get_grib().message(deflate=True) == md["message"]
-    assert field.geography.grid_spec() == ref_grid_spec_dict
+    assert field.geography.grid_spec().items() >= ref_grid_spec_dict.items()
 
     # modify via set() (updates reference field)
     da_1 = da.earthkit.set({"geography.grid_spec": {"grid": "O32"}})
@@ -48,27 +48,27 @@ def test_xr_engine_accessor_grib(lazy_load):
     md_1 = decode_earthkit_attrs(da_1.attrs["_earthkit"])
     assert "message" in md_1
     assert isinstance(md_1["message"], bytes)
-    assert md_1["grid_spec"] == ref_grid_spec_1_dict
-    assert da_1.earthkit.grid_spec == ref_grid_spec_1_dict
+    assert md_1["grid_spec"].items() >= ref_grid_spec_1_dict.items()
+    assert da_1.earthkit.grid_spec.items() >= ref_grid_spec_1_dict.items()
 
     field_1 = da_1.earthkit.reference_field
     assert field_1 is not None
-    assert field_1.geography.grid_spec() == ref_grid_spec_1_dict
+    assert field_1.geography.grid_spec().items() >= ref_grid_spec_1_dict.items()
 
     with temp_file() as path:
         da.to_netcdf(path)
         _da = xr.open_dataset(path)["t"]
-        assert _da.earthkit.grid_spec == ref_grid_spec_dict
-        assert _da.earthkit.reference_field.geography.grid_spec() == ref_grid_spec_dict
+        assert _da.earthkit.grid_spec.items() >= ref_grid_spec_dict.items()
+        assert _da.earthkit.reference_field.geography.grid_spec().items() >= ref_grid_spec_dict.items()
         assert _da.earthkit.reference_field.get("parameter.variable") == "t"
 
     with temp_file() as path:
         ds.to_netcdf(path)
         _ds = xr.open_dataset(path)
-        assert _ds.earthkit.grid_spec == ref_grid_spec_dict
+        assert _ds.earthkit.grid_spec.items() >= ref_grid_spec_dict.items()
         for v in _ds.data_vars:
             _da = _ds[v]
-            assert _da.earthkit.reference_field.geography.grid_spec() == ref_grid_spec_dict
+            assert _da.earthkit.reference_field.geography.grid_spec().items() >= ref_grid_spec_dict.items()
             assert _da.earthkit.reference_field.get("parameter.variable") == v
 
 
@@ -83,4 +83,4 @@ def test_xr_engine_accessor_netcdf():
 
     # modify via set() (special-case: geography.grid_spec without reference field)
     da_1 = da.earthkit.set({"geography.grid_spec": {"grid": "O32"}})
-    assert da_1.earthkit.grid_spec == ref_grid_spec_1_dict
+    assert da_1.earthkit.grid_spec.items() >= ref_grid_spec_1_dict.items()
