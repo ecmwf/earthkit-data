@@ -53,6 +53,8 @@ def download_and_cache(
         url,
         chunk_size=chunk_size,
         timeout=CONFIG.get("url-download-timeout"),
+        maximum_retries=CONFIG.get("url-maximum-retries"),
+        retry_after=CONFIG.get("url-retry-after"),
         verify=verify,
         parts=parts,
         range_method=range_method,
@@ -129,6 +131,8 @@ def download_to_target(
         url,
         chunk_size=chunk_size,
         timeout=CONFIG.get("url-download-timeout"),
+        maximum_retries=CONFIG.get("url-maximum-retries"),
+        retry_after=CONFIG.get("url-retry-after"),
         verify=verify,
         parts=parts,
         range_method=range_method,
@@ -192,9 +196,6 @@ class UrlBase(FileSource):
 
         self._kwargs = kwargs
         LOG.debug(f"url={self.url} url_parts={self.url_parts} auth={auth} _kwargs={self._kwargs}")
-
-    def connect_to_mirror(self, mirror):
-        return mirror.connection_for_url(self, self.url, self.url_parts)
 
     def prepare_headers(self, url):
         headers = {}
@@ -300,6 +301,8 @@ class Url(UrlBase):
         self.downloader = Downloader(
             self.url_spec.zipped(),
             timeout=CONFIG.get("url-download-timeout"),
+            maximum_retries=CONFIG.get("url-maximum-retries"),
+            retry_after=CONFIG.get("url-retry-after"),
             statistics_gatherer=record_statistics,
             progress_bar=progress_bar,
             resume_transfers=True,
@@ -388,6 +391,8 @@ class SingleUrlStream(UrlBase):
         downloader = Downloader(
             self.url_spec.zipped(),
             timeout=CONFIG.get("url-download-timeout"),
+            maximum_retries=CONFIG.get("url-maximum-retries"),
+            retry_after=CONFIG.get("url-retry-after"),
             # verify=self.verify,
             # range_method=self.range_method,
             # http_headers=self.prepare_headers(self.url),

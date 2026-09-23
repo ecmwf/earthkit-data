@@ -187,6 +187,8 @@ class CacheManager(threading.Thread):
     def _config_changed(self, policy):
         LOG.debug("Config changed")
         self._policy = policy
+        if self._connection is not None:
+            self._connection.close()
         self._connection = None  # The user may have changed the cache directory
         self._check_cache_size()
 
