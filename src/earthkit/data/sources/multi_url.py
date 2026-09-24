@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.sources import _from_source_internal
-
 from .multi import MultiSource
 
 
@@ -31,17 +29,15 @@ class MultiUrl(MultiSource):
         if sort_urls:
             url_spec = url_spec.sorted()
 
-        sources = [
-            _from_source_internal(
-                "url",
-                x,
-                filter=filter,
-                merger=merger,
-                force=force,
-                # Load lazily so we can do parallel downloads
-                lazily=lazily,
-            )
-            for x in url_spec
-        ]
+        if lazily:
+            # Load lazily so we can do parallel downloads
+            from earthkit.data.sources import from_source_lazily
+
+            sources = [from_source_lazily("url", x, filter=filter, merger=merger, force=force) for x in url_spec]
+        else:
+            from earthkit.data.sources.url import Url
+            from earthkit.data.sources.utils import _mutate_source
+
+            sources = [_mutate_source(Url(x, filter=filter, merger=merger, force=force)) for x in url_spec]
 
         super().__init__(sources, filter=filter, merger=merger)

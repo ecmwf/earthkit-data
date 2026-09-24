@@ -129,6 +129,3 @@ class WekeoRetriever(FileSource):
             (dataset, request),
             extension=EXTENSIONS.get(request.get("format"), ".cache"),
         )
-
-
-source = WekeoRetriever

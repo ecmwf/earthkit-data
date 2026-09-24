@@ -16,9 +16,8 @@ from earthkit.data.indexing.stream import StreamFieldList
 
 # from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.readers import stream_reader
+from earthkit.data.sources import Source
 from earthkit.data.sources.memory import MemoryBaseSource
-
-from . import Source
 
 LOG = logging.getLogger(__name__)
 
@@ -283,6 +282,3 @@ def make_stream_source_from_other(source, **kwargs):
         return source[0]
     else:
         return MultiStreamSource(source, **stream_kwargs)
-
-
-source = StreamSource

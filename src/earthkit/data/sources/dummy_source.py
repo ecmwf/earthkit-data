@@ -238,6 +238,3 @@ class DummySource(FileSource):
             extension=ext,
             force=force,
         )
-
-
-source = DummySource

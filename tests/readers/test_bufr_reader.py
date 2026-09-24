@@ -5,7 +5,7 @@ import earthkit.data as ekd
 
 def test_invalid_kwargs():
     with pytest.warns(UserWarning):
-        ekd.from_source("sample", "temp_10.bufr", grib_handle_policy=None)
+        ekd.from_source("sample", "temp_10.bufr", grib_handle_policy="cache")
 
 
 if __name__ == "__main__":
