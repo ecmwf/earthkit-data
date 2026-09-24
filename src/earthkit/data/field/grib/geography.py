@@ -240,7 +240,7 @@ class GribGeographyBuilder:
                     from earthkit.data.field.component.geography import EmptyGeography
 
                     shape = (handle.get("numberOfDataPoints", None),)
-                    component = EmptyGeography(shape=shape)
+                    component = EmptyGeography(shape=shape, grid_type=grid_type)
                 # for a named grid the the grid spec should exist, otherwise we cannot handle it
                 else:
                     raise ValueError(
