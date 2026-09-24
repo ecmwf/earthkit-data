@@ -8,6 +8,9 @@
 #
 
 
+from earthkit.data.readers import matcher
+
+
 def _match_magic(magic):
     if magic is not None:
         # magic check matching that from iris
@@ -16,6 +19,7 @@ def _match_magic(magic):
     return False
 
 
+@matcher(priority=830)
 def match_pp(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic):
         from .reader import PPReader

@@ -11,6 +11,8 @@ import os
 import stat
 from zipfile import ZipFile
 
+from earthkit.data.readers import matcher
+
 from .archive import ArchiveReader
 from .csv.reader import CSVReader
 
@@ -70,6 +72,7 @@ class ZIPReader(ArchiveReader):
 EXTENSIONS_TO_SKIP = (".npz",)  # Numpy arrays
 
 
+@matcher(priority=800)
 def match_zip(source, path, *, magic=None, deeper_check=False, **kwargs):
     if magic is not None:
         _, extension = os.path.splitext(path)

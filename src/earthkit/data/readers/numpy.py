@@ -12,6 +12,8 @@ import warnings
 
 import numpy as np
 
+from earthkit.data.readers import matcher
+
 from . import Reader
 
 
@@ -38,6 +40,7 @@ class NumpyReader(Reader):
         return None
 
 
+@matcher(priority=820)
 def match_numpy(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if magic is not None:
         if magic[:6] == b"\x93NUMPY":

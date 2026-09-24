@@ -9,7 +9,10 @@
 
 import mimetypes
 
+from earthkit.data.readers import matcher
 
+
+@matcher(priority=520)
 def match_geojson(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     mimetype, _ = mimetypes.guess_type(path)
     ext = path.split(".")[-1]

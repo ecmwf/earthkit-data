@@ -8,6 +8,9 @@
 #
 
 
+from earthkit.data.readers import matcher
+
+
 def _match_magic(magic, deeper_check):
     if magic is not None:
         type_id = (b"\x89HDF", b"CDF\x01", b"CDF\x02")
@@ -15,6 +18,7 @@ def _match_magic(magic, deeper_check):
     return False
 
 
+@matcher(priority=940)
 def match_netcdf(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic, deeper_check):
         from .reader import NetCDFFileReader

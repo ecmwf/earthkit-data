@@ -8,6 +8,9 @@
 #
 
 
+from earthkit.data.readers import matcher
+
+
 def _match_magic(magic):
     # https://docs.ogc.org/is/19-008r4/19-008r4.html#_tiff_core_test
     # Bytes 0-1: 'II' (little endian) or 'MM' (big endian)
@@ -17,6 +20,7 @@ def _match_magic(magic):
     return magic is not None and len(magic) >= 8 and magic[:4] in {b"II*\x00", b"II+\x00", b"MM\x00*"}
 
 
+@matcher(priority=840)
 def match_geotiff(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic):
         from .reader import GeoTIFFReader

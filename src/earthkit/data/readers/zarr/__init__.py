@@ -9,7 +9,10 @@
 
 import os
 
+from earthkit.data.readers import matcher
 
+
+@matcher(priority=860)
 def match_zarr(source, path, *, magic=None, deeper_check=False, **kwargs):
     if magic is None and (
         os.path.exists(os.path.join(path, ".zarray"))

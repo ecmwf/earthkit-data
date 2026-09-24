@@ -10,6 +10,8 @@
 import logging
 import tarfile
 
+from earthkit.data.readers import matcher
+
 from .archive import ArchiveReader
 
 LOG = logging.getLogger(__name__)
@@ -27,6 +29,7 @@ class TarReader(ArchiveReader):
             )
 
 
+@matcher(priority=300)
 def match_tar(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     # we explicitly do not consider all zeroes files as tar
     if tarfile.is_tarfile(path) and open(path, "rb").read(512).strip(b"\0"):

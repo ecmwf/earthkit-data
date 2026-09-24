@@ -119,12 +119,37 @@ class Reader(Loader, Encodable, os.PathLike):
         return None
 
 
+def matcher(priority):
+    """Decorator setting the priority of a function matching data to its reader.
+
+    The matching functions are tried from the highest to the lowest priority, and in
+    alphabetical order when the priorities are the same. The priorities used by the
+    built-in readers are:
+
+    - 900-999: core formats identified by magic bytes (e.g. GRIB, NetCDF)
+    - 800-899: other formats identified by magic bytes or directory layout
+    - 500-599: formats identified by file extension
+    - 100-399: checks reading the file (archives, csv and text sniffing), text is last
+    """
+
+    def wrap(func):
+        func.priority = priority
+        return func
+
+    return wrap
+
+
+def _sorted(matchers):
+    return sorted(matchers, key=lambda m: (-m.priority, m.__name__))
+
+
 @functools.cache
 def _file_matchers():
     """Return the functions matching a file or directory to its reader, in the order they are tried.
 
     Each function checks whether the data is in its format and returns the object to use for
-    it, otherwise None. The modules are imported on first use since they depend on this module.
+    it, otherwise None. See :func:`matcher` for the order. The modules are imported on first
+    use since they depend on this module.
     """
     from .bufr import match_bufr
     from .covjson import match_covjson
@@ -144,7 +169,7 @@ def _file_matchers():
     from .zarr import match_zarr
     from .zip import match_zip
 
-    return [
+    return _sorted([
         match_bufr,
         match_covjson,
         match_csv,
@@ -162,7 +187,7 @@ def _file_matchers():
         match_text,
         match_zarr,
         match_zip,
-    ]
+    ])
 
 
 @functools.cache
@@ -171,7 +196,7 @@ def _memory_matchers():
     from .covjson import match_covjson_memory
     from .grib import match_grib_memory
 
-    return [match_covjson_memory, match_grib_memory]
+    return _sorted([match_covjson_memory, match_grib_memory])
 
 
 @functools.cache
@@ -180,7 +205,7 @@ def _stream_matchers():
     from .covjson import match_covjson_stream
     from .grib import match_grib_stream
 
-    return [match_covjson_stream, match_grib_stream]
+    return _sorted([match_covjson_stream, match_grib_stream])
 
 
 def _match(matchers, source, data, **kwargs):

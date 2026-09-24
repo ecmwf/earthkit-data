@@ -9,12 +9,15 @@
 
 import os
 
+from earthkit.data.readers import matcher
+
 SHAPE_EXT = ".shp"
 MANDATORY = (".shp", ".shx", ".dbf")
 NON_MANDATORY = (".sbn", ".sbx", ".shp.xml", ".prj", ".CPG")
 DOUBLE_DOT_EXT = tuple([e for e in NON_MANDATORY if e.count(".") == 2])
 
 
+@matcher(priority=510)
 def match_shapefile(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     root, extension = os.path.splitext(path)
     for e in DOUBLE_DOT_EXT:
