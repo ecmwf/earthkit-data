@@ -89,6 +89,13 @@ class SourceData(SimpleData):
 
         to_target(target, *args, data=self._source, **kwargs)
 
+    @property
+    def path(self) -> str | list[str] | None:
+        try:
+            return self._reader.path
+        except Exception:
+            return None
+
 
 class DefaultSourceData(SourceData):
     def __init__(self, source_or_reader):
