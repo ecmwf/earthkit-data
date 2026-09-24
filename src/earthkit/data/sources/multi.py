@@ -13,10 +13,9 @@ import logging
 import deprecation
 
 from earthkit.data.mergers import make_merger, merge_by_class
+from earthkit.data.sources import Source
 from earthkit.data.sources.empty import EmptySource
 from earthkit.data.utils.bbox import BoundingBox
-
-from . import Source
 
 LOG = logging.getLogger(__name__)
 

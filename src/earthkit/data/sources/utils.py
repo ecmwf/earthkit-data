@@ -222,6 +222,20 @@ def _from_source(name: str, *args, lazily=False, **kwargs) -> "Data":
     raise ValueError(f"Source {src} cannot be converted into a data object")
 
 
+def _from_source_instance(src: "Source") -> "Data":
+    prev = None
+    while src is not prev:
+        prev = src
+        src = src.mutate()
+
+    if hasattr(src, "to_data_object"):
+        data = src.to_data_object()
+        if data is not None:
+            return data
+
+    raise ValueError(f"Source {src} cannot be converted into a data object")
+
+
 def _from_source_internal(name: str, *args, lazily=False, **kwargs) -> "Source":
     from earthkit.data.sources import from_source_lazily
 

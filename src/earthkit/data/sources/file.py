@@ -15,9 +15,9 @@ import os
 from earthkit.data.core import Encodable
 from earthkit.data.core.caching import CACHE
 from earthkit.data.readers import reader
+from earthkit.data.sources import Source
 from earthkit.data.utils.parts import PathAndParts
 
-from . import Source
 from .utils import _from_source_internal
 
 LOG = logging.getLogger(__name__)

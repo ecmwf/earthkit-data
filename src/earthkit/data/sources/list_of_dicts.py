@@ -10,8 +10,7 @@
 import logging
 
 from earthkit.data.data.fieldlist import FieldListData
-
-from . import Source
+from earthkit.data.sources import Source
 
 LOG = logging.getLogger(__name__)
 

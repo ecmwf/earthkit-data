@@ -38,7 +38,7 @@ def test_pp_file_2():
 
 def test_invalid_kwargs():
     with pytest.warns(UserWarning):
-        from_source("file", earthkit_examples_file("air_temp.pp"), grib_handle_policy=None)
+        from_source("file", earthkit_examples_file("air_temp.pp"), grib_handle_policy="cache")
 
 
 def test_pp_file_magic_detection_without_extension(tmp_path):

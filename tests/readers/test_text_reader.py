@@ -29,5 +29,5 @@ def test_text_reader():
 def test_invalid_kwargs():
     with pytest.warns(UserWarning):
         earthkit.data.from_source(
-            "file", os.path.join(os.path.dirname(__file__), "unknown_text_file.unknown_ext"), grib_handle_policy=None
+            "file", os.path.join(os.path.dirname(__file__), "unknown_text_file.unknown_ext"), grib_handle_policy="cache"
         )

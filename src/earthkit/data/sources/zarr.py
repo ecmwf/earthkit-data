@@ -7,8 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.data.sources import Source
+
 from ..readers.zarr.reader import ZarrReader
-from . import Source
 
 
 class ZarrSource(Source):

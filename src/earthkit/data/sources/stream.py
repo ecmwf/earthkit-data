@@ -16,9 +16,8 @@ from earthkit.data.indexing.stream import StreamFieldList
 
 # from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.readers import stream_reader
+from earthkit.data.sources import Source
 from earthkit.data.sources.memory import MemoryBaseSource
-
-from . import Source
 
 LOG = logging.getLogger(__name__)
 
