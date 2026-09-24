@@ -45,9 +45,9 @@ def is_probably_csv(
 @matcher(priority=200)
 def match_csv(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if magic is not None:
-        mimetype, compression = mimetypes.guess_type(path)
+        kind, compression = mimetypes.guess_type(path)
 
-        if mimetype == "text/csv" or (deeper_check and is_probably_csv(path)):
+        if kind == "text/csv" or (deeper_check and is_probably_csv(path)):
             from .reader import CSVReader
 
             return CSVReader(source, path, compression=compression)

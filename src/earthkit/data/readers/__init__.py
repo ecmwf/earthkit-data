@@ -12,6 +12,7 @@ import logging
 import os
 import weakref
 from abc import abstractmethod
+from importlib.metadata import entry_points
 
 from earthkit.data.core import Encodable, Loader
 from earthkit.data.core.config import CONFIG
@@ -119,6 +120,17 @@ class Reader(Loader, Encodable, os.PathLike):
         return None
 
 
+# Priority of the plugin match functions not setting one with matcher()
+DEFAULT_PLUGIN_PRIORITY = 700
+
+# The entry point groups of the reader plugins for each kind of input
+PLUGIN_GROUPS = {
+    "file": "earthkit.data.file_readers",
+    "memory": "earthkit.data.memory_readers",
+    "stream": "earthkit.data.stream_readers",
+}
+
+
 def matcher(priority):
     """Decorator setting the priority of a function matching data to its reader.
 
@@ -130,6 +142,8 @@ def matcher(priority):
     - 800-899: other formats identified by magic bytes or directory layout
     - 500-599: formats identified by file extension
     - 100-399: checks reading the file (archives, csv and text sniffing), text is last
+
+    Plugins without a priority use :data:`DEFAULT_PLUGIN_PRIORITY`.
     """
 
     def wrap(func):
@@ -140,72 +154,95 @@ def matcher(priority):
 
 
 def _sorted(matchers):
-    return sorted(matchers, key=lambda m: (-m.priority, m.__name__))
+    return sorted(matchers, key=lambda m: (-getattr(m, "priority", DEFAULT_PLUGIN_PRIORITY), m.__name__))
 
 
-@functools.cache
-def _file_matchers():
-    """Return the functions matching a file or directory to its reader, in the order they are tried.
+def _builtin_matchers(kind):
+    """Return the built-in functions matching the ``kind`` of input to its reader.
 
-    Each function checks whether the data is in its format and returns the object to use for
-    it, otherwise None. See :func:`matcher` for the order. The modules are imported on first
-    use since they depend on this module.
+    The modules are imported on first use since they depend on this module.
     """
-    from .bufr import match_bufr
-    from .covjson import match_covjson
-    from .csv import match_csv
-    from .directory import match_directory
-    from .geojson import match_geojson
-    from .geotiff import match_geotiff
-    from .grib import match_grib
-    from .netcdf import match_netcdf
-    from .numpy import match_numpy
-    from .odb import match_odb
-    from .pcraster import match_pcraster
-    from .pp import match_pp
-    from .shapefile import match_shapefile
-    from .tar import match_tar
-    from .text import match_text
-    from .zarr import match_zarr
-    from .zip import match_zip
+    if kind == "file":
+        from .bufr import match_bufr
+        from .covjson import match_covjson
+        from .csv import match_csv
+        from .directory import match_directory
+        from .geojson import match_geojson
+        from .geotiff import match_geotiff
+        from .grib import match_grib
+        from .netcdf import match_netcdf
+        from .numpy import match_numpy
+        from .odb import match_odb
+        from .pcraster import match_pcraster
+        from .pp import match_pp
+        from .shapefile import match_shapefile
+        from .tar import match_tar
+        from .text import match_text
+        from .zarr import match_zarr
+        from .zip import match_zip
 
-    return _sorted([
-        match_bufr,
-        match_covjson,
-        match_csv,
-        match_directory,
-        match_geojson,
-        match_geotiff,
-        match_grib,
-        match_netcdf,
-        match_numpy,
-        match_odb,
-        match_pcraster,
-        match_pp,
-        match_shapefile,
-        match_tar,
-        match_text,
-        match_zarr,
-        match_zip,
-    ])
+        return [
+            match_bufr,
+            match_covjson,
+            match_csv,
+            match_directory,
+            match_geojson,
+            match_geotiff,
+            match_grib,
+            match_netcdf,
+            match_numpy,
+            match_odb,
+            match_pcraster,
+            match_pp,
+            match_shapefile,
+            match_tar,
+            match_text,
+            match_zarr,
+            match_zip,
+        ]
+
+    if kind == "memory":
+        from .covjson import match_covjson_memory
+        from .grib import match_grib_memory
+
+        return [match_covjson_memory, match_grib_memory]
+
+    if kind == "stream":
+        from .covjson import match_covjson_stream
+        from .grib import match_grib_stream
+
+        return [match_covjson_stream, match_grib_stream]
+
+    raise ValueError(f"Unknown kind of input '{kind}'")
+
+
+def _load_plugins(group):
+    """Return the match functions registered in the entry point ``group``.
+
+    Each entry point refers to a match function with the same signature as the built-in
+    ones for that kind of input, e.g. ``new-thing = "package.module:match_new_thing"``.
+    A plugin failing to load is skipped.
+    """
+    plugins = []
+    for ep in entry_points(group=group):
+        try:
+            plugins.append(ep.load())
+        except Exception:
+            LOG.exception("Cannot load reader plugin '%s' from '%s'", ep.name, group)
+    return plugins
 
 
 @functools.cache
-def _memory_matchers():
-    """Return the functions matching a memory buffer to its reader, in the order they are tried."""
-    from .covjson import match_covjson_memory
-    from .grib import match_grib_memory
+def _matchers(kind):
+    """Return the functions matching the ``kind`` of input to its reader, in the order they are tried.
 
-    return _sorted([match_covjson_memory, match_grib_memory])
-
-
-@functools.cache
-def _stream_matchers():
-    """Return the functions matching a stream to its reader, in the order they are tried."""
-    from .covjson import match_covjson_stream
-    from .grib import match_grib_stream
-
-    return _sorted([match_covjson_stream, match_grib_stream])
+    The list contains the built-in functions and the plugins registered in the entry point
+    group for ``kind`` (see :data:`PLUGIN_GROUPS`), sorted by priority (see :func:`matcher`).
+    It is built once per kind, so plugins installed later are only found after a restart.
+    Each function checks whether the data is in its format and returns the object to use for
+    it, otherwise None.
+    """
+    return _sorted(_builtin_matchers(kind) + _load_plugins(PLUGIN_GROUPS[kind]))
 
 
 def _match(matchers, source, data, **kwargs):
@@ -253,7 +290,7 @@ def match_file(source, path, **kwargs):
 
     LOG.debug("Looking for a reader for %s (%s)", path, magic)
 
-    found = _match(_file_matchers(), source, path, magic=magic, **kwargs)
+    found = _match(_matchers("file"), source, path, magic=magic, **kwargs)
     if found is None:
         from .unknown import UnknownReader
 
@@ -267,7 +304,7 @@ def match_memory(source, buffer, **kwargs):
     n_bytes = CONFIG.get("reader-type-check-bytes")
     magic = buffer[: min(n_bytes, len(buffer) - 1)]
 
-    found = _match(_memory_matchers(), source, buffer, magic=magic, **kwargs)
+    found = _match(_matchers("memory"), source, buffer, magic=magic, **kwargs)
     if found is None:
         from .unknown import UnknownMemoryReader
 
@@ -287,7 +324,7 @@ def match_stream(source, stream, memory, **kwargs):
         except Exception:
             pass
 
-    found = _match(_stream_matchers(), source, stream, magic=magic, memory=memory, **kwargs)
+    found = _match(_matchers("stream"), source, stream, magic=magic, memory=memory, **kwargs)
     if found is None:
         from .unknown import UnknownStreamReader
 

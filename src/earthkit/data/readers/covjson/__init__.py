@@ -41,8 +41,8 @@ def match_covjson(source, path, *, magic=None, deeper_check=False, content_type=
     if extension == ".covjson":
         return _reader()
 
-    mimetype, _ = mimetypes.guess_type(path)
-    if mimetype == "application/prs.cov+json":
+    kind, _ = mimetypes.guess_type(path)
+    if kind == "application/prs.cov+json":
         return _reader()
 
 
