@@ -138,6 +138,29 @@ def _gg_pl(N):
             eccodes.codes_release(sample)
 
 
+def metkit_handle(values, metadata):
+    # from pymetkit.pymetkit_type import Mars2Grib
+    from pymetkit.experimental.mars2grib import Mars2Grib
+
+    if metadata.get("edition") == 1:
+        return None
+
+    import numpy as np
+
+    from earthkit.data.readers.grib.handle import GribCodesHandle
+
+    values = np.asarray(values)
+
+    if "date" in metadata:
+        if isinstance(metadata["date"], datetime.datetime):
+            metadata["date"] = metadata["date"].strftime("%Y%m%d")
+
+    encoder = Mars2Grib()
+    message = encoder.encode(values, metadata)
+    handle = GribCodesHandle.from_message(message)
+    return handle
+
+
 class GribHandleMaker:
     """Create a new GribCodesHandle from a template, field or metadata."""
 
@@ -246,7 +269,33 @@ class GribHandleMaker:
 
         return handle
 
-    def handle_from_metadata(self, values_shape, metadata, compulsory):
+    def handle_from_metadata(cls, values_shape, metadata, compulsory):
+        # from pymetkit.pymetkit_type import Mars2Grib
+        from pymetkit.experimental.mars2grib import Mars2Grib
+
+        if metadata.get("edition") == 1:
+            return None
+
+        import numpy as np
+
+        from earthkit.data.readers.grib.handle import GribCodesHandle
+
+        vals = np.array([237.15] * 360 * 181)
+
+        print("metadata", metadata)
+
+        if "date" in metadata:
+            if isinstance(metadata["date"], datetime.datetime):
+                metadata["date"] = metadata["date"].strftime("%Y%m%d")
+
+        encoder = Mars2Grib()
+        message = encoder.encode(vals, metadata)
+        handle = GribCodesHandle.from_message(message)
+
+        metadata.clear()
+        return handle
+
+    def handle_from_metadata_1(self, values_shape, metadata, compulsory):
         from earthkit.data.readers.grib.handle import GribCodesHandle  # Lazy loading of eccodes
 
         if len(values_shape) == 1:
@@ -550,7 +599,7 @@ class GribEncoder(Encoder):
             ``data`` in forming the new GRIB message, but values are taken from the ``data`` if no
             provided directly. Cannot be specified together with ``data`` and ``values``.
         missing_value: float
-            The value to use for NaNs. Default is 9999, which is the default missing value used by ecCode
+            The value to use for NaNs. Default is 9999, which is the default missing value used by ecCodes
             when encoding with a template that does not have a valid "bitsPerValue" key.
         kwargs: dict
             Additional metadata to encode.
@@ -607,7 +656,7 @@ class GribEncoder(Encoder):
         # and ecCodes GRIB metadata
         field_metadata, md = self._separate_metadata(md)
 
-        # when the input date a datetime object time can be inferred from it
+        # when the input date is a datetime object time can be inferred from it
         can_infer_time = (
             "date" in md
             and isinstance(md["date"], datetime.datetime)
@@ -654,6 +703,21 @@ class GribEncoder(Encoder):
                 **kwargs,
             )
         else:
+            new_handle = None
+            if values is not None and template is None and metadata:
+                try:
+                    new_handle = metkit_handle(values, metadata)
+                    if new_handle is not None:
+                        if field_metadata:
+                            template = new_handle
+                            new_handle = None
+                            metadata = None
+                        else:
+                            return GribEncodedData(new_handle, template_field=template_field)
+
+                except Exception as e:
+                    print("Failed to create metkit handle:", e)
+
             handle = self._get_handle(
                 template=template,
                 values_shape=values.shape if values is not None else None,
@@ -898,7 +962,6 @@ class GribEncoder(Encoder):
             handle.set_values(values)
 
         return handle
-        # return GribEncodedData(handle)
 
     def _update_metadata_from_field(self, field, metadata):
         if "stepRange" in metadata:
