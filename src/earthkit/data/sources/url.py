@@ -270,7 +270,7 @@ class Url(UrlBase):
 
     def mutate(self):
         if self.other_source:
-            from earthkit.data.sources import _from_source_internal
+            from earthkit.data.sources.utils import _from_source_internal
 
             source, url, kwargs = self.other_source
             return _from_source_internal(source, url, **kwargs)
@@ -381,7 +381,7 @@ class SingleUrlStream(UrlBase):
             raise NotImplementedError(f"Streams are not supported for scheme={o.scheme} urls")
 
     def mutate(self):
-        from .stream import _from_source_internal
+        from .utils import _from_source_internal
 
         return _from_source_internal(self, **self._kwargs)
 

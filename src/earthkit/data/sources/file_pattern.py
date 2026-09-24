@@ -13,9 +13,10 @@ from typing import Dict, Optional, Tuple, Union
 from earthkit.data import concat
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.indexing.empty import EmptyFieldList
-from earthkit.data.sources import Source, _from_source_internal
+from earthkit.data.sources import Source
 from earthkit.data.sources.file import File
 from earthkit.data.sources.multi import MultiSource
+from earthkit.data.sources.utils import _from_source_internal
 from earthkit.data.utils.patterns import HivePattern, Pattern
 
 

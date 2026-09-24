@@ -11,7 +11,7 @@ import os
 import stat
 from zipfile import ZipFile
 
-from earthkit.data.sources import _from_source_internal
+from earthkit.data.sources.utils import _from_source_internal
 
 from .archive import ArchiveReader
 from .csv.reader import CSVReader

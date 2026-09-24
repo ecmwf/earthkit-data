@@ -135,7 +135,7 @@ class GribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
             )
         elif policy == "memory":
             from earthkit.data.core.caching import cache_file
-            from earthkit.data.sources import _from_source_internal
+            from earthkit.data.sources.utils import _from_source_internal
 
             def _create(path, args):
                 with open(path, "wb") as f:

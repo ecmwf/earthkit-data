@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.sources import _from_source_internal
+from earthkit.data.sources.utils import _from_source_internal
 
 from .multi import MultiSource
 

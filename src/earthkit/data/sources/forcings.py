@@ -305,7 +305,7 @@ class ForcingsInnerData:
             if lons is None:
                 raise ValueError("longitudes must be specified when no source or dataset provided")
 
-            from earthkit.data.sources import _from_source_internal
+            from earthkit.data.sources.utils import _from_source_internal
 
             vals = np.ones(lats.shape)
             d = {"values": vals, "geography": {"latitudes": lats, "longitudes": lons}}
