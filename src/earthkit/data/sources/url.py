@@ -407,6 +407,3 @@ class SingleUrlStream(UrlBase):
 
         stream = downloader.make_stream()
         return RequestIterStreamer(stream(chunk_size=self.url_spec[0].kwargs["chunk_size"]))
-
-
-source = Url

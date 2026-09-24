@@ -98,6 +98,3 @@ class WekeoCDSRetriever(FileSource):
                 raise
         else:
             return APIClient()
-
-
-source = WekeoCDSRetriever

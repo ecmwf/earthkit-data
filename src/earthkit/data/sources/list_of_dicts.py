@@ -31,6 +31,3 @@ class FieldlistFromDicts(Source):
     def to_data_object(self):
 
         return FieldListData(self.mutate())
-
-
-source = FieldlistFromDicts

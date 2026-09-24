@@ -473,6 +473,3 @@ class ForcingsData(FieldListData):
 
     def describe():
         pass
-
-
-source = ForcingsFieldList

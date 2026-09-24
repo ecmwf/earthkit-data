@@ -42,6 +42,3 @@ class OpenDAP(Source):
         from earthkit.data.data.netcdf import NetCDFData
 
         return NetCDFData(self)
-
-
-source = OpenDAP

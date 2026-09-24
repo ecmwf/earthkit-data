@@ -282,6 +282,3 @@ def make_stream_source_from_other(source, **kwargs):
         return source[0]
     else:
         return MultiStreamSource(source, **stream_kwargs)
-
-
-source = StreamSource

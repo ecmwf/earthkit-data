@@ -24,6 +24,3 @@ class ZarrSource(Source):
             return source
 
         return self
-
-
-source = ZarrSource

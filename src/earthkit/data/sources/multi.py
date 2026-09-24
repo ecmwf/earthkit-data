@@ -743,6 +743,3 @@ class MultiSource(Source):
                     yield s
             else:
                 yield s
-
-
-source = MultiSource

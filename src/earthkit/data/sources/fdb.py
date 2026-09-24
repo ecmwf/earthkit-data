@@ -198,6 +198,3 @@ class FDBRequestMapper(RequestMapper):
                 data[k] = c(data[k])
 
         return data
-
-
-source = FDBSource

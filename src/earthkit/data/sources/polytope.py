@@ -174,6 +174,3 @@ class Polytope(Source):
         src = File(path)
         src.content_type = content_type
         return src
-
-
-source = Polytope

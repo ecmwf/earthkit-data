@@ -110,6 +110,3 @@ class MemorySource(MemoryBaseSource):
         from earthkit.data.data import SourceData
 
         return SourceData(self)
-
-
-source = MemorySource

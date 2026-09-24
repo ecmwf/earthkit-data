@@ -102,6 +102,3 @@ class FilePattern(MultiSource):
             return HiveFilePattern(self.pattern, self.params)
         else:
             return super().mutate()
-
-
-source = FilePattern

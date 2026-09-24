@@ -45,6 +45,3 @@ class EODRetriever(FileSource):
             retrieve,
             request,
         )
-
-
-source = EODRetriever

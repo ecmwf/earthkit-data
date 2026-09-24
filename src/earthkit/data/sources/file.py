@@ -330,6 +330,3 @@ class File(FileSource):
                     path = sorted(matches)
 
         super().__init__(path, filter, merger, stream=stream, parts=parts, **kwargs)
-
-
-source = File
