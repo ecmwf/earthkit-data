@@ -7,7 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
+import functools
 import warnings
+from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -54,6 +56,22 @@ def _preprocess_name(name):
             warnings.warn(f"Source name '{name}' is deprecated", FutureWarning)
 
     return _ALIASES.get(name, name)
+
+
+@functools.cache
+def _source_plugins():
+    """Return the source plugins registered in the ``earthkit.data.sources`` entry point group.
+
+    Scanning the installed packages is slow, so the result is cached. Plugins installed
+    after the first call are only found after a restart.
+
+    Returns
+    -------
+    dict of str to :class:`importlib.metadata.EntryPoint`
+        The entry points keyed by plugin name.
+
+    """
+    return {ep.name: ep for ep in entry_points(group="earthkit.data.sources")}
 
 
 def _mutate_source(src: "Source") -> "Source":

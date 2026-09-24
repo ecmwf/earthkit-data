@@ -7,7 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 
 from earthkit.data.sources.base import Source as Source
@@ -40,7 +39,7 @@ from earthkit.data.sources.helpers import (
     _from_wekeo_cds,
     _from_zarr,
 )
-from earthkit.data.sources.utils import _from_source_instance, _preprocess_name
+from earthkit.data.sources.utils import _from_source_instance, _preprocess_name, _source_plugins
 
 if TYPE_CHECKING:
     from earthkit.data.data import Data  # type: ignore[import]
@@ -84,8 +83,8 @@ def from_source(name: str, *args, lazily=False, **kwargs) -> "Data":
         return from_source_lazily(name, *args, **kwargs)
 
     # Plugins take priority over built-in sources
-    plugins = entry_points(group="earthkit.data.sources")
-    if name in plugins.names:
+    plugins = _source_plugins()
+    if name in plugins:
         return _from_source_instance(plugins[name].load()(*args, **kwargs))
 
     if name in POSSIBLE_SOURCES:

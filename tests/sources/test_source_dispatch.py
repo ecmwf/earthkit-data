@@ -12,6 +12,7 @@ from importlib.metadata import EntryPoint, EntryPoints
 import pytest
 
 from earthkit.data import sources
+from earthkit.data.sources import utils
 
 
 class Plugin(sources.Source):
@@ -31,13 +32,26 @@ def _patch_entry_points(monkeypatch, names):
     eps = EntryPoints(
         EntryPoint(name=name, value=f"{__name__}:Plugin", group="earthkit.data.sources") for name in names
     )
-    monkeypatch.setattr(sources, "entry_points", lambda group: eps)
+    monkeypatch.setattr(utils, "entry_points", lambda group: eps)
 
 
 @pytest.mark.parametrize("name", ["custom-source", "file"])
 def test_entry_point_plugin(monkeypatch, name):
     _patch_entry_points(monkeypatch, ["custom-source", "file"])
     assert sources.from_source(name, "value", option=42) == ("value", 42)
+
+
+def test_entry_points_are_cached(monkeypatch):
+    calls = []
+
+    def entry_points(group):
+        calls.append(group)
+        return EntryPoints([])
+
+    monkeypatch.setattr(utils, "entry_points", entry_points)
+    for _ in range(3):
+        sources.from_source("list-of-dicts", [])
+    assert len(calls) == 1
 
 
 def test_unknown_source_error():
