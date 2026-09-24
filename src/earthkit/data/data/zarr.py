@@ -56,7 +56,7 @@ class ZarrData(SourceData):
     def _repr_html_(self) -> str:
         return self.describe()._repr_html_()
 
-    def to_fieldlist(self, *args, **kwargs):
+    def to_fieldlist(self, **kwargs):
         """Convert into a FieldList.
 
         This method first converts the Zarr data into an Xarray dataset with :func:`to_xarray`
@@ -74,7 +74,7 @@ class ZarrData(SourceData):
         :py:class:`earthkit.data.readers.zarr.fieldlist.ZarrFieldList`
             A FieldList containing the Zarr data.
         """
-        return self._reader.to_fieldlist(*args, **kwargs)
+        return self._reader.to_fieldlist(**kwargs)
 
     def to_xarray(self, xarray_open_zarr_kwargs=None):
         """Convert into an Xarray dataset.
@@ -84,15 +84,13 @@ class ZarrData(SourceData):
 
         Parameters
         ----------
-                xarray_open_zarr_kwargs : dict, None, optional
-                    Keyword arguments to pass to :func:`xarray.open_zarr` when opening the Zarr file.
-                **kwargs: dict
-                    Additional keyword arguments to pass to the reader's to_xarray method.
+        xarray_open_zarr_kwargs : dict, None, optional
+            Keyword arguments to pass to :func:`xarray.open_zarr` when opening the Zarr file.
 
         Returns
         -------
-                :py:class:`xarray.Dataset`
-                    An Xarray dataset containing the Zarr data.
+        :py:class:`xarray.Dataset`
+            An Xarray dataset containing the Zarr data.
         """
         return self._reader.to_xarray(xarray_open_zarr_kwargs=xarray_open_zarr_kwargs)
 
