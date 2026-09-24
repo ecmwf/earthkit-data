@@ -36,7 +36,7 @@ class EmptyData(SimpleData):
         """
         from earthkit.data.utils.summary import DataDescriber
 
-        return DataDescriber(title="Empty file", path=self.path, types=self.available_types)
+        return DataDescriber(title="Empty data", path=self.path, types=self.available_types)
 
     @property
     def path(self) -> str | list[str] | None:
