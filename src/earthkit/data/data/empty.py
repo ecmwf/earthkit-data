@@ -8,6 +8,8 @@
 #
 
 
+from typing import Any
+
 from . import SimpleData
 
 
@@ -24,15 +26,30 @@ class EmptyData(SimpleData):
         """list[str] or None: Return the list of available types that this data object can be converted to."""
         return [self._FIELDLIST]
 
-    def describe(self):
-        """Provide a description of the data.
+    def describe(self) -> Any:
+        """Provide a description of empty data.
 
         Returns
         -------
-        str
-            A string description of the data.
+        :py:class:`earthkit.data.utils.summary.DataDescriber`
+            A DataDescriber object containing a description of the empty data.
         """
-        return str("Empty data object")
+        from earthkit.data.utils.summary import DataDescriber
+
+        return DataDescriber(title="Empty data", path=self.path, types=self.available_types)
+
+    @property
+    def path(self) -> str | list[str] | None:
+        try:
+            return self._reader.path
+        except Exception:
+            return None
+
+    def __repr__(self) -> str:
+        return f"EmptyData(path={self.path})"
+
+    def _repr_html_(self) -> str:
+        return self.describe()._repr_html_()
 
     def to_fieldlist(self, *args, **kwargs):
         """Convert into a FieldList.
