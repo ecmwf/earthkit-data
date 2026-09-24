@@ -61,7 +61,7 @@ class DirectoryReader(Reader):
     def mutate(self):
         return self
 
-    def mutate_source(self):
+    def to_source(self):
         if (
             os.path.exists(os.path.join(self.path, ".zarray"))
             or os.path.exists(os.path.join(self.path, ".zgroup"))
@@ -120,7 +120,7 @@ class DirectoryReader(Reader):
         return None
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+def match_directory(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if (
         magic is None
         and os.path.isdir(path)
@@ -131,7 +131,4 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
             or os.path.exists(os.path.join(path, ".zattrs"))
         )
     ):
-        return DirectoryReader(source, path, **kwargs)
-
-
-READER = reader
+        return DirectoryReader(source, path, **kwargs).to_source()

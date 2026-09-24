@@ -15,7 +15,7 @@ NON_MANDATORY = (".sbn", ".sbx", ".shp.xml", ".prj", ".CPG")
 DOUBLE_DOT_EXT = tuple([e for e in NON_MANDATORY if e.count(".") == 2])
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+def match_shapefile(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     root, extension = os.path.splitext(path)
     for e in DOUBLE_DOT_EXT:
         if path.endswith(e):
@@ -36,6 +36,3 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
             from ..unknown import UnknownReader
 
             return UnknownReader(source, "", skip_warning=True)
-
-
-READER = reader

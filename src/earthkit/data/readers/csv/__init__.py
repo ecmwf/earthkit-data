@@ -40,14 +40,11 @@ def is_probably_csv(
         return False
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+def match_csv(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if magic is not None:
-        kind, compression = mimetypes.guess_type(path)
+        mimetype, compression = mimetypes.guess_type(path)
 
-        if kind == "text/csv" or (deeper_check and is_probably_csv(path)):
+        if mimetype == "text/csv" or (deeper_check and is_probably_csv(path)):
             from .reader import CSVReader
 
             return CSVReader(source, path, compression=compression)
-
-
-READER = reader

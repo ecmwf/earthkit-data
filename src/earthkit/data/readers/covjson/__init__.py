@@ -25,7 +25,7 @@ def _match_magic(magic, deeper_check):
     return False
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+def match_covjson(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     def _reader():
         from .reader import CovJSONReader
 
@@ -38,19 +38,19 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
     if extension == ".covjson":
         return _reader()
 
-    kind, _ = mimetypes.guess_type(path)
-    if kind == "application/prs.cov+json":
+    mimetype, _ = mimetypes.guess_type(path)
+    if mimetype == "application/prs.cov+json":
         return _reader()
 
 
-def memory_reader(source, buffer, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+def match_covjson_memory(source, buffer, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_content_type(content_type) or _match_magic(magic, deeper_check):
         from .reader import CovJSONMemoryReader
 
         return CovJSONMemoryReader(buffer)
 
 
-def stream_reader(
+def match_covjson_stream(
     source,
     stream,
     *,
@@ -64,8 +64,3 @@ def stream_reader(
         from .reader import CovJSONStreamReader
 
         return CovJSONStreamReader(stream)
-
-
-READER = reader
-MEMORY_READER = memory_reader
-STREAM_READER = stream_reader

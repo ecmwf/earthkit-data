@@ -38,7 +38,7 @@ class NumpyReader(Reader):
         return None
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+def match_numpy(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if magic is not None:
         if magic[:6] == b"\x93NUMPY":
             return NumpyReader(source, path, **kwargs)
@@ -46,6 +46,3 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
         _, extension = os.path.splitext(path)
         if magic[:4] == b"PK\x03\x04" and extension == ".npz":
             return NumpyReader(source, path, **kwargs)
-
-
-READER = reader

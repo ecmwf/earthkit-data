@@ -11,8 +11,6 @@ import os
 import stat
 from zipfile import ZipFile
 
-from earthkit.data.sources.utils import _mutate_source
-
 from .archive import ArchiveReader
 from .csv.reader import CSVReader
 
@@ -68,25 +66,13 @@ class ZIPReader(ArchiveReader):
 
         return super().mutate()
 
-    def mutate_source(self):
-        # zarr can read data from a zip file
-        if ".zattrs" in self._content:
-            from earthkit.data.sources.zarr import ZarrSource
-
-            return _mutate_source(ZarrSource(self.path))
-
-        return None
-
 
 EXTENSIONS_TO_SKIP = (".npz",)  # Numpy arrays
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+def match_zip(source, path, *, magic=None, deeper_check=False, **kwargs):
     if magic is not None:
         _, extension = os.path.splitext(path)
 
         if magic[:4] == b"PK\x03\x04" and extension not in EXTENSIONS_TO_SKIP:
             return ZIPReader(source, path, **kwargs)
-
-
-READER = reader

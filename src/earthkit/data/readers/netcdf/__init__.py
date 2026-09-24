@@ -15,11 +15,8 @@ def _match_magic(magic, deeper_check):
     return False
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+def match_netcdf(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic, deeper_check):
         from .reader import NetCDFFileReader
 
         return NetCDFFileReader(source, path, **kwargs)
-
-
-READER = reader

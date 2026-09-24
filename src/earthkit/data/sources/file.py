@@ -14,7 +14,7 @@ import os
 
 from earthkit.data.core import Encodable
 from earthkit.data.core.caching import CACHE
-from earthkit.data.readers import reader
+from earthkit.data.readers import match_file
 from earthkit.data.sources import Source
 from earthkit.data.utils.parts import PathAndParts
 
@@ -80,14 +80,10 @@ class FileSource(Source, Encodable, os.PathLike):
                     )
                 )
 
-        # Give a chance to directories and zip files
-        # to return a multi-source
-        source = self._reader.mutate_source()
-        if source not in (None, self):
-            source._parent = self
-            return source
-
-        return self
+        found = self._reader
+        # Readers only keep a weak reference to their source, so keep it alive
+        found._parent = self
+        return found
 
     def ignore(self):
         return self._reader.ignore()
@@ -102,7 +98,7 @@ class FileSource(Source, Encodable, os.PathLike):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = reader(self, self.path, content_type=self.content_type, **self._kwargs)
+            self._reader_ = match_file(self, self.path, content_type=self.content_type, **self._kwargs)
         return self._reader_
 
     # def __iter__(self):
@@ -260,27 +256,21 @@ class StreamFileSource(FileSource):
         if self._kwargs.get("indexing", False):
             raise ValueError("Cannot stream when indexing is enabled!")
 
-        # Give a chance to directories and zip files
-        # to return a multi-source
-        source = self._reader.mutate_source()
-        if source not in (None, self):
-            if hasattr(source, "is_streamable_file") and source.is_streamable_file():
-                # when we reach this stage the source must be a file that can be streamed
-                from .stream import make_stream_source_from_other
+        found = self._reader
+        if hasattr(found, "is_streamable_file") and found.is_streamable_file():
+            # when we reach this stage the source must be a file that can be streamed
+            from .stream import make_stream_source_from_other
 
-                return make_stream_source_from_other([SingleStreamFileSource(source.path, self.parts)], **self._kwargs)
-            else:
-                return source
-        return self
+            return make_stream_source_from_other([SingleStreamFileSource(found.path, self.parts)], **self._kwargs)
+
+        # Readers only keep a weak reference to their source, so keep it alive
+        found._parent = self
+        return found
 
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = reader(
-                self,
-                self.path,
-                content_type=self.content_type,
-            )
+            self._reader_ = match_file(self, self.path, content_type=self.content_type)
         return self._reader_
 
 
