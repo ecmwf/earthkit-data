@@ -10,6 +10,8 @@
 import mimetypes
 import pathlib
 
+from earthkit.data.readers import matcher
+
 
 def _match_content_type(content_type):
     return content_type is not None and content_type == "application/prs.coverage+json"
@@ -25,7 +27,8 @@ def _match_magic(magic, deeper_check):
     return False
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+@matcher(priority=810)
+def match_covjson(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     def _reader():
         from .reader import CovJSONReader
 
@@ -43,14 +46,16 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
         return _reader()
 
 
-def memory_reader(source, buffer, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+@matcher(priority=810)
+def match_covjson_memory(source, buffer, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_content_type(content_type) or _match_magic(magic, deeper_check):
         from .reader import CovJSONMemoryReader
 
         return CovJSONMemoryReader(buffer)
 
 
-def stream_reader(
+@matcher(priority=810)
+def match_covjson_stream(
     source,
     stream,
     *,
@@ -64,8 +69,3 @@ def stream_reader(
         from .reader import CovJSONStreamReader
 
         return CovJSONStreamReader(stream)
-
-
-READER = reader
-MEMORY_READER = memory_reader
-STREAM_READER = stream_reader

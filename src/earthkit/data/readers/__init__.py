@@ -7,16 +7,16 @@
 # nor does it submit to any jurisdiction.
 #
 
+import functools
 import logging
 import os
 import weakref
 from abc import abstractmethod
-from importlib import import_module
+from importlib.metadata import entry_points
 
 from earthkit.data.core import Encodable, Loader
 from earthkit.data.core.config import CONFIG
 from earthkit.data.decorators import detect_out_filename as detect_out_filename
-from earthkit.data.decorators import locked
 
 LOG = logging.getLogger(__name__)
 
@@ -120,62 +120,141 @@ class Reader(Loader, Encodable, os.PathLike):
         return None
 
 
-_READERS = {}
+# Priority of the plugin match functions not setting one with matcher()
+DEFAULT_PLUGIN_PRIORITY = 700
+
+# The entry point groups of the reader plugins for each kind of input
+PLUGIN_GROUPS = {
+    "file": "earthkit.data.file_readers",
+    "memory": "earthkit.data.memory_readers",
+    "stream": "earthkit.data.stream_readers",
+}
 
 
-# TODO: Add plugins
-@locked
-def _readers(method_name):
-    if not _READERS:
-        here = os.path.dirname(__file__)
-        for path in sorted(os.listdir(here)):
-            if path[0] in ("_", "."):
-                continue
+def matcher(priority):
+    """Decorator setting the priority of a function matching data to its reader.
 
-            if path.endswith(".py") or os.path.isdir(os.path.join(here, path)):
-                name, _ = os.path.splitext(path)
-                try:
-                    for method in ["READER", "MEMORY_READER", "STREAM_READER"]:
-                        module = import_module(f".{name}", package=__name__)
-                        if hasattr(module, method):
-                            func = getattr(module, method)
-                            if func is not None:
-                                _READERS[(name, method.lower())] = func
-                                if hasattr(module, "aliases"):
-                                    for a in module.aliases:
-                                        assert a not in _READERS
-                                        _READERS[(a, method.lower())] = func
-                except Exception:
-                    LOG.exception("Error loading reader %s", name)
+    The matching functions are tried from the highest to the lowest priority, and in
+    alphabetical order when the priorities are the same. The priorities used by the
+    built-in readers are:
 
-    return {k[0]: v for k, v in _READERS.items() if k[1] == method_name}
+    - 900-999: core formats identified by magic bytes (e.g. GRIB, NetCDF)
+    - 800-899: other formats identified by magic bytes or directory layout
+    - 500-599: formats identified by file extension
+    - 100-399: checks reading the file (archives, csv and text sniffing), text is last
 
-
-def _find_reader(method_name, source, path_or_data, **kwargs):
-    """Helper function to create a reader.
-
-    Tries all the registered methods stored in _READERS.
+    Plugins without a priority use :data:`DEFAULT_PLUGIN_PRIORITY`.
     """
+
+    def wrap(func):
+        func.priority = priority
+        return func
+
+    return wrap
+
+
+def _sorted(matchers):
+    return sorted(matchers, key=lambda m: (-getattr(m, "priority", DEFAULT_PLUGIN_PRIORITY), m.__name__))
+
+
+def _builtin_matchers(kind):
+    """Return the built-in functions matching the ``kind`` of input to its reader.
+
+    The modules are imported on first use since they depend on this module.
+    """
+    if kind == "file":
+        from .bufr import match_bufr
+        from .covjson import match_covjson
+        from .csv import match_csv
+        from .directory import match_directory
+        from .geojson import match_geojson
+        from .geotiff import match_geotiff
+        from .grib import match_grib
+        from .netcdf import match_netcdf
+        from .numpy import match_numpy
+        from .odb import match_odb
+        from .pcraster import match_pcraster
+        from .pp import match_pp
+        from .shapefile import match_shapefile
+        from .tar import match_tar
+        from .text import match_text
+        from .zarr import match_zarr
+        from .zip import match_zip
+
+        return [
+            match_bufr,
+            match_covjson,
+            match_csv,
+            match_directory,
+            match_geojson,
+            match_geotiff,
+            match_grib,
+            match_netcdf,
+            match_numpy,
+            match_odb,
+            match_pcraster,
+            match_pp,
+            match_shapefile,
+            match_tar,
+            match_text,
+            match_zarr,
+            match_zip,
+        ]
+
+    if kind == "memory":
+        from .covjson import match_covjson_memory
+        from .grib import match_grib_memory
+
+        return [match_covjson_memory, match_grib_memory]
+
+    if kind == "stream":
+        from .covjson import match_covjson_stream
+        from .grib import match_grib_stream
+
+        return [match_covjson_stream, match_grib_stream]
+
+    raise ValueError(f"Unknown kind of input '{kind}'")
+
+
+def _load_plugins(group):
+    """Return the match functions registered in the entry point ``group``.
+
+    Each entry point refers to a match function with the same signature as the built-in
+    ones for that kind of input, e.g. ``new-thing = "package.module:match_new_thing"``.
+    A plugin failing to load is skipped.
+    """
+    plugins = []
+    for ep in entry_points(group=group):
+        try:
+            plugins.append(ep.load())
+        except Exception:
+            LOG.exception("Cannot load reader plugin '%s' from '%s'", ep.name, group)
+    return plugins
+
+
+@functools.cache
+def _matchers(kind):
+    """Return the functions matching the ``kind`` of input to its reader, in the order they are tried.
+
+    The list contains the built-in functions and the plugins registered in the entry point
+    group for ``kind`` (see :data:`PLUGIN_GROUPS`), sorted by priority (see :func:`matcher`).
+    It is built once per kind, so plugins installed later are only found after a restart.
+    Each function checks whether the data is in its format and returns the object to use for
+    it, otherwise None.
+    """
+    return _sorted(_builtin_matchers(kind) + _load_plugins(PLUGIN_GROUPS[kind]))
+
+
+def _match(matchers, source, data, **kwargs):
+    """Return the object created by the first function in ``matchers`` matching ``data``, or None."""
+    # The second pass allows the functions to look deeper into the data
     for deeper_check in (False, True):
-        # We do two passes, the second one
-        # allow the plugin to look deeper in the buffer
-        for name, r in _readers(method_name).items():
-            reader = r(source, path_or_data, deeper_check=deeper_check, **kwargs)
-            if reader is not None:
-                return reader.mutate()
+        for match in matchers:
+            found = match(source, data, deeper_check=deeper_check, **kwargs)
+            if found is not None:
+                return found.mutate()
 
-    return _unknown(method_name, source, path_or_data, **kwargs)
-
-
-def _unknown(method_name, source, path_or_data, **kwargs):
-    from .unknown import UnknownMemoryReader, UnknownReader, UnknownStreamReader
-
-    unknowns = {
-        "reader": UnknownReader,
-        "stream_reader": UnknownStreamReader,
-        "memory_reader": UnknownMemoryReader,
-    }
-    return unknowns[method_name](source, path_or_data, **kwargs)
+    return None
 
 
 def _non_existing(source, path, **kwargs):
@@ -192,24 +271,12 @@ def _empty(source, path, **kwargs):
     raise EmptyFileError(f"File is empty: '{path}'")
 
 
-def reader(source, path, **kwargs):
-    """Create the reader for a file/directory specified by path."""
+def match_file(source, path, **kwargs):
+    """Return the object reading the file or directory at ``path``."""
     assert isinstance(path, str), source
-
-    if hasattr(source, "reader"):
-        reader = source.reader
-        LOG.debug("Looking for a reader for %s (%s)", path, reader)
-        if callable(reader):
-            return reader(source, path)
-        if isinstance(reader, str):
-            return _readers()[reader.replace("-", "_")](source, path, magic=None, deeper_check=False)
-
-        raise TypeError("Provided reader must be a callable or a string, not %s" % type(reader))
 
     if not os.path.exists(path):
         return _non_existing(source, path, **kwargs)
-
-    LOG.debug("Reader for %s", path)
 
     if os.path.isdir(path):
         magic = None
@@ -223,26 +290,30 @@ def reader(source, path, **kwargs):
 
     LOG.debug("Looking for a reader for %s (%s)", path, magic)
 
-    return _find_reader(
-        "reader",
-        source,
-        path,
-        magic=magic,
-        **kwargs,
-    )
+    found = _match(_matchers("file"), source, path, magic=magic, **kwargs)
+    if found is None:
+        from .unknown import UnknownReader
+
+        found = UnknownReader(source, path, magic=magic, **kwargs)
+    return found
 
 
-def memory_reader(source, buffer, **kwargs):
-    """Create a reader for data held in a memory buffer."""
+def match_memory(source, buffer, **kwargs):
+    """Return the object reading the data held in a memory buffer."""
     assert isinstance(buffer, (bytes, bytearray)), source
     n_bytes = CONFIG.get("reader-type-check-bytes")
     magic = buffer[: min(n_bytes, len(buffer) - 1)]
 
-    return _find_reader("memory_reader", source, buffer, magic=magic, **kwargs)
+    found = _match(_matchers("memory"), source, buffer, magic=magic, **kwargs)
+    if found is None:
+        from .unknown import UnknownMemoryReader
+
+        found = UnknownMemoryReader(source, buffer, magic=magic, **kwargs)
+    return found
 
 
-def stream_reader(source, stream, memory, **kwargs):
-    """Create a reader for a stream."""
+def match_stream(source, stream, memory, **kwargs):
+    """Return the object reading a stream."""
     magic = None
     if hasattr(stream, "peek") and callable(stream.peek):
         try:
@@ -253,11 +324,9 @@ def stream_reader(source, stream, memory, **kwargs):
         except Exception:
             pass
 
-    return _find_reader(
-        "stream_reader",
-        source,
-        stream,
-        magic=magic,
-        memory=memory,
-        **kwargs,
-    )
+    found = _match(_matchers("stream"), source, stream, magic=magic, memory=memory, **kwargs)
+    if found is None:
+        from .unknown import UnknownStreamReader
+
+        found = UnknownStreamReader(source, stream, magic=magic, memory=memory, **kwargs)
+    return found

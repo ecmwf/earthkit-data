@@ -9,8 +9,11 @@
 
 import os
 
+from earthkit.data.readers import matcher
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+
+@matcher(priority=860)
+def match_zarr(source, path, *, magic=None, deeper_check=False, **kwargs):
     if magic is None and (
         os.path.exists(os.path.join(path, ".zarray"))
         or os.path.exists(os.path.join(path, ".zgroup"))
@@ -20,6 +23,3 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
         from .reader import ZarrReader
 
         return ZarrReader(source, path, **kwargs)
-
-
-READER = reader

@@ -12,6 +12,8 @@ from struct import unpack
 
 import numpy as np
 
+from earthkit.data.readers import matcher
+
 from . import Reader
 
 # CSF value scales
@@ -124,10 +126,8 @@ class PCRasterReader(Reader):
         return None
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+@matcher(priority=500)
+def match_pcraster(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if magic is not None:
         if path[-4:] == ".map":
             return PCRasterReader(source, path, **kwargs)
-
-
-READER = reader

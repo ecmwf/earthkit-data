@@ -10,6 +10,8 @@
 
 import warnings
 
+from earthkit.data.readers import matcher
+
 from . import Reader
 
 
@@ -57,9 +59,7 @@ class TextReader(Reader):
         return None
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+@matcher(priority=100)
+def match_text(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if deeper_check and is_probably_text(path):
         return TextReader(source, path, **kwargs)
-
-
-READER = reader

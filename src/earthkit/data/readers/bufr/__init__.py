@@ -8,6 +8,8 @@
 #
 import logging
 
+from earthkit.data.readers import matcher
+
 LOG = logging.getLogger(__name__)
 
 
@@ -21,12 +23,10 @@ def _match_magic(magic, deeper_check):
     return False
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+@matcher(priority=930)
+def match_bufr(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic, deeper_check):
         from .file import BUFRReader
 
         parts = source.parts if hasattr(source, "parts") else None
         return BUFRReader(source, path, parts=parts, **kwargs)
-
-
-READER = reader

@@ -12,6 +12,7 @@ import logging
 import os
 import shutil
 
+from earthkit.data.readers import matcher
 from earthkit.data.sources.utils import _mutate_source
 
 from . import Reader
@@ -120,7 +121,8 @@ class DirectoryReader(Reader):
         return None
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+@matcher(priority=850)
+def match_directory(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if (
         magic is None
         and os.path.isdir(path)
@@ -132,6 +134,3 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
         )
     ):
         return DirectoryReader(source, path, **kwargs)
-
-
-READER = reader
