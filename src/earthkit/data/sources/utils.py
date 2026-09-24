@@ -66,11 +66,4 @@ def _mutate_source(src: "Source") -> "Source":
 
 
 def _from_source_instance(src: "Source") -> "Data":
-    src = _mutate_source(src)
-
-    if hasattr(src, "to_data_object"):
-        data = src.to_data_object()
-        if data is not None:
-            return data
-
-    raise ValueError(f"Source {src} cannot be converted into a data object")
+    return _mutate_source(src).to_data_object()
