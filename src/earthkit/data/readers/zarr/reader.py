@@ -30,7 +30,7 @@ class ZarrReader(XArrayFieldList, ZarrReaderBase):
     def mutate_source(self):
         return self
 
-    def to_fieldlist(self, *args, **kwargs):
+    def to_fieldlist(self, **kwargs):
         from .fieldlist import ZarrFieldList
 
         return ZarrFieldList(self, self.path, **kwargs)
