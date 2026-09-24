@@ -7,33 +7,12 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
 import warnings
-from importlib import import_module
 from typing import TYPE_CHECKING
-
-from earthkit.data.core.plugins import find_plugin
-from earthkit.data.core.plugins import register as register_plugin
 
 if TYPE_CHECKING:
     from earthkit.data.data import Data  # type: ignore[import]
     from earthkit.data.sources import Source
-
-
-class SourceLoader:
-    kind = "source"
-
-    def load_module(self, module):
-        return import_module(module, package=__package__).source
-
-    def load_entry(self, entry):
-        entry = entry.load()
-        if callable(entry):
-            return entry
-        return entry.source
-
-    def load_remote(self, name):
-        return None
 
 
 # Maps alternative source names to the name the source is registered under
@@ -77,173 +56,8 @@ def _preprocess_name(name):
     return _ALIASES.get(name, name)
 
 
-class SourceMaker:
-    """Create :class:`Source` objects by name.
-
-    A source is implemented either as a module in this package or as a plugin. Calling
-    the maker resolves the source class by name (:meth:`_lookup`) and instantiates it.
-    The lookup itself is performed by :func:`find_plugin` and its result is cached in
-    :attr:`_SOURCES`, so each source is only looked up once per session.
-
-    The single instance created at module level is used by :func:`from_source`, which is
-    the public entry point. Direct use is not needed in user code.
-
-    Attributes
-    ----------
-    _SOURCES : dict of str to class
-        Cache of the source classes already looked up, keyed by the resolved (i.e.
-        non-aliased) source name. Shared by all the instances of :class:`SourceMaker`
-        and populated on demand by :meth:`_lookup`.
-
-    """
-
-    _SOURCES = {}
-
-    def __call__(self, name, *args, **kwargs):
-        """Create the source called ``name``.
-
-        Parameters
-        ----------
-        name : str
-            The name of the source. Can be an alias, see :func:`_preprocess_name`.
-        *args : tuple
-            Positional arguments passed to the source class.
-        **kwargs : dict, optional
-            Keyword arguments passed to the source class.
-
-        Returns
-        -------
-        :class:`Source`
-            The new source. Its ``name`` is set to ``name`` (i.e. to the alias, when an
-            alias was used) unless the source class already defines one.
-
-        Raises
-        ------
-        NameError
-            If no source or plugin called ``name`` can be found.
-
-        Warns
-        -----
-        FutureWarning
-            If ``name`` is deprecated, see :func:`_preprocess_name`.
-
-        """
-        klass = self._lookup(name)
-
-        source = klass(*args, **kwargs)
-
-        if getattr(source, "name", None) is None:
-            source.name = name
-
-        return source
-
-    def _lookup(self, name):
-        """Resolve a source name to the source class implementing it.
-
-        The name is first resolved by :func:`_preprocess_name`, then looked up in
-        :attr:`_SOURCES`. On a cache miss the source is located by :func:`find_plugin`,
-        which searches the modules of this package as well as the registered plugins,
-        and the result is added to :attr:`_SOURCES`.
-
-        Parameters
-        ----------
-        name : str
-            The name of the source. Can be an alias, see :func:`_preprocess_name`.
-
-        Returns
-        -------
-        class
-            The source class registered under the resolved name. Not instantiated.
-
-        Raises
-        ------
-        NameError
-            If no source or plugin called ``name`` can be found.
-
-        Warns
-        -----
-        FutureWarning
-            If ``name`` is deprecated, see :func:`_preprocess_name`.
-
-        """
-        loader = SourceLoader()
-
-        lookup_name = _preprocess_name(name)
-        if lookup_name in self._SOURCES:
-            klass = self._SOURCES[lookup_name]
-        else:
-            klass = find_plugin(os.path.dirname(__file__), lookup_name, loader)
-            self._SOURCES[lookup_name] = klass
-
-        return klass
-
-    def __getattr__(self, name: str):
-        """Create a source using attribute access.
-
-        Allows ``get_source.file_pattern`` as a shorthand for ``get_source("file-pattern")``.
-        Underscores in ``name`` are replaced by dashes, since source names are dash-separated.
-        The source is created without any arguments.
-
-        Parameters
-        ----------
-        name : str
-            The name of the source, with dashes optionally written as underscores.
-
-        Returns
-        -------
-        :class:`Source`
-            The new source.
-
-        Raises
-        ------
-        NameError
-            If no source or plugin called ``name`` can be found.
-
-        """
-        return self(name.replace("_", "-"))
-
-
-get_source = SourceMaker()
-
-
-def _from_source(name: str, *args, lazily=False, **kwargs) -> "Data":
-    from earthkit.data.sources import from_source_lazily
-
-    if lazily:
-        return from_source_lazily(name, *args, **kwargs)
-
-    src = _from_source_internal(name, *args, **kwargs)
-
-    if hasattr(src, "to_data_object"):
-        data = src.to_data_object()
-        if data is not None:
-            return data
-
-    raise ValueError(f"Source {src} cannot be converted into a data object")
-
-
-def _from_source_instance(src: "Source") -> "Data":
+def _mutate_source(src: "Source") -> "Source":
     prev = None
-    while src is not prev:
-        prev = src
-        src = src.mutate()
-
-    if hasattr(src, "to_data_object"):
-        data = src.to_data_object()
-        if data is not None:
-            return data
-
-    raise ValueError(f"Source {src} cannot be converted into a data object")
-
-
-def _from_source_internal(name: str, *args, lazily=False, **kwargs) -> "Source":
-    from earthkit.data.sources import from_source_lazily
-
-    if lazily:
-        return from_source_lazily(name, *args, **kwargs)
-
-    prev = None
-    src = get_source(name, *args, **kwargs)
     while src is not prev:
         prev = src
         src = src.mutate()
@@ -251,5 +65,12 @@ def _from_source_internal(name: str, *args, lazily=False, **kwargs) -> "Source":
     return src
 
 
-def register(name, proc):
-    register_plugin("source", name, proc)
+def _from_source_instance(src: "Source") -> "Data":
+    src = _mutate_source(src)
+
+    if hasattr(src, "to_data_object"):
+        data = src.to_data_object()
+        if data is not None:
+            return data
+
+    raise ValueError(f"Source {src} cannot be converted into a data object")

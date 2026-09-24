@@ -16,7 +16,7 @@ from earthkit.data.indexing.empty import EmptyFieldList
 from earthkit.data.sources import Source
 from earthkit.data.sources.file import File
 from earthkit.data.sources.multi import MultiSource
-from earthkit.data.sources.utils import _from_source_internal
+from earthkit.data.sources.utils import _mutate_source
 from earthkit.data.utils.patterns import HivePattern, Pattern
 
 
@@ -41,7 +41,7 @@ class HiveFilePattern(Source):
         if rest:
             out = EmptyFieldList()
             for f in self.scanner.scan(**kwargs):
-                ds = _from_source_internal("file", f).to_fieldlist()
+                ds = _mutate_source(File(f)).to_fieldlist()
                 out = concat(out, ds.sel(**rest))
                 if _hive_diag:
                     _hive_diag.file(1)

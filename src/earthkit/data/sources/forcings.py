@@ -305,12 +305,13 @@ class ForcingsInnerData:
             if lons is None:
                 raise ValueError("longitudes must be specified when no source or dataset provided")
 
-            from earthkit.data.sources.utils import _from_source_internal
+            from earthkit.data.sources.list_of_dicts import FieldlistFromDicts
+            from earthkit.data.sources.utils import _mutate_source
 
             vals = np.ones(lats.shape)
             d = {"values": vals, "geography": {"latitudes": lats, "longitudes": lons}}
             # d.update(self.request)
-            source_or_dataset = _from_source_internal("list-of-dicts", [d]).to_fieldlist()
+            source_or_dataset = _mutate_source(FieldlistFromDicts([d])).to_fieldlist()
         elif isinstance(source_or_dataset, Data):
             source_or_dataset = source_or_dataset.to_fieldlist()
 

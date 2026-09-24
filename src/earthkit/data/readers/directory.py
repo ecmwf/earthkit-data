@@ -12,7 +12,7 @@ import logging
 import os
 import shutil
 
-from earthkit.data.sources.utils import _from_source_internal
+from earthkit.data.sources.utils import _mutate_source
 
 from . import Reader
 
@@ -70,35 +70,44 @@ class DirectoryReader(Reader):
         ):
             if self.stream:
                 raise ValueError("Cannot stream zarr directories")
-            return _from_source_internal("zarr", self.path)
+            from earthkit.data.sources.zarr import ZarrSource
+
+            return _mutate_source(ZarrSource(self.path))
+
+        from earthkit.data.sources.file import File
 
         if len(self._content) == 1:
-            return _from_source_internal(
-                "file",
-                path=self._content[0],
-                filter=self.filter,
-                merger=self.merger,
-                stream=self.stream,
-                parts=self.parts,
-                **self._source_kwargs,
-            )
-
-        return _from_source_internal(
-            "multi",
-            [
-                _from_source_internal(
-                    "file",
-                    path=path,
+            return _mutate_source(
+                File(
+                    self._content[0],
                     filter=self.filter,
                     merger=self.merger,
                     stream=self.stream,
                     parts=self.parts,
                     **self._source_kwargs,
                 )
-                for path in sorted(self._content)
-            ],
-            filter=self.filter,
-            merger=self.merger,
+            )
+
+        from earthkit.data.sources.multi import MultiSource
+
+        return _mutate_source(
+            MultiSource(
+                [
+                    _mutate_source(
+                        File(
+                            path,
+                            filter=self.filter,
+                            merger=self.merger,
+                            stream=self.stream,
+                            parts=self.parts,
+                            **self._source_kwargs,
+                        )
+                    )
+                    for path in sorted(self._content)
+                ],
+                filter=self.filter,
+                merger=self.merger,
+            )
         )
 
     def save(self, path, **kwargs):

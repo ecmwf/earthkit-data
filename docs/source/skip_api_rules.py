@@ -18,17 +18,11 @@ def _ends_with_any(name, suffixes):
 _SKIP = {
     "function": [
         "sources.from_source",
-        "sources.utils._from_source_internal",
         "sources.from_source_lazily",
-        "sources.utils.register",
     ],
-    "class": [
-        "sources.utils.SourceLoader",
-        "sources.utils.SourceMaker",
-    ],
+    "class": [],
     "data": [
         "encoders.grib.encoder",
-        "sources.utils.get_source",
     ],
     "method": [
         "core.fieldlist.FieldList.to_data_object",

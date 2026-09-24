@@ -14,18 +14,18 @@ import warnings
 import pytest
 
 from earthkit.data import sources
-from earthkit.data.sources.utils import get_source
+from earthkit.data.sources.utils import _preprocess_name
 
 
 def test_wekeocds_alias_old_name_warns():
     with pytest.warns(FutureWarning, match="wekeocds"):
-        get_source._lookup("wekeocds")
+        assert _preprocess_name("wekeocds") == "wekeo-cds"
 
 
 def test_wekeocds_alias_new_name_no_warning():
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
-        get_source._lookup("wekeo-cds")
+        assert _preprocess_name("wekeo-cds") == "wekeo-cds"
 
 
 def test_from_source_resolves_deprecated_alias(monkeypatch):
