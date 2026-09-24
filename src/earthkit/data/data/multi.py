@@ -209,6 +209,12 @@ class MultiData(SimpleData):
 
         return r
 
+    def __repr__(self) -> str:
+        return f"MultiData(path={self.path})"
+
+    def _repr_html_(self) -> str:
+        return self.describe()._repr_html_()
+
     def to_fieldlist(self, *args, **kwargs) -> FieldList:
         """Convert into a FieldList.
 

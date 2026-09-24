@@ -56,13 +56,6 @@ class GeoJSONData(SourceData):
 
         return DataDescriber(title="GeoJSON file", path=self.path, types=self.available_types)
 
-    @property
-    def path(self) -> str | list[str] | None:
-        try:
-            return self._reader.path
-        except Exception:
-            return None
-
     def __repr__(self) -> str:
         return f"GeoJSONData(path={self.path})"
 

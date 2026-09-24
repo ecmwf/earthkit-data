@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+from typing import Any
+
 from .source import SourceData
 
 
@@ -21,25 +23,23 @@ class FeatureListData(SourceData):
             r.append(self._XARRAY)
         return r
 
-    def describe(self):
-        """Provide a description of the FeatureList data.
+    def describe(self) -> Any:
+        """Provide a description of FeatureList data.
 
         Returns
         -------
-        str
-            A description of the FeatureList data including the number of features.
+        :py:class:`earthkit.data.utils.summary.DataDescriber`
+            A DataDescriber object containing a description of the FeatureList data.
         """
-        return f"FeatureList data with {len(self._featurelist)} features"
+        from earthkit.data.utils.summary import DataDescriber
 
-    @property
-    def path(self) -> str | list[str] | None:
-        try:
-            if hasattr(self._reader, "path"):
-                return self._reader.path
-            else:
-                return None
-        except Exception:
-            return None
+        return DataDescriber(title="FeatureList", path=self.path, types=self.available_types)
+
+    def __repr__(self) -> str:
+        return f"FeatureListData(path={self.path})"
+
+    def _repr_html_(self) -> str:
+        return self.describe()._repr_html_()
 
     def to_featurelist(self, *args, **kwargs):
         """Convert into a FeatureList.
