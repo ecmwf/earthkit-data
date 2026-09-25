@@ -103,15 +103,6 @@ def test_grib_output_missing_value_1(mode, missing_value):
         values = fld.values
         values[0] = np.nan
         assert not np.isnan(values[1])
-
-        # if mode == "ori":
-        #     f = earthkit.data.new_grib_output(path)
-        #     f.write(values, check_nans=True, missing_value=missing_value, template=fld)
-        #     f.close()
-        # if mode == "compat":
-        #     f = new_grib_output_compat(path)
-        #     f.write(values=values, check_nans=True, missing_value=missing_value, template=fld)
-        #     f.close()
         if mode == "target":
             to_target(
                 "file",
@@ -137,20 +128,43 @@ def test_grib_output_latlon(mode):
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         path = os.path.join(tmp, "a.grib")
-
-        # if mode == "ori":
-        #     f = earthkit.data.new_grib_output(path, date=20010101)
-        #     f.write(data, param="2t")
-        #     f.close()
-        # elif mode == "compat":
-        #     f = new_grib_output_compat(path, metadata=dict(date=20010101, generatingProcessIdentifier=255))
-        #     f.write(values=data, param="2t")
-        #     f.close()
         if mode == "target":
             to_target(
                 "file",
                 path,
                 metadata=dict(date=20010101, generatingProcessIdentifier=255, param="2t"),
+                values=data,
+            )
+
+        ds = earthkit.data.from_source("file", path).to_fieldlist()
+
+        assert ds[0].get("metadata.shortName") == "2t"
+        assert ds[0].get("metadata.date") == 20010101
+        assert ds[0].get("metadata.shortName") == "2t"
+        assert ds[0].get("metadata.levtype") == "sfc"
+        assert ds[0].get("metadata.edition") == 2
+        assert ds[0].get("metadata.generatingProcessIdentifier") == 255
+
+        assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
+
+
+pytest.mark.skipif(
+    sys.version_info < (3, 10),
+    reason="ignore_cleanup_errors requires Python 3.10 or later",
+)
+
+
+@pytest.mark.parametrize("mode", ["target"])
+def test_grib_output_latlon_metkit(mode):
+    data = np.random.random((181, 360))
+
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        path = os.path.join(tmp, "a.grib")
+        if mode == "target":
+            to_target(
+                "file",
+                path,
+                metadata=dict(date=20010101, param=167),
                 values=data,
             )
 

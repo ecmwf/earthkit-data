@@ -26,6 +26,25 @@ _NOT_IN_EDITION_1 = (
 
 _COMPULSORY = (("date", "referenceDate"), ("param", "paramId", "shortName"))
 
+_METKIT_KEYS = (
+    "param",
+    "date",
+    "time",
+    "step",
+    "origin",
+    "class",
+    "stream",
+    "type",
+    "expver",
+    "levtype",
+    "levelist",
+    "grid",
+    "packing",
+    "bitsPerValue",
+    "area",
+    "hdate",
+)
+
 
 class GribEncodedData(EncodedData):
     """The object representing the encoded GRIB message."""
@@ -269,33 +288,7 @@ class GribHandleMaker:
 
         return handle
 
-    def handle_from_metadata(cls, values_shape, metadata, compulsory):
-        # from pymetkit.pymetkit_type import Mars2Grib
-        from pymetkit.experimental.mars2grib import Mars2Grib
-
-        if metadata.get("edition") == 1:
-            return None
-
-        import numpy as np
-
-        from earthkit.data.readers.grib.handle import GribCodesHandle
-
-        vals = np.array([237.15] * 360 * 181)
-
-        print("metadata", metadata)
-
-        if "date" in metadata:
-            if isinstance(metadata["date"], datetime.datetime):
-                metadata["date"] = metadata["date"].strftime("%Y%m%d")
-
-        encoder = Mars2Grib()
-        message = encoder.encode(vals, metadata)
-        handle = GribCodesHandle.from_message(message)
-
-        metadata.clear()
-        return handle
-
-    def handle_from_metadata_1(self, values_shape, metadata, compulsory):
+    def handle_from_metadata(self, values_shape, metadata, compulsory):
         from earthkit.data.readers.grib.handle import GribCodesHandle  # Lazy loading of eccodes
 
         if len(values_shape) == 1:
@@ -544,6 +537,7 @@ class GribEncoder(Encoder):
     def _separate_metadata(self, metadata):
         field = {}
         grib = {}
+        # metkit = {}
         for k, v in metadata.items():
             if "." in k:
                 field[k] = v
@@ -706,6 +700,7 @@ class GribEncoder(Encoder):
             new_handle = None
             if values is not None and template is None and metadata:
                 try:
+                    print("Creating metkit handle with values and metadata")
                     new_handle = metkit_handle(values, metadata)
                     if new_handle is not None:
                         if field_metadata:
@@ -713,6 +708,7 @@ class GribEncoder(Encoder):
                             new_handle = None
                             metadata = None
                         else:
+                            print("--> Returning GribEncodedData with new handle")
                             return GribEncodedData(new_handle, template_field=template_field)
 
                 except Exception as e:
