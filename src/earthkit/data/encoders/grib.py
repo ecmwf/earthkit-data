@@ -685,6 +685,48 @@ class GribEncoder(Encoder):
 
         return False
 
+    def _check_grid_spec(self, handle, metadata):
+        """Check and remove the gridSpec from metadata if needed.
+
+        Parameters
+        ----------
+        handle : object
+            The handle to check for grid type and name.
+        metadata : dict
+            The metadata dictionary from which to remove the gridSpec if the grid is unstructured.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        This code handles the situation where both the handle and the gridSpec represent unstructured grids.
+        The problem is that ecCodes does not allow setting a gridSpec of this type on a handle and raises
+        an exception if attempted. This poses a problem when the handle and the gridSpec represent the same
+        unstructured grid. In this case the gridSpec is not needed and has to be removed from the metadata to
+        avoid problems and let the encoding process to proceed without conflicts. The code below uses very
+        simple assumptions to detect this situation, which needs improvement.
+        """
+        try:
+            grid_spec = metadata.get("gridSpec", None)
+            if handle is None or grid_spec is None:
+                return
+
+            grid_type = handle.get("gridType", default=None)
+            grid_name = handle.get("gridName", default=None)
+            if grid_type is None or grid_name is None:
+                return
+
+            if grid_type == "unstructured_grid" and grid_name == "undefined":
+                from eckit.geo import Grid
+
+                grid = Grid(grid_spec)
+                if grid.type in ["unstructured", "unstructured_ll"]:
+                    metadata.pop("gridSpec", None)
+        except Exception:
+            pass
+
     def _encode(self, data, *, target=None, **kwargs):
         raise NotImplementedError
 
@@ -698,6 +740,8 @@ class GribEncoder(Encoder):
 
         handle = r.pop("handle", None)
         field_values = r.pop("values", None)
+
+        self._check_grid_spec(handle, r)
 
         if r:
             self._update_metadata_from_field(field, r)

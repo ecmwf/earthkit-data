@@ -743,7 +743,7 @@ ecmwf-open-data
 
       d = earthkit.data.from_source(
           "ecmwf-open-data",
-          requests=dict(param=["2t", "msl"], levtype="sfc", step=[0, 6, 12]),
+          request=dict(param=["2t", "msl"], levtype="sfc", step=[0, 6, 12]),
       )
 
 

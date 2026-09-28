@@ -8,8 +8,16 @@
 #
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
-    if magic is not None and path.endswith(".pp"):
+def _match_magic(magic):
+    if magic is not None:
+        # magic check matching that from iris
+        # https://github.com/SciTools/iris/blob/239f5b4dc7fbd55bc69e1fb71d5adc7371477cbf/lib/iris/fileformats/__init__.py#L48-L70
+        return magic[:4] in (b"\x00\x00\x01\x00", b"\x00\x01\x00\x00")
+    return False
+
+
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+    if _match_magic(magic):
         from .reader import PPReader
 
         return PPReader(source, path, **kwargs)

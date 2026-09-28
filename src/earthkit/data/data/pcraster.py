@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+
 from __future__ import annotations
 
 from typing import (
@@ -17,20 +18,19 @@ from typing import (
 from .source import SourceData
 
 if TYPE_CHECKING:
-    import numpy  # type: ignore[import]
+    pass  # type: ignore[import]
 
 
-class NumPyData(SourceData):
-    """
-    Represent data in the NumPy format.
+class PCRasterData(SourceData):
+    """Represent data in the PCRaster format.
 
-    NumPy data can be converted with the following methods:
+    PCRaster data can be converted with the following methods:
 
     - :py:func:`to_numpy`
 
     """
 
-    _TYPE_NAME = "NumPy"
+    _TYPE_NAME = "PCRaster"
 
     @property
     def available_types(self):
@@ -38,30 +38,34 @@ class NumPyData(SourceData):
         return [self._NUMPY]
 
     def describe(self) -> Any:
-        """Provide a description of NumPy ODB data.
+        """Provide a description of the PCRaster data.
 
         Returns
         -------
         :py:class:`earthkit.data.utils.summary.DataDescriber`
-            A DataDescriber object containing a description of the NumPy data.
+            A DataDescriber object containing a description of the PCRaster data.
         """
         from earthkit.data.utils.summary import DataDescriber
 
-        return DataDescriber(title="NumPy file", path=self.path, types=self.available_types)
+        return DataDescriber(title="PCRaster file", path=self.path, types=self.available_types)
 
     def __repr__(self) -> str:
-        return f"NumPyData(path={self.path})"
+        return f"PCRasterData(path={self.path})"
 
     def _repr_html_(self) -> str:
         return self.describe()._repr_html_()
 
-    def to_numpy(self) -> "numpy.array":
-        """Convert into a numpy array.
+    def to_numpy(self, missing_to_nan=True):
+        """Convert into an numpy array.
+
+        Parameters
+        ----------
+        mask: bool, optional
+            Whether or not to represent missing values as nans.
 
         Returns
         -------
         :py:class:`numpy.array`
-            A NumPy array created from the NumPy data.
-
+            A numpy array containing the PCRaster data.
         """
-        return self._reader.to_numpy()
+        return self._reader.to_numpy(missing_to_nan=missing_to_nan)

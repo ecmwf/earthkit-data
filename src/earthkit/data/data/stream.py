@@ -99,6 +99,10 @@ class StreamFeatureListData(SourceData):
 
         return self._reader
 
+    @property
+    def path(self) -> str | list[str] | None:
+        return None
+
 
 class StreamFieldListData(SourceData):
     """Data object representing a stream of fields.
@@ -175,3 +179,7 @@ class StreamFieldListData(SourceData):
             return r
 
         return self._reader
+
+    @property
+    def path(self) -> str | list[str] | None:
+        return None
