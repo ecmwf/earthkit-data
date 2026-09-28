@@ -12,7 +12,7 @@ import warnings
 
 import numpy as np
 
-from earthkit.data.readers import matcher
+from earthkit.data.readers import ReaderPlugin
 
 from . import Reader
 
@@ -40,7 +40,6 @@ class NumpyReader(Reader):
         return None
 
 
-@matcher(priority=820)
 def match_numpy(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if magic is not None:
         if magic[:6] == b"\x93NUMPY":
@@ -49,3 +48,6 @@ def match_numpy(source, path, *, magic=None, deeper_check=False, content_type=No
         _, extension = os.path.splitext(path)
         if magic[:4] == b"PK\x03\x04" and extension == ".npz":
             return NumpyReader(source, path, **kwargs)
+
+
+plugin = ReaderPlugin(file=match_numpy, priority=820)

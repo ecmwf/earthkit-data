@@ -8,7 +8,7 @@
 #
 
 
-from earthkit.data.readers import matcher
+from earthkit.data.readers import ReaderPlugin
 
 
 def _match_magic(magic):
@@ -19,9 +19,11 @@ def _match_magic(magic):
     return False
 
 
-@matcher(priority=830)
 def match_pp(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic):
         from .reader import PPReader
 
         return PPReader(source, path, **kwargs)
+
+
+plugin = ReaderPlugin(file=match_pp, priority=830)

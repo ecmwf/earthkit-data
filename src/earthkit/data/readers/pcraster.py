@@ -12,7 +12,7 @@ from struct import unpack
 
 import numpy as np
 
-from earthkit.data.readers import matcher
+from earthkit.data.readers import ReaderPlugin
 
 from . import Reader
 
@@ -126,8 +126,10 @@ class PCRasterReader(Reader):
         return None
 
 
-@matcher(priority=500)
 def match_pcraster(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if magic is not None:
         if path[-4:] == ".map":
             return PCRasterReader(source, path, **kwargs)
+
+
+plugin = ReaderPlugin(file=match_pcraster, priority=500)

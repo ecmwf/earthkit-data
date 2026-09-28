@@ -8,7 +8,7 @@
 #
 
 
-from earthkit.data.readers import matcher
+from earthkit.data.readers import ReaderPlugin
 
 
 def _match_magic(magic, deeper_check):
@@ -21,9 +21,11 @@ def _match_magic(magic, deeper_check):
     return False
 
 
-@matcher(priority=920)
 def match_odb(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic, deeper_check):
         from .reader import ODBReader
 
         return ODBReader(source, path, **kwargs)
+
+
+plugin = ReaderPlugin(file=match_odb, priority=920)

@@ -9,10 +9,9 @@
 
 import os
 
-from earthkit.data.readers import matcher
+from earthkit.data.readers import ReaderPlugin
 
 
-@matcher(priority=860)
 def match_zarr(source, path, *, magic=None, deeper_check=False, **kwargs):
     if magic is None and (
         os.path.exists(os.path.join(path, ".zarray"))
@@ -23,3 +22,6 @@ def match_zarr(source, path, *, magic=None, deeper_check=False, **kwargs):
         from .reader import ZarrReader
 
         return ZarrReader(source, path, **kwargs)
+
+
+plugin = ReaderPlugin(file=match_zarr, priority=860)

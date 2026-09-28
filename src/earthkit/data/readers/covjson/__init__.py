@@ -10,7 +10,7 @@
 import mimetypes
 import pathlib
 
-from earthkit.data.readers import matcher
+from earthkit.data.readers import ReaderPlugin
 
 
 def _match_content_type(content_type):
@@ -27,7 +27,6 @@ def _match_magic(magic, deeper_check):
     return False
 
 
-@matcher(priority=810)
 def match_covjson(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     def _reader():
         from .reader import CovJSONReader
@@ -46,7 +45,6 @@ def match_covjson(source, path, *, magic=None, deeper_check=False, content_type=
         return _reader()
 
 
-@matcher(priority=810)
 def match_covjson_memory(source, buffer, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_content_type(content_type) or _match_magic(magic, deeper_check):
         from .reader import CovJSONMemoryReader
@@ -54,7 +52,6 @@ def match_covjson_memory(source, buffer, *, magic=None, deeper_check=False, cont
         return CovJSONMemoryReader(buffer)
 
 
-@matcher(priority=810)
 def match_covjson_stream(
     source,
     stream,
@@ -69,3 +66,6 @@ def match_covjson_stream(
         from .reader import CovJSONStreamReader
 
         return CovJSONStreamReader(stream)
+
+
+plugin = ReaderPlugin(file=match_covjson, memory=match_covjson_memory, stream=match_covjson_stream, priority=810)

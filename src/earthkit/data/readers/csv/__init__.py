@@ -13,7 +13,7 @@ import itertools
 import logging
 import mimetypes
 
-from earthkit.data.readers import matcher
+from earthkit.data.readers import ReaderPlugin
 
 LOG = logging.getLogger(__name__)
 
@@ -42,7 +42,6 @@ def is_probably_csv(
         return False
 
 
-@matcher(priority=200)
 def match_csv(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if magic is not None:
         kind, compression = mimetypes.guess_type(path)
@@ -51,3 +50,6 @@ def match_csv(source, path, *, magic=None, deeper_check=False, content_type=None
             from .reader import CSVReader
 
             return CSVReader(source, path, compression=compression)
+
+
+plugin = ReaderPlugin(file=match_csv, priority=200)
