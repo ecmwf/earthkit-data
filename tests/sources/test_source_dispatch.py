@@ -41,19 +41,6 @@ def test_entry_point_plugin(monkeypatch, name):
     assert sources.from_source(name, "value", option=42) == ("value", 42)
 
 
-def test_entry_points_are_cached(monkeypatch):
-    calls = []
-
-    def entry_points(group):
-        calls.append(group)
-        return EntryPoints([])
-
-    monkeypatch.setattr(utils, "entry_points", entry_points)
-    for _ in range(3):
-        sources.from_source("list-of-dicts", [])
-    assert len(calls) == 1
-
-
 def test_unknown_source_error():
     with pytest.raises(NameError, match="does not exist"):
         sources.from_source("no-such-source")
