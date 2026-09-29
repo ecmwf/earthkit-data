@@ -14,12 +14,12 @@ import mimetypes
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.sources.helpers import _from_dummy_source
 from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 def test_csv_1():
-    s = from_source(
-        "dummy-source",
+    s = _from_dummy_source(
         "csv",
         headers=["a", "b", "c"],
         lines=[
@@ -39,8 +39,7 @@ def test_csv_1():
 
 
 def test_csv_2():
-    s = from_source(
-        "dummy-source",
+    s = _from_dummy_source(
         "csv",
         headers=["a", "b", "c"],
         lines=[
@@ -56,8 +55,7 @@ def test_csv_2():
 
 
 def test_csv_3():
-    s = from_source(
-        "dummy-source",
+    s = _from_dummy_source(
         "csv",
         headers=["a", "b", "c"],
         lines=[
@@ -73,8 +71,7 @@ def test_csv_3():
 
 
 def test_csv_4():
-    s = from_source(
-        "dummy-source",
+    s = _from_dummy_source(
         "csv",
         headers=["a", "b", "c"],
         quote_strings=True,
@@ -91,8 +88,7 @@ def test_csv_4():
 
 
 def test_csv_5():
-    s = from_source(
-        "dummy-source",
+    s = _from_dummy_source(
         "csv",
         headers=["a", "b", "c"],
         quote_strings=True,
@@ -127,8 +123,7 @@ def test_csv_icoads():
 
 
 def test_csv_text_file():
-    s = from_source(
-        "dummy-source",
+    s = _from_dummy_source(
         "csv",
         headers=["a", "b", "c"],
         quote_strings=True,
@@ -153,8 +148,7 @@ def test_csv_file_without_extension(tmp_path):
 
 
 def test_csv_with_comment():
-    s = from_source(
-        "dummy-source",
+    s = _from_dummy_source(
         "csv",
         headers=["a", "b", "c"],
         quote_strings=True,
@@ -192,8 +186,7 @@ def test_csv_multi_1():
 
 
 def test_csv_multi_2_comment_and_separator():
-    s1 = from_source(
-        "dummy-source",
+    s1 = _from_dummy_source(
         "csv",
         headers=["a", "b", "c"],
         quote_strings=True,
@@ -207,8 +200,7 @@ def test_csv_multi_2_comment_and_separator():
         comment="?",
     )
 
-    s2 = from_source(
-        "dummy-source",
+    s2 = _from_dummy_source(
         "csv",
         headers=["a", "b", "c"],
         quote_strings=True,

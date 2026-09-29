@@ -42,8 +42,7 @@ def test_netcdf_reader():
 
 @pytest.mark.parametrize("attribute", ["coordinates", "bounds", "grid_mapping"])
 def test_dummy_netcdf_reader_2(attribute):
-    s = from_source(
-        "dummy-source",
+    s = _from_dummy_source(
         kind="netcdf",
         attributes={"a": {attribute: f"{attribute}_of_a"}},
         variables=["a", f"{attribute}_of_a"],
@@ -71,8 +70,7 @@ def test_dummy_netcdf_2():
 
 
 def test_dummy_netcdf_3():
-    s = from_source(
-        "dummy-source",
+    s = _from_dummy_source(
         kind="netcdf",
         dims={"lat": dict(size=3), "lon": dict(size=2), "time": dict(size=2)},
         variables=["a", "b"],
@@ -82,8 +80,7 @@ def test_dummy_netcdf_3():
 
 
 def test_dummy_netcdf_4():
-    s = from_source(
-        "dummy-source",
+    s = _from_dummy_source(
         kind="netcdf",
         dims={"lat": dict(size=3), "lon": dict(size=2), "time": dict(size=2)},
         variables={

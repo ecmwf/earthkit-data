@@ -11,6 +11,7 @@
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.sources.helpers import _from_dummy_source
 from earthkit.data.utils.testing import earthkit_examples_file, earthkit_test_data_file
 
 
@@ -34,8 +35,7 @@ def test_grib_create_from_list_of_paths():
 
 
 def test_dummy_grib():
-    s = from_source(
-        "dummy-source",
+    s = _from_dummy_source(
         kind="grib",
         paramId=[129, 130],
         date=[19900101, 19900102],
