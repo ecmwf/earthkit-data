@@ -147,21 +147,6 @@ def from_source(
     name: Literal["multi"], *sources: Any, filter: Filter = None, merger: Any = None, **kwargs: Any
 ) -> Data: ...
 @overload
-def from_source(name: Literal["empty"], **kwargs: Any) -> Data: ...
-@overload
-def from_source(
-    name: Literal["dummy-source"],
-    kind: str,
-    request: dict | None = None,
-    force: Force = False,
-    extension: str | None = None,
-    **request_kwargs: Any,
-) -> Data: ...
-@overload
-def from_source(name: Literal["virtual"], **request_kwargs: Any) -> Data: ...
-@overload
-def from_source(name: Literal["virtual-directory"], *args: Any, **kwargs: Any) -> Data: ...
-@overload
 def from_source(
     name: Literal["ads"],
     dataset: str,

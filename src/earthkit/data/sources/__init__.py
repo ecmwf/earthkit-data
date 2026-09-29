@@ -13,10 +13,8 @@ from earthkit.data.sources.base import Source as Source
 from earthkit.data.sources.helpers import (
     _from_ads,
     _from_cds,
-    _from_dummy_source,
     _from_ecfs,
     _from_ecmwf_open_data,
-    _from_empty,
     _from_fdb,
     _from_file,
     _from_file_pattern,
@@ -33,11 +31,21 @@ from earthkit.data.sources.helpers import (
     _from_stream,
     _from_url,
     _from_url_pattern,
-    _from_virtual,
-    _from_virtual_directory,
     _from_wekeo,
     _from_wekeo_cds,
     _from_zarr,
+)
+from earthkit.data.sources.helpers import (
+    _from_dummy_source as _from_dummy_source,
+)
+from earthkit.data.sources.helpers import (
+    _from_empty as _from_empty,
+)
+from earthkit.data.sources.helpers import (
+    _from_virtual as _from_virtual,
+)
+from earthkit.data.sources.helpers import (
+    _from_virtual_directory as _from_virtual_directory,
 )
 from earthkit.data.sources.utils import _from_source_instance, _preprocess_name, _source_plugins
 
@@ -56,10 +64,10 @@ POSSIBLE_SOURCES = {
     "forcings": _from_forcings,
     "list-of-dicts": _from_list_of_dicts,
     "multi": _from_multi,
-    "empty": _from_empty,
-    "dummy-source": _from_dummy_source,
-    "virtual": _from_virtual,
-    "virtual-directory": _from_virtual_directory,
+    # "empty": _from_empty,
+    # "dummy-source": _from_dummy_source,
+    # "virtual": _from_virtual,
+    # "virtual-directory": _from_virtual_directory,
     "ads": _from_ads,
     "cds": _from_cds,
     "ecfs": _from_ecfs,
