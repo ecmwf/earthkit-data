@@ -21,6 +21,63 @@ _LABELS = {"my_label": "my_val"}
 _LABELS_SET_ARGS = {"labels.my_label": "my_val"}
 
 
+@pytest.mark.parametrize(
+    "_kwargs,expected_value",
+    [({}, 16), ({"metadata.bitsPerValue": 12}, 12)],
+)
+def test_grib_encoder_bits_per_value_fieldlist(
+    _kwargs,
+    expected_value,
+):
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+
+    assert ds[0].get("metadata.bitsPerValue") == 16
+
+    encoder = create_encoder("grib")
+    r = encoder.encode(data=ds, **_kwargs)
+    f_r = [x.to_field() for x in r]
+    assert [f.get("metadata.bitsPerValue") for f in f_r] == [expected_value] * len(ds)
+
+
+@pytest.mark.parametrize("array", [True, False])
+@pytest.mark.parametrize(
+    "_kwargs,expected_value",
+    [({}, 16), ({"metadata.bitsPerValue": 12}, 12)],
+)
+def test_grib_encoder_bits_per_value_single_field(array, _kwargs, expected_value):
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    assert ds[0].get("metadata.bitsPerValue") == 16
+    if array:
+        ds = ds.to_fieldlist()
+
+    encoder = create_encoder("grib")
+    r = encoder.encode(data=ds[0], **_kwargs)
+    f_r = r.to_field()
+    assert f_r.get("metadata.bitsPerValue") == expected_value
+
+
+# TODO: if we use missing_value = np.finfo(np.float32).max the test fails
+@pytest.mark.parametrize("missing_value", [100000.0, np.finfo(np.float32).max - 1])
+def test_grib_encoder_missing_value_1(missing_value):
+    fld = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()[0]
+
+    values = fld.values
+    values[0] = np.nan
+    assert not np.isnan(values[1])
+
+    encoder = create_encoder("grib")
+    r = encoder.encode(
+        values=values,
+        template=fld,
+        check_nans=True,
+        missing_value=missing_value,
+    )
+    f_r = r.to_field()
+    assert f_r.get("metadata.bitmapPresent") == 1
+    assert np.isnan(f_r.values[0])
+    assert not np.isnan(values[1])
+
+
 @pytest.mark.parametrize("_args,_kwargs", [(("<f>",), {}), ((), {"data": "<f>"}), ((), {"template": "<f>"})])
 def test_grib_encoder_field_1(_args, _kwargs):
     f = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()[0]
@@ -38,6 +95,32 @@ def test_grib_encoder_field_1(_args, _kwargs):
     assert f.message() == f_r.message()
     assert np.allclose(f.values, f_r.values)
     assert f.get("parameter.variable") == f_r.get("parameter.variable")
+
+
+@pytest.mark.parametrize("array", [True, False])
+def test_grib_encoder_field_as_template(array):
+    data = np.random.random((7, 12))
+
+    ds = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
+    if array:
+        ds = ds.to_fieldlist()
+
+    encoder = create_encoder("grib")
+    r = encoder.encode(
+        metadata=dict(date=20010101, generatingProcessIdentifier=255, param="pt", bitsPerValue=16),
+        values=data,
+        template=ds[0],
+    )
+    f_r = r.to_field()
+
+    assert f_r.get("metadata.date") == 20010101
+    assert f_r.get("metadata.shortName") == "pt"
+    assert f_r.get("metadata.levtype") == "pl"
+    assert f_r.get("metadata.edition") == 1
+    assert f_r.get("metadata.generatingProcessIdentifier") == 255
+    assert f_r.get("metadata.bitsPerValue") == 16
+
+    assert np.allclose(f_r.to_numpy(), data, rtol=1e-2, atol=1e-2)
 
 
 @pytest.mark.parametrize("init_encoder", [None, ["template"]])
