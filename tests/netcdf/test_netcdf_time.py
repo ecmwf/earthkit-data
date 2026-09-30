@@ -68,6 +68,30 @@ def test_netcdf_time_analysis():
     assert f.time.valid_datetime() == datetime.datetime(2020, 5, 13, 12, 0, 0)
 
 
+def test_netcdf_time_base_time_and_step():
+    ds = from_source("sample", "pl.nc").to_fieldlist()
+
+    assert ds[0].time.to_dict() == {
+        "valid_datetime": datetime.datetime(2024, 6, 3, 0, 0),
+        "base_datetime": datetime.datetime(2024, 6, 3, 0, 0),
+        "step": datetime.timedelta(0),
+    }
+    assert ds[0].time.base_datetime() == datetime.datetime(2024, 6, 3, 0, 0)
+    assert ds[0].time.forecast_reference_time() == datetime.datetime(2024, 6, 3, 0, 0)
+    assert ds[0].time.valid_datetime() == datetime.datetime(2024, 6, 3, 0, 0)
+    assert ds[0].time.step() == datetime.timedelta(0)
+
+    assert ds[-1].time.to_dict() == {
+        "valid_datetime": datetime.datetime(2024, 6, 4, 18, 0),
+        "base_datetime": datetime.datetime(2024, 6, 4, 12, 0),
+        "step": datetime.timedelta(hours=6),
+    }
+    assert ds[-1].time.base_datetime() == datetime.datetime(2024, 6, 4, 12, 0)
+    assert ds[-1].time.forecast_reference_time() == datetime.datetime(2024, 6, 4, 12, 0)
+    assert ds[-1].time.valid_datetime() == datetime.datetime(2024, 6, 4, 18, 0)
+    assert ds[-1].time.step() == datetime.timedelta(hours=6)
+
+
 @pytest.mark.download
 @pytest.mark.cache
 def test_netcdf_valid_time_and_lead_time():

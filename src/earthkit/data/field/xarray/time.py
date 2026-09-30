@@ -19,7 +19,7 @@ def from_xarray(owner, selection):
     _coords = {}
 
     for coord in owner.coordinates:
-        if coord.is_time or coord.is_step:
+        if coord.is_time or coord.is_step or coord.is_date:
             name = coord.name
             v = selection.coords.get(name, None)
             if v is not None and is_scalar(v):
