@@ -11,6 +11,7 @@
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.sources.helpers import _from_dummy_source
 from earthkit.data.utils.testing import earthkit_examples_file, earthkit_test_data_file
 
 
@@ -34,8 +35,7 @@ def test_grib_create_from_list_of_paths():
 
 
 def test_dummy_grib():
-    s = from_source(
-        "dummy-source",
+    s = _from_dummy_source(
         kind="grib",
         paramId=[129, 130],
         date=[19900101, 19900102],
@@ -46,7 +46,7 @@ def test_dummy_grib():
 
 def test_invalid_kwargs():
     with pytest.warns(UserWarning):
-        from_source("file", earthkit_examples_file("tuv_pl.grib"), banana=True)
+        from_source("file", earthkit_examples_file("tuv_pl.grib"), skip_warning=True)
 
 
 if __name__ == "__main__":

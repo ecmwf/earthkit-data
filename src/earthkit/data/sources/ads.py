@@ -70,6 +70,3 @@ class ADSRetriever(CDSRetriever):
 
     def client(self):
         return client()
-
-
-source = ADSRetriever

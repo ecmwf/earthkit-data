@@ -18,11 +18,10 @@ try:
 except ImportError:
     raise ImportError("FDB access requires 'pyfdb' to be installed")
 
+from earthkit.data.sources import Source
 from earthkit.data.sources.file import FileSource
 from earthkit.data.sources.stream import StreamSource
 from earthkit.data.utils.request import RequestBuilder, RequestMapper
-
-from . import Source
 
 LOG = logging.getLogger(__name__)
 
@@ -199,6 +198,3 @@ class FDBRequestMapper(RequestMapper):
                 data[k] = c(data[k])
 
         return data
-
-
-source = FDBSource

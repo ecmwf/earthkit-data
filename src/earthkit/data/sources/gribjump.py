@@ -497,6 +497,3 @@ class GribJumpSource(Source):
             requests=extraction_requests,
             fdb_retriever=fdb_retriever,
         )
-
-
-source = GribJumpSource
