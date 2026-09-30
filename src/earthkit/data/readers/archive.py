@@ -10,8 +10,7 @@
 import logging
 import os
 
-from . import Reader
-from . import reader as find_reader
+from . import Reader, match_file
 
 LOG = logging.getLogger(__name__)
 
@@ -49,7 +48,7 @@ class ArchiveReader(Reader):
 
     def mutate(self):
         if os.path.isdir(self.path):
-            return find_reader(self.source, self.path, **self._source_kwargs).mutate()
+            return match_file(self.source, self.path, **self._source_kwargs).mutate()
 
         return self
 

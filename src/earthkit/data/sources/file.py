@@ -14,7 +14,7 @@ import os
 
 from earthkit.data.core import Encodable
 from earthkit.data.core.caching import CACHE
-from earthkit.data.readers import reader
+from earthkit.data.readers import match_file
 from earthkit.data.sources import Source
 from earthkit.data.utils.parts import PathAndParts
 
@@ -102,49 +102,11 @@ class FileSource(Source, Encodable, os.PathLike):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = reader(self, self.path, content_type=self.content_type, **self._kwargs)
+            self._reader_ = match_file(self, self.path, content_type=self.content_type, **self._kwargs)
         return self._reader_
-
-    # def __iter__(self):
-    #     return iter(self._reader)
-
-    # def __len__(self):
-    #     return len(self._reader)
-
-    # def __getitem__(self, n):
-    #     return self._reader[n]
-
-    # def sel(self, *args, **kwargs):
-    #     return self._reader.sel(*args, **kwargs)
-
-    # def isel(self, *args, **kwargs):
-    #     return self._reader.isel(*args, **kwargs)
-
-    # def order_by(self, *args, **kwargs):
-    #     return self._reader.order_by(*args, **kwargs)
-
-    # def to_xarray(self, **kwargs):
-    #     return self._reader.to_xarray(**kwargs)
-
-    # def to_pandas(self, **kwargs):
-    #     LOG.debug("Calling reader.to_pandas %s", self)
-    #     return self._reader.to_pandas(**kwargs)
-
-    # def to_numpy(self, **kwargs):
-    #     return self._reader.to_numpy(**kwargs)
-
-    # @property
-    # def values(self):
-    #     return self._reader.values
 
     def to_target(self, *args, **kwargs):
         self._reader.to_target(*args, **kwargs)
-
-    # def scaled(self, *args, **kwargs):
-    #     return self._reader.scaled(*args, **kwargs)
-
-    # def _attributes(self, names):
-    #     return self._reader._attributes(names)
 
     def to_data_object(self):
         return self._reader.to_data_object()
@@ -165,40 +127,6 @@ class FileSource(Source, Encodable, os.PathLike):
     def __fspath__(self):
         return self.path
 
-    # def metadata(self, *args, **kwargs):
-    #     return self._reader.metadata(*args, **kwargs)
-
-    # def indices(self, *args, **kwargs):
-    #     return self._reader.indices(*args, **kwargs)
-
-    # def index(self, *args, **kwargs):
-    #     return self._reader.index(*args, **kwargs)
-
-    # def head(self, n=5, **kwargs):
-    #     if n <= 0:
-    #         raise ValueError("head: n must be > 0")
-    #     return self.ls(n=n, **kwargs)
-
-    # def tail(self, n=5, **kwargs):
-    #     if n <= 0:
-    #         raise ValueError("n must be > 0")
-    #     return self.ls(n=-n, **kwargs)
-
-    # def ls(self, *args, **kwargs):
-    #     return self._reader.ls(*args, **kwargs)
-
-    # def describe(self, *args, **kwargs):
-    #     return self._reader.describe(*args, **kwargs)
-
-    # def datetime(self, **kwargs):
-    #     return self._reader.datetime(**kwargs)
-
-    # def bounding_box(self):
-    #     return self._reader.bounding_box()
-
-    # def statistics(self, **kwargs):
-    #     return self._reader.statistics(**kwargs)
-
     @property
     def path(self):
         return self._path_and_parts.path
@@ -210,12 +138,6 @@ class FileSource(Source, Encodable, os.PathLike):
     @property
     def parts(self):
         return self._path_and_parts.parts
-
-    # def batched(self, *args):
-    #     return self._reader.batched(*args)
-
-    # def group_by(self, *args):
-    #     return self._reader.group_by(*args)
 
     def _default_encoder(self):
         return self._reader._default_encoder()
@@ -276,11 +198,7 @@ class StreamFileSource(FileSource):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = reader(
-                self,
-                self.path,
-                content_type=self.content_type,
-            )
+            self._reader_ = match_file(self, self.path, content_type=self.content_type)
         return self._reader_
 
 

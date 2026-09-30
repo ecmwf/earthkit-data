@@ -8,6 +8,8 @@
 #
 import logging
 
+from earthkit.data.readers import ReaderPlugin
+
 LOG = logging.getLogger(__name__)
 
 
@@ -38,7 +40,7 @@ def is_grib_file(path):
     return _match_magic(magic, True)
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+def match_grib(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic, deeper_check):
         from .file import GRIBReader
 
@@ -46,7 +48,7 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
         return GRIBReader(source, path, parts=parts, **kwargs)
 
 
-def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):
+def match_grib_memory(source, buffer, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
         import io
 
@@ -63,7 +65,7 @@ def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):
         return r
 
 
-def stream_reader(
+def match_grib_stream(
     source,
     stream,
     magic=None,
@@ -85,6 +87,4 @@ def stream_reader(
         return r
 
 
-READER = reader
-MEMORY_READER = memory_reader
-STREAM_READER = stream_reader
+plugin = ReaderPlugin(file=match_grib, memory=match_grib_memory, stream=match_grib_stream, priority=950)
