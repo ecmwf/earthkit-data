@@ -406,6 +406,10 @@ def from_source(
 
 
 @overload
+def from_source(name: Literal["sql"], url: str, sql: str) -> "Data": ...
+
+
+@overload
 def from_source(
     name: Literal["wekeo"],
     dataset: str,
