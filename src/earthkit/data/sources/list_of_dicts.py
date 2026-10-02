@@ -17,9 +17,8 @@ LOG = logging.getLogger(__name__)
 
 
 class FieldlistFromDicts(Source):
-    def __init__(self, list_of_dicts, *args, **kwargs):
+    def __init__(self, list_of_dicts):
         self.d = list_of_dicts
-        self._kwargs = kwargs
 
     def mutate(self):
         from earthkit.data.core.field import Field

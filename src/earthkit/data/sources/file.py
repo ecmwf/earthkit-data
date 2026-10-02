@@ -98,12 +98,7 @@ class FileSource(Source, Encodable, os.PathLike):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = reader(
-                self,
-                self.path,
-                content_type=self.content_type,
-                # parts=self.parts,
-            )
+            self._reader_ = reader(self, self.path, content_type=self.content_type, **self._kwargs)
         return self._reader_
 
     # def __iter__(self):
@@ -307,9 +302,12 @@ class File(FileSource):
         unix_glob=True,
         recursive_glob=True,
         filter=None,
+        stream=False,
         merger=None,
+        parts=None,
         **kwargs,
     ):
+
         if not isinstance(path, (list, tuple)):
             if expand_user:
                 path = os.path.expanduser(path)
@@ -324,7 +322,7 @@ class File(FileSource):
                 if len(matches) > 1:
                     path = sorted(matches)
 
-        super().__init__(path, filter, merger, **kwargs)
+        super().__init__(path, filter, merger, stream=stream, parts=parts, **kwargs)
 
 
 source = File

@@ -8,6 +8,7 @@
 #
 
 import logging
+import warnings
 
 from .. import Reader
 
@@ -16,6 +17,16 @@ LOG = logging.getLogger(__name__)
 
 class ODBReader(Reader):
     _format = "odb"
+
+    def __init__(self, source, path, **kwargs):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the ODB reader.",
+                UserWarning,
+                stacklevel=2,
+            )
+        super().__init__(source, path)
 
     def to_pandas(self, odc_read_odb_kwargs=None):
         try:

@@ -529,6 +529,42 @@ def test_grib_healpix_grid(fl_type):
     assert r["grid_type"] == "healpix"
 
 
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+def test_grib_custom_unstructured_grid(fl_type):
+    ds, _ = load_grib_data("unstructured_6_points.grib2", fl_type, folder="data")
+
+    lats = np.array([40.0, 40.0, 40.0, 30.0, 30.0, 30.0])
+    lons = np.array([10.0, 20.0, 30.0, 5.0, 25.0, 35.0])
+    points_num = len(lats)
+
+    ref_vals = np.array([288.44410706, 286.67457581, 281.93043518, 303.16481018, 292.76637268, 293.47926331])
+
+    # Note: ecCodes cannot generate a gridSpec for these kind of grids and
+    # cannot get the latitudes and longitudes either (these cannot be stored in
+    # the GRIB message, and has to be provided manually!).
+    # These GRIB grids are represented by an EmptyGeography component.
+    f = ds[0]
+    assert f.geography.shape() == (points_num,)
+    r = f.geography.to_dict()
+    assert r["shape"] == (points_num,)
+    assert r["grid_type"] == "unstructured_grid"
+    assert np.allclose(f.values, ref_vals)
+    assert f.geography.latitudes() is None
+    assert f.geography.longitudes() is None
+
+    # we set the the gridSpec manually. With this all the geography functionality should work as expected.
+    gs = {"latitudes": lats, "longitudes": lons}
+
+    f_gs = f.set({"geography.grid_spec": gs})
+    assert f_gs.geography.shape() == (points_num,)
+    r = f_gs.geography.to_dict()
+    assert r["shape"] == (points_num,)
+    assert r["grid_type"] in ["unstructured_ll", "unstructured"]
+    assert np.allclose(f_gs.geography.latitudes(), lats)
+    assert np.allclose(f_gs.geography.longitudes(), lons)
+    assert np.allclose(f_gs.values, ref_vals)
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

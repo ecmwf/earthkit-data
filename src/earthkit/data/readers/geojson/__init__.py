@@ -10,7 +10,7 @@
 import mimetypes
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     kind, _ = mimetypes.guess_type(path)
     ext = path.split(".")[-1]
 
@@ -19,7 +19,7 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if ext in geojson_extensions or kind in geojson_mimetypes:
         from .reader import GeoJSONReader
 
-        return GeoJSONReader(source, path)
+        return GeoJSONReader(source, path, **kwargs)
 
 
 READER = reader

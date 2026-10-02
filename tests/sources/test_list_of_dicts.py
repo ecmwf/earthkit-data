@@ -51,6 +51,11 @@ def test_list_of_dicts(lod):
     assert ds[0].time.valid_datetime() == datetime.datetime(2018, 8, 1, 12, 0)
 
 
+def test_invalid_kwargs(lod):
+    with pytest.raises(TypeError):
+        from_source("list-of-dicts", lod, grib_handle_policy=None)
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

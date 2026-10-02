@@ -7,14 +7,23 @@
 # nor does it submit to any jurisdiction.
 #
 
+import warnings
+
 from earthkit.data.sources import Source
 
 from .core import ShapefileReaderBase
 
 
 class ShapeFileReader(Source, ShapefileReaderBase):
-    def __init__(self, source, path):
+    def __init__(self, source, path, **kwargs):
         assert path.endswith(".shp")
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the ShapeFile reader.",
+                UserWarning,
+                stacklevel=2,
+            )
         self._ori_source = source
         ShapefileReaderBase.__init__(self, source, path)
 

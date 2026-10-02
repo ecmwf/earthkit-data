@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import warnings
+
 from earthkit.data.sources import Source
 
 from .core import PPReaderBase
@@ -14,6 +16,13 @@ from .core import PPReaderBase
 
 class PPReader(Source, PPReaderBase):
     def __init__(self, source, path, **kwargs):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the PP reader.",
+                UserWarning,
+                stacklevel=2,
+            )
         PPReaderBase.__init__(self, source, path)
 
     def mutate_source(self):

@@ -8,7 +8,6 @@
 #
 
 import logging
-import mimetypes
 import tarfile
 
 from .archive import ArchiveReader
@@ -17,8 +16,8 @@ LOG = logging.getLogger(__name__)
 
 
 class TarReader(ArchiveReader):
-    def __init__(self, source, path, compression=None):
-        super().__init__(source, path)
+    def __init__(self, source, path, **kwargs):
+        super().__init__(source, path, **kwargs)
 
         with tarfile.open(path) as tar:
             self.expand(
@@ -28,13 +27,10 @@ class TarReader(ArchiveReader):
             )
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
-    # We don't use tarfile.is_tarfile() because is
-    # returns true given a file of zeros
-
-    kind, compression = mimetypes.guess_type(path)
-    if kind == "application/x-tar":
-        return TarReader(source, path, compression)
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+    # we explicitly do not consider all zeroes files as tar
+    if tarfile.is_tarfile(path) and open(path, "rb").read(512).strip(b"\0"):
+        return TarReader(source, path, **kwargs)
 
 
 READER = reader

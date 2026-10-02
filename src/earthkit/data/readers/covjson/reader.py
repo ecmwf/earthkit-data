@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import warnings
+
 from earthkit.data.core import Encodable
 from earthkit.data.sources import Source
 
@@ -44,15 +46,18 @@ class FieldlistMixIn:
 
 
 class CovJSONReader(XarrayMixIn, GeoJSONMixIn, FieldlistMixIn, CovJSONReaderBase):
-    def __init__(self, source, path):
+    def __init__(self, source, path, **kwargs):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the CovJSON reader.",
+                UserWarning,
+                stacklevel=2,
+            )
         CovJSONReaderBase.__init__(self, source, path)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.path})"
-
-    # def mutate_source(self):
-    #     # A Covjson is a source itself
-    #     return self
 
     def _json(self):
         import json
@@ -130,9 +135,6 @@ class CovJSONMemoryReader(Source):
         from earthkit.data.data.covjson import CovJSONData
 
         return CovJSONData(self)
-
-    # def _encode_default(self, encoder, **kwargs):
-    #     return encoder._encode_xarray(self.to_xarray(), **kwargs)
 
 
 class CovJSONInMemory(Source, XarrayMixIn, GeoJSONMixIn, FieldlistMixIn, Encodable):
