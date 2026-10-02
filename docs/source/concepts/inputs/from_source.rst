@@ -69,6 +69,8 @@ from_source
       - retrieve fields from the `Polytope services <https://polytope.readthedocs.io/en/latest/>`_
     * - :ref:`data-sources-s3`
       - retrieve data from Amazon S3 buckets
+    * - :ref:`data-sources-sql`
+      - read the result of an SQL query from a database
     * - :ref:`data-sources-wekeo`
       - retrieve data from `WEkEO`_ using the WEkEO grammar
     * - :ref:`data-sources-wekeo-cds`
@@ -1202,6 +1204,40 @@ s3
   Further examples:
 
       - :ref:`/tutorials/source/s3.ipynb`
+
+
+.. _data-sources-sql:
+
+sql
+---
+
+.. py:function:: from_source("sql", url, sql)
+  :noindex:
+
+  The ``sql`` source reads the result of an SQL query from any database supported by `SQLAlchemy <https://www.sqlalchemy.org/>`_. Requires the ``sql`` optional dependency, plus the database driver (e.g. ``psycopg`` for PostgreSQL). The database is only accessed when the data is converted.
+
+  .. warning::
+    ⚠️ This source is **experimental** and may change in future versions without
+    warning.
+
+  :param str url: the `SQLAlchemy database URL <https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls>`_, e.g. ``"postgresql://user:password@host/db"`` or ``"sqlite:///path/to/file.db"``
+  :param str sql: an SQL query, e.g. ``"SELECT * FROM stations"``. Use ``:name`` placeholders for parameters and pass their values with ``params``, e.g. ``to_pandas(params={"name": value})``
+
+  The data can be converted with:
+
+  - ``to_pandas(**kwargs)``: uses :func:`pandas.read_sql_query`, ``kwargs`` are passed to it (except ``chunksize``, which is not supported)
+  - ``to_geopandas(geom_col="geom", **kwargs)``: uses :func:`geopandas.read_postgis`, ``kwargs`` are passed to it. The geometry column must be in WKB format. ``chunksize`` is not supported.
+
+  .. code-block:: python
+
+      import earthkit.data as ekd
+
+      ds = ekd.from_source(
+          "sql",
+          "postgresql://user:password@host/db",
+          "SELECT * FROM stations WHERE country = 'DE'",
+      )
+      df = ds.to_pandas()
 
 
 .. _data-sources-wekeo:
