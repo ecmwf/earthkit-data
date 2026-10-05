@@ -450,11 +450,11 @@ class Vertical(VerticalBase):
         state = {}
         state["level"] = self._level
         state["layer"] = self._layer
-        state["type"] = self._type.name
+        state["level_type"] = self._type.name
         return state
 
     def __setstate__(self, state: dict) -> None:
-        self.__init__(level=state["level"], layer=state["layer"], level_type=state["level_type"])
+        self.__init__(**state)
 
     def _check(self) -> None:
         if self.layer() is not None:
@@ -580,3 +580,11 @@ class ParametricVertical(Vertical):
 
         current.update(d)
         return self.from_dict(current)
+
+    def __getstate__(self) -> dict:
+        state = {}
+        state["level"] = self._level
+        state["layer"] = self._layer
+        state["type"] = self._type.name
+        state["coefficients"] = self.coefficients()
+        return state
