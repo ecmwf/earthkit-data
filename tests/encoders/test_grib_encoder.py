@@ -801,3 +801,17 @@ def test_grib_encoder_level_keys_bad(_kwargs, error):
 
     with pytest.raises(error):
         encoder.encode(data=f, **_kwargs)
+
+
+def test_grib_encoder_deflate():
+    f = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()[0]
+
+    message = f._get_grib().message(deflate=True)
+
+    from earthkit.data.field.grib.create import create_grib_field_from_message
+
+    # this calls the encoder under the hood
+    r = create_grib_field_from_message(message, no_values=True)
+    f_r = r.to_field()
+
+    assert f_r.get("parameter.variable") == "2t"

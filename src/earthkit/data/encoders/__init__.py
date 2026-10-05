@@ -254,8 +254,6 @@ class EncoderMaker:
 
         name = name_or_encoder
 
-        # loader = EncoderLoader()
-
         method = "encoder"
 
         if name in self.ENCODERS:
@@ -278,18 +276,6 @@ class EncoderMaker:
             if name not in self.ENCODERS:
                 raise ValueError(f"Encoder '{name}' not found")
             klass = self.ENCODERS[name]
-
-            # if name not in self.ENCODERS:
-            #     raise ValueError(f"Encoder '{name}' not found")
-            # klass = self.ENCODERS[name]
-
-            # # from earthkit.data.core.plugins import find_plugin
-
-            # # klass = find_plugin(os.path.dirname(__file__), name, loader)
-            # # self.ENCODERS[name] = klass
-
-        print(f"Loaded encoder '{name}'")
-        print("ENCODERS:", self.ENCODERS)
 
         encoder = klass(*args, **kwargs)
 

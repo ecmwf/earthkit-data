@@ -14,8 +14,8 @@ from earthkit.data.decorators import normalise, normalise_grib_keys
 from earthkit.data.utils.dates import step_range_to_grib
 
 from .. import EncodedData, Encoder, FilePathEncodedData
+from .mars import handle_from_mars
 from .metadata import handle_from_metadata
-from .metkit import handle_from_metkit, is_metkit_key
 from .template import handle_from_template
 
 LOG = logging.getLogger(__name__)
@@ -194,18 +194,14 @@ class GribEncoder(Encoder):
 
     def _separate_metadata(self, metadata):
         field = {}
-        raw = {}
-        metkit = {}
+        ecc = {}
         for k, v in metadata.items():
             if "." in k:
                 field[k] = v
             else:
-                if is_metkit_key(k):
-                    metkit[k] = v
-                else:
-                    raw[k] = v
+                ecc[k] = v
 
-        return field, raw, metkit
+        return field, ecc
 
     def encode(
         self,
@@ -213,6 +209,7 @@ class GribEncoder(Encoder):
         values=None,
         check_nans=True,
         metadata=None,
+        mars_metadata=None,
         template=None,
         missing_value=9999,
         target=None,
@@ -304,25 +301,29 @@ class GribEncoder(Encoder):
         md.update(self._normalise_kwargs_names(**kwargs))
         md = self._normalise_metadata_key_names(md)
 
-        # separate the metadata into format independent field metadata,
-        # raw ecCodes GRIB metadata and metadata supported by the metkit GRIB encoder.
-        field_metadata, raw_metadata, metkit_metadata = self._separate_metadata(md)
+        # separate the metadata into format independent field metadata and
+        # raw ecCodes GRIB metadata
+        field_metadata, ecc_metadata = self._separate_metadata(md)
+
+        mars_metadata = {} if mars_metadata is None else mars_metadata
+
+        if mars_metadata:
+            if template is not None or data is not None:
+                raise ValueError("Cannot provide mars_metadata when a template or data is specified")
+            if values is None:
+                raise ValueError("When providing mars_metadata, values must also be specified")
 
         # when the input date is a datetime object time can be inferred from it
         can_infer_time = (
-            "date" in raw_metadata
+            "date" in ecc_metadata
             and isinstance(md["date"], datetime.datetime)
             and not self._has_standard_date_input([self.metadata, metadata, kwargs])
         )
 
-        # combine the raw ecCodes GRIB metadata and the metkit metadata into a single dictionary for further processing
-        metadata = dict(raw_metadata)
-        metadata.update(metkit_metadata)
-
         kwargs = dict()
         kwargs["values"] = values
         kwargs["check_nans"] = check_nans
-        kwargs["metadata"] = metadata
+        kwargs["metadata"] = ecc_metadata
         kwargs["missing_value"] = missing_value
         kwargs["can_infer_time"] = can_infer_time
 
@@ -331,7 +332,8 @@ class GribEncoder(Encoder):
         path_allowed = (
             target is not None
             and target._name == "file"
-            and not metadata
+            and not ecc_metadata
+            and not mars_metadata
             and values is not None
             and template is not None
             and missing_value == 9999
@@ -358,27 +360,24 @@ class GribEncoder(Encoder):
             )
         else:
             new_handle = None
-            if values is not None and template is None and metkit_metadata:
+            if mars_metadata:
                 try:
-                    print("Creating metkit handle with values and metadata")
-                    new_handle = handle_from_metkit(values, metkit_metadata)
+                    new_handle = handle_from_mars(values, mars_metadata)
                     if new_handle is not None:
-                        if field_metadata or raw_metadata:
+                        if field_metadata or ecc_metadata:
                             values = None
                             template = new_handle
                             new_handle = None
-                            metadata = raw_metadata
                         else:
-                            print("--> Returning GribEncodedData with new handle")
                             return GribEncodedData(new_handle, template_field=template_field)
 
                 except Exception as e:
-                    print("Failed to create metkit handle:", e)
+                    raise RuntimeError("Failed to create handle from mars metadata") from e
 
             handle = self._create_handle(
                 template=template,
                 values_shape=values.shape if values is not None else None,
-                ecc_metadata=metadata,
+                ecc_metadata=ecc_metadata,
                 field_metadata=field_metadata,
             )
             new_handle = self._update_handle(handle, **kwargs)
@@ -487,9 +486,6 @@ class GribEncoder(Encoder):
         if template is None:
             template = handle
 
-        # Ensure that values are provided if required
-        if values is None:
-            raise ValueError("Values must be provided for encoding")
         handle = self._create_handle(
             values_shape=values.shape if values is not None else None, ecc_metadata=metadata, template=template
         )
