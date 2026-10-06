@@ -103,3 +103,8 @@ def _listable(ds, filename):
                 return obj
 
     raise click.ClickException(f"'ls' is not supported for {filename!r} ({type(ds).__name__})")
+
+
+COMMANDS = {
+    "ls": ls,
+}
