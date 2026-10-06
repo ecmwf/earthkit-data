@@ -585,6 +585,6 @@ class ParametricVertical(Vertical):
         state = {}
         state["level"] = self._level
         state["layer"] = self._layer
-        state["type"] = self._type.name
+        state["level_type"] = self._type.name
         state["coefficients"] = self.coefficients()
         return state
