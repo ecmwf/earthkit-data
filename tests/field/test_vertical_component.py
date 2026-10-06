@@ -8,6 +8,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+import pickle
 
 import pytest
 
@@ -221,3 +222,12 @@ def test_vertical_component_register():
 
     assert r.level() == 1000
     assert r.level_type() == "_my_level_type"
+
+
+def test_vertical_component_serialise():
+    v = Vertical(level=850, level_type="pressure")
+
+    r = pickle.loads(pickle.dumps(v))
+
+    assert r.level() == 850
+    assert r.level_type() == "pressure"
