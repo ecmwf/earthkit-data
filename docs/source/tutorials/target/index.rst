@@ -13,3 +13,4 @@ Targets and encoders
     grib_to_geotiff.ipynb
     grib_to_zarr_target.ipynb
     grib_encoder.ipynb
+    grib_encoder_mars.ipynb
