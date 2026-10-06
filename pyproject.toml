@@ -20,6 +20,7 @@ classifiers = [
 ]
 dependencies = [
   "cfgrib>=0.9.10.1",
+  "click",
   "dask",
   "deprecation",
   "earthkit-utils~=1.0",
@@ -42,6 +43,7 @@ dependencies = [
 ]
 description = "A format-agnostic Python interface for geospatial data"
 dynamic = ["version"]
+entry-points."earthkit.cli".ls = "earthkit.data.cli:ls"
 entry-points."xarray.backends".earthkit = "earthkit.data.xr_engine.engine:EarthkitBackendEntrypoint"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
