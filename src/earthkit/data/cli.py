@@ -105,6 +105,53 @@ def _listable(ds, filename):
     raise click.ClickException(f"'ls' is not supported for {filename!r} ({type(ds).__name__})")
 
 
+@click.command()
+@click.argument("source-file", type=click.Path(exists=True, dir_okay=False))
+@click.argument("target-file", type=click.Path(exists=False, dir_okay=False))
+@click.option(
+    "--profile",
+    type=str,
+    default="earthkit",
+    help="Name of the xr-engine profile to use for conversion ('earthkit', 'grib', 'mars', 'defaults')",
+)
+@click.option(
+    "--profile-file",
+    type=click.Path(exists=True, dir_okay=False),
+    required=False,
+    help="YAML or JSON file containing a custom xr-engine profile",
+)
+def convert(source_file, target_file, profile, profile_file):
+    """Convert a data file to xarray format using the specified profile."""
+    import earthkit.data as ekd
+
+    in_data = ekd.from_source("file", source_file)
+    if profile_file:
+        from earthkit.data.xr_engine.profile import Profile
+
+        custom_profile = _read_profile(profile_file)
+        profile = Profile.make(profile, **custom_profile)
+
+    out_data = in_data.to_xarray(profile=profile)  # profile is of the Profile type, which is accepted by to_xarray
+    # but not documented in the public API. It is used internally to control the conversion process.
+
+    ekd.to_target("file", target_file, data=out_data)
+
+
+def _read_profile(filename):
+    """Read a YAML profile file and return its contents as a dictionary."""
+    import yaml
+
+    with open(filename, "r") as f:
+        try:
+            profile = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            raise click.ClickException(f"Error reading profile file {filename!r}: {e}")
+    if not isinstance(profile, dict):
+        raise click.ClickException(f"Profile file {filename!r} does not contain a valid dictionary")
+    return profile
+
+
 COMMANDS = {
     "ls": ls,
+    "convert": convert,
 }
