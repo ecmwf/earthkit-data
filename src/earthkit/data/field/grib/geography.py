@@ -158,7 +158,7 @@ class GribGeography(GeographyBase):
         if ECKIT_GRID_SUPPORT.has_ecc_grid_spec and ECKIT_GRID_SUPPORT.has_grid:
             grid_type = self.handle.get("gridType", default=None)
             # For certain gridTypes the grid specification is not available and when we try to access it a
-            # lot of errors are logged/printed from the supporting librares (eccodes/eckit), so we skip
+            # lot of errors are logged/printed from the supporting libraries (eccodes/eckit), so we skip
             # them here.
             # TODO: remove this check once the supporting libraries handle all grid types correctly
             if grid_type in ["lambert", "polar_stereographic", "mercator", "lambert_azimuthal_equal_area"]:
