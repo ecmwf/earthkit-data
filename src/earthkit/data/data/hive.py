@@ -78,3 +78,7 @@ class HiveFilePatternData(SourceData):
         :ref:`Using hive partitioning <file-pattern-hive-partitioning>`
         """
         return self._source.to_fieldlist(*args, **kwargs)
+
+    @property
+    def path(self) -> str | list[str] | None:
+        return None
