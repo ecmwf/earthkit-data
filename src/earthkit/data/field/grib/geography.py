@@ -156,6 +156,14 @@ class GribGeography(GeographyBase):
     @thread_safe_cached_property
     def _get_grid_spec_from_handle(self):
         if ECKIT_GRID_SUPPORT.has_ecc_grid_spec and ECKIT_GRID_SUPPORT.has_grid:
+            grid_type = self.handle.get("gridType", default=None)
+            # For certain gridTypes the grid specification is not available and when we try to access it a
+            # lot of errors are logged/printed from the supporting librares (eccodes/eckit), so we skip
+            # them here.
+            # TODO: remove this check once the supporting libraries handle all grid types correctly
+            if grid_type in ["lambert", "polar_stereographic", "mercator", "lambert_azimuthal_equal_area"]:
+                return None
+
             # Try to get the gridspec from the handle
             grid_spec = self.handle.get("gridSpec", default=None)
             if isinstance(grid_spec, str) and grid_spec != "":
@@ -167,7 +175,9 @@ class GribGeography(GeographyBase):
             if not isinstance(grid_spec, dict):
                 grid_spec = None
 
-        return grid_spec
+            return grid_spec
+
+        return None
 
     def area(self):
         north = self.handle.get("latitudeOfFirstGridPointInDegrees")
