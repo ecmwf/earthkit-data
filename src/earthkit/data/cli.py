@@ -245,8 +245,64 @@ def sel(source_file: str, target_file: str, conditions: tuple[str, ...]) -> None
         raise click.ClickException(f"Could not select from {source_file!r}: {error}") from error
 
 
+@click.command(name="order_by")
+@click.argument("source-file", type=click.Path(exists=True, dir_okay=False))
+@click.argument("target-file", type=click.Path(dir_okay=False))
+@click.argument("keys", nargs=-1, required=True)
+def order_by(source_file: str, target_file: str, keys: tuple[str, ...]) -> None:
+    """Order GRIB fields or BUFR messages by metadata keys.
+
+    Bare keys use ascending order. Use KEY=ascending or KEY=descending to specify
+    direction, or KEY=value1,value2 to specify a custom order containing all values.
+    Keys are applied in the order given.
+    """
+    from earthkit.data import from_source, to_target
+    from earthkit.data.data.bufr import BUFRData
+    from earthkit.data.data.grib import GribData
+
+    ordering = {}
+    for argument in keys:
+        key, separator, value = argument.partition("=")
+        key = key.strip()
+        value = value.strip()
+        if not key:
+            raise click.BadParameter("Ordering keys must not be empty", param_hint="keys")
+        if key in ordering:
+            raise click.BadParameter(f"Duplicate ordering key {key!r}", param_hint="keys")
+        if not separator:
+            ordering[key] = "ascending"
+        elif value in ("ascending", "descending"):
+            ordering[key] = value
+        elif "," in value:
+            values = [item.strip() for item in value.split(",")]
+            if any(not item for item in values) or len(values) != len(set(values)):
+                raise click.BadParameter("Custom order values must be non-empty and unique", param_hint="keys")
+            ordering[key] = values
+        else:
+            raise click.BadParameter(
+                f"Expected KEY, KEY=ascending, KEY=descending or KEY=value1,value2, got {argument!r}",
+                param_hint="keys",
+            )
+
+    if os.path.exists(target_file) and os.path.samefile(source_file, target_file):
+        raise click.ClickException("Source and target files must be different")
+
+    try:
+        data = from_source("file", source_file)
+        if not isinstance(data, (GribData, BUFRData)):
+            raise click.ClickException("'order_by' only supports GRIB and BUFR input")
+        data = _listable(data, source_file, method="order_by")
+        ordered = data.order_by(ordering)
+        to_target("file", target_file, data=ordered)
+    except click.ClickException:
+        raise
+    except Exception as error:
+        raise click.ClickException(f"Could not order {source_file!r}: {error}") from error
+
+
 COMMANDS = {
     "ls": ls,
     "convert": convert,
     "sel": sel,
+    "order_by": order_by,
 }
