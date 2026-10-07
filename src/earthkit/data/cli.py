@@ -192,8 +192,10 @@ def sel(source_file: str, target_file: str, conditions: tuple[str, ...]) -> None
 
     Values can be comma-separated lists or integer slices with an exclusive stop.
     For example: earthkit sel input.grib output.grib metadata.level=1:4
+    NetCDF conditions use native xarray coordinate names, for example level=300:500.
     """
     from earthkit.data import from_source, to_target
+    from earthkit.data.data.netcdf import NetCDFData
 
     selection = {}
     for condition in conditions:
@@ -212,8 +214,25 @@ def sel(source_file: str, target_file: str, conditions: tuple[str, ...]) -> None
         raise click.ClickException("Source and target files must be different")
 
     try:
-        data = _listable(from_source("file", source_file), source_file, method="sel")
-        selected = data.sel(selection)
+        data = from_source("file", source_file)
+        if isinstance(data, NetCDFData):
+            dataset = data.to_xarray()
+            indexers = {}
+            for key, value in selection.items():
+                coordinate = dataset.coords[key]
+                if callable(value):
+                    indexers[key] = coordinate[[value(number) for number in coordinate.values]]
+                elif isinstance(value, list):
+                    import numpy as np
+
+                    values = np.asarray(value, dtype=coordinate.dtype)
+                    indexers[key] = coordinate[coordinate.isin(values)]
+                else:
+                    indexers[key] = coordinate.dtype.type(value)
+            selected = dataset.sel(indexers)
+        else:
+            data = _listable(data, source_file, method="sel")
+            selected = data.sel(selection)
         to_target("file", target_file, data=selected)
     except Exception as error:
         raise click.ClickException(f"Could not select from {source_file!r}: {error}") from error

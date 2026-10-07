@@ -50,7 +50,7 @@ def test_cli_selection_value_unbound(value, expected):
     assert not selection(None)
 
 
-@pytest.mark.parametrize("suffix", ["grib", "nc"])
+@pytest.mark.parametrize("suffix", ["grib"])
 @pytest.mark.parametrize(
     "conditions,selection,count",
     [
@@ -88,6 +88,55 @@ def test_cli_sel_fields(tmp_path, suffix, conditions, selection, count):
     expected_fields = {tuple(field.get(keys)): field.to_numpy() for field in expected}
     for field in actual:
         np.testing.assert_allclose(field.to_numpy(), expected_fields[tuple(field.get(keys))])
+
+
+@pytest.mark.parametrize(
+    "conditions,indexers",
+    [
+        (["level=700"], {"level": 700}),
+        (["level=300,500"], {"level": [500, 300]}),
+        (["level=300:500"], {"level": [400, 300]}),
+        (["level=300:701:200"], {"level": [700, 500, 300]}),
+        (["level=:500"], {"level": [400, 300]}),
+        (["level=700:"], {"level": [1000, 850, 700]}),
+        (["level=300:500", "latitude=0,30"], {"level": [400, 300], "latitude": [30, 0]}),
+    ],
+)
+def test_cli_sel_netcdf(tmp_path, monkeypatch, conditions, indexers):
+    import xarray as xr
+
+    from earthkit.data.data.netcdf import NetCDFData
+
+    def refuse_fieldlist(*args, **kwargs):
+        pytest.fail("NetCDF selection must not convert to a FieldList")
+
+    monkeypatch.setattr(NetCDFData, "to_fieldlist", refuse_fieldlist)
+    source = earthkit_examples_file("tuv_pl.nc")
+    target = tmp_path / "selected.nc"
+    with xr.open_dataset(source) as dataset:
+        expected = dataset.sel(indexers).load()
+
+    result = CliRunner().invoke(sel, [source, str(target), *conditions])
+    assert result.exit_code == 0, result.output
+    with xr.open_dataset(target) as actual:
+        xr.testing.assert_identical(actual, expected)
+
+
+def test_cli_sel_netcdf_native_coordinates(tmp_path):
+    import xarray as xr
+
+    source = tmp_path / "input.data"
+    target = tmp_path / "selected.nc"
+    dataset = xr.Dataset(
+        {"reading": (("station", "sample"), np.arange(12).reshape(2, 6))},
+        coords={"station": ["north", "south"], "sample": np.arange(6)},
+        attrs={"description": "Station observations"},
+    )
+    dataset.to_netcdf(source)
+    result = CliRunner().invoke(sel, [str(source), str(target), "station=south", "sample=1:4"])
+    assert result.exit_code == 0, result.output
+    with xr.open_dataset(target) as actual:
+        xr.testing.assert_identical(actual, dataset.sel(station="south", sample=[1, 2, 3]))
 
 
 @pytest.mark.parametrize(
