@@ -30,6 +30,55 @@ def _split_csv(ctx, param, value):
     return result or None
 
 
+def _ls_cubes(df):
+    def _walk(node, cols):
+        if not cols:
+            return [{"__num__": len(node)}]
+        col = cols[0]
+        cubes = []
+        groups = []
+        na = node[col].isna()
+        if na.any():
+            groups.append((None, node[na]))
+        groups.extend(node.groupby(col))
+        for val, child in groups:
+            for sub in _walk(child, cols[1:]):
+                for vals, cube in cubes:
+                    if sub == cube:
+                        vals.append(val)
+                        break
+                else:
+                    cubes.append(([val], sub))
+        return [{col: vals, **cube} for vals, cube in cubes]
+
+    first = True
+    for cube in _walk(df, list(df.columns)):
+        w = 0
+        num = 0
+        lines = []
+        for key, vals in cube.items():
+            if key == "__num__":
+                num = vals
+                continue
+            w = max(w, len(key))
+            vals_s = (
+                ("[" + ", ".join(str(val) for val in vals) + "]")
+                if len(vals) != 1
+                else str(vals[0])
+            )
+            lines.append((key, vals_s))
+        if w == 0:
+            continue
+        if first:
+            first = False
+        else:
+            click.echo()
+        if num > 1:
+            click.echo(" " * w + f"  ({num} items)")
+        for key, vals in lines:
+            click.echo(f"{key:<{w}s}  {vals}")
+
+
 @click.command()
 @click.argument("filename", type=click.Path(exists=True, dir_okay=False))
 @click.option(
@@ -53,7 +102,12 @@ def _split_csv(ctx, param, value):
     callback=_split_csv,
     help="Additional metadata keys to show on top of the default set. Comma-separated or repeated.",
 )
-def ls(filename, num, keys, extra_keys):
+@click.option(
+    "--cubes",
+    is_flag=True,
+    help="Group items into hypercubes.",
+)
+def ls(filename, num, keys, extra_keys, cubes):
     """List the contents of FILENAME as a metadata summary table."""
     import pandas as pd
 
@@ -71,6 +125,10 @@ def ls(filename, num, keys, extra_keys):
 
     df = ds.ls(**kwargs)
     if df is None:
+        return
+
+    if cubes:
+        _ls_cubes(df)
         return
 
     with pd.option_context(
