@@ -13,6 +13,9 @@ defined here are registered with it through the ``earthkit.cli`` entry point gro
 ``pyproject.toml``, so ``earthkit ls <file>`` becomes available once earthkit-data is installed.
 """
 
+import os
+from collections.abc import Callable
+
 import click
 
 
@@ -82,14 +85,14 @@ def ls(filename, num, keys, extra_keys):
         click.echo(df.to_string())
 
 
-def _listable(ds, filename):
-    """Return an object with an ``ls`` method for the data loaded from ``filename``.
+def _listable(ds, filename, method="ls"):
+    """Return an object with the requested method for data loaded from ``filename``.
 
     :func:`from_source` returns a :class:`~earthkit.data.data.Data` object. Depending on the
     file format it can be converted into a FieldList (e.g. GRIB, NetCDF) or a FeatureList
-    (e.g. BUFR), both of which provide ``ls``.
+    (e.g. BUFR), both of which provide ``ls`` and ``sel``.
     """
-    if hasattr(ds, "ls"):
+    if hasattr(ds, method):
         return ds
 
     available = getattr(ds, "available_types", None) or []
@@ -99,10 +102,10 @@ def _listable(ds, filename):
                 obj = ds.to(type_name)
             except Exception as e:
                 raise click.ClickException(f"Could not convert {filename!r} to a {type_name}: {e}")
-            if hasattr(obj, "ls"):
+            if hasattr(obj, method):
                 return obj
 
-    raise click.ClickException(f"'ls' is not supported for {filename!r} ({type(ds).__name__})")
+    raise click.ClickException(f"{method!r} is not supported for {filename!r} ({type(ds).__name__})")
 
 
 @click.command()
@@ -151,7 +154,73 @@ def _read_profile(filename):
     return profile
 
 
+def _selection_value(value: str) -> str | list | Callable:
+    """Parse a scalar, comma-separated list or integer range for selection."""
+    if "," in value:
+        items = value.split(",")
+        if any(not item.strip() for item in items):
+            raise ValueError("List values must not be empty")
+        result = []
+        for item in items:
+            parsed = _selection_value(item.strip())
+            if callable(parsed):
+                raise ValueError("Open-ended slices cannot be combined with comma-separated values")
+            result.extend(parsed if isinstance(parsed, list) else [parsed])
+        return result
+    if ":" in value:
+        parts = value.split(":")
+        if len(parts) == 2 and bool(parts[0].strip()) != bool(parts[1].strip()):
+            if not parts[0].strip():
+                stop = int(parts[1])
+                return lambda number: number is not None and number < stop
+            start = int(parts[0])
+            return lambda number: number is not None and number >= start
+        if len(parts) not in (2, 3) or any(not part.strip() for part in parts):
+            raise ValueError("Slices must be START:STOP[:STEP], :STOP or START: with integer bounds")
+        return list(range(*(int(part) for part in parts)))
+    if not value.strip():
+        raise ValueError("Selection values must not be empty")
+    return value.strip()
+
+
+@click.command()
+@click.argument("source-file", type=click.Path(exists=True, dir_okay=False))
+@click.argument("target-file", type=click.Path(dir_okay=False))
+@click.argument("conditions", nargs=-1, required=True)
+def sel(source_file: str, target_file: str, conditions: tuple[str, ...]) -> None:
+    """Select fields or BUFR messages using KEY=VALUE conditions.
+
+    Values can be comma-separated lists or integer slices with an exclusive stop.
+    For example: earthkit sel input.grib output.grib metadata.level=1:4
+    """
+    from earthkit.data import from_source, to_target
+
+    selection = {}
+    for condition in conditions:
+        key, separator, value = condition.partition("=")
+        key = key.strip()
+        if not separator or not key:
+            raise click.BadParameter(f"Expected KEY=VALUE, got {condition!r}", param_hint="conditions")
+        if key in selection:
+            raise click.BadParameter(f"Duplicate selection key {key!r}", param_hint="conditions")
+        try:
+            selection[key] = _selection_value(value)
+        except ValueError as error:
+            raise click.BadParameter(f"Invalid selection {condition!r}: {error}", param_hint="conditions") from error
+
+    if os.path.exists(target_file) and os.path.samefile(source_file, target_file):
+        raise click.ClickException("Source and target files must be different")
+
+    try:
+        data = _listable(from_source("file", source_file), source_file, method="sel")
+        selected = data.sel(selection)
+        to_target("file", target_file, data=selected)
+    except Exception as error:
+        raise click.ClickException(f"Could not select from {source_file!r}: {error}") from error
+
+
 COMMANDS = {
     "ls": ls,
     "convert": convert,
+    "sel": sel,
 }
