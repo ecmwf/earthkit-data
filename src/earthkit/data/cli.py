@@ -61,11 +61,7 @@ def _ls_cubes(df):
                 num = vals
                 continue
             w = max(w, len(key))
-            vals_s = (
-                ("[" + ", ".join(str(val) for val in vals) + "]")
-                if len(vals) != 1
-                else str(vals[0])
-            )
+            vals_s = ("[" + ", ".join(str(val) for val in vals) + "]") if len(vals) != 1 else str(vals[0])
             lines.append((key, vals_s))
         if w == 0:
             continue
