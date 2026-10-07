@@ -13,6 +13,7 @@ defined here are registered with it through the ``earthkit.cli`` entry point gro
 ``pyproject.toml``, so ``earthkit ls <file>`` becomes available once earthkit-data is installed.
 """
 
+import datetime
 import os
 from collections.abc import Callable
 
@@ -168,6 +169,12 @@ def _selection_value(value: str) -> str | list | Callable:
             result.extend(parsed if isinstance(parsed, list) else [parsed])
         return result
     if ":" in value:
+        try:
+            datetime.datetime.fromisoformat(value.strip())
+        except ValueError:
+            pass
+        else:
+            return value.strip()
         parts = value.split(":")
         if len(parts) == 2 and bool(parts[0].strip()) != bool(parts[1].strip()):
             if not parts[0].strip():

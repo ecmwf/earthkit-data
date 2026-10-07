@@ -1,3 +1,4 @@
+import datetime
 from pathlib import Path
 
 import numpy as np
@@ -6,7 +7,7 @@ from click.testing import CliRunner
 
 from earthkit.data import from_source
 from earthkit.data.cli import COMMANDS, _selection_value, sel
-from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file, earthkit_test_data_file
 
 
 @pytest.mark.parametrize(
@@ -195,6 +196,130 @@ def test_cli_sel_refuses_input_overwrite(tmp_path, alias):
     assert result.exit_code == 1
     assert "Source and target files must be different" in result.output
     assert source.read_bytes() == original
+
+
+def _check_grib_selection(tmp_path, source, conditions, keys, expected_metadata):
+    target = tmp_path / "selected.grib"
+    result = CliRunner().invoke(sel, [source, str(target), *conditions])
+    assert result.exit_code == 0, result.output
+    if not expected_metadata:
+        assert not target.exists() or target.stat().st_size == 0
+        return
+
+    actual = from_source("file", str(target)).to_fieldlist()
+    assert len(actual) == len(expected_metadata)
+    assert actual.get(keys) == expected_metadata
+    original = from_source("file", source).to_fieldlist()
+    expected_fields = [field for field in original if field.get(keys) in expected_metadata]
+    for field, expected in zip(actual, expected_fields):
+        np.testing.assert_array_equal(field.to_numpy(), expected.to_numpy())
+
+
+@pytest.mark.parametrize("key", ["parameter.variable", "metadata.shortName"])
+def test_cli_sel_grib_single_message(tmp_path, key):
+    _check_grib_selection(tmp_path, earthkit_test_data_file("test_single.grib"), [f"{key}=2t"], [key], [["2t"]])
+
+
+@pytest.mark.parametrize(
+    "conditions,keys,expected_metadata",
+    [
+        (["parameter.variable=u", "vertical.level=700"], ["parameter.variable", "vertical.level"], [["u", 700]]),
+        (["metadata.paramId=131", "vertical.level=700"], ["metadata.paramId", "vertical.level"], [[131, 700]]),
+        (
+            ["parameter.variable=t,u", "vertical.level=700,500"],
+            ["parameter.variable", "vertical.level"],
+            [["t", 700], ["u", 700], ["t", 500], ["u", 500]],
+        ),
+        (["variable=w"], ["variable"], []),
+        (["INVALIDKEY=w"], ["INVALIDKEY"], []),
+        (
+            ["parameter.variable=t", "vertical.level=500,700", "metadata.marsType=an"],
+            ["parameter.variable", "vertical.level", "metadata.marsType"],
+            [["t", 700, "an"], ["t", 500, "an"]],
+        ),
+        (
+            ["parameter.variable=t", "vertical.level=500,700", "metadata.mars.type=an"],
+            ["parameter.variable", "vertical.level", "metadata.mars.type"],
+            [["t", 700, "an"], ["t", 500, "an"]],
+        ),
+    ],
+)
+def test_cli_sel_grib_single_file(tmp_path, conditions, keys, expected_metadata):
+    _check_grib_selection(tmp_path, earthkit_examples_file("tuv_pl.grib"), conditions, keys, expected_metadata)
+
+
+@pytest.mark.parametrize(
+    "level,expected_metadata",
+    [
+        ("600:701", [[131, 700]]),
+        ("650:751", [[131, 700]]),
+        ("1000:", [[131, 1000]]),
+        (":301", [[131, 300]]),
+        ("500:701", [[131, 700], [131, 500]]),
+        ("510:521", []),
+    ],
+)
+def test_cli_sel_grib_slice_single_file(tmp_path, level, expected_metadata):
+    _check_grib_selection(
+        tmp_path,
+        earthkit_examples_file("tuv_pl.grib"),
+        ["metadata.paramId=131", f"vertical.level={level}"],
+        ["metadata.paramId", "vertical.level"],
+        expected_metadata,
+    )
+
+
+def test_cli_sel_grib_time_steps_repeated(tmp_path):
+    for _ in range(2):
+        _check_grib_selection(
+            tmp_path,
+            earthkit_test_data_file("t_time_series.grib"),
+            ["parameter.variable=t", "time.step=3,6"],
+            ["parameter.variable", "vertical.level", "time.step"],
+            [["t", 1000, datetime.timedelta(hours=3)], ["t", 1000, datetime.timedelta(hours=6)]],
+        )
+
+
+@pytest.mark.parametrize("step_key", ["metadata.endStep", "metadata.step", "time.step"])
+def test_cli_sel_grib_date_time_step(tmp_path, step_key):
+    _check_grib_selection(
+        tmp_path,
+        earthkit_test_data_file("t_time_series.grib"),
+        ["metadata.date=20201221", "metadata.time=1200", f"{step_key}=9"],
+        ["metadata.shortName", "metadata.date", "metadata.time", "metadata.step", "time.step"],
+        [
+            ["t", 20201221, 1200, 9, datetime.timedelta(hours=9)],
+            ["z", 20201221, 1200, 9, datetime.timedelta(hours=9)],
+        ],
+    )
+
+
+def test_cli_sel_grib_valid_datetime(tmp_path):
+    _check_grib_selection(
+        tmp_path,
+        earthkit_test_data_file("t_time_series.grib"),
+        ["time.valid_datetime=2020-12-21T21:00:00"],
+        ["parameter.variable", "time.base_datetime", "time.step"],
+        [
+            ["t", datetime.datetime(2020, 12, 21, 12), datetime.timedelta(hours=9)],
+            ["z", datetime.datetime(2020, 12, 21, 12), datetime.timedelta(hours=9)],
+        ],
+    )
+
+
+@pytest.mark.parametrize("key", ["time.base_datetime", "time.forecast_reference_time"])
+def test_cli_sel_grib_base_datetime(tmp_path, key):
+    _check_grib_selection(
+        tmp_path,
+        earthkit_test_data_file("t_time_series.grib"),
+        [f"{key}=2020-12-21T12:00:00"],
+        ["parameter.variable", "time.base_datetime", "time.step"],
+        [
+            [variable, datetime.datetime(2020, 12, 21, 12), datetime.timedelta(hours=step)]
+            for step in [0, 3, 6, 9, 48]
+            for variable in ["t", "z"]
+        ],
+    )
 
 
 def test_cli_sel_registered():
