@@ -8,9 +8,14 @@
 
 """Commands contributed by earthkit-data to the shared ``earthkit`` command line interface.
 
-The ``earthkit`` console script itself lives in :mod:`earthkit.utils.cli`. The commands
-defined here are registered with it through the ``earthkit.cli`` entry point group in
-``pyproject.toml``, so ``earthkit ls <file>`` becomes available once earthkit-data is installed.
+The ``earthkit`` console script itself lives in :mod:`earthkit.cli.main` (earthkit-utils). This module is
+part of the ``earthkit.cli`` namespace package, which is shared by all earthkit packages, and registers its commands on
+the shared ``earthkit`` group with ``@earthkit.command()``, so ``earthkit ls <file>`` becomes available once
+earthkit-data is installed.
+
+This module lives outside of ``earthkit.data`` on purpose, so that listing the commands does not import
+``earthkit.data``. Only import :mod:`click` and light standard library modules at module level, and import
+everything else inside the command functions.
 """
 
 import datetime
@@ -19,6 +24,7 @@ import sys
 from collections.abc import Callable
 
 import click
+from earthkit.cli.main import earthkit
 
 
 def _split_csv(ctx, param, value):
@@ -76,7 +82,7 @@ def _ls_cubes(df):
             click.echo(f"{key:<{w}s}  {vals}")
 
 
-@click.command()
+@earthkit.command()
 @click.argument("filename", type=click.Path(exists=True, dir_okay=False))
 @click.option(
     "-n",
@@ -218,7 +224,7 @@ def _listable(ds, filename, method="ls", stream=False):
     raise click.ClickException(f"{method!r} is not supported for {filename!r} ({type(ds).__name__})")
 
 
-@click.command()
+@earthkit.command()
 @click.argument("source-file", type=click.Path(exists=True, dir_okay=False))
 @click.argument("target-file", type=click.Path(exists=False, dir_okay=False))
 @click.option(
@@ -279,7 +285,7 @@ def _selection_value(value: str) -> str | list | Callable:
     return value.strip()
 
 
-@click.command()
+@earthkit.command()
 @click.argument("source-file", type=click.Path(exists=True, dir_okay=False, allow_dash=True))
 @click.argument("target-file", type=click.Path(dir_okay=False))
 @click.argument("conditions", nargs=-1, required=True)
@@ -341,7 +347,7 @@ def sel(source_file: str, target_file: str, conditions: tuple[str, ...]) -> None
         raise click.ClickException(f"Could not select from {source_file!r}: {error}") from error
 
 
-@click.command(name="order_by")
+@earthkit.command(name="order_by")
 @click.argument("source-file", type=click.Path(exists=True, dir_okay=False, allow_dash=True))
 @click.argument("target-file", type=click.Path(dir_okay=False))
 @click.argument("keys", nargs=-1, required=True)
@@ -395,11 +401,3 @@ def order_by(source_file: str, target_file: str, keys: tuple[str, ...]) -> None:
         raise
     except Exception as error:
         raise click.ClickException(f"Could not order {source_file!r}: {error}") from error
-
-
-COMMANDS = {
-    "ls": ls,
-    "convert": convert,
-    "sel": sel,
-    "order_by": order_by,
-}

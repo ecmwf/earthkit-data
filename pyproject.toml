@@ -43,7 +43,6 @@ dependencies = [
 ]
 description = "A format-agnostic Python interface for geospatial data"
 dynamic = ["version"]
-entry-points."earthkit.cli".data = "earthkit.data.cli:COMMANDS"
 entry-points."xarray.backends".earthkit = "earthkit.data.xr_engine.engine:EarthkitBackendEntrypoint"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -144,7 +143,7 @@ select = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["earthkit.data"]
+include = ["earthkit.data", "earthkit.cli"]
 where = ["src/"]
 
 [tool.setuptools_scm]

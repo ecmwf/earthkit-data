@@ -3,9 +3,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 from click.testing import CliRunner
+from earthkit.cli.main import earthkit
 
+from earthkit.cli.data import order_by
 from earthkit.data import from_source
-from earthkit.data.cli import COMMANDS, order_by
 from earthkit.data.utils.testing import earthkit_examples_file
 
 
@@ -135,4 +136,4 @@ def test_cli_order_by_refuses_input_overwrite(tmp_path, alias):
 
 
 def test_cli_order_by_registered():
-    assert COMMANDS["order_by"] is order_by
+    assert earthkit.commands["order_by"] is order_by

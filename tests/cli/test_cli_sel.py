@@ -4,9 +4,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 from click.testing import CliRunner
+from earthkit.cli.main import earthkit
 
+from earthkit.cli.data import _selection_value, sel
 from earthkit.data import from_source
-from earthkit.data.cli import COMMANDS, _selection_value, sel
 from earthkit.data.utils.testing import earthkit_examples_file, earthkit_test_data_file
 
 
@@ -323,4 +324,4 @@ def test_cli_sel_grib_base_datetime(tmp_path, key):
 
 
 def test_cli_sel_registered():
-    assert COMMANDS["sel"] is sel
+    assert earthkit.commands["sel"] is sel
