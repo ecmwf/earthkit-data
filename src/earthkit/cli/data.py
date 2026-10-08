@@ -25,6 +25,7 @@ from collections.abc import Callable
 
 import click
 from earthkit.cli.main import earthkit
+from earthkit.cli.standard_args import add_options, source_options
 
 
 def _split_csv(ctx, param, value):
@@ -83,7 +84,7 @@ def _ls_cubes(df):
 
 
 @earthkit.command()
-@click.argument("filename", type=click.Path(exists=True, dir_okay=False))
+@add_options([source_options(positional=True)])
 @click.option(
     "-n",
     "--num",
@@ -110,13 +111,11 @@ def _ls_cubes(df):
     is_flag=True,
     help="Group items into hypercubes.",
 )
-def ls(filename, num, keys, extra_keys, cubes):
+def ls(source, num, keys, extra_keys, cubes):
     """List the contents of FILENAME as a metadata summary table."""
     import pandas as pd
 
-    from earthkit.data import from_source
-
-    ds = _listable(from_source("file", filename), filename)
+    ds = _listable(source, None)
 
     kwargs = {}
     if num is not None:
