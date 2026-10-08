@@ -25,7 +25,7 @@ from collections.abc import Callable
 
 import click
 from earthkit.cli.main import earthkit
-from earthkit.cli.standard_args import add_options, source_options
+from earthkit.cli.standard_args import add_options, profile_option, source_options, target_options
 
 
 def _split_csv(ctx, param, value):
@@ -224,20 +224,19 @@ def _listable(ds, filename, method="ls", stream=False):
 
 
 @earthkit.command()
-@click.argument("source-file", type=click.Path(exists=True, dir_okay=False))
-@click.argument("target-file", type=click.Path(exists=False, dir_okay=False))
-@click.option(
-    "--profile",
-    type=str,
-    default=["earthkit"],
-    multiple=True,
-    help=(
-        "Profile controlling how the xr-engine builds the Xarray dataset. Either the name of a "
-        "pre-defined profile ('earthkit', 'grib', 'mars', 'defaults') or a path to a YAML/JSON file "
-        "containing a custom profile. Can be specified multiple times, in which case the profiles are "
-        "layered in order, each one overriding the options defined by the previous ones."
-    ),
-)
+@add_options([source_options(positional=True), target_options(positional=True), profile_option])
+# @click.option(
+#     "--profile",
+#     type=str,
+#     default=["earthkit"],
+#     multiple=True,
+#     help=(
+#         "Profile controlling how the xr-engine builds the Xarray dataset. Either the name of a "
+#         "pre-defined profile ('earthkit', 'grib', 'mars', 'defaults') or a path to a YAML/JSON file "
+#         "containing a custom profile. Can be specified multiple times, in which case the profiles are "
+#         "layered in order, each one overriding the options defined by the previous ones."
+#     ),
+# )
 def convert(source_file, target_file, profile):
     """Convert a data file to xarray format using the specified profile(s)."""
     import earthkit.data as ekd
