@@ -15,6 +15,7 @@ defined here are registered with it through the ``earthkit.cli`` entry point gro
 
 import datetime
 import os
+import sys
 from collections.abc import Callable
 
 import click
@@ -140,7 +141,58 @@ def ls(filename, num, keys, extra_keys, cubes):
         click.echo(df.to_string())
 
 
-def _listable(ds, filename, method="ls"):
+def _check_different_files(source_file: str, target_file: str) -> None:
+    """Raise if SOURCE_FILE and TARGET_FILE are the same file on disk.
+
+    No-op when either side is ``-`` (stdin/stdout), since there is then no real file to compare.
+    """
+    if source_file == "-" or target_file == "-":
+        return
+    if os.path.exists(target_file) and os.path.samefile(source_file, target_file):
+        raise click.ClickException("Source and target files must be different")
+
+
+def _read_source(source_file: str):
+    """Read SOURCE_FILE, or GRIB data from stdin when SOURCE_FILE is ``-``.
+
+    Returns
+    -------
+    tuple
+        ``(data, stream)`` where ``data`` is the loaded :class:`~earthkit.data.data.Data` object
+        and ``stream`` is True when it was read from stdin. Downstream code should pass
+        ``stream`` to :func:`_listable` so field/feature lists get materialised with
+        ``read_all=True``, since a single-pass stream cannot support random access operations
+        such as ``sel`` or ``order_by``.
+
+    Raises
+    ------
+    click.ClickException
+        If SOURCE_FILE is ``-`` and the stdin data is not GRIB, since that is the only format
+        that currently supports being read from a stream.
+    """
+    from earthkit.data import from_source
+    from earthkit.data.data.stream import StreamFieldListData
+
+    if source_file == "-":
+        data = from_source("stream", sys.stdin.buffer)
+        if not isinstance(data, StreamFieldListData):
+            raise click.ClickException("Reading from stdin is only supported for GRIB input")
+        return data, True
+
+    return from_source("file", source_file), False
+
+
+def _write_target(target_file: str, data, **kwargs) -> None:
+    """Write DATA to TARGET_FILE, or to stdout when TARGET_FILE is ``-``."""
+    from earthkit.data import to_target
+
+    if target_file == "-":
+        to_target("file", sys.stdout.buffer, data=data, **kwargs)
+    else:
+        to_target("file", target_file, data=data, **kwargs)
+
+
+def _listable(ds, filename, method="ls", stream=False):
     """Return an object with the requested method for data loaded from ``filename``.
 
     :func:`from_source` returns a :class:`~earthkit.data.data.Data` object. Depending on the
@@ -154,7 +206,10 @@ def _listable(ds, filename, method="ls"):
     for type_name in ("fieldlist", "featurelist"):
         if type_name in available:
             try:
-                obj = ds.to(type_name)
+                if not stream:
+                    obj = ds.to(type_name)
+                else:
+                    obj = ds.to(type_name, read_all=True)
             except Exception as e:
                 raise click.ClickException(f"Could not convert {filename!r} to a {type_name}: {e}")
             if hasattr(obj, method):
@@ -225,7 +280,7 @@ def _selection_value(value: str) -> str | list | Callable:
 
 
 @click.command()
-@click.argument("source-file", type=click.Path(exists=True, dir_okay=False))
+@click.argument("source-file", type=click.Path(exists=True, dir_okay=False, allow_dash=True))
 @click.argument("target-file", type=click.Path(dir_okay=False))
 @click.argument("conditions", nargs=-1, required=True)
 def sel(source_file: str, target_file: str, conditions: tuple[str, ...]) -> None:
@@ -234,8 +289,9 @@ def sel(source_file: str, target_file: str, conditions: tuple[str, ...]) -> None
     Values can be comma-separated lists or integer slices with an exclusive stop.
     For example: earthkit sel input.grib output.grib metadata.level=1:4
     NetCDF conditions use native xarray coordinate names, for example level=300:500.
+    Use '-' as SOURCE_FILE to read GRIB data from stdin (not currently supported for BUFR or NetCDF).
+    Use '-' as TARGET_FILE to write the result to stdout.
     """
-    from earthkit.data import from_source, to_target
     from earthkit.data.data.netcdf import NetCDFData
 
     selection = {}
@@ -251,12 +307,14 @@ def sel(source_file: str, target_file: str, conditions: tuple[str, ...]) -> None
         except ValueError as error:
             raise click.BadParameter(f"Invalid selection {condition!r}: {error}", param_hint="conditions") from error
 
-    if os.path.exists(target_file) and os.path.samefile(source_file, target_file):
-        raise click.ClickException("Source and target files must be different")
+    to_stdout = target_file == "-"
+    _check_different_files(source_file, target_file)
 
     try:
-        data = from_source("file", source_file)
-        if isinstance(data, NetCDFData):
+        data, stream = _read_source(source_file)
+
+        is_netcdf = isinstance(data, NetCDFData)
+        if is_netcdf:
             dataset = data.to_xarray()
             indexers = {}
             for key, value in selection.items():
@@ -272,15 +330,19 @@ def sel(source_file: str, target_file: str, conditions: tuple[str, ...]) -> None
                     indexers[key] = coordinate.dtype.type(value)
             selected = dataset.sel(indexers)
         else:
-            data = _listable(data, source_file, method="sel")
+            data = _listable(data, source_file, method="sel", stream=stream)
             selected = data.sel(selection)
-        to_target("file", target_file, data=selected)
+
+        if is_netcdf and to_stdout:
+            _write_target(target_file, selected, encoder="netcdf")
+        else:
+            _write_target(target_file, selected)
     except Exception as error:
         raise click.ClickException(f"Could not select from {source_file!r}: {error}") from error
 
 
 @click.command(name="order_by")
-@click.argument("source-file", type=click.Path(exists=True, dir_okay=False))
+@click.argument("source-file", type=click.Path(exists=True, dir_okay=False, allow_dash=True))
 @click.argument("target-file", type=click.Path(dir_okay=False))
 @click.argument("keys", nargs=-1, required=True)
 def order_by(source_file: str, target_file: str, keys: tuple[str, ...]) -> None:
@@ -289,8 +351,9 @@ def order_by(source_file: str, target_file: str, keys: tuple[str, ...]) -> None:
     Bare keys use ascending order. Use KEY=ascending or KEY=descending to specify
     direction, or KEY=value1,value2 to specify a custom order containing all values.
     Keys are applied in the order given.
+    Use '-' as SOURCE_FILE to read GRIB data from stdin (not currently supported for BUFR).
+    Use '-' as TARGET_FILE to write the result to stdout.
     """
-    from earthkit.data import from_source, to_target
     from earthkit.data.data.bufr import BUFRData
     from earthkit.data.data.grib import GribData
 
@@ -318,16 +381,16 @@ def order_by(source_file: str, target_file: str, keys: tuple[str, ...]) -> None:
                 param_hint="keys",
             )
 
-    if os.path.exists(target_file) and os.path.samefile(source_file, target_file):
-        raise click.ClickException("Source and target files must be different")
+    _check_different_files(source_file, target_file)
 
     try:
-        data = from_source("file", source_file)
-        if not isinstance(data, (GribData, BUFRData)):
+        data, stream = _read_source(source_file)
+        if not stream and not isinstance(data, (GribData, BUFRData)):
             raise click.ClickException("'order_by' only supports GRIB and BUFR input")
-        data = _listable(data, source_file, method="order_by")
+
+        data = _listable(data, source_file, method="order_by", stream=stream)
         ordered = data.order_by(ordering)
-        to_target("file", target_file, data=ordered)
+        _write_target(target_file, ordered)
     except click.ClickException:
         raise
     except Exception as error:
