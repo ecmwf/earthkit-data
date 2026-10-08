@@ -8,6 +8,9 @@
 #
 
 
+from earthkit.data.readers import ReaderPlugin
+
+
 def _match_magic(magic, deeper_check):
     if magic is not None:
         type_id = b"\xff\xffODA"
@@ -18,11 +21,11 @@ def _match_magic(magic, deeper_check):
     return False
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+def match_odb(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic, deeper_check):
         from .reader import ODBReader
 
         return ODBReader(source, path, **kwargs)
 
 
-READER = reader
+plugin = ReaderPlugin(file=match_odb, priority=920)

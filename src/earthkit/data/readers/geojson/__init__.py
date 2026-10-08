@@ -9,8 +9,10 @@
 
 import mimetypes
 
+from earthkit.data.readers import ReaderPlugin
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+
+def match_geojson(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     kind, _ = mimetypes.guess_type(path)
     ext = path.split(".")[-1]
 
@@ -22,4 +24,4 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
         return GeoJSONReader(source, path, **kwargs)
 
 
-READER = reader
+plugin = ReaderPlugin(file=match_geojson, priority=520)

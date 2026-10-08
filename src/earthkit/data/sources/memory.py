@@ -9,7 +9,7 @@
 
 import logging
 
-from earthkit.data.readers import memory_reader
+from earthkit.data.readers import match_memory
 from earthkit.data.sources import Source
 
 LOG = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ class MemorySource(MemoryBaseSource):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = memory_reader(self, self._buf)
+            self._reader_ = match_memory(self, self._buf)
             self._buf = None
         return self._reader_
 

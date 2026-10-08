@@ -8,6 +8,9 @@
 #
 
 
+from earthkit.data.readers import ReaderPlugin
+
+
 def _match_magic(magic):
     if magic is not None:
         # magic check matching that from iris
@@ -16,11 +19,11 @@ def _match_magic(magic):
     return False
 
 
-def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
+def match_pp(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic):
         from .reader import PPReader
 
         return PPReader(source, path, **kwargs)
 
 
-READER = reader
+plugin = ReaderPlugin(file=match_pp, priority=830)

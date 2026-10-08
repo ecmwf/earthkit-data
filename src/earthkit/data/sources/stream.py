@@ -15,7 +15,7 @@ from earthkit.utils.decorators import thread_safe_cached_property
 from earthkit.data.indexing.stream import StreamFieldList
 
 # from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.readers import stream_reader
+from earthkit.data.readers import match_stream
 from earthkit.data.sources import Source
 from earthkit.data.sources.memory import MemoryBaseSource
 
@@ -38,7 +38,7 @@ class StreamMemorySource(MemoryBaseSource):
 
     @thread_safe_cached_property
     def _reader(self):
-        reader = stream_reader(self, self._stream.stream, True, **self._kwargs)
+        reader = match_stream(self, self._stream.stream, True, **self._kwargs)
         if reader is None:
             raise TypeError(f"could not create reader for stream={self._stream}")
         return reader
@@ -78,7 +78,7 @@ class StreamSource(Source):
 
     @thread_safe_cached_property
     def _reader(self):
-        reader = stream_reader(self, self._stream.stream, False, **self._kwargs)
+        reader = match_stream(self, self._stream.stream, False, **self._kwargs)
         if reader is None:
             raise TypeError(f"could not create reader for stream={self._stream.stream}")
         return reader
