@@ -62,11 +62,15 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         r"""
         filename_or_obj, str, Path or earthkit object
             Input GRIB file or object to be converted to an Xarray dataset.
-        profile: str, dict or None
+        profile: str, dict, None or list of str/dict
             Provide custom default values for most of the kwargs. The default profile is "earthkit".
-            An explicit dict can be used. None is equivalent to an empty dict. When a kwarg is specified it
-            will update the corresponding profile value if it is a dict otherwise it will overwrite it. See:
-            :ref:`xr_profile` for more information.
+            It can be the name of a pre-defined profile ("earthkit", "grib", "mars" or "defaults"),
+            a path to a YAML/JSON file containing a custom profile, or an explicit dict. None is
+            equivalent to an empty dict. A list of any of these (except None) can also be used, in
+            which case the profiles are layered in order, each one overriding the options defined by
+            the previous ones. When a kwarg is specified it will update the corresponding profile
+            value if it is a dict otherwise it will overwrite it. See: :ref:`xr_profile` for more
+            information.
         variable_key: str, None
             The metadata key which will be used to name the Xarray Dataset variables.
             Default is "parameter.variable" (which in the case of GRIB data is the same as

@@ -202,6 +202,9 @@ class Profile:
     USER_ONLY_OPTIONS = ["remapping", "patch", "fill_metadata", "aux_coords"]
     DEFAULT_PROFILE_NAME = "earthkit"
 
+    #: File extensions recognised as paths to user-defined profile files.
+    PROFILE_FILE_EXTENSIONS = (".yaml", ".yml", ".json")
+
     def __init__(
         self,
         name=None,
@@ -326,6 +329,29 @@ class Profile:
 
     @staticmethod
     def make(name_or_def, *args, force=False, **kwargs):
+        """Build a :class:`Profile` from one or more profile specifications.
+
+        Parameters
+        ----------
+        name_or_def: Profile, str, dict, None or list/tuple of str/dict
+            The profile specification. It can be:
+
+            - a :class:`Profile` instance (returned as is, or copied when ``force=True``)
+            - ``None`` (equivalent to an empty profile, i.e. the bare defaults)
+            - the name of a predefined profile (e.g. ``"earthkit"``, ``"grib"``,
+              ``"mars"`` or ``"defaults"``)
+            - a path to a YAML or JSON file containing a custom profile
+            - a dict defining a custom profile inline
+            - a list or tuple of any of the above (except a :class:`Profile`), which
+              are layered in order so that each item overrides the options defined by
+              the previous ones
+        force: bool
+            When ``name_or_def`` is a :class:`Profile`, return a copy of it instead of
+            the instance itself.
+        *args, **kwargs:
+            Forwarded to :meth:`from_conf`. The ``kwargs`` are applied last, on top of
+            all the resolved profile specifications.
+        """
         # print("name_or_def", name_or_def)
 
         if isinstance(name_or_def, Profile):
@@ -337,23 +363,106 @@ class Profile:
         if name_or_def is None:
             name_or_def = {}
 
-        if isinstance(name_or_def, str):
-            conf = PROFILE_CONF.get(name_or_def)
-            name = name_or_def
-        elif isinstance(name_or_def, dict):
-            conf = name_or_def
-            name = ""
+        # Normalise to a list of specifications that are layered in order,
+        # each one overriding the options defined by the previous ones.
+        if isinstance(name_or_def, (list, tuple)):
+            specs = list(name_or_def)
         else:
-            raise ValueError(f"Unsupported type for name_or_def: {type(name_or_def)}")
+            specs = [name_or_def]
 
-        return Profile.from_conf(name, conf, *args, **kwargs)
+        if not specs:
+            specs = [{}]
+
+        names = []
+        confs = []
+        for spec in specs:
+            spec_name, conf = Profile._resolve(spec)
+            names.append(spec_name)
+            confs.append(conf)
+
+        name = "+".join(n for n in names if n)
+        return Profile.from_conf(name, confs, *args, **kwargs)
+
+    @staticmethod
+    def _resolve(spec):
+        """Resolve a single profile specification into a ``(name, conf)`` pair.
+
+        ``spec`` can be the name of a predefined profile, a path to a YAML/JSON file
+        containing a custom profile, or a dict defining a custom profile inline.
+        """
+        if isinstance(spec, dict):
+            return "", spec
+
+        if isinstance(spec, str):
+            if Profile._is_profile_file(spec):
+                return spec, Profile._read_profile_file(spec)
+            # "defaults" is always the base profile, so it resolves to an empty conf
+            if spec == "defaults":
+                return spec, {}
+            return spec, PROFILE_CONF.get(spec)
+
+        raise ValueError(
+            f"Unsupported profile specification: {spec!r} of type {type(spec).__name__}. "
+            "Expected a predefined profile name, a path to a YAML/JSON file or a dict."
+        )
 
     @classmethod
-    def from_conf(cls, name, conf, *args, **kwargs):
+    def _is_profile_file(cls, name):
+        """Return True if ``name`` looks like a path to a YAML/JSON profile file."""
+        return os.path.splitext(name)[1].lower() in cls.PROFILE_FILE_EXTENSIONS
+
+    @staticmethod
+    def _read_profile_file(path):
+        """Read a user-defined profile from a YAML or JSON file."""
+        if not os.path.exists(path):
+            raise ValueError(f"Profile file not found: {path}")
+
+        if os.path.splitext(path)[1].lower() == ".json":
+            import json
+
+            loader = json.load
+        else:
+            import yaml
+
+            loader = yaml.safe_load
+
+        try:
+            with open(path, "r") as f:
+                conf = loader(f)
+        except Exception as e:
+            LOG.exception(f"Failed to read profile file {path}. {e}")
+            raise
+
+        if conf is None:
+            conf = {}
+        if not isinstance(conf, dict):
+            raise ValueError(f"Profile file {path} must contain a mapping, got {type(conf).__name__}")
+        return conf
+
+    @classmethod
+    def from_conf(cls, name, confs, *args, **kwargs):
+        """Build a :class:`Profile` by layering ``confs`` over the defaults.
+
+        Parameters
+        ----------
+        name: str
+            A label for the resulting profile (used in error messages).
+        confs: dict or list of dict
+            One or more profile configuration dicts. They are applied in order on top
+            of the defaults, so later items override earlier ones.
+        *args, **kwargs:
+            ``kwargs`` are applied last, overriding the options from ``confs``.
+        """
         import copy
 
         kwargs = copy.deepcopy(kwargs)
         opt = copy.deepcopy(PROFILE_CONF.defaults)
+
+        # a single conf dict is accepted for convenience
+        if isinstance(confs, dict):
+            confs = [confs]
+        # deepcopy so that the merge below never mutates cached/predefined confs
+        confs = copy.deepcopy(list(confs))
 
         def _deprec_array_module(data):
             """Deprecated: use 'array_namespace' instead."""
@@ -378,7 +487,7 @@ class Profile:
         _deprec_array_module(kwargs)
         _deprec_array_backend(kwargs)
 
-        for d in [conf, kwargs]:
+        for d in [*confs, kwargs]:
             for k, v in d.items():
                 if k in PROFILE_CONF.defaults and v is not None:
                     if isinstance(PROFILE_CONF.defaults[k], dict):

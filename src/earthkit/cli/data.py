@@ -37,6 +37,51 @@ def _split_csv(ctx, param, value):
     return result or None
 
 
+def _ls_cubes(df):
+    def _walk(node, cols):
+        if not cols:
+            return [{"__num__": len(node)}]
+        col = cols[0]
+        cubes = []
+        groups = []
+        na = node[col].isna()
+        if na.any():
+            groups.append((None, node[na]))
+        groups.extend(node.groupby(col))
+        for val, child in groups:
+            for sub in _walk(child, cols[1:]):
+                for vals, cube in cubes:
+                    if sub == cube:
+                        vals.append(val)
+                        break
+                else:
+                    cubes.append(([val], sub))
+        return [{col: vals, **cube} for vals, cube in cubes]
+
+    first = True
+    for cube in _walk(df, list(df.columns)):
+        w = 0
+        num = 0
+        lines = []
+        for key, vals in cube.items():
+            if key == "__num__":
+                num = vals
+                continue
+            w = max(w, len(key))
+            vals_s = ("[" + ", ".join(str(val) for val in vals) + "]") if len(vals) != 1 else str(vals[0])
+            lines.append((key, vals_s))
+        if w == 0:
+            continue
+        if first:
+            first = False
+        else:
+            click.echo()
+        if num > 1:
+            click.echo(" " * w + f"  ({num} items)")
+        for key, vals in lines:
+            click.echo(f"{key:<{w}s}  {vals}")
+
+
 @earthkit.command()
 @click.argument("filename", type=click.Path(exists=True, dir_okay=False))
 @click.option(
@@ -60,7 +105,12 @@ def _split_csv(ctx, param, value):
     callback=_split_csv,
     help="Additional metadata keys to show on top of the default set. Comma-separated or repeated.",
 )
-def ls(filename, num, keys, extra_keys):
+@click.option(
+    "--cubes",
+    is_flag=True,
+    help="Group items into hypercubes.",
+)
+def ls(filename, num, keys, extra_keys, cubes):
     """List the contents of FILENAME as a metadata summary table."""
     import pandas as pd
 
@@ -78,6 +128,10 @@ def ls(filename, num, keys, extra_keys):
 
     df = ds.ls(**kwargs)
     if df is None:
+        return
+
+    if cubes:
+        _ls_cubes(df)
         return
 
     with pd.option_context(
@@ -122,44 +176,24 @@ def _listable(ds, filename, method="ls"):
 @click.option(
     "--profile",
     type=str,
-    default="earthkit",
-    help="Name of the xr-engine profile to use for conversion ('earthkit', 'grib', 'mars', 'defaults')",
+    default=["earthkit"],
+    multiple=True,
+    help=(
+        "Profile controlling how the xr-engine builds the Xarray dataset. Either the name of a "
+        "pre-defined profile ('earthkit', 'grib', 'mars', 'defaults') or a path to a YAML/JSON file "
+        "containing a custom profile. Can be specified multiple times, in which case the profiles are "
+        "layered in order, each one overriding the options defined by the previous ones."
+    ),
 )
-@click.option(
-    "--profile-file",
-    type=click.Path(exists=True, dir_okay=False),
-    required=False,
-    help="YAML or JSON file containing a custom xr-engine profile",
-)
-def convert(source_file, target_file, profile, profile_file):
-    """Convert a data file to xarray format using the specified profile."""
+def convert(source_file, target_file, profile):
+    """Convert a data file to xarray format using the specified profile(s)."""
     import earthkit.data as ekd
 
     in_data = ekd.from_source("file", source_file)
-    if profile_file:
-        from earthkit.data.xr_engine.profile import Profile
 
-        custom_profile = _read_profile(profile_file)
-        profile = Profile.make(profile, **custom_profile)
-
-    out_data = in_data.to_xarray(profile=profile)  # profile is of the Profile type, which is accepted by to_xarray
-    # but not documented in the public API. It is used internally to control the conversion process.
+    out_data = in_data.to_xarray(profile=list(profile))
 
     ekd.to_target("file", target_file, data=out_data)
-
-
-def _read_profile(filename):
-    """Read a YAML profile file and return its contents as a dictionary."""
-    import yaml
-
-    with open(filename, "r") as f:
-        try:
-            profile = yaml.safe_load(f)
-        except yaml.YAMLError as e:
-            raise click.ClickException(f"Error reading profile file {filename!r}: {e}")
-    if not isinstance(profile, dict):
-        raise click.ClickException(f"Profile file {filename!r} does not contain a valid dictionary")
-    return profile
 
 
 def _selection_value(value: str) -> str | list | Callable:

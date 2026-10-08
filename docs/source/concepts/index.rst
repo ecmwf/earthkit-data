@@ -5,6 +5,7 @@ Concepts
 .. toctree::
    :maxdepth: 2
 
+   cli/index.rst
    inputs/index.rst
    data
    encoders/index.rst
