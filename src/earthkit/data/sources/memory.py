@@ -10,8 +10,7 @@
 import logging
 
 from earthkit.data.readers import memory_reader
-
-from . import Source
+from earthkit.data.sources import Source
 
 LOG = logging.getLogger(__name__)
 
@@ -111,6 +110,3 @@ class MemorySource(MemoryBaseSource):
         from earthkit.data.data import SourceData
 
         return SourceData(self)
-
-
-source = MemorySource
