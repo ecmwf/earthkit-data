@@ -225,27 +225,10 @@ def _listable(ds, filename, method="ls", stream=False):
 
 @earthkit.command()
 @add_options([source_options(positional=True), target_options(positional=True), profile_option])
-# @click.option(
-#     "--profile",
-#     type=str,
-#     default=["earthkit"],
-#     multiple=True,
-#     help=(
-#         "Profile controlling how the xr-engine builds the Xarray dataset. Either the name of a "
-#         "pre-defined profile ('earthkit', 'grib', 'mars', 'defaults') or a path to a YAML/JSON file "
-#         "containing a custom profile. Can be specified multiple times, in which case the profiles are "
-#         "layered in order, each one overriding the options defined by the previous ones."
-#     ),
-# )
-def convert(source_file, target_file, profile):
+def convert(source, target, profile):
     """Convert a data file to xarray format using the specified profile(s)."""
-    import earthkit.data as ekd
-
-    in_data = ekd.from_source("file", source_file)
-
-    out_data = in_data.to_xarray(profile=list(profile))
-
-    ekd.to_target("file", target_file, data=out_data)
+    out_data = source.to_xarray(profile=profile)
+    target.to_target(data=out_data)
 
 
 def _selection_value(value: str) -> str | list | Callable:
