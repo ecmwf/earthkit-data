@@ -252,8 +252,8 @@ class GribEncoder(Encoder):
         mars_metadata: dict, optional
             MARS metadata keys/values (e.g. ``class``, ``stream``, ``type``, ``expver``, ``date``, ``time``,
             ``step``, ``param``, ``levtype``, ``grid``, etc.) used to build a new GRIB message directly from
-            ``values``, without a ``template``. Internally, this uses the `pymetkit
-            <https://github.com/ecmwf/pymetkit>`_ package to turn the MARS-style request into a GRIB message.
+            ``values``, without a ``template`` or ``data``. Internally, this uses the `metkit
+            <https://github.com/ecmwf/metkit>`_ package to turn the MARS-style request into a GRIB message.
             ``values`` is mandatory when ``mars_metadata`` is used. Cannot be specified together with
             ``template`` or ``data``, since ``mars_metadata`` builds the message from scratch. Can be combined
             with ``metadata``, in which case the GRIB message is first created from ``mars_metadata`` and
@@ -293,10 +293,15 @@ class GribEncoder(Encoder):
         - ``values``, ``template``: The ``template`` will be used as a basis for encoding, but
             the values will be taken from the ``values`` argument.
 
-        When no ``data`` and ``template`` are provided, a new GRIB message will be created from the
-        ``values`` and ``metadata``. This is an experimental feature and only works for certain metadata
-        keys and the grid has to be either global lat-lon or reduced Gaussian grid. The geography is
-        inferred from the shape of the specified ``values``.
+        When no ``data`` and ``template`` are provided, a new GRIB message will be created either from
+        ``mars_metadata`` or from ``values`` and ``metadata``:
+
+        - If ``mars_metadata`` is given, it is used together with ``values`` to build the message via
+          `metkit <https://github.com/ecmwf/metkit>`_. Any ``metadata`` provided is then applied on
+          top of the resulting message.
+        - Otherwise, the message is created from ``values`` and ``metadata`` alone. This is an experimental
+          feature and only works for certain metadata keys and the grid has to be either global lat-lon or
+          reduced Gaussian grid. The geography is inferred from the shape of the specified ``values``.
 
         Examples
         --------
