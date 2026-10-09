@@ -28,7 +28,7 @@ other ``earthkit`` commands, as ``[NAME:]VALUE``:
 
 .. code-block:: bash
 
-   cat input.grib | earthkit order_by - - -k vertical.level | earthkit sel - selected.grib --parameter.variable t
+   cat input.grib | earthkit order_by - - --key vertical.level | earthkit sel - selected.grib --parameter.variable t
 
 A target file must differ from the source files, including through symbolic or
 hard links. An existing target file may be overwritten. The target suffix

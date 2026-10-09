@@ -11,8 +11,8 @@ from earthkit.data.utils.testing import earthkit_examples_file
 
 
 def _keys(arguments):
-    """Turn KEY[=ORDER] arguments into -k options."""
-    return [option for argument in arguments for option in ("-k", argument)]
+    """Turn KEY[=ORDER] arguments into --key options."""
+    return [option for argument in arguments for option in ("--key", argument)]
 
 
 @pytest.mark.parametrize(
@@ -101,7 +101,7 @@ def test_cli_order_by_invalid_arguments(tmp_path, arguments):
 def test_cli_order_by_incomplete_custom_order(tmp_path):
     target = tmp_path / "ordered.grib"
     result = CliRunner().invoke(
-        order_by, [earthkit_examples_file("tuv_pl.grib"), str(target), "-k", "parameter.variable=t,u"]
+        order_by, [earthkit_examples_file("tuv_pl.grib"), str(target), "--key", "parameter.variable=t,u"]
     )
     assert result.exit_code == 1
     assert "Could not order" in result.output
@@ -146,7 +146,7 @@ def test_cli_order_by_registered():
 
 def test_cli_order_by_stdin_stdout():
     source = Path(earthkit_examples_file("tuv_pl.grib")).read_bytes()
-    result = CliRunner().invoke(order_by, ["-", "-", "-k", "vertical.level=descending"], input=source)
+    result = CliRunner().invoke(order_by, ["-", "-", "--key", "vertical.level=descending"], input=source)
     assert result.exit_code == 0, result.output
     ordered = from_source("memory", result.stdout_bytes).to_fieldlist()
     assert ordered.get("vertical.level")[::3] == [1000, 850, 700, 500, 400, 300]
@@ -156,4 +156,5 @@ def test_cli_order_by_usage():
     result = CliRunner().invoke(earthkit, ["order_by", "--help"])
     assert result.exit_code == 0
     assert "[OPTIONS] SOURCE TARGET" in result.output
-    assert "-k, --key KEY[=ORDER]" in result.output
+    assert "--key KEY[=ORDER]" in result.output
+    assert "-k," not in result.output

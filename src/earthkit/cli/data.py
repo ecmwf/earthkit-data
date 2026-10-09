@@ -31,18 +31,9 @@ from earthkit.cli.standard_args import (
     add_options,
     profile_option,
     source_options,
+    split_csv,
     target_options,
 )
-
-
-def _split_csv(ctx, param, value):
-    """Turn a tuple of (possibly comma-separated) option values into a flat list."""
-    if not value:
-        return None
-    result = []
-    for item in value:
-        result.extend(v.strip() for v in item.split(",") if v.strip())
-    return result or None
 
 
 def _ls_cubes(df):
@@ -93,24 +84,21 @@ def _ls_cubes(df):
 @earthkit.command()
 @add_options([source_options(positional=True)])
 @click.option(
-    "-n",
     "--num",
     type=int,
     default=None,
     help="Number of items to list. Positive values list from the front, negative values from the back.",
 )
 @click.option(
-    "-k",
     "--keys",
     multiple=True,
-    callback=_split_csv,
+    callback=split_csv,
     help="Metadata keys to show instead of the default set. Comma-separated or repeated.",
 )
 @click.option(
-    "-e",
     "--extra-keys",
     multiple=True,
-    callback=_split_csv,
+    callback=split_csv,
     help="Additional metadata keys to show on top of the default set. Comma-separated or repeated.",
 )
 @click.option(
@@ -119,7 +107,10 @@ def _ls_cubes(df):
     help="Group items into hypercubes.",
 )
 def ls(source, num, keys, extra_keys, cubes):
-    """List the contents of FILENAME as a metadata summary table."""
+    """List the contents of SOURCE as a metadata summary table.
+
+    --keys replaces the default set of metadata keys shown, --extra-keys adds to it.
+    """
     import pandas as pd
 
     ds = _listable(source, None)
@@ -478,13 +469,12 @@ TARGET: {TARGET_HELP}
 
 \b
 Example:
-    earthkit order_by input.grib output.grib -k vertical.level=descending -k parameter.variable
-    cat input.grib | earthkit order_by - - -k parameter.variable=v,u,t > output.grib
+    earthkit order_by input.grib output.grib --key vertical.level=descending --key parameter.variable
+    cat input.grib | earthkit order_by - - --key parameter.variable=v,u,t > output.grib
 """,
 )
 @add_options([source_options(positional=True), target_options(positional=True)])
 @click.option(
-    "-k",
     "--key",
     "ordering",
     multiple=True,
