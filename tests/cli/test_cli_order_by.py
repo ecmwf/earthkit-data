@@ -10,6 +10,11 @@ from earthkit.data import from_source
 from earthkit.data.utils.testing import earthkit_examples_file
 
 
+def _keys(arguments):
+    """Turn KEY[=ORDER] arguments into -k options."""
+    return [option for argument in arguments for option in ("-k", argument)]
+
+
 @pytest.mark.parametrize(
     "arguments,ordering",
     [
@@ -38,7 +43,7 @@ def test_cli_order_by_grib(tmp_path, arguments, ordering):
     original = from_source("file", source).to_fieldlist()
     expected = original.order_by(ordering)
 
-    result = CliRunner().invoke(order_by, [source, str(target), *arguments])
+    result = CliRunner().invoke(order_by, [source, str(target), *_keys(arguments)])
     assert result.exit_code == 0, result.output
     actual = from_source("file", str(target)).to_fieldlist()
     assert len(actual) == len(original)
@@ -64,7 +69,7 @@ def test_cli_order_by_bufr(tmp_path, direction):
 
     source = earthkit_examples_file("temp_10.bufr")
     target = tmp_path / "ordered.bufr"
-    result = CliRunner().invoke(order_by, [source, str(target), *arguments])
+    result = CliRunner().invoke(order_by, [source, str(target), *_keys(arguments)])
     assert result.exit_code == 0, result.output
     actual = from_source("file", str(target)).to_featurelist()
     assert len(actual) == 10
@@ -88,7 +93,7 @@ def test_cli_order_by_bufr(tmp_path, direction):
 )
 def test_cli_order_by_invalid_arguments(tmp_path, arguments):
     target = tmp_path / "ordered.grib"
-    result = CliRunner().invoke(order_by, [earthkit_examples_file("tuv_pl.grib"), str(target), *arguments])
+    result = CliRunner().invoke(order_by, [earthkit_examples_file("tuv_pl.grib"), str(target), *_keys(arguments)])
     assert result.exit_code == 2
     assert not target.exists()
 
@@ -96,7 +101,7 @@ def test_cli_order_by_invalid_arguments(tmp_path, arguments):
 def test_cli_order_by_incomplete_custom_order(tmp_path):
     target = tmp_path / "ordered.grib"
     result = CliRunner().invoke(
-        order_by, [earthkit_examples_file("tuv_pl.grib"), str(target), "parameter.variable=t,u"]
+        order_by, [earthkit_examples_file("tuv_pl.grib"), str(target), "-k", "parameter.variable=t,u"]
     )
     assert result.exit_code == 1
     assert "Could not order" in result.output
@@ -111,7 +116,7 @@ def test_cli_order_by_unsupported_format(tmp_path, format_name):
     else:
         source.write_text("Unsupported ordering input\n")
     target = tmp_path / "ordered.grib"
-    result = CliRunner().invoke(order_by, [str(source), str(target), "vertical.level"])
+    result = CliRunner().invoke(order_by, [str(source), str(target), "--key", "vertical.level"])
     assert result.exit_code == 1
     assert "only supports GRIB and BUFR input" in result.output
     assert not target.exists()
@@ -129,7 +134,7 @@ def test_cli_order_by_refuses_input_overwrite(tmp_path, alias):
             target.symlink_to(source)
         else:
             target.hardlink_to(source)
-    result = CliRunner().invoke(order_by, [str(source), str(target), "parameter.variable"])
+    result = CliRunner().invoke(order_by, [str(source), str(target), "--key", "parameter.variable"])
     assert result.exit_code == 1
     assert "Source and target files must be different" in result.output
     assert source.read_bytes() == original
@@ -137,3 +142,18 @@ def test_cli_order_by_refuses_input_overwrite(tmp_path, alias):
 
 def test_cli_order_by_registered():
     assert earthkit.commands["order_by"] is order_by
+
+
+def test_cli_order_by_stdin_stdout():
+    source = Path(earthkit_examples_file("tuv_pl.grib")).read_bytes()
+    result = CliRunner().invoke(order_by, ["-", "-", "-k", "vertical.level=descending"], input=source)
+    assert result.exit_code == 0, result.output
+    ordered = from_source("memory", result.stdout_bytes).to_fieldlist()
+    assert ordered.get("vertical.level")[::3] == [1000, 850, 700, 500, 400, 300]
+
+
+def test_cli_order_by_usage():
+    result = CliRunner().invoke(earthkit, ["order_by", "--help"])
+    assert result.exit_code == 0
+    assert "[OPTIONS] SOURCE TARGET" in result.output
+    assert "-k, --key KEY[=ORDER]" in result.output

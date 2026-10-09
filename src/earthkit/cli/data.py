@@ -20,12 +20,19 @@ everything else inside the command functions.
 
 import datetime
 import os
+import re
 import sys
-from collections.abc import Callable
 
 import click
 from earthkit.cli.main import earthkit
-from earthkit.cli.standard_args import add_options, profile_option, source_options, target_options
+from earthkit.cli.standard_args import (
+    SOURCE_HELP,
+    TARGET_HELP,
+    add_options,
+    profile_option,
+    source_options,
+    target_options,
+)
 
 
 def _split_csv(ctx, param, value):
@@ -146,55 +153,33 @@ def ls(source, num, keys, extra_keys, cubes):
         click.echo(df.to_string())
 
 
-def _check_different_files(source_file: str, target_file: str) -> None:
-    """Raise if SOURCE_FILE and TARGET_FILE are the same file on disk.
+def _is_stdout(target) -> bool:
+    return target.args[1:2] == (sys.stdout.buffer,)
 
-    No-op when either side is ``-`` (stdin/stdout), since there is then no real file to compare.
+
+def _check_different_files(source, target) -> None:
+    """Raise if the SOURCE and TARGET are the same file on disk.
+
+    No-op when the source or target is not a file, e.g. stdin or stdout.
     """
-    if source_file == "-" or target_file == "-":
+    path = target.args[1] if len(target.args) > 1 else target.kwargs.get("file")
+    if target.args[0] != "file" or not isinstance(path, (str, os.PathLike)) or not os.path.exists(path):
         return
-    if os.path.exists(target_file) and os.path.samefile(source_file, target_file):
-        raise click.ClickException("Source and target files must be different")
+    try:
+        source_paths = source.path
+    except Exception:
+        return
+    for source_path in source_paths if isinstance(source_paths, (list, tuple)) else [source_paths]:
+        if isinstance(source_path, (str, os.PathLike)) and os.path.exists(source_path):
+            if os.path.samefile(source_path, path):
+                raise click.ClickException("Source and target files must be different")
 
 
-def _read_source(source_file: str):
-    """Read SOURCE_FILE, or GRIB data from stdin when SOURCE_FILE is ``-``.
-
-    Returns
-    -------
-    tuple
-        ``(data, stream)`` where ``data`` is the loaded :class:`~earthkit.data.data.Data` object
-        and ``stream`` is True when it was read from stdin. Downstream code should pass
-        ``stream`` to :func:`_listable` so field/feature lists get materialised with
-        ``read_all=True``, since a single-pass stream cannot support random access operations
-        such as ``sel`` or ``order_by``.
-
-    Raises
-    ------
-    click.ClickException
-        If SOURCE_FILE is ``-`` and the stdin data is not GRIB, since that is the only format
-        that currently supports being read from a stream.
-    """
-    from earthkit.data import from_source
+def _is_stream(source) -> bool:
+    """Return True if SOURCE was read from stdin, which only supports GRIB data."""
     from earthkit.data.data.stream import StreamFieldListData
 
-    if source_file == "-":
-        data = from_source("stream", sys.stdin.buffer)
-        if not isinstance(data, StreamFieldListData):
-            raise click.ClickException("Reading from stdin is only supported for GRIB input")
-        return data, True
-
-    return from_source("file", source_file), False
-
-
-def _write_target(target_file: str, data, **kwargs) -> None:
-    """Write DATA to TARGET_FILE, or to stdout when TARGET_FILE is ``-``."""
-    from earthkit.data import to_target
-
-    if target_file == "-":
-        to_target("file", sys.stdout.buffer, data=data, **kwargs)
-    else:
-        to_target("file", target_file, data=data, **kwargs)
+    return isinstance(source, StreamFieldListData)
 
 
 def _listable(ds, filename, method="ls", stream=False):
@@ -231,128 +216,239 @@ def convert(source, target, profile):
     target.to_target(data=out_data)
 
 
-def _selection_value(value: str) -> str | list | Callable:
-    """Parse a scalar, comma-separated list or integer range for selection."""
-    if "," in value:
-        items = value.split(",")
-        if any(not item.strip() for item in items):
-            raise ValueError("List values must not be empty")
-        result = []
-        for item in items:
-            parsed = _selection_value(item.strip())
-            if callable(parsed):
-                raise ValueError("Open-ended slices cannot be combined with comma-separated values")
-            result.extend(parsed if isinstance(parsed, list) else [parsed])
-        return result
-    if ":" in value:
-        try:
-            datetime.datetime.fromisoformat(value.strip())
-        except ValueError:
-            pass
-        else:
-            return value.strip()
-        parts = value.split(":")
-        if len(parts) == 2 and bool(parts[0].strip()) != bool(parts[1].strip()):
-            if not parts[0].strip():
-                stop = int(parts[1])
-                return lambda number: number is not None and number < stop
-            start = int(parts[0])
-            return lambda number: number is not None and number >= start
-        if len(parts) not in (2, 3) or any(not part.strip() for part in parts):
-            raise ValueError("Slices must be START:STOP[:STEP], :STOP or START: with integer bounds")
-        return list(range(*(int(part) for part in parts)))
-    if not value.strip():
+_DATETIME = r"\d{4}-\d{2}-\d{2}(?:[T ]\d{2}(?::\d{2}(?::\d{2}(?:\.\d+)?)?)?)?"
+_NUMBER = r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?"
+_BOUND = rf'"[^"]*"|{_DATETIME}|{_NUMBER}'
+_SLICE = re.compile(rf"(?P<start>{_BOUND})?:(?P<stop>{_BOUND})?(?::(?P<step>[-+]?\d+))?")
+
+
+def _slice_bound(text: str | None) -> str | int | float | datetime.datetime | None:
+    """Turn a slice bound into a quoted string, an ISO date-time, an int or a float."""
+    if text is None:
+        return None
+    if text.startswith('"'):
+        return text[1:-1]
+    if re.fullmatch(_DATETIME, text):
+        return datetime.datetime.fromisoformat(text)
+    return int(text) if re.fullmatch(r"[-+]?\d+", text) else float(text)
+
+
+def _selection_item(text: str) -> str | list | slice:
+    """Parse a scalar or a START:STOP[:STEP] slice, which includes STOP."""
+    text = text.strip()
+    if not text:
         raise ValueError("Selection values must not be empty")
-    return value.strip()
+    if re.fullmatch(r'"[^"]*"', text):
+        return text[1:-1]
+    # Scalars stay strings: FieldList.sel casts them to the type of the metadata
+    if ":" not in text or re.fullmatch(_DATETIME, text):
+        return text
+    match = _SLICE.fullmatch(text)
+    if match is None:
+        raise ValueError("Slices must be START:STOP[:STEP], with numbers, ISO date-times or quoted strings as bounds")
+    start, stop = _slice_bound(match["start"]), _slice_bound(match["stop"])
+    if start is None and stop is None:
+        raise ValueError("Slices need a START or a STOP")
+    if start is not None and stop is not None:
+        number = (int, float)
+        if not (isinstance(start, number) and isinstance(stop, number)) and type(start) is not type(stop):
+            raise ValueError("The START and STOP of a slice must have the same type")
+    if match["step"] is None:
+        return slice(start, stop)
+    step = int(match["step"])
+    if step == 0 or not (isinstance(start, int) and isinstance(stop, int)):
+        raise ValueError("A STEP must not be 0, and needs an integer START and STOP")
+    return list(range(start, stop + (1 if step > 0 else -1), step))
 
 
-@earthkit.command()
-@click.argument("source-file", type=click.Path(exists=True, dir_okay=False, allow_dash=True))
-@click.argument("target-file", type=click.Path(dir_okay=False))
-@click.argument("conditions", nargs=-1, required=True)
-def sel(source_file: str, target_file: str, conditions: tuple[str, ...]) -> None:
-    """Select fields or BUFR messages using KEY=VALUE conditions.
+def _selection_value(value: str) -> str | list | slice:
+    """Parse a scalar, a comma-separated list or a slice for selection.
 
-    Values can be comma-separated lists or integer slices with an exclusive stop.
-    For example: earthkit sel input.grib output.grib metadata.level=1:4
-    NetCDF conditions use native xarray coordinate names, for example level=300:500.
-    Use '-' as SOURCE_FILE to read GRIB data from stdin (not currently supported for BUFR or NetCDF).
-    Use '-' as TARGET_FILE to write the result to stdout.
+    Slices include their STOP, as :meth:`~earthkit.data.core.fieldlist.FieldList.sel` and ``xarray.Dataset.sel``
+    do. Integer slices in a list, or with a STEP, are expanded to the values they select.
     """
+    items = re.split(r',(?=(?:[^"]*"[^"]*")*[^"]*$)', value)
+    if len(items) == 1:
+        return _selection_item(items[0])
+    result = []
+    for item in items:
+        parsed = _selection_item(item)
+        if isinstance(parsed, slice):
+            if not (isinstance(parsed.start, int) and isinstance(parsed.stop, int)):
+                raise ValueError("Only slices with an integer START and STOP can be combined with commas")
+            parsed = list(range(parsed.start, parsed.stop + 1))
+        result.extend(parsed if isinstance(parsed, list) else [parsed])
+    return result
+
+
+class _SelectionCommand(click.Command):
+    """A command taking ``--KEY VALUE`` (or ``--KEY=VALUE``) conditions, for any KEY that is not one of its options.
+
+    The conditions are passed to the command as ``conditions``, a dict of the VALUE strings by KEY.
+    """
+
+    def parse_args(self, ctx: click.Context, args: list[str]) -> list[str]:
+        takes_value = {
+            opt: not (param.is_flag or param.count)
+            for param in self.get_params(ctx)
+            if isinstance(param, click.Option)
+            for opt in param.opts + param.secondary_opts
+        }
+        rest, conditions = [], {}
+        args = iter(args)
+        for arg in args:
+            if arg == "--":
+                rest += [arg, *args]
+                break
+            name, separator, value = arg.partition("=")
+            if not arg.startswith("--") or len(name) == 2 or name in takes_value:
+                rest.append(arg)
+                # Keep the value of an option of the command, even if it looks like an option
+                if takes_value.get(arg):
+                    option_value = next(args, None)
+                    if option_value is not None:
+                        rest.append(option_value)
+                continue
+            if not separator:
+                value = next(args, None)
+                if value is None:
+                    raise click.UsageError(f"Option {name!r} requires a value.", ctx)
+            key = name[2:]
+            if key in conditions:
+                raise click.UsageError(f"Duplicate selection key {key!r}", ctx)
+            conditions[key] = value
+        result = super().parse_args(ctx, rest)
+        ctx.params["conditions"] = conditions
+        return result
+
+    def collect_usage_pieces(self, ctx: click.Context) -> list[str]:
+        return [*super().collect_usage_pieces(ctx), "--KEY VALUE [--KEY VALUE]..."]
+
+
+@earthkit.command(
+    cls=_SelectionCommand,
+    help=f"""Select GRIB fields, BUFR messages or NetCDF coordinate labels with --KEY VALUE conditions.
+
+\b
+VALUE can be:
+- a scalar, e.g. --parameter.variable t
+- a comma-separated list, e.g. --vertical.level 500,700
+- a slice START:STOP[:STEP], which includes STOP, e.g. --vertical.level 300:500 or --vertical.level 700:.
+  The bounds are numbers, ISO date-times, e.g. '2020-12-21T00:00:2020-12-22T00:00', or quoted strings,
+  e.g. '"a":"c"'. A STEP needs integer bounds, e.g. 300:700:200.
+
+Conditions on different keys are combined with AND. GRIB and BUFR conditions use earthkit-data metadata keys,
+NetCDF conditions use coordinate names, e.g. --level 300:500.
+
+SOURCE: {SOURCE_HELP}
+
+TARGET: {TARGET_HELP}
+
+\b
+Example:
+    earthkit sel input.grib output.grib --parameter.variable t,u --vertical.level 300:500
+    cat input.grib | earthkit sel - - --metadata.paramId 131 > output.grib
+""",
+)
+@add_options([source_options(positional=True), target_options(positional=True)])
+def sel(source, target, conditions: dict[str, str]) -> None:
     from earthkit.data.data.netcdf import NetCDFData
 
+    if not conditions:
+        raise click.UsageError("At least one --KEY VALUE condition is required")
     selection = {}
-    for condition in conditions:
-        key, separator, value = condition.partition("=")
-        key = key.strip()
-        if not separator or not key:
-            raise click.BadParameter(f"Expected KEY=VALUE, got {condition!r}", param_hint="conditions")
-        if key in selection:
-            raise click.BadParameter(f"Duplicate selection key {key!r}", param_hint="conditions")
+    for key, value in conditions.items():
         try:
             selection[key] = _selection_value(value)
         except ValueError as error:
-            raise click.BadParameter(f"Invalid selection {condition!r}: {error}", param_hint="conditions") from error
+            raise click.BadParameter(f"{value!r}: {error}", param_hint=f"'--{key}'") from error
 
-    to_stdout = target_file == "-"
-    _check_different_files(source_file, target_file)
+    _check_different_files(source, target)
 
     try:
-        data, stream = _read_source(source_file)
-
-        is_netcdf = isinstance(data, NetCDFData)
+        is_netcdf = isinstance(source, NetCDFData)
         if is_netcdf:
-            dataset = data.to_xarray()
-            indexers = {}
-            for key, value in selection.items():
-                coordinate = dataset.coords[key]
-                if callable(value):
-                    indexers[key] = coordinate[[value(number) for number in coordinate.values]]
-                elif isinstance(value, list):
-                    import numpy as np
-
-                    values = np.asarray(value, dtype=coordinate.dtype)
-                    indexers[key] = coordinate[coordinate.isin(values)]
-                else:
-                    indexers[key] = coordinate.dtype.type(value)
-            selected = dataset.sel(indexers)
+            selected = _sel_netcdf(source.to_xarray(), selection)
         else:
-            data = _listable(data, source_file, method="sel", stream=stream)
-            selected = data.sel(selection)
+            selected = _sel_list(_listable(source, "SOURCE", method="sel", stream=_is_stream(source)), selection)
 
-        if is_netcdf and to_stdout:
-            _write_target(target_file, selected, encoder="netcdf")
+        if is_netcdf and _is_stdout(target):
+            target.to_target(selected, encoder="netcdf")
         else:
-            _write_target(target_file, selected)
+            target.to_target(selected)
     except Exception as error:
-        raise click.ClickException(f"Could not select from {source_file!r}: {error}") from error
+        raise click.ClickException(f"Could not select: {error}") from error
 
 
-@earthkit.command(name="order_by")
-@click.argument("source-file", type=click.Path(exists=True, dir_okay=False, allow_dash=True))
-@click.argument("target-file", type=click.Path(dir_okay=False))
-@click.argument("keys", nargs=-1, required=True)
-def order_by(source_file: str, target_file: str, keys: tuple[str, ...]) -> None:
-    """Order GRIB fields or BUFR messages by metadata keys.
+def _ordered_bounds(value: slice) -> tuple:
+    """Return the START and STOP of a slice, swapped if STOP is before START."""
+    start, stop = value.start, value.stop
+    if start is not None and stop is not None and stop < start:
+        return stop, start
+    return start, stop
 
-    Bare keys use ascending order. Use KEY=ascending or KEY=descending to specify
-    direction, or KEY=value1,value2 to specify a custom order containing all values.
-    Keys are applied in the order given.
-    Use '-' as SOURCE_FILE to read GRIB data from stdin (not currently supported for BUFR).
-    Use '-' as TARGET_FILE to write the result to stdout.
+
+def _sel_list(items, selection):
+    """Select from a FieldList or FeatureList, with the slices in SELECTION including their STOP.
+
+    The slices are applied to the metadata values here, since ``sel`` does not support slices for all keys, e.g.
+    date-time keys such as ``time.valid_datetime``.
     """
-    from earthkit.data.data.bufr import BUFRData
-    from earthkit.data.data.grib import GribData
+    slices = {key: value for key, value in selection.items() if isinstance(value, slice)}
+    others = {key: value for key, value in selection.items() if key not in slices}
+    selected = items.sel(others) if others else items
+    for key, value in slices.items():
+        start, stop = _ordered_bounds(value)
 
+        def included(item_value):
+            try:
+                return (
+                    item_value is not None
+                    and (start is None or item_value >= start)
+                    and (stop is None or item_value <= stop)
+                )
+            except TypeError:
+                return False
+
+        selected = selected[[i for i, item_value in enumerate(selected.get(key)) if included(item_value)]]
+    return selected
+
+
+def _sel_netcdf(dataset, selection):
+    """Select the coordinate labels of DATASET, keeping their order and ignoring absent labels in lists and slices."""
+    import numpy as np
+
+    indexers = {}
+    for key, value in selection.items():
+        coordinate = dataset.coords[key]
+        if isinstance(value, slice):
+            start, stop = _ordered_bounds(value)
+            if coordinate.dtype.kind == "M":
+                start, stop = (None if v is None else np.datetime64(v) for v in (start, stop))
+            mask = np.ones(coordinate.shape, dtype=bool)
+            if start is not None:
+                mask &= (coordinate >= start).values
+            if stop is not None:
+                mask &= (coordinate <= stop).values
+            indexers[key] = coordinate[mask]
+        elif isinstance(value, list):
+            indexers[key] = coordinate[coordinate.isin(np.asarray(value, dtype=coordinate.dtype))]
+        else:
+            indexers[key] = coordinate.dtype.type(value)
+    return dataset.sel(indexers)
+
+
+def _ordering(ctx: click.Context, param: click.Parameter, keys: tuple[str, ...]) -> dict[str, str | list[str]]:
+    """Turn the KEY[=ORDER] values of --key into the ordering of :meth:`FieldList.order_by`."""
     ordering = {}
     for argument in keys:
         key, separator, value = argument.partition("=")
         key = key.strip()
         value = value.strip()
         if not key:
-            raise click.BadParameter("Ordering keys must not be empty", param_hint="keys")
+            raise click.BadParameter("Ordering keys must not be empty")
         if key in ordering:
-            raise click.BadParameter(f"Duplicate ordering key {key!r}", param_hint="keys")
+            raise click.BadParameter(f"Duplicate ordering key {key!r}")
         if not separator:
             ordering[key] = "ascending"
         elif value in ("ascending", "descending"):
@@ -360,25 +456,53 @@ def order_by(source_file: str, target_file: str, keys: tuple[str, ...]) -> None:
         elif "," in value:
             values = [item.strip() for item in value.split(",")]
             if any(not item for item in values) or len(values) != len(set(values)):
-                raise click.BadParameter("Custom order values must be non-empty and unique", param_hint="keys")
+                raise click.BadParameter("Custom order values must be non-empty and unique")
             ordering[key] = values
         else:
             raise click.BadParameter(
-                f"Expected KEY, KEY=ascending, KEY=descending or KEY=value1,value2, got {argument!r}",
-                param_hint="keys",
+                f"Expected KEY, KEY=ascending, KEY=descending or KEY=value1,value2, got {argument!r}"
             )
+    return ordering
 
-    _check_different_files(source_file, target_file)
 
+@earthkit.command(
+    name="order_by",
+    help=f"""Order GRIB fields or BUFR messages by metadata keys.
+
+Give each key with --key, in the order they are applied. A bare KEY uses ascending order. Use KEY=ascending or
+KEY=descending to specify the direction, or KEY=value1,value2 for a custom order containing all values.
+
+SOURCE: {SOURCE_HELP}
+
+TARGET: {TARGET_HELP}
+
+\b
+Example:
+    earthkit order_by input.grib output.grib -k vertical.level=descending -k parameter.variable
+    cat input.grib | earthkit order_by - - -k parameter.variable=v,u,t > output.grib
+""",
+)
+@add_options([source_options(positional=True), target_options(positional=True)])
+@click.option(
+    "-k",
+    "--key",
+    "ordering",
+    multiple=True,
+    required=True,
+    callback=_ordering,
+    metavar="KEY[=ORDER]",
+    help="Key to order by, as KEY, KEY=ascending, KEY=descending or KEY=value1,value2. Can be repeated.",
+)
+def order_by(source, target, ordering: dict[str, str | list[str]]) -> None:
+    from earthkit.data.data.bufr import BUFRData
+    from earthkit.data.data.grib import GribData
+
+    _check_different_files(source, target)
+
+    stream = _is_stream(source)
+    if not stream and not isinstance(source, (GribData, BUFRData)):
+        raise click.ClickException("'order_by' only supports GRIB and BUFR input")
     try:
-        data, stream = _read_source(source_file)
-        if not stream and not isinstance(data, (GribData, BUFRData)):
-            raise click.ClickException("'order_by' only supports GRIB and BUFR input")
-
-        data = _listable(data, source_file, method="order_by", stream=stream)
-        ordered = data.order_by(ordering)
-        _write_target(target_file, ordered)
-    except click.ClickException:
-        raise
+        target.to_target(_listable(source, "SOURCE", method="order_by", stream=stream).order_by(ordering))
     except Exception as error:
-        raise click.ClickException(f"Could not order {source_file!r}: {error}") from error
+        raise click.ClickException(f"Could not order: {error}") from error
