@@ -122,6 +122,11 @@ class GribEncoder(Encoder):
         This metadata is used as default when :meth:`encode` is called without metadata. If metadata is provided
         in the :meth:`encode` method, it is merged with this preset metadata, with the metadata provided
         in the :meth:`encode` method taking precedence.
+    mars_metadata: dict, optional
+        A preset of MARS metadata keys/values used as default when :meth:`encode` is called without
+        ``mars_metadata``. If ``mars_metadata`` is provided in the :meth:`encode` method, it is merged with
+        this preset, with the ``mars_metadata`` provided in the :meth:`encode` method taking precedence.
+        Cannot be specified together with ``template``.
     kwargs: dict
         Additional keyword arguments interpreted as metadata to encode. The keys must be ecCodes GRIB keys,
         optionally prefixed with "metadata.".
@@ -131,6 +136,7 @@ class GribEncoder(Encoder):
     See the howto examples for more details and examples of encoding GRIB data with :class:`GribEncoder`.
 
     - :ref:`/tutorials/target/grib_encoder.ipynb`
+    - :ref:`/tutorials/target/grib_encoder_mars.ipynb`
     - :ref:`/tutorials/grib/grib_modify_metadata.ipynb`
     - :ref:`/tutorials/grib/grib_modify_values.ipynb`
 
@@ -166,7 +172,7 @@ class GribEncoder(Encoder):
     6
     """
 
-    def __init__(self, template=None, metadata=None, **kwargs):
+    def __init__(self, template=None, metadata=None, mars_metadata=None, **kwargs):
         super().__init__(template=template, metadata=metadata, **kwargs)
         # the template is stored as a handle to be used as a basis for encoding,
         # (when available)
@@ -177,6 +183,10 @@ class GribEncoder(Encoder):
             if isinstance(template, Field):
                 self._template_field = template
 
+        if mars_metadata and template:
+            raise NotImplementedError("mars_metadata cannot be used together with a template")
+
+        self.mars_metadata = mars_metadata
         self.template = handle_from_template(self.template, clone=False)
 
     @normalise_grib_keys
@@ -239,6 +249,18 @@ class GribEncoder(Encoder):
             The format independent keys from :py:class:`~earthkit.data.core.field.Field` metadata are also
             accepted. If format independent keys are provided, they are applied first to create a new handle,
             then if ecCodes GRIB keys are provided too, they are applied on top of the handle.
+        mars_metadata: dict, optional
+            MARS metadata keys/values (e.g. ``class``, ``stream``, ``type``, ``expver``, ``date``, ``time``,
+            ``step``, ``param``, ``levtype``, ``grid``, etc.) used to build a new GRIB message directly from
+            ``values``, without a ``template``. Internally, this uses the `pymetkit
+            <https://github.com/ecmwf/pymetkit>`_ package to turn the MARS-style request into a GRIB message.
+            ``values`` is mandatory when ``mars_metadata`` is used. Cannot be specified together with
+            ``template`` or ``data``, since ``mars_metadata`` builds the message from scratch. Can be combined
+            with ``metadata``, in which case the GRIB message is first created from ``mars_metadata`` and
+            ``values``, then the keys in ``metadata`` are set on top of it. This is useful for GRIB keys that
+            are not part of the MARS vocabulary, such as ``bitsPerValue``. If a preset ``mars_metadata`` was
+            given to :obj:`GribEncoder`, it is merged with the ``mars_metadata`` provided here, with the
+            latter taking precedence.
         template: Field, GribCodesHandle, bytes, str, int, None
             A template to use for encoding. It can be a :py:class:`~earthkit.data.core.field.Field`,
             a :py:class:`~earthkit.data.reader.grib.GribCodesHandle`, a GRIB message as
@@ -281,6 +303,7 @@ class GribEncoder(Encoder):
         See the howto examples for more details and examples of encoding GRIB data with :class:`GribEncoder`.
 
         - :ref:`/tutorials/target/grib_encoder.ipynb`
+        - :ref:`/tutorials/target/grib_encoder_mars.ipynb`
         """
         template_field = None
         if template is None:
@@ -295,6 +318,17 @@ class GribEncoder(Encoder):
         if data is not None and values is not None and template:
             raise ValueError("Cannot provide data, values and template together")
 
+        mars_metadata = {} if mars_metadata is None else mars_metadata
+        mmd = {} if self.mars_metadata is None else self.mars_metadata.copy()
+        mmd.update(**mars_metadata)
+        mars_metadata = mmd
+
+        if mars_metadata:
+            if template is not None or data is not None:
+                raise ValueError("Cannot provide mars_metadata when a template or data is specified")
+            if values is None:
+                raise ValueError("When providing mars_metadata, values must also be specified")
+
         metadata = metadata if metadata is not None else {}
         md = self._normalise_kwargs_names(**self.metadata)
         md.update(self._normalise_kwargs_names(**metadata))
@@ -304,14 +338,6 @@ class GribEncoder(Encoder):
         # separate the metadata into format independent field metadata and
         # raw ecCodes GRIB metadata
         field_metadata, ecc_metadata = self._separate_metadata(md)
-
-        mars_metadata = {} if mars_metadata is None else mars_metadata
-
-        if mars_metadata:
-            if template is not None or data is not None:
-                raise ValueError("Cannot provide mars_metadata when a template or data is specified")
-            if values is None:
-                raise ValueError("When providing mars_metadata, values must also be specified")
 
         # when the input date is a datetime object time can be inferred from it
         can_infer_time = (
