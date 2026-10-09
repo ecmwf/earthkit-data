@@ -9,13 +9,14 @@
 
 import datetime
 import logging
-from functools import lru_cache
 
 from earthkit.data.decorators import normalise, normalise_grib_keys
 from earthkit.data.utils.dates import step_range_to_grib
-from earthkit.data.utils.humanize import list_to_human
 
-from . import EncodedData, Encoder, FilePathEncodedData
+from .. import EncodedData, Encoder, FilePathEncodedData
+from .mars import handle_from_mars
+from .metadata import handle_from_metadata
+from .template import handle_from_template
 
 LOG = logging.getLogger(__name__)
 
@@ -103,306 +104,6 @@ class Combined:
         return self.handle.get(key, default=None)
 
 
-@lru_cache(maxsize=None)
-def _gg_pl(N):
-    import eccodes
-
-    sample = None
-    result = {}
-    try:
-        sample = eccodes.codes_new_from_samples(
-            f"reduced_gg_pl_{N}_grib2",
-            eccodes.CODES_PRODUCT_GRIB,
-        )
-
-        for key in ("N", "Ni", "Nj"):
-            result[key] = eccodes.codes_get(sample, key)
-
-        for key in (
-            "latitudeOfFirstGridPointInDegrees",
-            "longitudeOfFirstGridPointInDegrees",
-            "latitudeOfLastGridPointInDegrees",
-            "longitudeOfLastGridPointInDegrees",
-            "iDirectionIncrementInDegrees",
-        ):
-            result[key] = eccodes.codes_get_double(sample, key)
-
-        pl = eccodes.codes_get_long_array(sample, "pl")
-        result["pl"] = pl.tolist()
-        result["gridType"] = "reduced_gg"
-
-        return result
-
-    finally:
-        if sample is not None:
-            eccodes.codes_release(sample)
-
-
-class GribHandleMaker:
-    """Create a new GribCodesHandle from a template, field or metadata."""
-
-    def __init__(self, template=None):
-        self.template = self.handle_from_template(template, clone=False)
-        self._bbox = {}
-
-    def make(self, values_shape=None, metadata=None, template=None, field_metadata=None):
-        """Create a new GribCodesHandle from a template, field or metadata.
-
-        May modify existing metadata
-
-        Parameters
-        ----------
-        values_shape: tuple, optional
-            The shape of the values to encode
-        metadata: dict, optional
-            Metadata to encode
-        template: GribCoder, optional
-            A template to use for encoding
-        field_metadata: dict, optional
-            Metadata to be set on the field before encoding.
-        """
-        if template is None:
-            template = self.template
-
-        handle = self.handle_from_template(
-            template, values_shape=values_shape, field_metadata=field_metadata, clone=True
-        )
-        if handle is not None:
-            self.update_metadata_from_template(metadata, template, handle)
-
-        if handle is None:
-            if values_shape is None:
-                raise ValueError("No values to encode")
-            if field_metadata:
-                raise ValueError("Cannot provide field_metadata without a template or handle")
-            handle = self.handle_from_metadata(values_shape, metadata, _COMPULSORY)
-
-        return handle
-
-    @staticmethod
-    def handle_from_template(template, values_shape=None, field_metadata=None, clone=True):
-        handle = None
-        if template is not None:
-            from earthkit.data.core.field import Field
-
-            def _result(handle):
-                if field_metadata:
-                    from earthkit.data.field.grib.create import create_grib_field
-
-                    field = create_grib_field(handle)
-                    field = field.set(**field_metadata)
-                    # it clones the handle internally, so we don't need to clone it again here
-                    return GribHandleMaker.handle_from_field(field)
-                return handle.clone() if clone else handle
-
-            if isinstance(template, Field):
-                if field_metadata:
-                    template = template.set(**field_metadata)
-                return GribHandleMaker.handle_from_field(template, values_shape=values_shape)
-            # GribMetadata or GribHandle
-            elif hasattr(template, "handle"):
-                handle = template.handle
-                if handle is not None:
-                    return _result(handle)
-            else:
-                from earthkit.data.readers.grib.handle import GribCodesHandle
-
-                if isinstance(template, GribCodesHandle):
-                    return _result(template)
-
-                # message buffer as bytes
-                elif isinstance(template, bytes):
-                    handle = GribCodesHandle.from_message(template)
-                    if handle is not None:
-                        return _result(handle)
-                # GRIB sample as string
-                elif isinstance(template, str):
-                    handle = GribCodesHandle.from_sample(template)
-                    if handle is not None:
-                        return _result(handle)
-                # raw ecCodes handle
-                elif isinstance(template, int):
-                    try:
-                        handle = GribCodesHandle._from_raw_handle(template)
-                        if handle is not None:
-                            return _result(handle)
-                    except Exception:
-                        pass
-
-        return None
-
-    @staticmethod
-    def handle_from_field(field, values_shape=None):
-        r = {}
-        field = field.sync()
-        field._get_grib_context(r)
-        handle = r.pop("handle", None)
-
-        if handle is not None:
-            handle = handle.clone()
-            if values_shape is None:
-                if "values" in r:
-                    handle.set_values(r["values"])
-
-        return handle
-
-    def handle_from_metadata(self, values_shape, metadata, compulsory):
-        from earthkit.data.readers.grib.handle import GribCodesHandle  # Lazy loading of eccodes
-
-        if len(values_shape) == 1:
-            sample = self._gg_field(values_shape, metadata)
-        elif len(values_shape) == 2:
-            sample = self._ll_field(values_shape, metadata)
-        else:
-            raise ValueError(f"Invalid shape {values_shape} for GRIB, must be 1 or 2 dimension ")
-
-        metadata.setdefault("bitsPerValue", 16)
-        metadata["scanningMode"] = 0
-
-        if "class" in metadata or "type" in metadata or "stream" in metadata or "expver" in metadata:
-            # MARS labelling
-            metadata["setLocalDefinition"] = 1
-            # metadata['grib2LocalSectionNumber'] = 1
-
-        for check in compulsory:
-            if not isinstance(check, tuple):
-                check = [check]
-
-            if not any(c in metadata for c in check):
-                choices = list_to_human([f"'{c}'" for c in check], "or")
-                raise ValueError(f"Please provide a value for {choices}.")
-
-        LOG.debug("GribCodesHandle.from_sample(%s)", sample)
-        return GribCodesHandle.from_sample(sample)
-
-    def update_metadata_from_template(self, metadata, template, handle):
-        return
-        # TODO: review this code
-        # the template can contain extra metadata that is not encoded in the handle
-        if "bitsPerValue" in metadata:
-            return
-
-        bpv = None
-        if hasattr(template, "_get_grib"):
-            template_md = template._get_grib()
-            bpv = template_md.get_extra_key("bitsPerValue", default=None)
-            if bpv is not None:
-                metadata["bitsPerValue"] = bpv
-            else:
-                bpv = template_md.get("bitsPerValue", default=None)
-
-    def _levtype_from_metadata(self, metadata):
-        levtype = metadata.get("levtype", None)
-        type_of_level = metadata.get("typeOfLevel", None)
-
-        if levtype is None:
-            if type_of_level is not None:
-                if type_of_level == "isobaricInhPa":
-                    levtype = "pl"
-                elif type_of_level == "surface":
-                    levtype = "sfc"
-                else:
-                    raise ValueError(
-                        f"Unsupported typeOfLevel {type_of_level} for GRIB encoding when only metadata is provided."
-                    )
-            elif "levelist" in metadata or "level" in metadata:
-                levtype = "pl"
-            else:
-                levtype = "sfc"
-
-        return levtype
-
-    def _ll_field(self, values_shape, metadata):
-        Nj, Ni = values_shape
-        metadata["Nj"] = Nj
-        metadata["Ni"] = Ni
-
-        # We assume the scanning mode north->south, west->east
-        west_east = 360 / Ni
-
-        if Nj % 2 == 0:
-            north_south = 180 / Nj
-            adjust = north_south / 2
-        else:
-            north_south = 181 / Nj
-            adjust = 0
-
-        north = 90 - adjust
-        south = -90 + adjust
-        west = 0
-        east = 360 - west_east
-
-        metadata["iDirectionIncrementInDegrees"] = west_east
-        metadata["jDirectionIncrementInDegrees"] = north_south
-
-        metadata["latitudeOfFirstGridPointInDegrees"] = north
-        metadata["latitudeOfLastGridPointInDegrees"] = south
-        metadata["longitudeOfFirstGridPointInDegrees"] = west
-        metadata["longitudeOfLastGridPointInDegrees"] = east
-
-        edition = metadata.get("edition", 2)
-        levtype = self._levtype_from_metadata(metadata)
-
-        return f"regular_ll_{levtype}_grib{edition}"
-
-    def _gg_field(self, values_shape, metadata):
-        GAUSSIAN = {
-            6114: (32, False),
-            13280: (48, False),
-            24572: (64, False),
-            35718: (80, False),
-            40320: (96, True),
-            50662: (96, False),
-            88838: (128, False),
-            108160: (160, True),
-            138346: (160, False),
-            213988: (200, False),
-            348528: (256, False),
-            542080: (320, False),
-            843490: (400, False),
-            1373624: (512, False),
-            2140702: (640, False),
-            5447118: (1024, False),
-            6599680: (1280, True),
-            8505906: (1280, False),
-            20696844: (2000, False),
-        }
-
-        n = values_shape[0]
-        if n not in GAUSSIAN:
-            raise ValueError(f"Unsupported GAUSSIAN grid. Number of grid points {n:,}")
-        N, octahedral = GAUSSIAN[n]
-
-        if N not in self._bbox:
-            import eccodes
-
-            self._bbox[N] = max(eccodes.codes_get_gaussian_latitudes(N))
-
-        metadata["latitudeOfFirstGridPointInDegrees"] = self._bbox[N]
-        metadata["latitudeOfLastGridPointInDegrees"] = -self._bbox[N]
-        metadata["longitudeOfFirstGridPointInDegrees"] = 0
-
-        metadata["N"] = N
-        if octahedral:
-            half = list(range(20, 20 + N * 4, 4))
-            pl = half + list(reversed(half))
-            assert len(pl) == 2 * N, (len(pl), 2 * N)
-            metadata["pl"] = pl
-            metadata["longitudeOfLastGridPointInDegrees"] = 360 - max(pl) / 360
-            metadata["Nj"] = len(pl)
-        else:
-            # We just want the PL
-            metadata.update(_gg_pl(N))
-
-        edition = metadata.get("edition", 2)
-        levtype = self._levtype_from_metadata(metadata)
-
-        if octahedral or levtype == "sfc":
-            return f"reduced_gg_{levtype}_grib{edition}"
-        else:
-            return f"reduced_gg_{levtype}_{N}_grib{edition}"
-
-
 class GribEncoder(Encoder):
     """Encoder for GRIB format.
 
@@ -421,6 +122,11 @@ class GribEncoder(Encoder):
         This metadata is used as default when :meth:`encode` is called without metadata. If metadata is provided
         in the :meth:`encode` method, it is merged with this preset metadata, with the metadata provided
         in the :meth:`encode` method taking precedence.
+    mars_metadata: dict, optional
+        A preset of MARS metadata keys/values used as default when :meth:`encode` is called without
+        ``mars_metadata``. If ``mars_metadata`` is provided in the :meth:`encode` method, it is merged with
+        this preset, with the ``mars_metadata`` provided in the :meth:`encode` method taking precedence.
+        Cannot be specified together with ``template``.
     kwargs: dict
         Additional keyword arguments interpreted as metadata to encode. The keys must be ecCodes GRIB keys,
         optionally prefixed with "metadata.".
@@ -430,6 +136,7 @@ class GribEncoder(Encoder):
     See the howto examples for more details and examples of encoding GRIB data with :class:`GribEncoder`.
 
     - :ref:`/tutorials/target/grib_encoder.ipynb`
+    - :ref:`/tutorials/target/grib_encoder_mars.ipynb`
     - :ref:`/tutorials/grib/grib_modify_metadata.ipynb`
     - :ref:`/tutorials/grib/grib_modify_values.ipynb`
 
@@ -465,9 +172,8 @@ class GribEncoder(Encoder):
     6
     """
 
-    def __init__(self, template=None, metadata=None, **kwargs):
+    def __init__(self, template=None, metadata=None, mars_metadata=None, **kwargs):
         super().__init__(template=template, metadata=metadata, **kwargs)
-        self._bbox = {}
         # the template is stored as a handle to be used as a basis for encoding,
         # (when available)
         self._template_field = None
@@ -477,7 +183,11 @@ class GribEncoder(Encoder):
             if isinstance(template, Field):
                 self._template_field = template
 
-        self.template = GribHandleMaker.handle_from_template(self.template, clone=False)
+        if mars_metadata and template:
+            raise NotImplementedError("mars_metadata cannot be used together with a template")
+
+        self.mars_metadata = mars_metadata
+        self.template = handle_from_template(self.template, clone=False)
 
     @normalise_grib_keys
     @normalise("date", "date")
@@ -494,17 +204,14 @@ class GribEncoder(Encoder):
 
     def _separate_metadata(self, metadata):
         field = {}
-        grib = {}
+        ecc = {}
         for k, v in metadata.items():
             if "." in k:
                 field[k] = v
             else:
-                grib[k] = v
+                ecc[k] = v
 
-        return field, grib
-
-    def _get_handle(self, **kwargs):
-        return GribHandleMaker(template=self.template).make(**kwargs)
+        return field, ecc
 
     def encode(
         self,
@@ -512,6 +219,7 @@ class GribEncoder(Encoder):
         values=None,
         check_nans=True,
         metadata=None,
+        mars_metadata=None,
         template=None,
         missing_value=9999,
         target=None,
@@ -541,6 +249,18 @@ class GribEncoder(Encoder):
             The format independent keys from :py:class:`~earthkit.data.core.field.Field` metadata are also
             accepted. If format independent keys are provided, they are applied first to create a new handle,
             then if ecCodes GRIB keys are provided too, they are applied on top of the handle.
+        mars_metadata: dict, optional
+            MARS metadata keys/values (e.g. ``class``, ``stream``, ``type``, ``expver``, ``date``, ``time``,
+            ``step``, ``param``, ``levtype``, ``grid``, etc.) used to build a new GRIB message directly from
+            ``values``, without a ``template`` or ``data``. Internally, this uses the `metkit
+            <https://github.com/ecmwf/metkit>`_ package to turn the MARS-style request into a GRIB message.
+            ``values`` is mandatory when ``mars_metadata`` is used. Cannot be specified together with
+            ``template`` or ``data``, since ``mars_metadata`` builds the message from scratch. Can be combined
+            with ``metadata``, in which case the GRIB message is first created from ``mars_metadata`` and
+            ``values``, then the keys in ``metadata`` are set on top of it. This is useful for GRIB keys that
+            are not part of the MARS vocabulary, such as ``bitsPerValue``. If a preset ``mars_metadata`` was
+            given to :obj:`GribEncoder`, it is merged with the ``mars_metadata`` provided here, with the
+            latter taking precedence.
         template: Field, GribCodesHandle, bytes, str, int, None
             A template to use for encoding. It can be a :py:class:`~earthkit.data.core.field.Field`,
             a :py:class:`~earthkit.data.reader.grib.GribCodesHandle`, a GRIB message as
@@ -550,7 +270,7 @@ class GribEncoder(Encoder):
             ``data`` in forming the new GRIB message, but values are taken from the ``data`` if no
             provided directly. Cannot be specified together with ``data`` and ``values``.
         missing_value: float
-            The value to use for NaNs. Default is 9999, which is the default missing value used by ecCode
+            The value to use for NaNs. Default is 9999, which is the default missing value used by ecCodes
             when encoding with a template that does not have a valid "bitsPerValue" key.
         kwargs: dict
             Additional metadata to encode.
@@ -573,16 +293,22 @@ class GribEncoder(Encoder):
         - ``values``, ``template``: The ``template`` will be used as a basis for encoding, but
             the values will be taken from the ``values`` argument.
 
-        When no ``data`` and ``template`` are provided, a new GRIB message will be created from the
-        ``values`` and ``metadata``. This is an experimental feature and only works for certain metadata
-        keys and the grid has to be either global lat-lon or reduced Gaussian grid. The geography is
-        inferred from the shape of the specified ``values``.
+        When no ``data`` and ``template`` are provided, a new GRIB message will be created either from
+        ``mars_metadata`` or from ``values`` and ``metadata``:
+
+        - If ``mars_metadata`` is given, it is used together with ``values`` to build the message via
+          `metkit <https://github.com/ecmwf/metkit>`_. Any ``metadata`` provided is then applied on
+          top of the resulting message.
+        - Otherwise, the message is created from ``values`` and ``metadata`` alone. This is an experimental
+          feature and only works for certain metadata keys and the grid has to be either global lat-lon or
+          reduced Gaussian grid. The geography is inferred from the shape of the specified ``values``.
 
         Examples
         --------
         See the howto examples for more details and examples of encoding GRIB data with :class:`GribEncoder`.
 
         - :ref:`/tutorials/target/grib_encoder.ipynb`
+        - :ref:`/tutorials/target/grib_encoder_mars.ipynb`
         """
         template_field = None
         if template is None:
@@ -597,29 +323,38 @@ class GribEncoder(Encoder):
         if data is not None and values is not None and template:
             raise ValueError("Cannot provide data, values and template together")
 
+        mars_metadata = {} if mars_metadata is None else mars_metadata
+        mmd = {} if self.mars_metadata is None else self.mars_metadata.copy()
+        mmd.update(**mars_metadata)
+        mars_metadata = mmd
+
+        if mars_metadata:
+            if template is not None or data is not None:
+                raise ValueError("Cannot provide mars_metadata when a template or data is specified")
+            if values is None:
+                raise ValueError("When providing mars_metadata, values must also be specified")
+
         metadata = metadata if metadata is not None else {}
         md = self._normalise_kwargs_names(**self.metadata)
         md.update(self._normalise_kwargs_names(**metadata))
         md.update(self._normalise_kwargs_names(**kwargs))
         md = self._normalise_metadata_key_names(md)
 
-        # separate the metadata into format independent field metadata,
-        # and ecCodes GRIB metadata
-        field_metadata, md = self._separate_metadata(md)
+        # separate the metadata into format independent field metadata and
+        # raw ecCodes GRIB metadata
+        field_metadata, ecc_metadata = self._separate_metadata(md)
 
-        # when the input date a datetime object time can be inferred from it
+        # when the input date is a datetime object time can be inferred from it
         can_infer_time = (
-            "date" in md
+            "date" in ecc_metadata
             and isinstance(md["date"], datetime.datetime)
             and not self._has_standard_date_input([self.metadata, metadata, kwargs])
         )
 
-        metadata = md
-
         kwargs = dict()
         kwargs["values"] = values
         kwargs["check_nans"] = check_nans
-        kwargs["metadata"] = metadata
+        kwargs["metadata"] = ecc_metadata
         kwargs["missing_value"] = missing_value
         kwargs["can_infer_time"] = can_infer_time
 
@@ -628,7 +363,8 @@ class GribEncoder(Encoder):
         path_allowed = (
             target is not None
             and target._name == "file"
-            and not metadata
+            and not ecc_metadata
+            and not mars_metadata
             and values is not None
             and template is not None
             and missing_value == 9999
@@ -654,26 +390,29 @@ class GribEncoder(Encoder):
                 **kwargs,
             )
         else:
-            handle = self._get_handle(
+            new_handle = None
+            if mars_metadata:
+                try:
+                    new_handle = handle_from_mars(values, mars_metadata)
+                    if new_handle is not None:
+                        if field_metadata or ecc_metadata:
+                            values = None
+                            template = new_handle
+                            new_handle = None
+                        else:
+                            return GribEncodedData(new_handle, template_field=template_field)
+
+                except Exception as e:
+                    raise RuntimeError("Failed to create handle from mars metadata") from e
+
+            handle = self._create_handle(
                 template=template,
                 values_shape=values.shape if values is not None else None,
-                metadata=metadata,
+                ecc_metadata=ecc_metadata,
                 field_metadata=field_metadata,
             )
-            new_handle = self._make_new_handle(handle, **kwargs)
+            new_handle = self._update_handle(handle, **kwargs)
             return GribEncodedData(new_handle, template_field=template_field)
-
-    def _template(self, data, template):
-        if template is None:
-            template = self.template
-            template_field = self._template_field
-        else:
-            from earthkit.data import Field
-
-            if isinstance(template, Field):
-                template_field = template
-
-        return template, template_field
 
     def _has_standard_date_input(self, d):
         for v in d:
@@ -778,11 +517,11 @@ class GribEncoder(Encoder):
         if template is None:
             template = handle
 
-        handle = self._get_handle(
-            values_shape=values.shape if values is not None else None, metadata=metadata, template=template
+        handle = self._create_handle(
+            values_shape=values.shape if values is not None else None, ecc_metadata=metadata, template=template
         )
 
-        new_handle = self._make_new_handle(handle, values=values, metadata=metadata, **kwargs)
+        new_handle = self._update_handle(handle, values=values, metadata=metadata, **kwargs)
 
         return GribEncodedData(new_handle, template_field=template_field)
 
@@ -810,7 +549,26 @@ class GribEncoder(Encoder):
         else:
             return None
 
-    def _make_new_handle(
+    def _create_handle(self, template=None, values_shape=None, ecc_metadata=None, field_metadata=None):
+
+        clone = True
+        if template is None:
+            template = self.template
+            clone = False
+        handle = handle_from_template(
+            template=template, values_shape=values_shape, field_metadata=field_metadata, clone=clone
+        )
+
+        if handle is None:
+            if values_shape is None:
+                raise ValueError("No values to encode")
+            if field_metadata:
+                raise ValueError("Cannot provide field_metadata without a template or handle")
+            handle = handle_from_metadata(values_shape, ecc_metadata, _COMPULSORY)
+
+        return handle
+
+    def _update_handle(
         self, handle, values=None, check_nans=True, metadata=None, missing_value=9999, can_infer_time=False
     ):
         if handle is None:
@@ -820,9 +578,9 @@ class GribEncoder(Encoder):
         if metadata is None:
             metadata = {}
 
-        compulsory = _COMPULSORY
+        # compulsory = _COMPULSORY
 
-        self._update_metadata(handle, metadata, compulsory, can_infer_time)
+        self._update_metadata(handle, metadata, can_infer_time)
 
         # right now the encoder is only able to write pv for edition 2
         if "pv" in metadata and metadata.get("edition", None) != 2:
@@ -898,7 +656,6 @@ class GribEncoder(Encoder):
             handle.set_values(values)
 
         return handle
-        # return GribEncodedData(handle)
 
     def _update_metadata_from_field(self, field, metadata):
         if "stepRange" in metadata:
@@ -909,7 +666,7 @@ class GribEncoder(Encoder):
                 end = step
                 metadata["stepRange"] = step_range_to_grib(start, end)
 
-    def _update_metadata(self, handle, metadata, compulsory, can_infer_time):
+    def _update_metadata(self, handle, metadata, can_infer_time):
         # TODO: revisit the logic
         combined = Combined(handle, metadata)
 
@@ -955,7 +712,6 @@ class GribEncoder(Encoder):
                 metadata.setdefault("type", "pf")
 
         if "number" in metadata:
-            compulsory += ("numberOfForecastsInEnsemble",)
             metadata.setdefault("productDefinitionTemplateNumber", 1)  # 11 for accumulations
 
         if metadata.get("type") in ("pf", "cf"):
@@ -1009,6 +765,3 @@ class GribEncoder(Encoder):
                     "For backwards compatibility, the following levtype values are still "
                     f"accepted: {list(levtype_remap)}."
                 )
-
-
-encoder = GribEncoder

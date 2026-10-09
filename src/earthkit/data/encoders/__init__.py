@@ -254,15 +254,28 @@ class EncoderMaker:
 
         name = name_or_encoder
 
-        loader = EncoderLoader()
+        method = "encoder"
 
         if name in self.ENCODERS:
             klass = self.ENCODERS[name]
         else:
-            from earthkit.data.core.plugins import find_plugin
+            here = os.path.dirname(__file__)
+            for path in sorted(os.listdir(here)):
+                if path[0] in ("_", "."):
+                    continue
 
-            klass = find_plugin(os.path.dirname(__file__), name, loader)
-            self.ENCODERS[name] = klass
+                if path.endswith(".py") or os.path.isdir(os.path.join(here, path)):
+                    base, ext = os.path.splitext(path)
+                    if base == name:
+                        module = import_module(f".{path[:-3] if path.endswith('.py') else path}", package=__name__)
+                        if hasattr(module, method):
+                            klass = getattr(module, method)
+                            if klass is not None:
+                                self.ENCODERS[name] = klass
+
+            if name not in self.ENCODERS:
+                raise ValueError(f"Encoder '{name}' not found")
+            klass = self.ENCODERS[name]
 
         encoder = klass(*args, **kwargs)
 

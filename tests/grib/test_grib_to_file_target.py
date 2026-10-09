@@ -10,7 +10,6 @@
 #
 
 import os
-import sys
 import tempfile
 
 import numpy as np
@@ -28,16 +27,6 @@ from earthkit.data.utils.testing import earthkit_examples_file
 EPSILON = 1e-4
 
 
-def new_grib_output_compat(*args, split_output=False, **kwargs):
-    from earthkit.data.targets.file import FileTarget
-    from earthkit.data.targets.file_pattern import FilePatternTarget
-
-    if split_output:
-        return FilePatternTarget(*args, encoder="grib", **kwargs)
-    else:
-        return FileTarget(*args, encoder="grib", **kwargs)
-
-
 def new_grib_coder_compat(*args, **kwargs):
     from earthkit.data.encoders.grib import GribEncoder
 
@@ -45,7 +34,7 @@ def new_grib_coder_compat(*args, **kwargs):
 
 
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
-def test_grib_save_when_loaded_from_file_core(fl_type):
+def test_grib_to_file_target_when_loaded_from_file_core(fl_type):
     fs, _ = load_grib_data("test6.grib", fl_type)
     assert len(fs) == 6
     with temp_file() as tmp:
@@ -58,7 +47,7 @@ def test_grib_save_when_loaded_from_file_core(fl_type):
     "_kwargs,expected_value",
     [({}, 16), ({"metadata.bitsPerValue": 12}, 12)],
 )
-def test_grib_save_bits_per_value_fieldlist(
+def test_grib_to_file_target_bits_per_value_fieldlist(
     _kwargs,
     expected_value,
 ):
@@ -77,7 +66,7 @@ def test_grib_save_bits_per_value_fieldlist(
     "_kwargs,expected_value",
     [({}, 16), ({"metadata.bitsPerValue": 12}, 12)],
 )
-def test_grib_save_bits_per_value_single_field(array, _kwargs, expected_value):
+def test_grib_to_file_target_bits_per_value_single_field(array, _kwargs, expected_value):
     ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     assert ds[0].get("metadata.bitsPerValue") == 16
     if array:
@@ -90,11 +79,8 @@ def test_grib_save_bits_per_value_single_field(array, _kwargs, expected_value):
 
 
 # TODO: if we use missing_value = np.finfo(np.float32).max the test fails
-@pytest.mark.parametrize("mode", ["target"])
 @pytest.mark.parametrize("missing_value", [100000.0, np.finfo(np.float32).max - 1])
-# @pytest.mark.parametrize("mode", ["target"])
-# @pytest.mark.parametrize("missing_value", [100000.0])
-def test_grib_output_missing_value_1(mode, missing_value):
+def test_grib_to_file_target_missing_value_1(missing_value):
     fld = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()[0]
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -103,56 +89,31 @@ def test_grib_output_missing_value_1(mode, missing_value):
         values = fld.values
         values[0] = np.nan
         assert not np.isnan(values[1])
-
-        # if mode == "ori":
-        #     f = earthkit.data.new_grib_output(path)
-        #     f.write(values, check_nans=True, missing_value=missing_value, template=fld)
-        #     f.close()
-        # if mode == "compat":
-        #     f = new_grib_output_compat(path)
-        #     f.write(values=values, check_nans=True, missing_value=missing_value, template=fld)
-        #     f.close()
-        if mode == "target":
-            to_target(
-                "file",
-                path,
-                values=values,
-                template=fld,
-                check_nans=True,
-                missing_value=missing_value,
-            )
+        to_target(
+            "file",
+            path,
+            values=values,
+            template=fld,
+            check_nans=True,
+            missing_value=missing_value,
+        )
         ds = earthkit.data.from_source("file", path).to_fieldlist()
         assert ds[0].get("metadata.bitmapPresent") == 1
         assert np.isnan(ds[0].values[0])
         assert not np.isnan(values[1])
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 10),
-    reason="ignore_cleanup_errors requires Python 3.10 or later",
-)
-@pytest.mark.parametrize("mode", ["target"])
-def test_grib_output_latlon(mode):
+def test_grib_to_file_target_latlon():
     data = np.random.random((181, 360))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         path = os.path.join(tmp, "a.grib")
-
-        # if mode == "ori":
-        #     f = earthkit.data.new_grib_output(path, date=20010101)
-        #     f.write(data, param="2t")
-        #     f.close()
-        # elif mode == "compat":
-        #     f = new_grib_output_compat(path, metadata=dict(date=20010101, generatingProcessIdentifier=255))
-        #     f.write(values=data, param="2t")
-        #     f.close()
-        if mode == "target":
-            to_target(
-                "file",
-                path,
-                metadata=dict(date=20010101, generatingProcessIdentifier=255, param="2t"),
-                values=data,
-            )
+        to_target(
+            "file",
+            path,
+            metadata=dict(date=20010101, generatingProcessIdentifier=255, param="2t"),
+            values=data,
+        )
 
         ds = earthkit.data.from_source("file", path).to_fieldlist()
 
@@ -166,32 +127,18 @@ def test_grib_output_latlon(mode):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 10),
-    reason="ignore_cleanup_errors requires Python 3.10 or later",
-)
-@pytest.mark.parametrize("mode", ["target"])
-def test_grib_output_o96_sfc(mode):
+def test_grib_to_file_target_o96_sfc():
     data = np.random.random((40320,))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         path = os.path.join(tmp, "a.grib")
 
-        # if mode == "ori":
-        #     f = earthkit.data.new_grib_output(path, date=20010101)
-        #     f.write(data, param="2t")
-        #     f.close()
-        # elif mode == "compat":
-        #     f = new_grib_output_compat(path, metadata=dict(date=20010101, generatingProcessIdentifier=255))
-        #     f.write(values=data, param="2t")
-        #     f.close()
-        if mode == "target":
-            to_target(
-                "file",
-                path,
-                metadata=dict(date=20010101, generatingProcessIdentifier=255, param="2t"),
-                values=data,
-            )
+        to_target(
+            "file",
+            path,
+            metadata=dict(date=20010101, generatingProcessIdentifier=255, param="2t"),
+            values=data,
+        )
 
         ds = earthkit.data.from_source("file", path).to_fieldlist()
 
@@ -212,32 +159,18 @@ def test_grib_output_o96_sfc(mode):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 10),
-    reason="ignore_cleanup_errors requires Python 3.10 or later",
-)
-@pytest.mark.parametrize("mode", ["target"])
-def test_grib_output_o160_sfc(mode):
+def test_grib_to_file_target_o160_sfc():
     data = np.random.random((108160,))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         path = os.path.join(tmp, "a.grib")
 
-        # if mode == "ori":
-        #     f = earthkit.data.new_grib_output(path, date=20010101)
-        #     f.write(data, param="2t")
-        #     f.close()
-        # elif mode == "compat":
-        #     f = new_grib_output_compat(path, metadata=dict(date=20010101, generatingProcessIdentifier=255))
-        #     f.write(values=data, param="2t")
-        #     f.close()
-        if mode == "target":
-            to_target(
-                "file",
-                path,
-                metadata=dict(date=20010101, generatingProcessIdentifier=255, param="2t"),
-                values=data,
-            )
+        to_target(
+            "file",
+            path,
+            metadata=dict(date=20010101, generatingProcessIdentifier=255, param="2t"),
+            values=data,
+        )
         ds = earthkit.data.from_source("file", path).to_fieldlist()
 
         ref = {
@@ -257,32 +190,18 @@ def test_grib_output_o160_sfc(mode):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 10),
-    reason="ignore_cleanup_errors requires Python 3.10 or later",
-)
-@pytest.mark.parametrize("mode", ["target"])
-def test_grib_output_n96_sfc(mode):
+def test_grib_to_file_target_n96_sfc():
     data = np.random.random(50662)
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         path = os.path.join(tmp, "a.grib")
 
-        # if mode == "ori":
-        #     f = earthkit.data.new_grib_output(path, date=20010101)
-        #     f.write(data, param="2t")
-        #     f.close()
-        # elif mode == "compat":
-        #     f = new_grib_output_compat(path, metadata=dict(date=20010101, generatingProcessIdentifier=255))
-        #     f.write(values=data, param="2t")
-        #     f.close()
-        if mode == "target":
-            to_target(
-                "file",
-                path,
-                metadata=dict(date=20010101, generatingProcessIdentifier=255, param="2t"),
-                values=data,
-            )
+        to_target(
+            "file",
+            path,
+            metadata=dict(date=20010101, generatingProcessIdentifier=255, param="2t"),
+            values=data,
+        )
         ds = earthkit.data.from_source("file", path).to_fieldlist()
 
         ref = {
@@ -302,39 +221,25 @@ def test_grib_output_n96_sfc(mode):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 10),
-    reason="ignore_cleanup_errors requires Python 3.10 or later",
-)
-@pytest.mark.parametrize("mode", ["target"])
-def test_grib_output_mars_labeling(mode):
+def test_grib_to_file_target_mars_labeling():
     data = np.random.random((40320,))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         path = os.path.join(tmp, "a.grib")
 
-        # if mode == "ori":
-        #     f = earthkit.data.new_grib_output(path, date=20010101)
-        #     f.write(data, type="fc", expver="test", step=24, param="msl")
-        #     f.close()
-        # elif mode == "compat":
-        #     f = new_grib_output_compat(path, metadata=dict(date=20010101, generatingProcessIdentifier=255))
-        #     f.write(values=data, type="fc", expver="test", step=24, param="msl")
-        #     f.close()
-        if mode == "target":
-            to_target(
-                "file",
-                path,
-                metadata=dict(
-                    date=20010101,
-                    generatingProcessIdentifier=255,
-                    type="fc",
-                    expver="test",
-                    step=24,
-                    param="msl",
-                ),
-                values=data,
-            )
+        to_target(
+            "file",
+            path,
+            metadata=dict(
+                date=20010101,
+                generatingProcessIdentifier=255,
+                type="fc",
+                expver="test",
+                step=24,
+                param="msl",
+            ),
+            values=data,
+        )
 
         ds = earthkit.data.from_source("file", path).to_fieldlist()
 
@@ -354,34 +259,16 @@ def test_grib_output_mars_labeling(mode):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 10),
-    reason="ignore_cleanup_errors requires Python 3.10 or later",
-)
-@pytest.mark.parametrize("mode", ["target"])
 @pytest.mark.parametrize("levtype", [{}, {"levtype": "pl"}])
-def test_grib_output_o96_pl(mode, levtype):
+def test_grib_to_file_target_o96_pl(levtype):
     data = np.random.random((40320,))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         path = os.path.join(tmp, "a.grib")
 
-        # if mode == "ori":
-        #     f = earthkit.data.new_grib_output(path, date=20010101)
-        #     _kwargs = dict(param="t", level=850)
-        #     _kwargs.update(levtype)
-        #     f.write(data, **_kwargs)
-        #     f.close()
-        # elif mode == "compat":
-        #     f = new_grib_output_compat(path, metadata=dict(date=20010101, generatingProcessIdentifier=255))
-        #     _kwargs = dict(param="t", level=850)
-        #     _kwargs.update(levtype)
-        #     f.write(values=data, **_kwargs)
-        #     f.close()
-        if mode == "target":
-            _kwargs = dict(date=20010101, generatingProcessIdentifier=255, param="t", level=850)
-            _kwargs.update(levtype)
-            to_target("file", path, metadata=_kwargs, values=data)
+        _kwargs = dict(date=20010101, generatingProcessIdentifier=255, param="t", level=850)
+        _kwargs.update(levtype)
+        to_target("file", path, metadata=_kwargs, values=data)
 
         ds = earthkit.data.from_source("file", path).to_fieldlist()
 
@@ -398,35 +285,19 @@ def test_grib_output_o96_pl(mode, levtype):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 10),
-    reason="ignore_cleanup_errors requires Python 3.10 or later",
-)
-@pytest.mark.parametrize("mode", ["target"])
 @pytest.mark.parametrize("levtype", [{}, {"levtype": "pl"}])
-def test_grib_output_tp(mode, levtype):
+def test_grib_to_file_target_tp(levtype):
     data = np.random.random((181, 360))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         path = os.path.join(tmp, "a.grib")
 
-        # if mode == "ori":
-        #     f = earthkit.data.new_grib_output(path, date=20010101)
-        #     # TODO: make it work for edition=2
-        #     f.write(data, param="tp", step=48, edition=1)
-        #     f.close()
-        # elif mode == "compat":
-        #     f = new_grib_output_compat(path, metadata=dict(date=20010101, generatingProcessIdentifier=255))
-        #     # TODO: make it work for edition=2
-        #     f.write(values=data, param="tp", step=48, edition=1)
-        #     f.close()
-        if mode == "target":
-            to_target(
-                "file",
-                path,
-                metadata=dict(date=20010101, generatingProcessIdentifier=255, param="tp", step=48, edition=1),
-                values=data,
-            )
+        to_target(
+            "file",
+            path,
+            metadata=dict(date=20010101, generatingProcessIdentifier=255, param="tp", step=48, edition=1),
+            values=data,
+        )
         ds = earthkit.data.from_source("file", path).to_fieldlist()
 
         assert ds[0].get("metadata.date") == 20010101
@@ -443,12 +314,8 @@ def test_grib_output_tp(mode, levtype):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 10),
-    reason="ignore_cleanup_errors requires Python 3.10 or later",
-)
 @pytest.mark.parametrize("array", [True, False])
-def test_grib_output_field_template(array):
+def test_grib_to_file_target_field_template(array):
     data = np.random.random((7, 12))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -459,17 +326,6 @@ def test_grib_output_field_template(array):
         # assert ds[0].get("metadata.bitsPerValue") == 4
 
         path = os.path.join(tmp, "a.grib")
-
-        # if mode == "ori":
-        #     f = earthkit.data.new_grib_output(path, template=ds[0], date=20010101)
-        #     f.write(data, param="pt", bitsPerValue=16)
-        #     f.close()
-        # elif mode == "compat":
-        #     f = new_grib_output_compat(
-        #         path, template=ds[0], metadata=dict(date=20010101, generatingProcessIdentifier=255)
-        #     )
-        #     f.write(values=data, param="pt", bitsPerValue=16)
-        #     f.close()
 
         to_target(
             "file",
@@ -491,7 +347,6 @@ def test_grib_output_field_template(array):
         assert np.allclose(ds[0].to_numpy(), data, rtol=1e-2, atol=1e-2)
 
 
-@pytest.mark.parametrize("mode", ["target"])
 @pytest.mark.parametrize(
     "pattern,expected_value",
     [
@@ -504,38 +359,19 @@ def test_grib_output_field_template(array):
         ("{metadata.date}_{metadata.time}_{metadata.step:03}", {"20180801_1200_000": 6}),
     ],
 )
-def test_grib_output_filename_pattern(mode, pattern, expected_value):
+def test_grib_to_file_target_filename_pattern(pattern, expected_value):
     ds = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
 
     with temp_directory() as tmp:
         path = os.path.join(tmp, f"{pattern}.grib")
 
-        # if mode == "ori":
-        #     f = earthkit.data.new_grib_output(path, split_output=True)
-        #     for x in ds:
-        #         f.write(x.values, template=x)
-
-        #     f.close()
-        # elif mode == "compat":
-        #     f = new_grib_output_compat(path, split_output=True)
-
-        #     for x in ds:
-        #         f.write(values=x.values, template=x)
-        #     f.close()
-        if mode == "target":
-            to_target(
-                "file-pattern",
-                path,
-                data=ds,
-            )
+        to_target(
+            "file-pattern",
+            path,
+            data=ds,
+        )
 
         for k, count in expected_value.items():
             path = os.path.join(tmp, f"{k}.grib")
             assert os.path.exists(path)
             assert len(from_source("file", path).to_fieldlist()) == count
-
-
-if __name__ == "__main__":
-    from earthkit.data.utils.testing import main
-
-    main()
