@@ -108,7 +108,7 @@ class MemorySource(MemoryBaseSource):
         return self._reader_
 
     def to_data_object(self):
-        from earthkit.data.data import SourceData
+        from earthkit.data.data.source import SourceData
 
         return SourceData(self)
 

@@ -63,7 +63,7 @@ Controls whether fields are kept in memory. The default is ``"persistent"``. The
 
 The actual memory used by a field depends on whether it owns the GRIB handle of the related GRIB message. This is controlled by the :ref:`grib-handle-policy <grib-handle-policy>` config option.
 
-A field can also cache its metadata access for performance, thus increasing memory usage. This is controlled by the :ref:`use-grib-metadata-cache <use-grib-metadata-cache>` config option.
+A field can also cache its metadata access for performance, thus increasing memory usage. This is controlled by the :ref:`use-grib-metadata-cache <grib-metadata-cache>` config option.
 
 .. _grib-handle-policy:
 

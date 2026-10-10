@@ -473,7 +473,7 @@ stream
     - :ref:`/tutorials/source/data_from_stream.ipynb`
     - :ref:`/tutorials/source/fdb.ipynb`
     - :ref:`/tutorials/source/url_stream.ipynb`
-    - :ref:`/tutorials/source/bufr_file_stream.ipynb`
+    - :ref:`/tutorials/bufr/bufr_file_stream.ipynb`
 
 
 .. _data-sources-memory:
@@ -486,7 +486,7 @@ memory
 
   Read data from a memory buffer.
 
-  Currently it only works for a ``buffer`` storing GRIB, BUFR data or a single CoverageJson object. The result is a FieldList (for GRIB) or FeatureList (for BUFR) object storing all the data in memory.
+  Currently it only works for a ``buffer`` storing GRIB or BUFR data or a single CoverageJson object. The result can be converted to a FieldList (for GRIB) or FeatureList (for BUFR) storing all the data in memory.
 
   .. code-block:: python
 
@@ -516,6 +516,12 @@ memory
 
       # f is the only GribField in fl
       f = fl[0]
+
+
+  Further examples:
+
+    - :ref:`/how-tos/read_grib_message_from_memory.ipynb`
+    - :ref:`/how-tos/read_bufr_message_from_memory.ipynb`
 
 
 .. _data-sources-forcings:
