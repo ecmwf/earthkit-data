@@ -3,17 +3,22 @@
 Streams
 ==========
 
-.. warning::
-   This guide is currently under construction and may be incomplete or inaccurate.
-
-
-We can read :ref:`grib` and CoverageJson data as a stream by using the ``stream=True`` option in :func:`from_source`. It is only available for the following sources:
+We can read GRIB, BUFR and CoverageJson data as a stream by using the ``stream=True`` option in :func:`from_source`. It is only available for the following sources:
 
 - :ref:`data-sources-file`
 - :ref:`data-sources-url`
 - :ref:`data-sources-fdb`
 - :ref:`data-sources-polytope`
 - :ref:`data-sources-s3`
+
+GRIB data is organised into Fields and a GRIB stream is turned into a :py:class:`FieldList` by calling
+``to_fieldlist()`` on it. BUFR data, on the other hand, is organised into messages (observations) rather than
+Fields, so a BUFR stream is turned into a FeatureList instead, by calling ``to_featurelist()``. Apart from this
+difference, and the fact that FeatureList currently offers a smaller set of features than FieldList, BUFR
+streams can be read in the same way as GRIB streams, using the methods described below. See the
+:ref:`/tutorials/bufr/bufr_file_stream.ipynb` notebook for an example.
+
+All the examples in the rest of this chapter use GRIB data.
 
 Iterating over a stream
 ------------------------
@@ -87,3 +92,4 @@ Further examples
 - :ref:`/tutorials/source/file_stream.ipynb`
 - :ref:`/tutorials/source/fdb.ipynb`
 - :ref:`/tutorials/source/url_stream.ipynb`
+- :ref:`/tutorials/bufr/bufr_file_stream.ipynb`

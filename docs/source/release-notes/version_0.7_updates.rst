@@ -13,7 +13,7 @@ Installation
 New features
 ++++++++++++++++
 
-- implemented the :ref:`parts <parts>` option for :ref:`file <data-sources-file>` sources with :ref:`grib` and :ref:`bufr` data
+- implemented the :ref:`parts <parts>` option for :ref:`file <data-sources-file>` sources with GRIB and BUFR  data
 - added shapefile support. See the :ref:`/tutorials/shapefile/shapefile.ipynb` notebook example.
 - added the :ref:`data-sources-opendap` source to access NetCDF data from OPEnDAP services. See the :ref:`/tutorials/source/netcdf_opendap.ipynb` notebook example.
 - added the :ref:`data-sources-sample` source to access data used in tests and examples

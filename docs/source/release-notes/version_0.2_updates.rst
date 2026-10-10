@@ -11,7 +11,7 @@ New features
 
 - added new source :ref:`data-sources-eod` to retrieve ECMWF open data. See the :ref:`/tutorials/source/ecmwf_open_data.ipynb` notebook example.
 - added new method :func:`from_object` to use a objects like numpy arrays or xarray datasets as an input. See the :ref:`/tutorials/other/from_object.ipynb` notebook example.
-- redesigned :ref:`bufr` handling. :ref:`bufr` data is now represented by a :class:`BUFRList <data.readers.bufr.bufr.BUFRList>` made up of :class:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>` objects. In many aspects it behaves similarly to a :obj:`FieldList <earthkit.data.core.fieldlist.FieldList>` offering iteration, slicing, selection and message dump. For details see :ref:`here <bufr>` and also check the notebook examples:
+- redesigned BUFR handling. BUFR data is now represented by a :class:`BUFRList <data.readers.bufr.bufr.BUFRList>` made up of :class:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>` objects. In many aspects it behaves similarly to a :obj:`FieldList <earthkit.data.core.fieldlist.FieldList>` offering iteration, slicing, selection and message dump. For details see :ref:`here <bufr>` and also check the notebook examples:
 
      - :ref:`/tutorials/bufr/bufr_temp.ipynb`
      - :ref:`/tutorials/bufr/bufr_synop.ipynb`
@@ -35,5 +35,5 @@ New features
 Fixes
 ++++++
 
-- fixed issue when :ref:`grib`, :ref:`bufr` or :ref:`odb` data contained extra bytes at the beginning :func:`from_source` could not identify their type. (`#123 <https://github.com/ecmwf/earthkit-data/issues/123>`_)
-- fixed issue when not specifying the ``filter`` option in :func:`to_pandas` on :ref:`bufr` data caused a crash
+- fixed issue when GRIB, BUFR or ODB data contained extra bytes at the beginning :func:`from_source` could not identify their type. (`#123 <https://github.com/ecmwf/earthkit-data/issues/123>`_)
+- fixed issue when not specifying the ``filter`` option in :func:`to_pandas` on BUFR data caused a crash

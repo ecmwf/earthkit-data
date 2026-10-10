@@ -40,13 +40,15 @@ BUFR_LS_KEYS = [
 ]
 
 
-class BUFRList(IndexFeatureListBase):
-    r"""Represent a list of
-    :obj:`BUFRMessage <earthkit.data.readers.bufr.message.BUFRMessage>`\ s.
-    """
+class BUFRFeatureListMixin:
+    r"""Mixin implementing the common, BUFR specific, behaviour shared by all the
+    featurelist implementations holding :obj:`BUFRMessage
+    <earthkit.data.readers.bufr.message.BUFRMessage>`\ s (file based, in-memory and streamed).
 
-    def __init__(self, *args, **kwargs):
-        IndexFeatureListBase.__init__(self, *args, **kwargs)
+    BUFR messages use plain (not dotted/component based) metadata keys, hence the generic
+    :class:`~earthkit.data.featurelist.indexed.IndexFeatureListBase` implementation of ``get``
+    and ``metadata`` (designed for components based metadata) cannot be used and is overridden here.
+    """
 
     def get(
         self,
@@ -431,6 +433,15 @@ class BUFRList(IndexFeatureListBase):
 
         return pdbufr.read_bufr(self, columns=columns, filters=filters, **kwargs)
 
+
+class BUFRList(BUFRFeatureListMixin, IndexFeatureListBase):
+    r"""Represent a list of
+    :obj:`BUFRMessage <earthkit.data.readers.bufr.message.BUFRMessage>`\ s.
+    """
+
+    def __init__(self, *args, **kwargs):
+        IndexFeatureListBase.__init__(self, *args, **kwargs)
+
     @classmethod
     def new_mask_index(cls, *args, **kwargs):
         return MaskBUFRList(*args, **kwargs)
@@ -546,7 +557,7 @@ class BUFRReader(Source, BUFRReaderBase):
         return self
 
     def is_streamable_file(self):
-        return False
+        return True
 
     def to_data_object(self):
         from earthkit.data.data.bufr import BUFRData
