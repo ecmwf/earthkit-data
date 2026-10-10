@@ -35,5 +35,5 @@ New features
 Fixes
 ++++++
 
-- fixed issue when :ref:`grib`, :ref:`bufr` or :ref:`odb` data contained extra bytes at the beginning :func:`from_source` could not identify their type. (`#123 <https://github.com/ecmwf/earthkit-data/issues/123>`_)
-- fixed issue when not specifying the ``filter`` option in :func:`to_pandas` on :ref:`bufr` data caused a crash
+- fixed issue when GRIB, BUFR or ODB data contained extra bytes at the beginning :func:`from_source` could not identify their type. (`#123 <https://github.com/ecmwf/earthkit-data/issues/123>`_)
+- fixed issue when not specifying the ``filter`` option in :func:`to_pandas` on BUFR data caused a crash

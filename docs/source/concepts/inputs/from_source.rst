@@ -102,7 +102,7 @@ file
   :type parts: pair, list or tuple of pairs, None
   :param merger: When None, an attempt is made to merge multiple inputs by their classes (using the nearest common class). When False, no merging is attempted (available from *version 1.3*). Otherwise ``merger`` specifies a custom merger (see details :ref:`here <mergers-details>`), which is used in a lazy way when conversion to fieldlst, Xarray or pandas is requested. For further details about the merging process consult the :ref:`mergers` section.
   :type merger: None, False, object, callable, str, or tuple
-  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Directories and archives are supported. Stream based access is only available for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`. *New in version 0.11.0*
+  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Directories and archives are supported. Stream based access is only available for GRIB, BUFR and CoverageJson data. See details about streams :ref:`here <streams>`. *New in version 0.11.0*
 
 
   The ``path`` can be used in a flexible way:
@@ -291,7 +291,7 @@ url
   :param session: A requests session to use for the request. See `multiurl`_ for details.
   :param bool update_if_out_of_date: If ``True``, the cached data will be updated if it is out of date. Default is False.
   :param bool force: If ``True``, the data will be downloaded even if it is already in the cache. Default is None.
-  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs. See details about streams :ref:`here <streams>`.
+  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB and BUFR data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs. See details about streams :ref:`here <streams>`.
   :param filter: A filter passed to the underlying :ref:`file source <data-sources-file>` that reads the downloaded data.
   :param merger: A merger passed to the underlying :ref:`file source <data-sources-file>` that reads the downloaded data.
   :param dict **kwargs: Other keyword arguments.
@@ -414,12 +414,12 @@ stream
 
   Read data from a stream (or streams).
 
-  The stream (or streams) can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment it only works for :ref:`grib` and CoverageJson data. For more details see :ref:`here <streams>`.
+  The stream (or streams) can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment it only works for GRIB, BUFR and CoverageJson data. For more details see :ref:`here <streams>`.
 
   :param stream: The stream(s)
   :type stream: stream, list, tuple
 
-  In the examples below, for simplicity, we create a file stream from a :ref:`grib` file. By default :ref:`from_source() <data-sources-stream>` returns an object that can only be used as an iterator.
+  In the examples below, for simplicity, we create a file stream from a GRIB file. By default :ref:`from_source() <data-sources-stream>` returns an object that can only be used as an iterator.
 
   .. code-block:: python
 
@@ -473,6 +473,7 @@ stream
     - :ref:`/tutorials/source/data_from_stream.ipynb`
     - :ref:`/tutorials/source/fdb.ipynb`
     - :ref:`/tutorials/source/url_stream.ipynb`
+    - :ref:`/tutorials/source/bufr_file_stream.ipynb`
 
 
 .. _data-sources-memory:
@@ -485,7 +486,7 @@ memory
 
   Read data from a memory buffer.
 
-  Currently it only works for a ``buffer`` storing GRIB data or a single CoverageJson object. The result is a FieldList object storing all the data in memory.
+  Currently it only works for a ``buffer`` storing GRIB, BUFR data or a single CoverageJson object. The result is a FieldList (for GRIB) or FeatureList (for BUFR) object storing all the data in memory.
 
   .. code-block:: python
 
@@ -773,7 +774,7 @@ fdb
   :param dict,str userconfig: Deprecated alias for ``user_config`` and will be removed in a future release. When both ``user_config`` and ``userconfig`` are provided a ValueError is raised. *Deprecated in version 1.2.0*
   :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests, but current only one request is supported. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
-  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
+  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for GRIB, BUFR and CoverageJson data. See details about streams :ref:`here <streams>`.
   :param bool lazy: If ``True``, the data is read in a lazy way. This means the following:
 
     - GRIB data is not retrieved until it is explicitly/implictly requested for a given field
@@ -789,7 +790,7 @@ fdb
 
     .. include:: misc/request_args.rst
 
-  The following example retrieves analysis :ref:`grib` data for 3 surface parameters as stream.
+  The following example retrieves analysis GRIB data for 3 surface parameters as stream.
   By default we will consume one message at a time and ``ds`` can only be used as an iterator:
 
   .. code-block:: python
@@ -1056,7 +1057,7 @@ polytope
   :param str user_key: Specify the user key credential. Must be used together with ``user_email``. This is an alternative to using the ``POLYTOPE_USER_KEY`` environment variable. *New in version 0.7.0*
   :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
-  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
+  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for GRIB, BUFR and CoverageJson data. See details about streams :ref:`here <streams>`.
   :param dict **kwargs: Other keyword arguments, these can include options passed to the polytope-client_
 
   The following logic is applied to build the **requests**:
@@ -1120,7 +1121,7 @@ s3
   :param str aws_access_key: The AWS access key. Can be overridden in a request. Used when ``anon=False``.
   :param str aws_secret_access_key: The AWS secret access key. Can be overridden in a request. Used when ``anon=False``.
   :param str aws_token: The AWS token only used for AWS Security Token Service (AWS STS) temporary credentials. Can be overridden in a request. Used when ``anon=False``.
-  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
+  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for GRIB, BUFR and CoverageJson data. See details about streams :ref:`here <streams>`.
 
 
   A **request** is a dictionary describing a single or multiple objects in a given bucket. It has the following format:
@@ -1160,7 +1161,7 @@ s3
       where the optional "parts" can specify the :ref:`parts <parts>` (byte ranges) to read.
 
 
-  The following examples retrieve :ref:`grib` data from a publicly available bucket on the European Weather Cloud (EWC).
+  The following examples retrieve GRIB data from a publicly available bucket on the European Weather Cloud (EWC).
 
   .. code-block:: python
 

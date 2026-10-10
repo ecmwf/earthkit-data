@@ -12,6 +12,7 @@ import logging
 
 from earthkit.utils.decorators import thread_safe_cached_property
 
+from earthkit.data.featurelist.stream import StreamFeatureList
 from earthkit.data.indexing.stream import StreamFieldList
 
 # from earthkit.data.core.fieldlist import FieldList
@@ -71,6 +72,9 @@ class StreamSource(Source):
             return MultiStreamSource(self._stream)
         elif hasattr(self._reader, "to_fieldlist"):
             return StreamFieldList(self._reader, **self._kwargs)
+        elif hasattr(self._reader, "to_featurelist"):
+            cls = getattr(self._reader, "stream_featurelist_class", StreamFeatureList)
+            return cls(self._reader, **self._kwargs)
         # if self.memory:
         #     return StreamMemorySource(self._stream, **self._kwargs)
         # elif hasattr(self._reader, "to_fieldlist"):
@@ -152,12 +156,17 @@ class MultiStreamSource(Source):
 
         #     return MultiSource([s.mutate() for s in self.sources])
         # else:
-        if not any(isinstance(s, StreamFieldList) for s in self.sources):
+        if not any(isinstance(s, (StreamFieldList, StreamFeatureList)) for s in self.sources):
             first = self.sources[0]
             if hasattr(first._reader, "to_fieldlist"):
                 return StreamFieldList(self, **self._kwargs)
+            elif hasattr(first._reader, "to_featurelist"):
+                cls = getattr(first._reader, "stream_featurelist_class", StreamFeatureList)
+                return cls(self, **self._kwargs)
         if all(isinstance(s, StreamFieldList) for s in self.sources):
             return StreamFieldList(self, **self._kwargs)
+        if all(isinstance(s, StreamFeatureList) for s in self.sources):
+            return type(self.sources[0])(self, **self._kwargs)
 
         return self
 
@@ -177,7 +186,7 @@ class MultiStreamSource(Source):
     def _from_sources(self, sources):
         r = []
         for s in sources:
-            if isinstance(s, (StreamSource, StreamFieldList, StreamMemorySource)):
+            if isinstance(s, (StreamSource, StreamFieldList, StreamFeatureList, StreamMemorySource)):
                 r.append(s)
             elif isinstance(s, Stream):
                 r.append(StreamSource(s))

@@ -40,21 +40,6 @@ class SimpleFeatureListBase(IndexFeatureListBase):
         # print("SimpleFeatureList Setstate")
         self._features = state.pop("_features")
 
-    # def to_pandas(self, *args, **kwargs):
-    #     # TODO make it generic
-    #     if len(self) > 0:
-    #         if self[0]._default_encoder() == "grib":
-    #             from earthkit.data.readers.grib.pandas import PandasMixIn
-
-    #             class _C(PandasMixIn, SimpleFeatureList):
-    #                 pass
-
-    #             return _C(self._features).to_pandas(*args, **kwargs)
-    #     else:
-    #         import pandas as pd
-
-    #         return pd.DataFrame()
-
     # def to_xarray(self, *args, **kwargs):
     #     # TODO make it generic
     #     if len(self) > 0:
@@ -76,11 +61,15 @@ class SimpleFeatureListBase(IndexFeatureListBase):
             return self[0]._default_encoder()
 
     @classmethod
+    def from_fields(cls, fields=None):
+        return cls(fields)
+
+    @classmethod
     def new_mask_index(cls, *args, **kwargs):
         assert len(args) == 2
         fs = args[0]
         indices = list(args[1])
-        return cls.from_fields([fs._fields[i] for i in indices])
+        return cls.from_fields([fs._features[i] for i in indices])
 
     @classmethod
     def merge(cls, sources):

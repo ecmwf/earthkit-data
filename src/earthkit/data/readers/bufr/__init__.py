@@ -29,4 +29,27 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
         return BUFRReader(source, path, parts=parts, **kwargs)
 
 
+def stream_reader(
+    source,
+    stream,
+    magic=None,
+    *,
+    deeper_check=False,
+    content_type=None,
+    memory=False,
+    **kwargs,
+):
+    if _match_magic(magic, deeper_check):
+        from .memory import BUFRStreamReader
+
+        r = BUFRStreamReader(stream, **kwargs)
+        if memory:
+            from .memory import BUFRFeatureListInMemory
+
+            messages = [m for m in r]
+            r = BUFRFeatureListInMemory(messages)
+        return r
+
+
 READER = reader
+STREAM_READER = stream_reader
