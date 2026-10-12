@@ -20,19 +20,23 @@ class BUFRMessage(Base):
 
     Parameters
     ----------
-    path: str
-        Path to the BUFR file
-    offset: number
-        File offset of the message (in bytes)
-    length: number
-        Size of the message (in bytes)
+    path: str, None
+        Path to the BUFR file. None when the message is held in memory (e.g. read from a stream)
+        and ``handle`` is provided instead.
+    offset: number, None
+        File offset of the message (in bytes). None when ``handle`` is provided.
+    length: number, None
+        Size of the message (in bytes). None when ``handle`` is provided.
+    handle: CodesHandle, None
+        An already available handle wrapping the message. When given, ``path`` and ``offset``
+        are not used to lazily create the handle.
     """
 
-    def __init__(self, path, offset, length):
+    def __init__(self, path, offset, length, handle=None):
         self.path = path
         self._offset = offset
         self._length = length
-        self.__handle = None
+        self.__handle = handle
 
     # TODO: make usage of _handle thread safe
     @property
@@ -322,7 +326,7 @@ class BUFRMessage(Base):
         -------
         bytes
         """
-        return self.handle.get_buffer()
+        return self._handle.get_buffer()
 
     def _default_encoder(self):
         return "bufr"

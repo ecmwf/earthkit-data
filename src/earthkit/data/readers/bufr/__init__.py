@@ -29,4 +29,43 @@ def reader(source, path, *, magic=None, deeper_check=False, content_type=None, *
         return BUFRReader(source, path, parts=parts, **kwargs)
 
 
+def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):
+    if _match_magic(magic, deeper_check):
+        import io
+
+        from .memory import BUFRFeatureListInMemory, BUFRStreamReader
+
+        # convert the memory buffer into a stream and use the stream reader. See
+        # https://github.com/ecmwf/earthkit-data/issues/740 for details
+        stream = io.BytesIO(buffer)
+        r = BUFRStreamReader(stream, **kwargs)
+        messages = [m for m in r]
+        r = BUFRFeatureListInMemory(messages)
+        return r
+
+
+def stream_reader(
+    source,
+    stream,
+    magic=None,
+    *,
+    deeper_check=False,
+    content_type=None,
+    memory=False,
+    **kwargs,
+):
+    if _match_magic(magic, deeper_check):
+        from .memory import BUFRStreamReader
+
+        r = BUFRStreamReader(stream, **kwargs)
+        if memory:
+            from .memory import BUFRFeatureListInMemory
+
+            messages = [m for m in r]
+            r = BUFRFeatureListInMemory(messages)
+        return r
+
+
 READER = reader
+MEMORY_READER = memory_reader
+STREAM_READER = stream_reader
