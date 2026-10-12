@@ -349,6 +349,30 @@ class BoundingBoxType(Type, NonListMixin):
         return formatter(value)
 
 
+class _UnitsType(Type):
+    # def cast(self, value):
+    #     from earthkit.utils.units import Units
+
+    #     return Units.from_any(value)
+
+    def _cast(self, value):
+        from earthkit.utils.units import Units
+
+        return Units.from_any(value)
+
+
+class UnitsType(_UnitsType, NonListMixin):
+    pass
+
+
+class UnitsListType(_UnitsType, ListMixin):
+    pass
+
+
+class UnitsSingleOrListType(_UnitsType, SingleOrListMixin):
+    pass
+
+
 GIVEN_TYPES = {
     int: "int",
     float: "float",
@@ -367,6 +391,7 @@ NON_LIST_TYPES = {
     "variable": VariableType,
     "bounding-box": BoundingBoxType,
     "bbox": BoundingBoxType,
+    "units": UnitsType,
 }
 LIST_TYPES = {
     "int-list": IntListType,
@@ -376,6 +401,7 @@ LIST_TYPES = {
     "date-list": DateListType,
     "timedelta-list": TimeDeltaListType,
     "variable-list": VariableListType,
+    "units-list": UnitsListType,
 }
 
 SINGLE_OR_LIST_TYPES = {
@@ -386,6 +412,7 @@ SINGLE_OR_LIST_TYPES = {
     "date": DateSingleOrListType,
     "timedelta": TimeDeltaSingleOrListType,
     "variable": VariableSingleOrListType,
+    "units": UnitsSingleOrListType,
 }
 
 

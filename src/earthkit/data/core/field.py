@@ -2017,6 +2017,7 @@ class Field(Base):
     @normalise("metadata.base_datetime", "date")
     @normalise("metadata.valid_datetime", "date")
     @normalise("metadata.step_timedelta", "timedelta")
+    @normalise("parameter.units", "units")
     @staticmethod
     def _normalise_key_values(**kwargs):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""
