@@ -14,11 +14,10 @@ LOG = logging.getLogger(__name__)
 
 
 def normalise_selection(*args, **kwargs):
+    from earthkit.utils.units import Units
+
     from earthkit.data.arguments.transformers import ALL
     from earthkit.data.field.component.level_type import LevelType
-
-    # from earthkit.data.field.component.time_span import TimeSpan
-    # from earthkit.data.field.component.time_span import TimeSpanMethod
 
     _kwargs = {}
     for a in args:
@@ -41,7 +40,7 @@ def normalise_selection(*args, **kwargs):
             or isinstance(v, (list, tuple, set, slice))
             or isinstance(
                 v,
-                (str, int, float, datetime.datetime, datetime.timedelta, LevelType),
+                (str, int, float, datetime.datetime, datetime.timedelta, LevelType, Units),
             )
         ), f"Unsupported type: {type(v)} for key {k}"
     return _kwargs, remapping
