@@ -3,6 +3,15 @@
 Version 1.2 Updates
 ///////////////////////
 
+
+Version 1.2.4
+==============
+
+Fixes
+++++++++++++
+
+- Fixed GRIB grid handling to avoid noisy errors from unsupported grid specifications and make distinct latitude/longitude extraction consistent (:pr:`1179`)
+
 Version 1.2.3
 ==============
 

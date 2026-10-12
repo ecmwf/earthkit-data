@@ -38,7 +38,7 @@ class Grid:
         else:
             return Grid(field)
 
-    def distinct_latlon(self, field_shape):
+    def distinct_latlons(self, field_shape):
         return None, None
 
     def latlons(self, field_shape=None):
@@ -62,7 +62,7 @@ class Grid:
 
 
 class RegularLLGrid(Grid):
-    def to_distinct_latlon(self, field_shape):
+    def distinct_latlons(self, field_shape):
         assert len(field_shape) == 2
         assert field_shape == self.field.shape
         lat, lon = self.latlons()
@@ -80,7 +80,7 @@ class RectifiedLLGrid(Grid):
         lon = lon[0, :]
         return lat, lon
 
-    def to_distinct_latlon(self, field_shape):
+    def distinct_latlons(self, field_shape):
         lat = np.atleast_1d(self.field.geography.distinct_latitudes())
         if len(lat) == field_shape[0]:
             lon = np.atleast_1d(self.field.geography.distinct_longitudes())
@@ -153,7 +153,7 @@ class TensorGrid:
                     pass
             elif len(field_shape) == 2:
                 try:
-                    lat, lon = grid.to_distinct_latlon(field_shape)
+                    lat, lon = grid.distinct_latlons(field_shape)
                     if (
                         lat is not None
                         and lon is not None
