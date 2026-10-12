@@ -13,10 +13,18 @@ import re
 from . import ObjectWrapperData
 
 VALID_DATE = re.compile(r"\d\d\d\d-?\d\d-?\d\d([T\s]\d\d:\d\d(:\d\d)?)?Z?")
+RELATIVE_DATE = re.compile(r"0$|-\d+$")
 
 
-def parse_date(dt):
+def parse_date(
+    dt,
+):
     from dateutil.parser import isoparse, parse
+
+    if RELATIVE_DATE.match(dt):
+        dt = int(dt)
+        date = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=int(dt))
+        return datetime.datetime(date.year, date.month, date.day)
 
     if not VALID_DATE.match(dt):
         raise ValueError(f"Invalid datetime '{dt}'")
