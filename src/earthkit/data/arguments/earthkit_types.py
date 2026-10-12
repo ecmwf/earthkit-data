@@ -350,11 +350,6 @@ class BoundingBoxType(Type, NonListMixin):
 
 
 class _UnitsType(Type):
-    # def cast(self, value):
-    #     from earthkit.utils.units import Units
-
-    #     return Units.from_any(value)
-
     def _cast(self, value):
         from earthkit.utils.units import Units
 
