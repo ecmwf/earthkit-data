@@ -268,7 +268,7 @@ hive_partioning=True
 url
 -----
 
-.. py:function:: from_source("url", url, *  parts=None, chunk_size=1024 * 1024, verify=True, range_method="auto", http_headers=None, fake_headers=None, auth=None, session=None, update_if_out_of_date=False, force=None, stream=False, filter=None, merger=None, **kwargs)
+.. py:function:: from_source("url", url, *  parts=None, chunk_size=1024 * 1024, verify=True, range_method="auto", http_headers=None, fake_headers=None, auth=None, session=None, update_if_out_of_date=False, force=None, stream=False, filter=None, merger=None, split=False, **kwargs)
   :noindex:
 
   Download data from the URL(s) specified.
@@ -276,7 +276,7 @@ url
   The results are stored in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above. The download is performed using the `multiurl`_ package.
 
   .. warning::
-      When multiple URLs are specified, they are all downloaded into a **single** file in the :ref:`cache <caching>`, effectively concatenating their contents. This works well for formats that support concatenation at the file level, such as GRIB or BUFR. For formats that do not, e.g. NetCDF or TAR archives, this concatenation produces an unusable result. In such cases you need to download each URL in a separate ``from_source("url", ...)`` call.
+      When multiple URLs are specified, with the default settings (``split=False``), they are all downloaded into a **single** file in the :ref:`cache <caching>`, effectively concatenating their contents. This works well for formats that support concatenation at the file level, such as GRIB or BUFR. For formats that do not, e.g. NetCDF or TAR archives, this concatenation produces an unusable result. In such cases you need to download each URL in a separate ``from_source("url", ...)`` call.
 
   :param url: The URL(s) to download. Each URL can contain the :ref:`parts <parts>` defining the byte ranges to read. A single url can be a str or a list/tuple of two items. The first item is the url as a str, while the second item defines the parts for the given url. In this case the ``parts`` kwargs cannot be used. Multiple urls can be provided as a list/tuple of of the single url formats above. Mixing single url formats in a list/tuple is not allowed.
   :type url: str, list, tuple or an iterable of these
@@ -291,9 +291,10 @@ url
   :param session: A requests session to use for the request. See `multiurl`_ for details.
   :param bool update_if_out_of_date: If ``True``, the cached data will be updated if it is out of date. Default is False.
   :param bool force: If ``True``, the data will be downloaded even if it is already in the cache. Default is None.
-  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB and BUFR data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs. See details about streams :ref:`here <streams>`.
+  :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB and BUFR data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs. Cannot be used together with ``split=True``. See details about streams :ref:`here <streams>`.
   :param filter: A filter passed to the underlying :ref:`file source <data-sources-file>` that reads the downloaded data.
   :param merger: A merger passed to the underlying :ref:`file source <data-sources-file>` that reads the downloaded data.
+  :param bool split: If ``True`` and multiple URLs are provided, each URL is downloaded into its own target file instead of merging all the URLs into a single target file. Has no effect when a single URL is given. Cannot be used together with ``stream=True``. Default is ``False``. *New in version 1.3.0*
   :param dict **kwargs: Other keyword arguments.
 
   .. code-block:: python
