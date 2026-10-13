@@ -240,6 +240,12 @@ class Url(UrlBase):
 
         Multiple urls can be provided as a list/tuple of of the single url formats above.
         Mixing single url formats in a list/tuple is not allowed.
+    split: bool
+        If True and multiple urls are provided, each url is downloaded into its own
+        separate target file by delegating to :class:`MultiUrl` instead of merging all
+        the urls into a single target file. Has no effect when a single url is given,
+        in which case the default behaviour applies. Cannot be used together with
+        ``stream=True``. Default is ``False``.
     """
 
     def __init__(
@@ -249,8 +255,12 @@ class Url(UrlBase):
         update_if_out_of_date=False,
         force=None,
         stream=False,
+        split=False,
         **kwargs,
     ):
+        if split and stream:
+            raise ValueError("split and stream cannot both be True")
+
         super().__init__(url, **kwargs)
 
         self.other_source = None
@@ -264,6 +274,10 @@ class Url(UrlBase):
         self.update_if_out_of_date = update_if_out_of_date
         self.force = force
         self.stream = stream
+        self.split = split
+
+        if self.split and len(self.url_spec) > 1:
+            return
 
         if not self.stream:
             self._download()
@@ -274,6 +288,16 @@ class Url(UrlBase):
 
             source, url, kwargs = self.other_source
             return _from_source_internal(source, url, **kwargs)
+
+        if self.split and len(self.url_spec) > 1:
+            from .multi_url import MultiUrl
+
+            return MultiUrl(
+                self.url_spec,
+                filter=self.filter,
+                merger=self.merger,
+                force=self.force,
+            )
 
         if self.stream:
             s = []
