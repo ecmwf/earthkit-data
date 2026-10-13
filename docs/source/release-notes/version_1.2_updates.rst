@@ -4,13 +4,22 @@ Version 1.2 Updates
 ///////////////////////
 
 
+Version 1.2.5
+==============
+
+Dependencies
+++++++++++++
+
+- Increased the minimum version requirement for the `pyfdb` dependency to `5.21` to ensure compatibility with the latest features and fixes (:pr:`1140`).
+
 Version 1.2.4
 ==============
 
 Fixes
 ++++++++++++
 
-- Fixed GRIB grid handling to avoid noisy errors from unsupported grid specifications and make distinct latitude/longitude extraction consistent (:pr:`1179`)
+- Fixed GRIB grid handling to avoid noisy errors from unsupported grid specifications and make distinct latitude/longitude extraction consistent (:pr:`1179`).
+
 
 Version 1.2.3
 ==============

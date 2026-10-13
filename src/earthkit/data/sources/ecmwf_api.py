@@ -78,6 +78,7 @@ class ECMWFAPI(FileSource):
 
     def _retrieve_one(self, request, *args):
         def retrieve(target, request):
+            print("request:", request)
             self.service().execute(request, target)
 
         return self._cache_file(
