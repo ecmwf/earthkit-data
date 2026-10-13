@@ -246,11 +246,57 @@ def test_url_grib_netcdf_mixed():
             earthkit_remote_examples_file("test.grib"),
         ],
     )
-    # TODO: this is the consequence of the current behaviour of the url source, which
-    # concatenates multiple URLs into a single target file. Change this test if an option is
-    # added to handle multiple URLs differently.
+    # this is the consequence of the default behaviour of the url source, which
+    # concatenates multiple URLs into a single target file. Use split=True to
+    # download each url into its own target file.
     assert ds._TYPE_NAME == "NetCDF"
     assert isinstance(ds.path, str)
+
+
+def test_url_split_grib_netcdf_mixed():
+    ds = from_source(
+        "url",
+        [
+            earthkit_remote_examples_file("test.nc"),
+            earthkit_remote_examples_file("test.grib"),
+        ],
+        split=True,
+    )
+
+    assert ds._TYPE_NAME == "Multi"
+    assert isinstance(ds.path, list)
+    assert len(ds.path) == 2
+
+    items = [x for x in ds]
+    assert len(items) == 2
+    assert items[0]._TYPE_NAME == "NetCDF"
+    assert items[1]._TYPE_NAME == "GRIB"
+
+
+def test_url_split_single_url():
+    # split has no effect when a single url is given
+    ds = from_source(
+        "url",
+        earthkit_remote_examples_file("test.grib"),
+        split=True,
+    )
+
+    assert ds._TYPE_NAME == "GRIB"
+    assert isinstance(ds.path, str)
+
+
+def test_url_split_stream_invalid():
+    # split and stream cannot be used together
+    with pytest.raises(ValueError):
+        from_source(
+            "url",
+            [
+                earthkit_remote_examples_file("test.nc"),
+                earthkit_remote_examples_file("test.grib"),
+            ],
+            split=True,
+            stream=True,
+        )
 
 
 if __name__ == "__main__":
