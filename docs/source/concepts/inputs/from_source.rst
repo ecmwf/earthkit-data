@@ -276,7 +276,7 @@ url
   The results are stored in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above. The download is performed using the `multiurl`_ package.
 
   .. warning::
-      When multiple URLs are specified, with the default settings (``split=False``), they are all downloaded into a **single** file in the :ref:`cache <caching>`, effectively concatenating their contents. This works well for formats that support concatenation at the file level, such as GRIB or BUFR. For formats that do not, e.g. NetCDF or TAR archives, this concatenation produces an unusable result. In such cases you need to download each URL in a separate ``from_source("url", ...)`` call.
+      When multiple URLs are specified, with the default settings (``split=False``) they are all downloaded into a **single** file in the :ref:`cache <caching>`, effectively concatenating their contents. This works well for formats that support concatenation at the file level, such as GRIB or BUFR. For formats that do not, e.g. NetCDF or TAR archives, this concatenation produces an unusable result. In such cases you need to download each URL in a separate ``from_source("url", ...)`` call.
 
   :param url: The URL(s) to download. Each URL can contain the :ref:`parts <parts>` defining the byte ranges to read. A single url can be a str or a list/tuple of two items. The first item is the url as a str, while the second item defines the parts for the given url. In this case the ``parts`` kwargs cannot be used. Multiple urls can be provided as a list/tuple of of the single url formats above. Mixing single url formats in a list/tuple is not allowed.
   :type url: str, list, tuple or an iterable of these
