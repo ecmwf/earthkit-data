@@ -13,17 +13,13 @@ import datetime
 
 import numpy as np
 import pytest
-
-# from earthkit.data.specs.time_span import TimeSpan
-# from earthkit.data.specs.time_span import TimeSpanMethod
+from earthkit.utils.units import Units
 from grib_fixtures import (
     FL_TYPES,  # noqa: E402
     load_grib_data,  # noqa: E402
 )
 
 from earthkit.data import from_source
-
-# @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -287,41 +283,6 @@ def test_grib_sel_base_datetime(fl_type, _kwargs):
     assert g.get(ref_keys) == ref
 
 
-# @pytest.mark.cache
-# @pytest.mark.parametrize(
-#     "_kwargs,ref_len,ref",
-#     [
-#         (
-#             {"step": 24, "time_span_value": datetime.timedelta(hours=6)},
-#             1,
-#             {"step": datetime.timedelta(hours=24), "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
-#         ),
-#         (
-#             {"step": 24, "time_span_method": TimeSpanMethod.MAX},
-#             1,
-#             {"step": datetime.timedelta(hours=24), "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
-#         ),
-#         (
-#             {"time_span_method": TimeSpanMethod.AVERAGE},
-#             0,
-#             {},
-#         ),
-#         (
-#             {"step": 24, "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
-#             1,
-#             {"step": datetime.timedelta(hours=24), "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
-#         ),
-#     ],
-# )
-# def test_grib_sel_time_span(_kwargs, ref_len, ref):
-#     ds1 = from_source("url", earthkit_remote_test_data_file("xr_engine/date/wgust_step_range.grib1")).to_fieldlist()
-
-#     g = ds1.sel(**_kwargs)
-#     assert len(g) == ref_len
-#     for k, v in ref.items():
-#         assert g[0].get(k) == v
-
-
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_sel_remapping_1(fl_type):
     ds, _ = load_grib_data("test6.grib", fl_type)
@@ -339,6 +300,28 @@ def test_grib_sel_remapping_2(fl_type):
         "remapping": {"param_level": "{parameter.variable}{vertical.level}"},
     })
     assert r.get(("parameter.variable", "vertical.level")) == ref
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize(
+    "units,expected_meta",
+    [
+        ("K", ["t"] * 6),
+        (Units.from_any("K"), ["t"] * 6),
+        ("kelvins", ["t"] * 6),
+        (Units.from_any("kelvins"), ["t"] * 6),
+        ("m/s", ["u", "v"] * 6),
+        (Units.from_any("m/s"), ["u", "v"] * 6),
+        (["K", "m/s"], ["t", "u", "v"] * 6),
+        (["K", Units.from_any("m/s")], ["t", "u", "v"] * 6),
+    ],
+)
+def test_grib_sel_units(fl_type, units, expected_meta):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
+
+    g = f.sel({"parameter.units": units})
+    assert len(g) == len(expected_meta)
+    assert g.get("parameter.variable") == expected_meta
 
 
 if __name__ == "__main__":

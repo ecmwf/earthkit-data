@@ -91,10 +91,14 @@ class StreamFeatureListData(SourceData):
             in memory read from the stream.
         """
         if read_all:
-            from earthkit.data.featurelist.simple import SimpleFeatureList
+            cls = getattr(self._reader, "in_memory_class", None)
+            if cls is None:
+                from earthkit.data.featurelist.simple import SimpleFeatureList
+
+                cls = SimpleFeatureList
 
             features = [f for f in self._reader]
-            r = SimpleFeatureList(features)
+            r = cls(features)
             return r
 
         return self._reader

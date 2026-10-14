@@ -19,6 +19,16 @@ from earthkit.data import from_object
 LOG = logging.getLogger(__name__)
 
 
+def relative_date(n):
+    """Since it is based on calling now() returns both the relative date and day after."""
+    if n <= 0:
+        d = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=n)
+        d = datetime.datetime(d.year, d.month, d.day)
+        return (d, d + datetime.timedelta(days=1))
+    else:
+        raise ValueError(f"{n=} must be 0 or negative")
+
+
 def test_string_wrapper():
     v = "hello"
     ds = from_object(v)
@@ -77,3 +87,21 @@ def test_string_wrapper_bbox():
     assert "bounding_box" in ds.available_types
 
     assert ds.bounding_box() == (89.0, 0.0, -89.0, 360.0)
+
+
+@pytest.mark.parametrize("n", ["0", "-1", "-5"])
+def test_string_wrapper_relative_date_ok(n):
+    ds = from_object(n)
+    assert ds._TYPE_NAME == "str"
+    assert "datetime" in ds.available_types
+    dt, dt_next = relative_date(int(n))
+    assert ds.to_datetime() in (dt, dt_next)
+
+
+@pytest.mark.parametrize("n", ["1", "5"])
+def test_string_wrapper_relative_date_bad(n):
+    ds = from_object(n)
+    assert ds._TYPE_NAME == "str"
+    assert "datetime" in ds.available_types
+    with pytest.raises(ValueError):
+        ds.to_datetime()

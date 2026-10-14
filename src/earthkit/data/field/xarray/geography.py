@@ -26,7 +26,7 @@ class XArrayGeography(GeographyBase):
             raise ValueError(
                 (
                     f"Invalid shape for selection for variable={name}. Expected only two dimensions, "
-                    "got sizes {self.selection.shape}"
+                    f"got sizes {self.selection.shape}"
                 )
             )
 
