@@ -153,6 +153,3 @@ class Virtual(GribFieldList):
 
 
 register_serialisation(Virtual, lambda x: None, lambda x: Virtual())
-
-
-source = Virtual

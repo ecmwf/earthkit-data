@@ -15,6 +15,7 @@ import pytest
 
 from earthkit.data import concat, create_fieldlist, from_source
 from earthkit.data.core.temporary import temp_file
+from earthkit.data.sources.helpers import _from_empty
 from earthkit.data.utils.testing import earthkit_examples_file
 
 
@@ -151,7 +152,7 @@ def test_grib_from_empty_3():
 
 # See github issue #588
 def test_grib_concat_large():
-    ds_e = from_source("empty").to_fieldlist()
+    ds_e = _from_empty().to_fieldlist()
     ds1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     for _ in range(2000):

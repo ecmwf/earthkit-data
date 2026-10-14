@@ -16,6 +16,7 @@ import pytest
 from earthkit.data import cache, config, from_source
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.temporary import temp_directory
+from earthkit.data.sources.helpers import _from_dummy_source
 from earthkit.data.utils.testing import earthkit_examples_file, earthkit_remote_examples_file
 
 
@@ -70,7 +71,7 @@ def test_cache_4():
         config.set("cache-directory", "/Volumes/RAMDisk/earthkit_data")
         config.set("maximum-cache-disk-usage", "90%")
         for n in range(10):
-            from_source("dummy-source", "zeros", size=100 * 1024 * 1024, n=n)
+            _from_dummy_source("zeros", size=100 * 1024 * 1024, n=n)
 
 
 def test_cache_policy():
@@ -277,7 +278,7 @@ def test_cache_management(policy):
             # create 3 files existing only in the cache
             r = []
             for n in range(3):
-                r.append(from_source("dummy-source", "zeros", size=data_size, n=n))
+                r.append(_from_dummy_source("zeros", size=data_size, n=n))
 
             for ds in r:
                 assert os.path.exists(ds._source.path)
@@ -331,30 +332,30 @@ def test_cache_force():
         return False
 
     data_size = 10 * 1024
-    ds = from_source("dummy-source", "zeros", size=data_size, n=0)
+    ds = _from_dummy_source("zeros", size=data_size, n=0)
     st = os.stat(ds._source.path)
     m_time_ref = st.st_mtime_ns
 
-    ds1 = from_source("dummy-source", "zeros", size=data_size, n=0)
+    ds1 = _from_dummy_source("zeros", size=data_size, n=0)
     assert ds1._source.path == ds._source.path
     st = os.stat(ds1._source.path)
     m_time = st.st_mtime_ns
     assert m_time == m_time_ref
 
-    ds2 = from_source("dummy-source", "zeros", force=_force_false, size=data_size, n=0)
+    ds2 = _from_dummy_source("zeros", force=_force_false, size=data_size, n=0)
     assert ds2._source.path == ds._source.path
     st = os.stat(ds2._source.path)
     m_time = st.st_mtime_ns
     assert m_time == m_time_ref
 
-    ds3 = from_source("dummy-source", "zeros", force=_force_true, size=data_size, n=0)
+    ds3 = _from_dummy_source("zeros", force=_force_true, size=data_size, n=0)
     assert ds3._source.path == ds._source.path
     st = os.stat(ds3._source.path)
     m_time = st.st_mtime_ns
     assert m_time != m_time_ref
     m_time_ref = m_time
 
-    ds4 = from_source("dummy-source", "zeros", size=data_size, n=0)
+    ds4 = _from_dummy_source("zeros", size=data_size, n=0)
     assert ds4._source.path == ds._source.path
     st = os.stat(ds4._source.path)
     m_time = st.st_mtime_ns

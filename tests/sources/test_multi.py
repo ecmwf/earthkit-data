@@ -18,20 +18,21 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory, temp_file
+from earthkit.data.sources.helpers import _from_dummy_source
 
 LOG = logging.getLogger(__name__)
 
 
 def test_multi_graph_1():
-    a11 = from_source("dummy-source", kind="grib", date=20000101)
-    a12 = from_source("dummy-source", kind="grib", date=20000102)
-    b11 = from_source("dummy-source", kind="grib", date=20000103)
-    b12 = from_source("dummy-source", kind="grib", date=20000104)
+    a11 = _from_dummy_source(kind="grib", date=20000101)
+    a12 = _from_dummy_source(kind="grib", date=20000102)
+    b11 = _from_dummy_source(kind="grib", date=20000103)
+    b12 = _from_dummy_source(kind="grib", date=20000104)
 
-    a21 = from_source("dummy-source", kind="grib", date=20000105)
-    a22 = from_source("dummy-source", kind="grib", date=20000106)
-    b21 = from_source("dummy-source", kind="grib", date=20000107)
-    b22 = from_source("dummy-source", kind="grib", date=20000108)
+    a21 = _from_dummy_source(kind="grib", date=20000105)
+    a22 = _from_dummy_source(kind="grib", date=20000106)
+    b21 = _from_dummy_source(kind="grib", date=20000107)
+    b22 = _from_dummy_source(kind="grib", date=20000108)
 
     m1 = from_source(
         "multi",
@@ -55,27 +56,27 @@ def test_multi_graph_1():
 def test_multi_graph_2():
     with temp_directory() as tmpdir:
         os.mkdir(os.path.join(tmpdir, "a1"))
-        a11 = from_source("dummy-source", kind="grib", date=20000101)
+        a11 = _from_dummy_source(kind="grib", date=20000101)
         a11.to_target("file", os.path.join(tmpdir, "a1", "a11.grib"))
-        a12 = from_source("dummy-source", kind="grib", date=20000102)
+        a12 = _from_dummy_source(kind="grib", date=20000102)
         a12.to_target("file", os.path.join(tmpdir, "a1", "a12.grib"))
 
         os.mkdir(os.path.join(tmpdir, "b1"))
-        b11 = from_source("dummy-source", kind="grib", date=20000103)
+        b11 = _from_dummy_source(kind="grib", date=20000103)
         b11.to_target("file", os.path.join(tmpdir, "b1", "b11.grib"))
-        b12 = from_source("dummy-source", kind="grib", date=20000104)
+        b12 = _from_dummy_source(kind="grib", date=20000104)
         b12.to_target("file", os.path.join(tmpdir, "b1", "b12.grib"))
 
         os.mkdir(os.path.join(tmpdir, "a2"))
-        a21 = from_source("dummy-source", kind="grib", date=20000105)
+        a21 = _from_dummy_source(kind="grib", date=20000105)
         a21.to_target("file", os.path.join(tmpdir, "a2", "a21.grib"))
-        a22 = from_source("dummy-source", kind="grib", date=20000106)
+        a22 = _from_dummy_source(kind="grib", date=20000106)
         a22.to_target("file", os.path.join(tmpdir, "a2", "a22.grib"))
 
         os.mkdir(os.path.join(tmpdir, "b2"))
-        b21 = from_source("dummy-source", kind="grib", date=20000107)
+        b21 = _from_dummy_source(kind="grib", date=20000107)
         b21.to_target("file", os.path.join(tmpdir, "b2", "b21.grib"))
-        b22 = from_source("dummy-source", kind="grib", date=20000108)
+        b22 = _from_dummy_source(kind="grib", date=20000108)
         b22.to_target("file", os.path.join(tmpdir, "b2", "b22.grib"))
 
         def filter(path_or_url):
@@ -91,7 +92,7 @@ def test_multi_graph_2():
 def test_multi_directory_1():
     with temp_directory() as directory:
         for date in (20000101, 20000102):
-            ds = from_source("dummy-source", kind="grib", date=date).to_fieldlist()
+            ds = _from_dummy_source(kind="grib", date=date).to_fieldlist()
             ds.to_target("file", os.path.join(directory, f"{date}.grib"))
 
         ds = from_source("file", directory).to_fieldlist()
@@ -108,8 +109,8 @@ def test_multi_directory_1():
 def test_multi_grib_1():
     ds = from_source(
         "multi",
-        from_source("dummy-source", kind="grib", date=20000101),
-        from_source("dummy-source", kind="grib", date=20000102),
+        _from_dummy_source(kind="grib", date=20000101),
+        _from_dummy_source(kind="grib", date=20000102),
     ).to_fieldlist()
     assert len(ds) == 2
     ds.to_xarray()
@@ -119,9 +120,9 @@ def test_multi_grib_1():
 def test_multi_grib_mixed_1():
     ds = from_source(
         "multi",
-        from_source("dummy-source", kind="grib", date=20000101).to_fieldlist(),
-        from_source("dummy-source", kind="grib", date=20000102).to_fieldlist(),
-        from_source("dummy-source", kind="unknown", hello="world"),
+        _from_dummy_source(kind="grib", date=20000101).to_fieldlist(),
+        _from_dummy_source(kind="grib", date=20000102).to_fieldlist(),
+        _from_dummy_source(kind="unknown", hello="world"),
     ).to_fieldlist()
 
     assert len(ds) == 2
@@ -130,9 +131,9 @@ def test_multi_grib_mixed_1():
 def test_multi_grib_mixed_2():
     ds = from_source(
         "multi",
-        from_source("dummy-source", kind="grib", date=20000101).to_fieldlist(),
-        from_source("dummy-source", kind="grib", date=20000102).to_fieldlist(),
-        from_source("dummy-source", kind="unknown", hello="world"),
+        _from_dummy_source(kind="grib", date=20000101).to_fieldlist(),
+        _from_dummy_source(kind="grib", date=20000102).to_fieldlist(),
+        _from_dummy_source(kind="unknown", hello="world"),
         merger=False,
     )
 

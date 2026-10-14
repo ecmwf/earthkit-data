@@ -229,6 +229,3 @@ class S3Source(FileSource):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
-
-
-source = S3Source

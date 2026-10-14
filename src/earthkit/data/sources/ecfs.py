@@ -39,6 +39,3 @@ class ECFSRetriever(FileSource):
         LOG.debug("%s", f"Fetching {url} to {target}")
 
         subprocess.run(["ecp", url, target], check=True)
-
-
-source = ECFSRetriever
