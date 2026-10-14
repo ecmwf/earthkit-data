@@ -36,6 +36,7 @@ SKIP = [
     "gribjump.ipynb",
     "mars.ipynb",
     "netcdf_opendap.ipynb",
+    "pcraster.ipynb",
     "polytope.ipynb",
     "polytope_feature.ipynb",
     "polytope_polygon_coverage.ipynb",
