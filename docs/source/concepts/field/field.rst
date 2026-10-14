@@ -62,10 +62,10 @@ classes that implement them. Use the ``Reference`` column to jump to the compone
      - Ensemble member identifier.
      - :doc:`ensemble`
      - :py:class:`~earthkit.data.field.component.ensemble.EnsembleBase`
-   * - ``field.proc``
-     - Post-processing operations applied to produce the field (e.g. accumulation).
-     - :doc:`proc`
-     - :py:class:`~earthkit.data.field.component.proc.ProcBase`
+   * - ``field.processing``
+     - Processing that produced the field (time/ensemble statistics, probabilities, ...).
+     - :doc:`processing`
+     - :py:class:`~earthkit.data.field.component.processing.Processing`
    * - ``field.labels``
      - User-defined key-value pairs; keys are arbitrary strings chosen by the caller.
      - :doc:`labels`
@@ -169,7 +169,7 @@ Arithmetic operations
 
 Fields support element-wise arithmetic directly (``+``, ``-``, ``*``, ``/``). Each
 operation returns a new field whose data is the result of the operation. The metadata
-(parameter, time, vertical, geography, ensemble, proc) of the **left-hand operand** is
+(parameter, time, vertical, geography, ensemble, processing) of the **left-hand operand** is
 retained in the result without modification:
 
 .. code-block:: python

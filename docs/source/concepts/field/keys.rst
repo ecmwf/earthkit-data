@@ -188,14 +188,18 @@ dedicated page.
      - Alias of ``ensemble.member``.
 
 
-.. _field_keys_proc:
+.. _field_keys_processing:
 
-:doc:`Processing (proc) <proc>`
---------------------------------
+:doc:`Processing <processing>`
+------------------------------
 
 .. warning::
 
   This component is experimental and may be changed in future versions of earthkit-data.
+
+The processing component is a sequence of processing steps. A plain key is chain-valued
+(returns a tuple with one value per step); an indexed key ``"<attr>[i]"`` returns a single
+step's value. See :doc:`processing` for details.
 
 .. list-table::
    :header-rows: 1
@@ -203,15 +207,24 @@ dedicated page.
 
    * - Key
      - Description
-   * - ``proc.time``
-     - The first :py:class:`~earthkit.data.field.component.proc.TimeProcItem` in the processing
-       list, or ``None`` if no time processing is present.
-   * - ``proc.time_value``
-     - The time-span value from the first time processing item as a :py:class:`datetime.timedelta`,
-       or ``None``.
-   * - ``proc.time_method``
-     - The processing method from the first time processing item as a
-       :py:class:`~earthkit.data.field.component.time_span.TimeMethod`, or ``None``.
+   * - ``processing.kind``
+     - The kind of each step (``"reduction"``, ``"time_aggregation"``,
+       ``"lagged_forecasts_aggregation"`` or ``"probability"``).
+   * - ``processing.axis``
+     - The axis each step operates on (``"forecast_reference_time"``, ``"forecast_period"``,
+       ``"ensemble"`` or ``"vertical"``), or ``None``.
+   * - ``processing.method``
+     - The statistical method of each step (e.g. ``"mean"``, ``"sum"``, ``"maximum"``), or ``None``.
+   * - ``processing.sample_size``
+     - The sample size of each step, or ``None``.
+   * - ``processing.window_length``
+     - The aggregation window length of each step as an ISO 8601 duration, or ``None``.
+   * - ``processing.window_anchor``
+     - The window anchor (``"left"`` or ``"right"``) of each step, or ``None``.
+   * - ``processing.sampling_frequency``
+     - The window sampling frequency of each step as an ISO 8601 duration, or ``None``.
+   * - ``processing.method[i]``, ``processing[i].method``, ...
+     - A single step's value (equivalent forms).
 
 
 .. _field_keys_labels:

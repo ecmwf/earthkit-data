@@ -42,7 +42,7 @@ _PARAMETER = "parameter"
 _GEOGRAPHY = "geography"
 _VERTICAL = "vertical"
 _ENSEMBLE = "ensemble"
-_PROC = "proc"
+_PROCESSING = "processing"
 _LABELS = "labels"
 _METADATA = "metadata"
 
@@ -53,7 +53,7 @@ _DESCRIBE_ORDER = [
     _VERTICAL,
     _ENSEMBLE,
     _GEOGRAPHY,
-    _PROC,
+    _PROCESSING,
     _LABELS,
 ]
 
@@ -79,7 +79,7 @@ class _ComponentMaker:
         from earthkit.data.field.handler.geography import GeographyFieldComponentHandler
         from earthkit.data.field.handler.labels import SimpleLabels
         from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
-        from earthkit.data.field.handler.proc import ProcFieldComponentHandler
+        from earthkit.data.field.handler.processing import ProcessingFieldComponentHandler
         from earthkit.data.field.handler.time import TimeFieldComponentHandler
         from earthkit.data.field.handler.vertical import VerticalFieldComponentHandler
 
@@ -90,7 +90,7 @@ class _ComponentMaker:
             _GEOGRAPHY: GeographyFieldComponentHandler,
             _VERTICAL: VerticalFieldComponentHandler,
             _ENSEMBLE: EnsembleFieldComponentHandler,
-            _PROC: ProcFieldComponentHandler,
+            _PROCESSING: ProcessingFieldComponentHandler,
             _LABELS: SimpleLabels,
         }
 
@@ -126,8 +126,8 @@ class Field(Base):
       :py:class:`~earthkit.data.field.component.vertical.VerticalBase`)
     - ensemble: the ensemble component of the field (see:
       :py:class:`~earthkit.data.field.component.ensemble.EnsembleBase`)
-    - proc: the processing component of the field (see:
-      :py:class:`~earthkit.data.field.component.proc.ProcBase`)
+    - processing: the processing component of the field (see:
+      :py:class:`~earthkit.data.field.component.processing.Processing`)
     - labels: the labels of the field (see:
       :py:class:`~earthkit.data.field.handler.labels.SimpleLabels`)
 
@@ -209,7 +209,7 @@ class Field(Base):
         _GEOGRAPHY,
         _VERTICAL,
         _ENSEMBLE,
-        _PROC,
+        _PROCESSING,
         _LABELS,
     )
 
@@ -222,7 +222,7 @@ class Field(Base):
         geography=None,
         vertical=None,
         ensemble=None,
-        proc=None,
+        processing=None,
         labels=None,
     ):
         """
@@ -244,7 +244,7 @@ class Field(Base):
             The vertical structure of the field.
         ensemble : EnsembleFieldComponentHandler
             The ensemble component of the field.
-        proc : ProcFieldComponent
+        processing : ProcessingFieldComponentHandler
             The processing component of the field.
         labels : SimpleLabels
             The labels of the field.
@@ -265,7 +265,7 @@ class Field(Base):
             _GEOGRAPHY: _ensure(_GEOGRAPHY, geography),
             _VERTICAL: _ensure(_VERTICAL, vertical),
             _ENSEMBLE: _ensure(_ENSEMBLE, ensemble),
-            _PROC: _ensure(_PROC, proc),
+            _PROCESSING: _ensure(_PROCESSING, processing),
             _LABELS: _ensure(_LABELS, labels),
         }
 
@@ -281,7 +281,7 @@ class Field(Base):
         geography=None,
         vertical=None,
         ensemble=None,
-        proc=None,
+        processing=None,
         labels=None,
     ):
         r"""Create a Field from another Field.
@@ -308,7 +308,7 @@ class Field(Base):
         ensemble : EnsembleBase, EnsembleFieldComponentHandler, dict or None
             The new ensemble specification of the field. When specified it is used instead of
             the ensemble component in the ``field``.
-        proc : ProcBase, dict, ProcFieldComponentHandler or None
+        processing : Processing, dict, list, ProcessingFieldComponentHandler or None
             The new processing specification of the field. When specified it is used instead of
             the processing component in the ``field``.
         labels : SimpleLabels, dict or None
@@ -328,7 +328,7 @@ class Field(Base):
             _GEOGRAPHY: geography,
             _VERTICAL: vertical,
             _ENSEMBLE: ensemble,
-            _PROC: proc,
+            _PROCESSING: processing,
             _LABELS: labels,
         }
 
@@ -357,7 +357,7 @@ class Field(Base):
         geography=None,
         vertical=None,
         ensemble=None,
-        proc=None,
+        processing=None,
         labels=None,
     ):
         _kwargs = {
@@ -367,7 +367,7 @@ class Field(Base):
             _GEOGRAPHY: geography,
             _VERTICAL: vertical,
             _ENSEMBLE: ensemble,
-            _PROC: proc,
+            _PROCESSING: processing,
             _LABELS: labels,
         }
 
@@ -465,7 +465,7 @@ class Field(Base):
         geography=None,
         vertical=None,
         ensemble=None,
-        proc=None,
+        processing=None,
         labels=None,
     ):
         r"""Create a Field from components.
@@ -484,7 +484,7 @@ class Field(Base):
             The vertical level of the field.
         ensemble : Ensemble, EnsembleFieldComponent, dict or None
             The ensemble specification of the field.
-        proc :  Proc, ProcFieldComponent, dict or None
+        processing :  Processing, ProcessingFieldComponentHandler, dict, list or None
             The processing specification of the field.
         labels : SimpleLabels, dict or None
             The labels of the field.
@@ -500,7 +500,7 @@ class Field(Base):
             _PARAMETER: parameter,
             _VERTICAL: vertical,
             _ENSEMBLE: ensemble,
-            _PROC: proc,
+            _PROCESSING: processing,
             _LABELS: labels,
         }
 
@@ -603,15 +603,15 @@ class Field(Base):
         return self._components[_GEOGRAPHY].component
 
     @property
-    def proc(self):
-        """Return the proc component of the field.
+    def processing(self):
+        """Return the processing component of the field.
 
         Returns
         -------
-        :py:class:`~earthkit.data.field.component.proc.ProcBase`
-            The proc component of the field.
+        :py:class:`~earthkit.data.field.component.processing.Processing`
+            The processing component of the field.
         """
-        return self._components[_PROC].component
+        return self._components[_PROCESSING].component
 
     @property
     def labels(self):
@@ -864,6 +864,13 @@ class Field(Base):
     def _get_component(self, key):
         if "." in key:
             component_name, name = key.split(".", 1)
+            # an index may sit on the component name, e.g. "processing[0].method".
+            # Normalise it so the index is carried on the sub-key: "method[0]".
+            if component_name.endswith("]") and "[" in component_name:
+                base, _, index = component_name[:-1].partition("[")
+                if base in self._components:
+                    name = f"{name}[{index}]"
+                    component_name = base
             return component_name, self._components.get(component_name), name
         elif key in self._components[_DATA]:
             return _DATA, self._components[_DATA], key
@@ -2021,6 +2028,28 @@ class Field(Base):
     @staticmethod
     def _normalise_key_values(**kwargs):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""
+
+        def _is_processing_key(k, v):
+            if callable(v) or not isinstance(k, str):
+                return False
+            rest = k[len(_PROCESSING) :] if k.startswith(_PROCESSING) else None
+            return bool(rest) and rest[0] in (".", "[")
+
+        processing_keys = [k for k, v in kwargs.items() if _is_processing_key(k, v)]
+        if processing_keys:
+            from earthkit.data.field.component.processing import _parse_indexed_key, make_selection_matcher
+
+            for k in processing_keys:
+                rest = k[len(_PROCESSING) :]
+                if rest[0] == "[":
+                    # "processing[i].attr" -> "attr"
+                    rest = rest.split(".", 1)[1] if "." in rest else ""
+                else:
+                    # "processing.attr" or "processing.attr[i]"
+                    rest = rest[1:]
+                attr, _ = _parse_indexed_key(rest)
+                kwargs[k] = make_selection_matcher(attr, kwargs[k])
+
         return kwargs
 
     def _unary_op(self, oper):
