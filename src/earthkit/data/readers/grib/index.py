@@ -19,6 +19,10 @@ import tqdm
 LOG = logging.getLogger(__name__)
 
 
+def create_grib_index(path: str, overwrite: bool = False) -> "GribIndex":
+    return GribIndex(path, overwrite=overwrite)
+
+
 class GribIndex:
     def __init__(
         self,
@@ -459,7 +463,10 @@ class GribIndex:
 
             if not CACHE.policy.managed():
                 raise ValueError(
-                    "Cannot create GribIndex from file when cache is not managed. Please provide a db_path."
+                    (
+                        "Cannot create GribIndex from file when cache is not managed. Please provide"
+                        "  a db_path or change the  'cache-policy' setting to 'user' or 'temporary'."
+                    )
                 )
 
             from earthkit.data.core.caching import auxiliary_cache_file

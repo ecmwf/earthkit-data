@@ -73,7 +73,7 @@ class GribData(SourceData):
     def _repr_html_(self) -> str:
         return self.describe()._repr_html_()
 
-    def to_fieldlist(self) -> "FieldList":
+    def to_fieldlist(self, **kwargs) -> "FieldList":
         """Convert into a FieldList.
 
         Returns
@@ -81,7 +81,7 @@ class GribData(SourceData):
         :py:class:`earthkit.data.core.fieldlist.FieldList`
             A FieldList containing the GRIB data.
         """
-        return self._reader.to_fieldlist()
+        return self._reader.to_fieldlist(**kwargs)
 
     def to_xarray(self, **kwargs) -> "xarray.Dataset":
         """Convert into an Xarray dataset.

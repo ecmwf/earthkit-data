@@ -427,7 +427,9 @@ class GRIBReader(Source, GRIBReaderBase):
         GRIBReaderBase.__init__(self, source, path)
 
     def to_fieldlist(self, *args, **kwargs):
-        grib_index = self._grib_index
+
+        grib_index = kwargs.pop("grib_index", None)
+        # grib_index = self._grib_index
 
         if grib_index:
             from .index import GribIndex
