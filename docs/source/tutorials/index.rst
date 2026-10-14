@@ -15,6 +15,7 @@ Tutorials
     covjson/index.rst
     geotiff/index.rst
     geojson/index.rst
+    pcraster/index.rst
     shapefile/index.rst
     pp/index.rst
     dict/index.rst
