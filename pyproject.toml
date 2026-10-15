@@ -47,7 +47,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 name = "earthkit-data"
 optional-dependencies.all = [
-  "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geopandas,gribjump,iris,mars,odb,polytope,projection,s3,wekeo]"
+  "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geopandas,gribjump,iris,mars,odb,polytope,projection,s3,sql,wekeo]"
 ]
 optional-dependencies.cds = ["cdsapi>=0.7.2"]
 optional-dependencies.ci = ["numpy"]
@@ -86,6 +86,7 @@ optional-dependencies.odb = ["pyodc"]
 optional-dependencies.polytope = ["polytope-client>=0.7.6"]
 optional-dependencies.projection = ["cartopy"]
 optional-dependencies.s3 = ["aws-requests-auth", "botocore"]
+optional-dependencies.sql = ["sqlalchemy>=2"]
 optional-dependencies.test = [
   "astropy",
   "earthkit-data-demo-source",
