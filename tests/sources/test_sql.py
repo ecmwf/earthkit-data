@@ -70,9 +70,11 @@ def test_sql_source_same_as_file_reader(db_path):
 def test_sql_source_sql_is_always_a_query(db_path, method):
     # pandas would read a bare table name as a table, with different dtypes than a query
     from pandas.errors import DatabaseError
+    from sqlalchemy.exc import OperationalError
 
     ds = from_source("sql", f"sqlite:///{db_path}", "obs")
-    with pytest.raises(DatabaseError, match="syntax error"):
+    # different pandas versions raise different errors
+    with pytest.raises((DatabaseError, OperationalError), match="syntax error"):
         getattr(ds, method)()
 
 
