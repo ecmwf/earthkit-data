@@ -138,6 +138,17 @@ class GribIndex:
         """
         return self._path_id(path, insert=False) is not None
 
+    def paths(self) -> list[str]:
+        """Retrieve all paths stored in the database.
+
+        Returns
+        -------
+        list[str]
+            A list of paths stored in the paths table.
+        """
+        self.cursor.execute("SELECT path FROM paths")
+        return [row[0] for row in self.cursor.fetchall()]
+
     def _path_id(self, path: str, insert: bool = True) -> int:
         """Get the id of a path in the database.
 

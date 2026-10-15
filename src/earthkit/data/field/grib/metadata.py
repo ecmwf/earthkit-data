@@ -157,7 +157,7 @@ class GribMetadata:
 
         print(f"GribMetadata.get: key={key}, astype={astype}, kwargs={_kwargs}")
         # print(f"{self._cache=}")
-        raise AssertionError("Debugging GribMetadata.get")
+        # raise AssertionError("Debugging GribMetadata.get")
 
         # print(f"GribMetadata.get: key={key}, astype={astype}, kwargs={_kwargs}")
 
