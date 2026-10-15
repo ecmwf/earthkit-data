@@ -11,15 +11,15 @@
 def _match_magic(magic, deeper_check):
     if magic is not None:
         type_id = (b"\x89HDF", b"CDF\x01", b"CDF\x02")
-        return len(magic) >= 4 and magic[:4] in type_id
+        return magic[:4] in type_id
     return False
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, content_type=None, **kwargs):
     if _match_magic(magic, deeper_check):
         from .reader import NetCDFFileReader
 
-        return NetCDFFileReader(source, path)
+        return NetCDFFileReader(source, path, **kwargs)
 
 
 READER = reader

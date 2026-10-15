@@ -23,6 +23,7 @@ Data sources
     polytope.ipynb
     polytope_feature.ipynb
     s3.ipynb
+    sql_source.ipynb
     data_from_stream.ipynb
     tar_files.ipynb
     wekeo.ipynb

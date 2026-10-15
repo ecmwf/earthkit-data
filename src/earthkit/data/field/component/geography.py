@@ -639,8 +639,9 @@ class GeographyBase(SimpleFieldComponent):
 
 
 class EmptyGeography(GeographyBase):
-    def __init__(self, shape=None) -> None:
+    def __init__(self, shape=None, grid_type=None) -> None:
         self._shape = shape
+        self._grid_type = grid_type
 
     def latitudes(self, dtype=None) -> None:
         return None
@@ -682,7 +683,7 @@ class EmptyGeography(GeographyBase):
         return None
 
     def grid_type(self) -> str | None:
-        return None
+        return self._grid_type
 
     def set(self, *args, shape_hint=None, **kwargs) -> "GeographyBase":
         """Return a new GeographyBase object with updated values."""

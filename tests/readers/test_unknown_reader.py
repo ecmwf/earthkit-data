@@ -12,27 +12,66 @@
 import os
 
 import earthkit.data
+from earthkit.data.utils.testing import earthkit_remote_test_data_file, earthkit_test_data_file
 
 
-def test_unknown_reader():
-    s = earthkit.data.from_source(
+def test_unknown_reader_from_file():
+    d = earthkit.data.from_source(
         "file",
         os.path.join(os.path.dirname(__file__), "unknown_file.unknown_ext"),
     )
-    print(s)
-    assert isinstance(s._reader, earthkit.data.readers.unknown.UnknownReader)
+
+    assert d._TYPE_NAME == "Unknown"
+    assert isinstance(d._reader, earthkit.data.readers.unknown.UnknownReader)
 
 
-def test_text_reader():
-    s = earthkit.data.from_source(
+def test_unknown_reader_from_tar_1():
+    d = earthkit.data.from_source(
         "file",
-        os.path.join(os.path.dirname(__file__), "unknown_text_file.unknown_ext"),
+        earthkit_test_data_file("binary_unknown.tar"),
     )
-    print(s)
-    assert isinstance(s._reader, earthkit.data.readers.text.TextReader)
+
+    assert d.available_types == ["fieldlist"]
+    assert len(d.to_fieldlist()) == 0
 
 
-if __name__ == "__main__":
-    from earthkit.data.utils.testing import main
+def test_unknown_reader_from_tar_2():
+    d = earthkit.data.from_source(
+        "file",
+        earthkit_test_data_file("binary_unknown.tar"),
+        merger=False,
+    )
 
-    main(__file__)
+    assert d.available_types == []
+    assert len(d.path) == 2
+
+
+def test_unknown_reader_from_url_file():
+    d = earthkit.data.from_source(
+        "url",
+        earthkit_remote_test_data_file("binary_1"),
+    )
+
+    assert d._TYPE_NAME == "Unknown"
+    assert isinstance(d._reader, earthkit.data.readers.unknown.UnknownReader)
+
+
+def test_unknown_reader_from_url_tar_1():
+    d = earthkit.data.from_source(
+        "url",
+        earthkit_remote_test_data_file("binary_unknown.tar"),
+    )
+
+    assert d.available_types == ["fieldlist"]
+    assert len(d.to_fieldlist()) == 0
+
+
+def test_unknown_reader_from_url_tar_2():
+    d = earthkit.data.from_source(
+        "url",
+        earthkit_remote_test_data_file("binary_unknown.tar"),
+        merger=False,
+    )
+
+    assert d.available_types == []
+    assert len(d.path) == 2

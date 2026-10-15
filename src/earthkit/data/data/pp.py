@@ -44,13 +44,6 @@ class PPData(SourceData):
 
         return DataDescriber(title="PP file", path=self.path, types=self.available_types)
 
-    @property
-    def path(self) -> str | list[str] | None:
-        try:
-            return self._reader.path
-        except Exception:
-            return None
-
     def __repr__(self) -> str:
         return f"PPData(path={self.path})"
 

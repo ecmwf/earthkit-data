@@ -93,7 +93,8 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
 
     # solar hour angle [h.deg]
     # TODO: deg2rad() is not part of the array API standard
-    solar_angle = xp.deg2rad((date.hour - 12) * 15 + longitudes + time_correction)
+    hours = date.hour + date.minute / 60.0 + date.second / 3600.0 + date.microsecond / 3.6e9
+    solar_angle = xp.deg2rad((hours - 12) * 15 + longitudes + time_correction)
     zenith_angle = sindec_sinlat + cosdec_coslat * xp.cos(solar_angle)
 
     # Clip negative values

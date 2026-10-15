@@ -484,7 +484,7 @@ class ForecastTime(TimeBase):
         d1 = cls._normalise_create_kwargs(d, allowed_keys=KEYS, remove_nones=True)
 
         if not d1:
-            return cls()
+            return EmptyTime()
 
         found = tuple(sorted(d1.keys()))
         METHODS = {
