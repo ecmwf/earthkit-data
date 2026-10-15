@@ -14,6 +14,7 @@ from earthkit.utils.array import convert as convert_array
 from earthkit.utils.array.convert import convert_dtype
 from earthkit.utils.decorators import thread_safe_cached_property
 
+from earthkit.data import __version__
 from earthkit.data.core import Base
 from earthkit.data.core.order import Patch, Remapping, build_remapping
 from earthkit.data.decorators import normalise
@@ -2093,3 +2094,18 @@ class Field(Base):
         self.__init__(**components)
         private = state.get("private", {})
         self._private = private
+
+    def to_json_dict(self):
+        r"""Return the field as a dict.
+
+        Returns
+        -------
+        dict
+        """
+        d = {
+            component_name: component.to_json_dict()
+            for component_name, component in self._components.items()
+            if component_name not in ["data", "labels"]
+        }
+        d["__version__"] = __version__
+        return d

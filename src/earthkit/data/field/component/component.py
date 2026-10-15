@@ -219,6 +219,17 @@ class FieldComponent(metaclass=ABCMeta):
     def __setstate__(self, state):
         pass
 
+    def to_json_dict(self) -> dict:
+        """
+        Convert the object to a JSON-serializable dictionary.
+
+        Returns
+        -------
+        dict
+            JSON-serializable dictionary representation of the object.
+        """
+        return self.to_dict()
+
 
 class SimpleFieldComponent(FieldComponent):
     _KEYS = tuple()

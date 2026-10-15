@@ -301,3 +301,7 @@ class SimpleFieldComponentHandler(FieldComponentHandler):
 
     def __setstate__(self, state) -> None:
         self.__init__(component=state["component"])
+
+    def to_json_dict(self) -> dict:
+        """Return the component as a dictionary."""
+        return self.component.to_json_dict()

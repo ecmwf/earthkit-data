@@ -177,6 +177,22 @@ class TimeBase(SimpleFieldComponent):
         """
         pass
 
+    def to_json_dict(self) -> dict:
+        """Return a dictionary representation of the time object.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the time information.
+        """
+        d = self.to_dict()
+        for k, v in self.to_dict().items():
+            if isinstance(v, (datetime.date, datetime.time)):
+                d[k] = v.isoformat()
+            elif isinstance(v, datetime.timedelta):
+                d[k] = str(v)
+        return d
+
 
 def create_time(d: dict) -> "TimeBase":
     """Create a TimeBase object from a dictionary.
