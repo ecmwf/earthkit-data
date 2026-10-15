@@ -156,6 +156,7 @@ file
     - :ref:`/tutorials/bufr/bufr_temp.ipynb`
     - :ref:`/tutorials/netcdf/netcdf.ipynb`
     - :ref:`/tutorials/odb/odb.ipynb`
+    - :ref:`/tutorials/sql/sql.ipynb`
     - :ref:`/how-tos/read_file_list.ipynb`
 
 .. _data-sources-file-pattern:
@@ -1246,6 +1247,11 @@ sql
           "SELECT * FROM stations WHERE country = 'DE'",
       )
       df = ds.to_pandas()
+
+  Further examples:
+
+      - :ref:`/tutorials/source/sql_source.ipynb`
+      - :ref:`/tutorials/sql/sql.ipynb`
 
 
 .. _data-sources-wekeo:
