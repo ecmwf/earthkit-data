@@ -39,9 +39,12 @@ class GribTimeBuilder:
 
         base = _datetime("dataDate", "dataTime")
 
-        end = _get("endStep")
-        if end is None:
-            end = _get("step")
+        if _get("mars.step") is not None:
+            end = _get("endStep")
+            if end is None:
+                end = _get("step")
+        else:
+            end = None
 
         if end is None:
             end = ZERO_TIMEDELTA
