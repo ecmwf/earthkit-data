@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import itertools
 import json
 import logging
 from typing import Any, Dict, List, Optional, Union
@@ -137,8 +138,14 @@ class XArrayFieldList(IndexFieldListBase):
         XarrayFieldList
             The created XarrayFieldList.
         """
-        if patch is not None:
-            ds = patch_dataset(ds, patch)
+        if patch is None:
+            patch = {}
+
+        if "levelist" not in patch:
+            patch["levelist"] = None
+
+        assert patch
+        ds = patch_dataset(ds, patch)
 
         variables: List[Variable] = []
 
@@ -165,42 +172,16 @@ class XArrayFieldList(IndexFieldListBase):
         def _skip_attr(v: Any, attr_name: str) -> None:
             attr_val: str = getattr(v, attr_name, "")
             if isinstance(attr_val, str):
-                v = attr_val.split(" ")
+                v = attr_val.split()
                 if v:
                     skip.update(v)
 
-        for name in ds.data_vars:
+        for name in itertools.chain(ds.coords, ds.data_vars):
             variable = ds[name]
             _skip_attr(variable, "coordinates")
             _skip_attr(variable, "bounds")
+            _skip_attr(variable, "climatology")
             _skip_attr(variable, "grid_mapping")
-
-        # Handle lat_vertices and lon_vertices in the CORDEX dataset.
-        # The current algorithm cannot skip these vars, so it has to be done
-        # manually.
-        #
-        # Example data.:
-        # Dimensions:                   (time: 31, bnds: 2, rlat: 19, rlon: 15,
-        #                                 vertices: 4)
-        # Coordinates:
-        # * time                        (time) datetime64[ns] 248B 2006-01-01T12:00:0...
-        # * rlat                        (rlat) float64 152B -10.56 -10.45 ... -8.58
-        # * rlon                        (rlon) float64 120B -5.77 -5.66 ... -4.34 -4.23
-        #   lat                         (rlat, rlon) float32 1kB ...
-        #   lon                         (rlat, rlon) float32 1kB ...
-        #   height                      float64 8B ...
-        # Dimensions without coordinates: bnds, vertices
-        # Data variables:
-        #   time_bnds                   (time, bnds) datetime64[ns] 496B ...
-        #   rotated_latitude_longitude  int32 4B ...
-        #   lat_vertices                (rlat, rlon, vertices) float32 5kB ...
-        #   lon_vertices                (rlat, rlon, vertices) float32 5kB ...
-        #   sfcWind                     (time, rlat, rlon) float32 35kB ...
-
-        for name in ["lat_vertices", "lon_vertices"]:
-            if name in ds.data_vars:
-                if list(ds.data_vars[name].sizes.keys()) == ["rlat", "rlon", "vertices"]:
-                    skip.add(name)
 
         LOG.debug("Xarray data_vars: %s", ds.data_vars)
 
@@ -241,6 +222,7 @@ class XArrayFieldList(IndexFieldListBase):
                    * level    (level) int64 16B 700 500
                      lat      (values) int64 72B 50 50 50 40 40 40 30 30 30
                      lon      (values) int64 72B 0 10 20 0 10 20 0 10 20
+                     values   (values) int64 72B 0 1 2 3 4 5 6 7 8
                  Dimensions without coordinates: values
                  Data variables:
                      a        (level, values) int64 144B 11 12 13 21 22 23 ... 24 25 26 34 35 36
@@ -250,7 +232,7 @@ class XArrayFieldList(IndexFieldListBase):
 
                 g = [c for c in coordinates if c.is_grid]
 
-                for i, c in enumerate(coordinates):
+                for c in coordinates:
                     if c.is_dim and isinstance(c, UnsupportedCoordinate):
                         for cx in g:
                             if c.name in cx.variable.sizes:

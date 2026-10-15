@@ -11,8 +11,9 @@ from typing import Any as TypingAny
 from typing import Dict, Optional, Tuple, Union
 
 from earthkit.data import concat
+from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.indexing.empty import EmptyFieldList
 from earthkit.data.sources import Source, _from_source_internal
-from earthkit.data.sources.empty import EmptySource
 from earthkit.data.sources.file import File
 from earthkit.data.sources.multi import MultiSource
 from earthkit.data.utils.patterns import HivePattern, Pattern
@@ -27,7 +28,7 @@ class HiveFilePattern(Source):
         *args: Tuple[Dict[str, TypingAny]],
         _hive_diag: Optional[TypingAny] = None,
         **kwargs: TypingAny,
-    ) -> Union[EmptySource, MultiSource]:
+    ) -> FieldList:
         from earthkit.data.core.index import normalise_selection
 
         kwargs, _ = normalise_selection(*args, **kwargs)
@@ -37,7 +38,7 @@ class HiveFilePattern(Source):
             del kwargs[k]
 
         if rest:
-            out = EmptySource()
+            out = EmptyFieldList()
             for f in self.scanner.scan(**kwargs):
                 ds = _from_source_internal("file", f).to_fieldlist()
                 out = concat(out, ds.sel(**rest))

@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import warnings
+
 from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.indexing.simple import SimpleFieldListBase
@@ -180,16 +182,32 @@ class GribFieldListInFile(SimpleFieldListBase, GRIBReaderBase):
 
 
 class GRIBReader(Source, GRIBReaderBase):
-    def __init__(self, source, path, parts=None, positions=None):
+    def __init__(
+        self,
+        source,
+        path,
+        parts=None,
+        positions=None,
+        grib_handle_policy=None,
+        grib_handle_cache_size=None,
+        use_grib_metadata_cache=None,
+        **kwargs,
+    ):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the GRIB reader.",
+                UserWarning,
+                stacklevel=2,
+            )
         self._ori_source = source
-        self._kwargs = {"parts": parts, "positions": positions}
-
-        for k in [
-            "grib_handle_policy",
-            "grib_handle_cache_size",
-            "use_grib_metadata_cache",
-        ]:
-            self._kwargs[k] = source._kwargs.get(k, None)
+        self._kwargs = {
+            "parts": parts,
+            "positions": positions,
+            "grib_handle_policy": grib_handle_policy,
+            "grib_handle_cache_size": grib_handle_cache_size,
+            "use_grib_metadata_cache": use_grib_metadata_cache,
+        }
 
         GRIBReaderBase.__init__(self, source, path)
 
@@ -209,7 +227,7 @@ class GRIBReader(Source, GRIBReaderBase):
         return self.to_fieldlist().to_pandas(*args, **kwargs)
 
     def peek(self):
-        return first_field_from_grib_file(self.path, parts=self._kwargs.get("parts", None))
+        return first_field_from_grib_file(self.path, parts=self._kwargs["parts"])
 
     def mutate_source(self):
         # A GRIBReader is a source itself

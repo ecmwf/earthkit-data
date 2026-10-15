@@ -10,7 +10,7 @@
 from .source import SourceData
 
 
-class CovJsonData(SourceData):
+class CovJSONData(SourceData):
     """Represent CoverageJSON data.
 
     CoverageJSON is a format for encoding multi-dimensional gridded data, often used in geospatial
@@ -29,7 +29,7 @@ class CovJsonData(SourceData):
     @property
     def available_types(self):
         """list[str]: Return the list of available types that this data object can be converted to."""
-        return [self._XARRAY, "geojson"]
+        return [self._XARRAY, self._FIELDLIST, "geojson"]
 
     def describe(self):
         """Provide a description of the CovJSON data.
@@ -43,18 +43,21 @@ class CovJsonData(SourceData):
 
         return DataDescriber(title="CovJSON file", path=self.path, types=self.available_types)
 
-    @property
-    def path(self) -> str | list[str] | None:
-        try:
-            return self._reader.path
-        except Exception:
-            return None
-
     def __repr__(self) -> str:
         return f"CovJSONData(path={self.path})"
 
     def _repr_html_(self) -> str:
         return self.describe()._repr_html_()
+
+    def to_fieldlist(self):
+        """Convert into a FieldList.
+
+        Returns
+        -------
+        :py:class:`earthkit.data.core.fieldlist.FieldList`
+            A FieldList containing the covjson data.
+        """
+        return self._reader.to_fieldlist()
 
     def to_xarray(self, **kwargs):
         """Convert into an Xarray dataset.

@@ -91,6 +91,7 @@ class GribCodesHandle(CodesHandle):
                             "GeocalculusError",
                             "BufferTooSmallError",
                             "MissingKeyError",
+                            "GridUnknownError",
                         ]
                     ):
                         return kwargs.get("default", None)

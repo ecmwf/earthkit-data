@@ -104,6 +104,40 @@ def test_grib_multi_url_parts(parts1, parts2, expected_meta):
     assert ds.get(("parameter.variable", "vertical.level")) == expected_meta
 
 
+def test_grib_url_split():
+    ds = from_source(
+        "url",
+        [
+            earthkit_remote_examples_file("test.grib"),
+            earthkit_remote_examples_file("test6.grib"),
+        ],
+        split=True,
+    )
+
+    # each url is downloaded into its own target file
+    assert isinstance(ds.path, list)
+    assert len(ds.path) == 2
+
+    fs = ds.to_fieldlist()
+    assert len(fs) == 2 + 6
+
+
+def test_grib_url_split_parts():
+    parts1 = [(240, 150)]
+    parts2 = [(0, 526)]
+    ds = from_source(
+        "url",
+        [
+            [earthkit_remote_examples_file("test6.grib"), parts1],
+            [earthkit_remote_examples_file("test.grib"), parts2],
+        ],
+        split=True,
+    ).to_fieldlist()
+
+    assert len(ds) == 2
+    assert ds.get(("parameter.variable", "vertical.level")) == [("u", 1000), ("2t", 0)]
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

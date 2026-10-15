@@ -43,7 +43,7 @@ def relative_date(n):
         d = datetime.datetime(d.year, d.month, d.day)
         return (d, d + datetime.timedelta(days=1))
     else:
-        raise ValueError(f"{n=} must be negative")
+        raise ValueError(f"{n=} must be 0 or negative")
 
 
 @pytest.mark.parametrize(

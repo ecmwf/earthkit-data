@@ -37,6 +37,26 @@ class FeatureList(Source, Encodable):
     def __len__(self):
         pass
 
+    @staticmethod
+    def from_fields(fields=None):
+        r"""Create a featurelist from the given features.
+
+        Parameters
+        ----------
+        fields: iterable, None
+            Iterable of features (e.g. :obj:`BUFRMessage <earthkit.data.readers.bufr.message.BUFRMessage>`
+            objects). When it is None, an empty featurelist is returned.
+
+        Returns
+        -------
+        :class:`~earthkit.data.featurelist.simple.SimpleFeatureList`
+            A featurelist containing the given features.
+
+        """
+        from earthkit.data.featurelist.simple import SimpleFeatureList
+
+        return SimpleFeatureList(fields)
+
     @abstractmethod
     def get(
         self,

@@ -4,8 +4,8 @@ build:
   dependencies:
   - ecmwf/ecbuild@develop
   - MathisRosenhauer/libaec@refs/tags/v1.1.3
-  - ecmwf/eccodes@develop
   - ecmwf/eckit@develop
+  - ecmwf/eccodes@develop
   - ecmwf/odc@develop
   - ecmwf/metkit@develop
   - ecmwf/fdb@develop

@@ -56,13 +56,6 @@ class GeoTIFFData(SourceData):
 
         return DataDescriber(title="GeoTIFF file", path=self.path, types=self.available_types)
 
-    @property
-    def path(self) -> str | list[str] | None:
-        try:
-            return self._reader.path
-        except Exception:
-            return None
-
     def __repr__(self) -> str:
         return f"GeoTIFFData(path={self.path})"
 

@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import warnings
 from abc import abstractmethod
 
 from earthkit.data.sources import Source
@@ -109,7 +110,14 @@ class NetCDFReader(Source, NetCDFReaderBase):
 
 
 class NetCDFFileReader(NetCDFReader):
-    def __init__(self, source, path):
+    def __init__(self, source, path, **kwargs):
+        if kwargs:
+            names = ", ".join(repr(name) for name in kwargs)
+            warnings.warn(
+                f"Arguments {names} have no effect for the netCDF reader.",
+                UserWarning,
+                stacklevel=2,
+            )
         self._ori_source = source
         # self.path = path
         super().__init__(source, path)

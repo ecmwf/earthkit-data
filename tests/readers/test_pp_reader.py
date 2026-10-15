@@ -34,3 +34,27 @@ def test_pp_file_2():
     assert isinstance(ds[1], Field)
     assert ds[0].metadata("standard_name") == "x_wind"
     assert ds[1].metadata("standard_name") == "y_wind"
+
+
+def test_invalid_kwargs():
+    with pytest.warns(UserWarning):
+        from_source("file", earthkit_examples_file("air_temp.pp"), grib_handle_policy=None)
+
+
+def test_pp_file_magic_detection_without_extension(tmp_path):
+    import shutil
+
+    from earthkit.data.data.pp import PPData
+
+    source_file = earthkit_examples_file("air_temp.pp")
+    dest_file = tmp_path / "air_temp_noext"
+    shutil.copy2(source_file, dest_file)
+
+    ds = from_source("file", dest_file)
+    assert isinstance(ds, PPData)
+
+
+if __name__ == "__main__":
+    from earthkit.data.utils.testing import main
+
+    main(__file__)

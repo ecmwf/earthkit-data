@@ -53,6 +53,8 @@ def download_and_cache(
         url,
         chunk_size=chunk_size,
         timeout=CONFIG.get("url-download-timeout"),
+        maximum_retries=CONFIG.get("url-maximum-retries"),
+        retry_after=CONFIG.get("url-retry-after"),
         verify=verify,
         parts=parts,
         range_method=range_method,
@@ -129,6 +131,8 @@ def download_to_target(
         url,
         chunk_size=chunk_size,
         timeout=CONFIG.get("url-download-timeout"),
+        maximum_retries=CONFIG.get("url-maximum-retries"),
+        retry_after=CONFIG.get("url-retry-after"),
         verify=verify,
         parts=parts,
         range_method=range_method,
@@ -168,6 +172,7 @@ class UrlBase(FileSource):
         fake_headers=None,  # When HEAD is not allowed but you know the size
         stream=False,
         auth=None,
+        session=None,
         **kwargs,
     ):
         super().__init__(filter=filter, merger=merger)
@@ -185,14 +190,12 @@ class UrlBase(FileSource):
                 http_headers=http_headers,
                 fake_headers=fake_headers,
                 auth=auth,
+                session=session,
             )
             self.url_spec = UrlSpec.from_urls(url, **url_kwargs)
 
         self._kwargs = kwargs
         LOG.debug(f"url={self.url} url_parts={self.url_parts} auth={auth} _kwargs={self._kwargs}")
-
-    def connect_to_mirror(self, mirror):
-        return mirror.connection_for_url(self, self.url, self.url_parts)
 
     def prepare_headers(self, url):
         headers = {}
@@ -237,6 +240,12 @@ class Url(UrlBase):
 
         Multiple urls can be provided as a list/tuple of of the single url formats above.
         Mixing single url formats in a list/tuple is not allowed.
+    split: bool
+        If True and multiple urls are provided, each url is downloaded into its own
+        separate target file by delegating to :class:`MultiUrl` instead of merging all
+        the urls into a single target file. Has no effect when a single url is given,
+        in which case the default behaviour applies. Cannot be used together with
+        ``stream=True``. Default is ``False``.
     """
 
     def __init__(
@@ -246,8 +255,12 @@ class Url(UrlBase):
         update_if_out_of_date=False,
         force=None,
         stream=False,
+        split=False,
         **kwargs,
     ):
+        if split and stream:
+            raise ValueError("split and stream cannot both be True")
+
         super().__init__(url, **kwargs)
 
         self.other_source = None
@@ -261,6 +274,10 @@ class Url(UrlBase):
         self.update_if_out_of_date = update_if_out_of_date
         self.force = force
         self.stream = stream
+        self.split = split
+
+        if self.split and len(self.url_spec) > 1:
+            return
 
         if not self.stream:
             self._download()
@@ -271,6 +288,16 @@ class Url(UrlBase):
 
             source, url, kwargs = self.other_source
             return _from_source_internal(source, url, **kwargs)
+
+        if self.split and len(self.url_spec) > 1:
+            from .multi_url import MultiUrl
+
+            return MultiUrl(
+                self.url_spec,
+                filter=self.filter,
+                merger=self.merger,
+                force=self.force,
+            )
 
         if self.stream:
             s = []
@@ -295,10 +322,11 @@ class Url(UrlBase):
                 f" _kwargs={self._kwargs}"
             )
         )
-
         self.downloader = Downloader(
             self.url_spec.zipped(),
             timeout=CONFIG.get("url-download-timeout"),
+            maximum_retries=CONFIG.get("url-maximum-retries"),
+            retry_after=CONFIG.get("url-retry-after"),
             statistics_gatherer=record_statistics,
             progress_bar=progress_bar,
             resume_transfers=True,
@@ -387,6 +415,8 @@ class SingleUrlStream(UrlBase):
         downloader = Downloader(
             self.url_spec.zipped(),
             timeout=CONFIG.get("url-download-timeout"),
+            maximum_retries=CONFIG.get("url-maximum-retries"),
+            retry_after=CONFIG.get("url-retry-after"),
             # verify=self.verify,
             # range_method=self.range_method,
             # http_headers=self.prepare_headers(self.url),
