@@ -15,6 +15,7 @@ Tutorials
     geotiff/index.rst
     geojson/index.rst
     odb/index.rst
+    geopoints/index.rst
     pcraster/index.rst
     shapefile/index.rst
     sql/index.rst

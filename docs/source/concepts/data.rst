@@ -56,6 +56,8 @@ When :func:`from_source` reads a file input (can be data on disk, URL or memory 
      - :py:class:`earthkit.data.data.csv.CSVData`
    * - ODB
      - :py:class:`earthkit.data.data.odb.ODBData`
+   * - Geopoints
+     - :py:class:`earthkit.data.data.geopoints.GeopointsData`
    * - Zarr
      - :py:class:`earthkit.data.data.zarr.ZarrData`
    * - GeoJSON

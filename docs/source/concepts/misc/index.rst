@@ -5,6 +5,7 @@ Miscellaneous
    :glob:
    :maxdepth: 1
 
+   geopoints
    mergers
    parts
    patterns
