@@ -236,6 +236,78 @@ def test_cf_hybrid_encode_no_valid_p0():
     assert ds["level_bnds"].attrs["formula_terms"] == "ap: ap_bnds b: b_bnds ps: ps"
 
 
+def test_cf_hybrid_encode_ps_dims(full_model, tmp_path):
+    ref = full_model.encode()
+    ds = full_model.encode(ps_dims={"lat": 3, "lon": 4})
+
+    assert set(ds.variables) == set(ref.variables) | {"sp"}
+    ps = ds["sp"]
+    assert ps.dims == ("lat", "lon")
+    assert ps.shape == (3, 4)
+    assert ps.dtype == np.float64
+    assert np.isnan(ps.values).all()
+    assert ps.attrs == {"standard_name": "surface_air_pressure", "units": "Pa", "long_name": "surface air pressure"}
+    assert ds["level"].attrs["formula_terms"] == "ap: ap b: b ps: sp p0: p0"
+    assert ds["level_bnds"].attrs["formula_terms"] == "ap: ap_bnds b: b_bnds ps: sp p0: p0"
+
+    # the other variables are not changed
+    for name in ref.variables:
+        assert ds[name].identical(ref[name])
+
+    # dims are kept in the given order, a scalar is possible
+    assert full_model.encode(ps_dims={"x": 2, "y": 3})["sp"].dims == ("x", "y")
+    assert full_model.encode(ps_dims={})["sp"].dims == ()
+
+    # the variable is written and read back
+    path = tmp_path / "ps.nc"
+    ds.to_netcdf(path)
+    with xr.open_dataset(path) as ds1:
+        assert ds1["sp"].dims == ("lat", "lon")
+        assert np.isnan(ds1["sp"].values).all()
+        assert ds1["sp"].attrs["standard_name"] == "surface_air_pressure"
+        assert decode_parametric_vertical(ds1).ps_name == "sp"
+
+
+def test_cf_hybrid_encode_ps_dims_names():
+    m = CLS([1000.0, 2000.0], [0.5, 0.6], ap_bnds=[[0, 1], [1, 2]], b_bnds=[[0, 1]] * 2, levels=[1, 2])
+    ds = m.encode(ps_dims={"lat": 2}, names={"ps": "lnsp"})
+    assert ds["lnsp"].dims == ("lat",)
+    assert "ps" not in ds.variables
+
+    # the placeholder is written without bounds too
+    assert "ps" in m.encode(ps_dims={"lat": 2}, bounds=False).variables
+
+
+def test_cf_hybrid_encode_ps_dims_invalid():
+    m = CLS([1000.0, 2000.0], [0.5, 0.6], ap_bnds=[[0, 1], [1, 2]], b_bnds=[[0, 1]] * 2, levels=[1, 2])
+
+    # no ps name
+    m_no_ps = CLS([1000.0, 2000.0], [0.5, 0.6], levels=[1, 2], ps_name=None)
+    m_no_ps.encode()
+    with pytest.raises(ValueError):
+        m_no_ps.encode(ps_dims={"lat": 2})
+
+    # the dims must not be the names of other written variables or the ps name itself
+    for name in ("level", "ap", "b", "ap_bnds", "b_bnds", "level_bnds", "bnds", "p0", "ps"):
+        with pytest.raises(ValueError):
+            m.encode(ps_dims={name: 2})
+    with pytest.raises(ValueError):
+        m.encode(ps_dims={"lat": 2, "bnds": 2})
+
+    # names that are not written do not collide
+    m.encode(ps_dims={"bnds": 2}, bounds=False)
+    m.encode(ps_dims={"model_level_number": 2})
+
+    with pytest.raises(ValueError):
+        m.encode(ps_dims={"": 2})
+    with pytest.raises(ValueError):
+        m.encode(ps_dims={"lat": -1})
+    with pytest.raises(ValueError):
+        m.encode(ps_dims={"lat": 2.0})
+    with pytest.raises(ValueError):
+        m.encode(ps_dims=3)
+
+
 # ---------------------------------------------------------------------------
 # round trips
 # ---------------------------------------------------------------------------

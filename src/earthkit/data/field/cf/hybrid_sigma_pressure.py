@@ -510,12 +510,13 @@ class AtmosphereHybridSigmaPressureCoordinate(ParametricVerticalCoordinate):
     # xarray
     # ------------------------------------------------------------------
 
-    def encode(self, *, level_dim="level", coord_values="level_number", bounds=True, names=None):
+    def encode(self, *, level_dim="level", coord_values="level_number", bounds=True, names=None, ps_dims=None):
         """Encode the coordinate into an :obj:`xarray.Dataset` following the CF conventions.
 
         The ``ap`` form of the formula is used: the pressure is ``ap(k) + b(k) * ps`` and the
-        dimensionless coordinate value is ``ap(k) / p0 + b(k)``. The surface pressure variable is
-        only referred to in ``formula_terms``, it is never written into the dataset. When :attr:`p0` is
+        dimensionless coordinate value is ``ap(k) / p0 + b(k)``. By default the surface pressure variable is
+        only referred to in ``formula_terms``, it is not written into the dataset (see ``ps_dims`` to
+        write an all-NaN placeholder). When :attr:`p0` is
         positive and finite it is written as the scalar variable ``p0`` (units "Pa") and referred to by the
         ``p0`` term of the ``formula_terms`` of both the coordinate and its bounds, in both ``coord_values``
         modes, so that it is restored when the dataset is decoded. Otherwise neither the variable nor the
@@ -545,19 +546,31 @@ class AtmosphereHybridSigmaPressureCoordinate(ParametricVerticalCoordinate):
             None: no ``ps`` term is written), "p0" (``"p0"``), "level_bnds" (``"<level_dim>_bnds"``),
             "bnds" (``"bnds"``, bounds dimension) and
             "level_number" (``"model_level_number"``, only used with "dimensionless").
+        ps_dims: dict, optional
+            Mapping from dimension name to size. When specified, the surface pressure is written as a
+            float64 placeholder variable named by the "ps" name with these dimensions (in the given order),
+            with all the values NaN and the attributes ``standard_name="surface_air_pressure"``,
+            ``units="Pa"`` and ``long_name="surface air pressure"``. The values are a read-only broadcast
+            view of a single NaN (:func:`numpy.broadcast_to`), so the placeholder needs no memory
+            until the dataset is copied or written. The dimensions must not be those of any other
+            variable written here (see ``Raises``). An empty mapping writes a scalar.
 
         Returns
         -------
         xarray.Dataset
             Dataset with the level coordinate ``level_dim``, the variables ``ap`` and ``b`` and, when
-            bounds are written, ``ap_bnds``, ``b_bnds`` and the level bounds variable. When the
+            bounds are written, ``ap_bnds``, ``b_bnds`` and the level bounds variable. When ``ps_dims``
+            is specified the ``ps`` placeholder is included. When the
             levels are known they are written in ascending level number order, otherwise the order of
             the arrays is kept.
 
         Raises
         ------
         ValueError
-            If ``coord_values`` is invalid, ``names`` has unknown keys, a name (including that of ``ps``
+            If ``ps_dims`` is specified but the "ps" name is None, a name in ``ps_dims`` is not a non-empty str, a
+            size is not a non-negative int or a name in ``ps_dims`` is the same as a written name (the level
+            dimension, any written variable, the bounds dimension when bounds are written or the "ps" name).
+            Also if ``coord_values`` is invalid, ``names`` has unknown keys, a name (including that of ``ps``
             and ``p0``) is the same as another written name or dimension, the levels
             are unknown with ``coord_values="level_number"``, or with ``coord_values="dimensionless"``
             :attr:`p0` is not positive or the dimensionless values are not strictly monotonic.
@@ -615,6 +628,23 @@ class AtmosphereHybridSigmaPressureCoordinate(ParametricVerticalCoordinate):
         if len(set(used)) != len(used):
             raise ValueError(f"The names of the variables and dimensions must be distinct, got {used}")
 
+        ps_shape = None
+        if ps_dims is not None:
+            if nm["ps"] is None:
+                raise ValueError("ps_dims is specified but the ps name is None")
+            try:
+                ps_dims = dict(ps_dims)
+            except (TypeError, ValueError) as e:
+                raise ValueError(f"ps_dims must be a mapping from dimension name to size: {e}") from e
+            for d, size in ps_dims.items():
+                if not isinstance(d, str) or not d:
+                    raise ValueError(f"Invalid dimension name in ps_dims: {d!r}")
+                if isinstance(size, bool) or not isinstance(size, (int, np.integer)) or size < 0:
+                    raise ValueError(f"Invalid size for dimension {d!r} in ps_dims: {size!r}")
+                if d in used:
+                    raise ValueError(f"The dimension {d!r} of ps_dims is the same as a written name, got {used}")
+            ps_shape = tuple(int(s) for s in ps_dims.values())
+
         if self._levels is None:
             order = np.arange(len(self))
         else:
@@ -665,6 +695,17 @@ class AtmosphereHybridSigmaPressureCoordinate(ParametricVerticalCoordinate):
                     "units": "Pa",
                     "standard_name": "reference_air_pressure_for_atmosphere_vertical_coordinate",
                     "long_name": "vertical coordinate formula term: reference pressure",
+                },
+            )
+
+        if ps_shape is not None:
+            data_vars[nm["ps"]] = (
+                tuple(ps_dims),
+                np.broadcast_to(np.float64(np.nan), ps_shape),
+                {
+                    "standard_name": "surface_air_pressure",
+                    "units": "Pa",
+                    "long_name": "surface air pressure",
                 },
             )
 

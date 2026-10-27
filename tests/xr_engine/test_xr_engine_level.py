@@ -23,6 +23,30 @@ def _get_level_type_attr(level_dim, levtype):
     return get_level_type(levtype).cf
 
 
+# Hybrid levels whose fields have the A/B coefficients get the CF parametric vertical coordinate attributes
+_HYBRID_CF_PARAMETRIC_ATTRS = {
+    "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate",
+    "positive": "down",
+    "axis": "Z",
+    "computed_standard_name": "air_pressure",
+    "formula_terms": "ap: ap b: b ps: ps p0: p0",
+    "bounds": "level_bnds",
+}
+
+
+def _check_level_attrs(ds, level_dim, levtype):
+    attrs = ds.coords[level_dim].attrs
+    ref = _get_level_type_attr(level_dim, levtype)
+    if levtype == "hybrid":
+        # the file has A/B: the old level type attributes are kept and the CF parametric ones are added
+        assert ref.items() <= attrs.items()
+        assert _HYBRID_CF_PARAMETRIC_ATTRS.items() <= attrs.items()
+        for v in ("ap", "b", "ps", "p0", "ap_bnds", "b_bnds", "level_bnds"):
+            assert v in ds.coords
+    else:
+        assert attrs == ref
+
+
 @pytest.mark.cache
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
@@ -311,7 +335,7 @@ def test_xr_engine_level_attr_grib(allow_holes, lazy_load, fname, kwargs, dims, 
     compare_dims(ds, dims)
 
     level_dim = next(iter(dims))
-    assert ds.coords[level_dim].attrs == _get_level_type_attr(level_dim, levtype)
+    _check_level_attrs(ds, level_dim, levtype)
 
 
 @pytest.mark.cache
@@ -678,7 +702,7 @@ def test_xr_engine_level_attr_earthkit(fname, kwargs, dims, levtype):
     compare_dims(ds, dims)
 
     level_dim = next(iter(dims))
-    assert ds.coords[level_dim].attrs == _get_level_type_attr(level_dim, levtype)
+    _check_level_attrs(ds, level_dim, levtype)
 
 
 @pytest.mark.cache

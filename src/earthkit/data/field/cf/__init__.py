@@ -9,6 +9,7 @@
 
 from .formula_terms import CF_PARAMETRIC_VERTICAL_TERMS, format_formula_terms, parse_formula_terms
 from .hybrid_sigma_pressure import AtmosphereHybridSigmaPressureCoordinate
+from .merge import add_parametric_vertical, merge_parametric_vertical
 from .parametric_vertical import (
     ParametricVerticalCoordinate,
     decode_parametric_vertical,
@@ -21,10 +22,12 @@ __all__ = [
     "AtmosphereHybridSigmaPressureCoordinate",
     "CF_PARAMETRIC_VERTICAL_TERMS",
     "ParametricVerticalCoordinate",
+    "add_parametric_vertical",
     "decode_parametric_vertical",
     "format_formula_terms",
     "get_cf_attribute",
     "get_parametric_vertical_class",
+    "merge_parametric_vertical",
     "parse_formula_terms",
     "register_parametric_vertical",
 ]
