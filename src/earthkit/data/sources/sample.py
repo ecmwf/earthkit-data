@@ -35,6 +35,3 @@ class Sample(FileSource):
             urls.append(REMOTE_SAMPLE_DATA_URL + f_name)
 
         return Url(urls, **self._kwargs)
-
-
-source = Sample

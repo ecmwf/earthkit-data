@@ -46,6 +46,3 @@ class EODRetriever(FileSource):
         return self._cache_file(
             retrieve, request, hash_extra={"model": self.client.model, "source_url": self.client.source.url}
         )
-
-
-source = EODRetriever

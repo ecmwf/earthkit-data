@@ -12,16 +12,17 @@
 import pytest
 
 from earthkit.data import concat, from_source
+from earthkit.data.sources.helpers import _from_empty
 from earthkit.data.utils.testing import earthkit_examples_file
 
 
 def test_empty_source_len():
-    ds = from_source("empty").to_fieldlist()
+    ds = _from_empty().to_fieldlist()
     assert len(ds) == 0
 
 
 def test_empty_source_concat1():
-    ds = from_source("empty").to_fieldlist()
+    ds = _from_empty().to_fieldlist()
     assert len(ds) == 0
 
     ds1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
@@ -33,7 +34,7 @@ def test_empty_source_concat1():
 
 
 def test_empty_source_concat2():
-    ds = from_source("empty").to_fieldlist()
+    ds = _from_empty().to_fieldlist()
     assert len(ds) == 0.0
 
     ds1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
@@ -46,7 +47,7 @@ def test_empty_source_concat2():
 
 @pytest.mark.skip("Currently fails because of += is not implemented")
 def test_empty_source_concat3():
-    ds = from_source("empty").to_fieldlist()
+    ds = _from_empty().to_fieldlist()
     assert len(ds) == 0
 
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
@@ -58,6 +59,6 @@ def test_empty_source_concat3():
 
 
 def test_empty_source_iterate():
-    ds = from_source("empty").to_fieldlist()
+    ds = _from_empty().to_fieldlist()
     for _ in ds:
         assert False, "Empty source should not iterate"

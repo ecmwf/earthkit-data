@@ -111,7 +111,7 @@ def test_covjson_stream_1():
 
 def test_invalid_kwargs():
     with pytest.warns(UserWarning):
-        from_source("file", earthkit_test_data_file("time_series.covjson"), grib_handle_policy=None)
+        from_source("file", earthkit_test_data_file("time_series.covjson"), grib_handle_policy="cache")
 
 
 if __name__ == "__main__":
