@@ -41,9 +41,10 @@ class EODRetriever(FileSource):
         def retrieve(target, request):
             self.client.retrieve(request, target)
 
+        # we use hash_extra here to ensure that two ecmwf-open-data requests that differ only by model
+        # or by source resolve to different cache file
         return self._cache_file(
-            retrieve,
-            request,
+            retrieve, request, hash_extra={"model": self.client.model, "source_url": self.client.source.url}
         )
 
 
