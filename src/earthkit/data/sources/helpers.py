@@ -541,3 +541,8 @@ def _from_zarr(path: str, **kwargs: Any) -> Data:
     from earthkit.data.sources.zarr import ZarrSource
 
     return _to_data(ZarrSource(path, **kwargs), "zarr")
+
+def _from_sql(url: str, sql: str) -> Data:
+    from earthkit.data.sources.sql import SQLSource
+    
+    return _to_data(SQLSource(url, sql), "sql")

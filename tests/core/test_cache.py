@@ -148,6 +148,20 @@ def test_url_source_no_cache():
         assert len(ds) == 2
 
 
+@pytest.mark.long_test
+@pytest.mark.download
+def test_cache_hash_model_source():
+    with config.temporary("cache-policy", "user"):
+        request1 = {"resol": "0p25", "step": [96], "type": "fc", "param": "2t", "model": "ifs"}
+        request2 = {"resol": "0p25", "step": [96], "type": "fc", "param": "2t", "model": "aifs-single"}
+        request3 = {"source": "azure", "resol": "0p25", "step": [96], "type": "fc", "param": "2t", "model": "ifs"}
+        ds_1 = from_source("ecmwf-open-data", **request1)
+        ds_2 = from_source("ecmwf-open-data", **request2)
+        ds_3 = from_source("ecmwf-open-data", **request3)
+    assert ds_1.path != ds_2.path
+    assert ds_1.path != ds_3.path
+
+
 def test_grib_no_cache():
     with config.temporary("cache-policy", "off"):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
