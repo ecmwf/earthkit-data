@@ -4,6 +4,15 @@ Version 1.3 Updates
 ///////////////////////
 
 
+Version 1.3.1
+==============
+
+Fixes
+++++++++++++
+
+- Fixed issue when the :ref:`data-sources-ecmwf-open-data` source did not include the ``model`` and ``source`` in the earthkit-data cache key  (:pr:`1203`)
+
+
 Version 1.3.0
 ==============
 
