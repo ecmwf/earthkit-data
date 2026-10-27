@@ -495,7 +495,8 @@ def test_cf_hybrid_decode_formula_terms_in_encoding():
 
 
 def _cmip6_dataset():
-    ap_bnds = np.array([[0.0, 1000.0], [1000.0, 3000.0], [3000.0, 6000.0]])
+    # a complete model: zero pressure top (ap=0, b=0) and surface (ap=0, b=1)
+    ap_bnds = np.array([[0.0, 1000.0], [1000.0, 3000.0], [3000.0, 0.0]])
     b_bnds = np.array([[0.0, 0.0], [0.0, 0.2], [0.2, 1.0]])
     ap = ap_bnds.mean(axis=1)
     b = b_bnds.mean(axis=1)
@@ -549,7 +550,7 @@ def test_cf_hybrid_decode_cmip6():
 
     # bounds are contiguous, the half levels can be rebuilt
     A, B = d.to_level_parameters().coefficients()
-    np.testing.assert_array_equal(A, [0.0, 1000.0, 3000.0, 6000.0])
+    np.testing.assert_array_equal(A, [0.0, 1000.0, 3000.0, 0.0])
     np.testing.assert_array_equal(B, [0.0, 0.0, 0.2, 1.0])
 
 
@@ -819,3 +820,318 @@ def test_cf_hybrid_decode_levels():
         mln=("lev", [10, 20, 30], {"standard_name": "model_level_number"}),
     )
     np.testing.assert_array_equal(CLS.from_xarray(ds, "lev").levels, [10, 20, 30])
+
+
+# ---------------------------------------------------------------------------
+# positive
+# ---------------------------------------------------------------------------
+
+# synthetic 3 level model (4 half levels)
+A3 = np.array([0.0, 2000.0, 1000.0, 0.0])
+B3 = np.array([0.0, 0.0, 0.5, 1.0])
+
+# a positive-up model: level 1 at the surface
+A_UP = np.array([0.0, 0.0, 0.0])
+B_UP = np.array([1.0, 0.5, 0.0])
+
+
+@pytest.mark.parametrize("positive", ["down", "up"])
+@pytest.mark.parametrize("to_file", [False, True])
+def test_cf_hybrid_roundtrip_positive(l137, positive, to_file, tmp_path):
+    A, B = l137
+    if positive == "up":
+        A, B = A[::-1], B[::-1]
+    m = CLS.from_half_levels(A, B, positive=positive)
+    ds = m.encode()
+    assert ds["level"].attrs["positive"] == positive
+
+    if to_file:
+        ds.to_netcdf(tmp_path / "positive.nc")
+        ds = xr.open_dataset(tmp_path / "positive.nc")
+
+    d = CLS.from_xarray(ds, "level")
+    assert d.positive == positive
+    _assert_same(m, d)
+    assert decode_parametric_vertical(ds).positive == positive
+
+    if positive == "down":
+        A1, B1 = d.to_level_parameters().coefficients()
+        np.testing.assert_array_equal(A1, A)
+        np.testing.assert_array_equal(B1, B)
+    else:
+        assert not d.can_rebuild_half_levels()
+    np.testing.assert_array_equal(d.level_numbers(), np.arange(1, 138))
+
+    if to_file:
+        ds.close()
+
+
+def test_cf_hybrid_decode_positive_attribute():
+    ds = _cmip6_dataset()
+
+    # missing: down
+    del ds["lev"].attrs["positive"]
+    assert CLS.from_xarray(ds, "lev").positive == "down"
+
+    # case-insensitive
+    for value, expected in (("UP", "up"), ("Down", "down"), ("up", "up")):
+        ds["lev"].attrs["positive"] = value
+        assert CLS.from_xarray(ds, "lev").positive == expected
+
+    # in the encoding
+    del ds["lev"].attrs["positive"]
+    ds["lev"].encoding["positive"] = "up"
+    assert CLS.from_xarray(ds, "lev").positive == "up"
+
+    # invalid
+    for bad in ("sideways", "", 1):
+        ds = _cmip6_dataset()
+        ds["lev"].attrs["positive"] = bad
+        with pytest.raises(ValueError, match="positive"):
+            CLS.from_xarray(ds, "lev")
+        with pytest.raises(ValueError, match="positive"):
+            decode_parametric_vertical(ds, "lev")
+
+
+def test_cf_hybrid_encode_positive_up():
+    m = CLS.from_half_levels(A_UP, B_UP, positive="up")
+    ds = m.encode()
+    assert ds["level"].attrs["positive"] == "up"
+
+    # the coordinate values increase with the level number, the bounds are in level order
+    np.testing.assert_array_equal(ds["level"].values, [1, 2])
+    np.testing.assert_array_equal(ds["level_bnds"].values, [[0.5, 1.5], [1.5, 2.5]])
+    np.testing.assert_array_equal(ds["ap_bnds"].values, [[0.0, 0.0], [0.0, 0.0]])
+    np.testing.assert_array_equal(ds["b_bnds"].values, [[1.0, 0.5], [0.5, 0.0]])
+    np.testing.assert_array_equal(ds["b"].values, [0.75, 0.25])
+
+    d = CLS.from_xarray(ds, "level")
+    assert d.positive == "up"
+    _assert_same(m, d)
+    np.testing.assert_array_equal(d.levels, [1, 2])
+    np.testing.assert_array_equal(d.b_bnds, [[1.0, 0.5], [0.5, 0.0]])
+
+    # the values decrease with the level number
+    with pytest.raises(ValueError, match="increase"):
+        m.encode(coord_values="dimensionless")
+
+    # the levels are written in ascending order whatever the array order
+    m = CLS.from_half_levels(A_UP, B_UP, levels=[2, 1], positive="up")
+    ds = m.encode()
+    np.testing.assert_array_equal(ds["level"].values, [1, 2])
+    np.testing.assert_array_equal(ds["b_bnds"].values, [[1.0, 0.5], [0.5, 0.0]])
+
+
+def test_cf_hybrid_positive_up_unknown_levels_level_numbers():
+    m = CLS(
+        [0.0, 0.0],
+        [0.75, 0.25],
+        ap_bnds=[[0.0, 0.0], [0.0, 0.0]],
+        b_bnds=[[1.0, 0.5], [0.5, 0.0]],
+        positive="up",
+    )
+    np.testing.assert_array_equal(m.level_numbers(), [1, 2])
+    assert not m.can_rebuild_half_levels()
+    with pytest.raises(ValueError, match="positive"):
+        m.to_level_parameters()
+
+    # decoded from a dataset with unknown levels (non-integer coordinate values increasing upwards)
+    ds = CLS.from_half_levels(A_UP, B_UP, positive="up").encode(coord_values="level_number")
+    ds["level"] = ("level", np.array([-0.75, -0.25]), ds["level"].attrs)
+    d = CLS.from_xarray(ds, "level")
+    assert d.levels is None
+    assert d.positive == "up"
+    np.testing.assert_array_equal(d.level_numbers(), [1, 2])
+    np.testing.assert_array_equal(d.b_bnds, [[1.0, 0.5], [0.5, 0.0]])
+
+
+def test_cf_hybrid_encode_surface_first_dimensionless():
+    # positive down, the arrays are stored surface-first: the increasing check is made in level order
+    m = CLS.from_half_levels(A3, B3, levels=[3, 2, 1])
+    ds = m.encode(coord_values="dimensionless")
+    assert ds["level"].attrs["positive"] == "down"
+    values = ds["level"].values
+    assert np.all(np.diff(values) > 0)
+    np.testing.assert_array_equal(ds["model_level_number"].values, [1, 2, 3])
+    np.testing.assert_array_equal(ds["ap"].values, m.ap[::-1])
+    np.testing.assert_array_equal(ds["ap_bnds"].values, m.ap_bnds[::-1])
+
+    d = CLS.from_xarray(ds, "level")
+    np.testing.assert_array_equal(d.levels, [1, 2, 3])
+    A, B = d.to_level_parameters().coefficients()
+    np.testing.assert_array_equal(A, A3)
+    np.testing.assert_array_equal(B, B3)
+
+    # the values must increase with the level number, not decrease
+    with pytest.raises(ValueError, match="increase"):
+        CLS([1000.0, 500.0], [0.5, 0.25], levels=[1, 2]).encode(coord_values="dimensionless")
+    with pytest.raises(ValueError, match="increase"):
+        CLS([1000.0, 500.0], [0.5, 0.25]).encode(coord_values="dimensionless")
+
+
+# ---------------------------------------------------------------------------
+# CMIP6-style data: surface-first, either vertex order, no model_level_number
+# ---------------------------------------------------------------------------
+
+
+def _cmip6_l137_dataset(l137, flip="none", positive="down"):
+    """Strict-CF dataset of the full L137 model with ``lev`` stored surface-first (IFS level 137 first).
+
+    The coordinate values increase in the ``positive`` direction. ``flip`` selects the vertex order of
+    the bounds: "none" is (upper, lower) i.e. (top, bottom), "all" is (lower, upper) and "alternate"
+    mixes them cell by cell. The level bounds and the term bounds always use the same vertex order.
+    """
+    A, B = l137
+    m = CLS.from_half_levels(A, B)
+    p0 = 100000.0
+
+    ap, b = m.ap[::-1], m.b[::-1]
+    ap_bnds, b_bnds = m.ap_bnds[::-1], m.b_bnds[::-1]  # (upper, lower)
+    sign = 1.0 if positive == "down" else -1.0
+    lev = sign * (ap / p0 + b)
+    lev_bnds = sign * (ap_bnds / p0 + b_bnds)
+
+    if flip == "all":
+        swap = np.ones(len(ap), dtype=bool)
+    elif flip == "alternate":
+        swap = np.arange(len(ap)) % 2 == 1
+    else:
+        swap = np.zeros(len(ap), dtype=bool)
+    sw = swap[:, None]
+    ap_bnds = np.where(sw, ap_bnds[:, ::-1], ap_bnds)
+    b_bnds = np.where(sw, b_bnds[:, ::-1], b_bnds)
+    lev_bnds = np.where(sw, lev_bnds[:, ::-1], lev_bnds)
+
+    ds = xr.Dataset(
+        data_vars={
+            "ap": ("lev", ap, {"units": "Pa"}),
+            "b": ("lev", b),
+            "ap_bnds": (("lev", "bnds"), ap_bnds, {"units": "Pa"}),
+            "b_bnds": (("lev", "bnds"), b_bnds),
+            "lev_bnds": (("lev", "bnds"), lev_bnds, {"formula_terms": "ap: ap_bnds b: b_bnds ps: ps"}),
+        },
+        coords={
+            "lev": (
+                "lev",
+                lev,
+                {
+                    "standard_name": HYBRID,
+                    "units": "1",
+                    "axis": "Z",
+                    "positive": positive,
+                    "bounds": "lev_bnds",
+                    "formula_terms": "ap: ap b: b ps: ps",
+                },
+            )
+        },
+    )
+    return ds, m
+
+
+@pytest.mark.parametrize("flip", ["none", "all", "alternate"])
+@pytest.mark.parametrize("to_file", [False, True])
+def test_cf_hybrid_decode_cmip6_l137_surface_first(l137, flip, to_file, tmp_path):
+    A, B = l137
+    ds, m = _cmip6_l137_dataset(l137, flip=flip)
+    # strictly increasing downwards: surface-first storage is in descending coordinate order
+    assert np.all(np.diff(ds["lev"].values) < 0)
+
+    if to_file:
+        ds.to_netcdf(tmp_path / "cmip6.nc")
+        ds = xr.open_dataset(tmp_path / "cmip6.nc")
+
+    d = CLS.from_xarray(ds, "lev")
+    assert d.positive == "down"
+    assert d.levels is None
+
+    # the arrays keep the order of the dataset, the bounds are in level order
+    np.testing.assert_array_equal(d.ap, m.ap[::-1])
+    np.testing.assert_array_equal(d.b, m.b[::-1])
+    np.testing.assert_array_equal(d.ap_bnds, m.ap_bnds[::-1])
+    np.testing.assert_array_equal(d.b_bnds, m.b_bnds[::-1])
+
+    # the half levels are those of the GRIB, top-first
+    assert d.can_rebuild_half_levels()
+    A1, B1 = d.to_level_parameters().coefficients()
+    np.testing.assert_array_equal(A1, A)
+    np.testing.assert_array_equal(B1, B)
+
+    # level numbers: array entry i is IFS level 137 - i
+    ln = d.level_numbers()
+    np.testing.assert_array_equal(ln, np.arange(137, 0, -1))
+    np.testing.assert_array_equal(d.ap, m.ap[ln - 1])
+    np.testing.assert_array_equal(d.b_bnds, m.b_bnds[ln - 1])
+    assert d.levels is None
+
+    v = d.to_vertical(137)
+    assert v.level() == 137
+    np.testing.assert_array_equal(v.coefficients()[0], A)
+
+    # it can be encoded again in CF "dimensionless" mode: values increase with the level number
+    ds2 = d.encode(coord_values="dimensionless")
+    assert np.all(np.diff(ds2["level"].values) > 0)
+    d2 = CLS.from_xarray(ds2, "level")
+    assert d2.levels is None
+    np.testing.assert_array_equal(d2.level_numbers(), np.arange(1, 138))
+    np.testing.assert_array_equal(d2.to_level_parameters().coefficients()[0], A)
+
+    if to_file:
+        ds.close()
+
+
+def test_cf_hybrid_decode_cmip6_l137_with_model_level_number(l137):
+    ds, m = _cmip6_l137_dataset(l137)
+    ds = ds.assign_coords(mln=("lev", np.arange(137, 0, -1), {"standard_name": "model_level_number"}))
+    d = CLS.from_xarray(ds, "lev")
+    np.testing.assert_array_equal(d.levels, np.arange(137, 0, -1))
+    np.testing.assert_array_equal(d.level_numbers(), np.arange(137, 0, -1))
+    np.testing.assert_array_equal(d.to_level_parameters().coefficients()[0], l137[0])
+
+
+@pytest.mark.parametrize("flip", ["none", "all", "alternate"])
+def test_cf_hybrid_decode_l137_positive_up(l137, flip):
+    A, B = l137
+    # coordinate values increase upward: level 1 is the surface, which is stored first
+    ds, m = _cmip6_l137_dataset(l137, flip=flip, positive="up")
+    d = CLS.from_xarray(ds, "lev")
+    assert d.positive == "up"
+    assert d.levels is None
+
+    m_up = CLS.from_half_levels(A[::-1], B[::-1], positive="up")
+    np.testing.assert_array_equal(d.ap, m_up.ap)
+    np.testing.assert_array_equal(d.b, m_up.b)
+    np.testing.assert_array_equal(d.ap_bnds, m_up.ap_bnds)
+    np.testing.assert_array_equal(d.b_bnds, m_up.b_bnds)
+    np.testing.assert_array_equal(d.level_numbers(), np.arange(1, 138))
+
+    # but the half levels are not rebuilt
+    assert not d.can_rebuild_half_levels()
+    with pytest.raises(ValueError, match="positive"):
+        d.to_level_parameters()
+    with pytest.raises(ValueError, match="positive"):
+        d.to_vertical(1)
+
+
+def test_cf_hybrid_decode_bounds_level_order_errors():
+    # the level bounds variable must be usable to order the vertices
+    ds = _cmip6_dataset()
+    ds["lev_bnds"] = (("lev", "bnds"), np.full((3, 2), np.nan), ds["lev_bnds"].attrs)
+    with pytest.raises(ValueError, match="lev_bnds"):
+        CLS.from_xarray(ds, "lev")
+
+    ds = _cmip6_dataset()
+    ds["lev_bnds"] = ("lev", np.zeros(3), ds["lev_bnds"].attrs)
+    with pytest.raises(ValueError, match="lev_bnds"):
+        CLS.from_xarray(ds, "lev")
+
+
+def test_cf_hybrid_decode_incomplete_not_rebuilt_and_no_level_numbers():
+    # a prefix of the model with unknown levels (no zero pressure top is possible to prove)
+    ds = _cmip6_dataset()
+    ap_bnds = np.array([[0.0, 1000.0], [1000.0, 3000.0], [3000.0, 6000.0]])
+    ds["ap_bnds"] = (("lev", "bnds"), ap_bnds, {"units": "Pa"})
+    d = CLS.from_xarray(ds, "lev")
+    assert not d.can_rebuild_half_levels()
+    assert d.level_numbers() is None
+    with pytest.raises(ValueError, match="surface"):
+        d.to_level_parameters()

@@ -93,6 +93,36 @@ def test_cf_hybrid_constructor():
         c.ap = [1.0, 2.0, 3.0]
 
 
+def test_cf_hybrid_positive():
+    assert CLS([1.0], [0.5]).positive == "down"
+    assert CLS([1.0], [0.5], positive="up").positive == "up"
+    # case-insensitive, stored lower-case
+    assert CLS([1.0], [0.5], positive="UP").positive == "up"
+    assert CLS([1.0], [0.5], positive="Down").positive == "down"
+    assert "positive='up'" in repr(CLS([1.0], [0.5], positive="up"))
+
+    with pytest.raises(AttributeError):
+        CLS([1.0], [0.5]).positive = "up"
+
+    for bad in ("sideways", "", None, 1):
+        with pytest.raises(ValueError, match="positive"):
+            CLS([1.0], [0.5], positive=bad)
+        with pytest.raises(ValueError, match="positive"):
+            CLS.from_half_levels(A3, B3, positive=bad)
+
+
+def test_cf_hybrid_positive_factories():
+    assert CLS.from_half_levels(A3, B3).positive == "down"
+    c = CLS.from_half_levels(A3, B3, positive="Up")
+    assert c.positive == "up"
+    # the half levels are in level order: level 1 is between half levels 0 and 1
+    np.testing.assert_array_equal(c.ap_bnds, [[0.0, 2000.0], [2000.0, 1000.0], [1000.0, 0.0]])
+
+    c = CLS.from_level_parameters(HybridLevelParameters(A3, B3), positive="up")
+    assert c.positive == "up"
+    assert CLS.from_level_parameters(HybridLevelParameters(A3, B3)).positive == "down"
+
+
 @pytest.mark.parametrize(
     "kwargs,match",
     [
@@ -253,6 +283,61 @@ def test_cf_hybrid_from_verticals_synthetic():
     np.testing.assert_array_equal(c.levels, [1, 2])
 
 
+class _StubVertical:
+    """Vertical with a given ``positive()``, which real hybrid verticals always have as "down"."""
+
+    def __init__(self, level, positive, A=A3, B=B3):
+        self._level = level
+        self._positive = positive
+        self._coeffs = (A, B)
+
+    def level_type(self):
+        return "hybrid"
+
+    def level(self):
+        return self._level
+
+    def positive(self):
+        return self._positive
+
+    def coefficients(self):
+        return self._coeffs
+
+
+def test_cf_hybrid_from_verticals_positive(ml_fieldlist):
+    # real verticals: positive() is "down"
+    verticals = [f.vertical for f in ml_fieldlist]
+    assert verticals[0].positive() == "down"
+    assert CLS.from_verticals(verticals).positive == "down"
+    assert CLS.from_verticals(_vertical(1)).positive == "down"
+
+    # passed through
+    c = CLS.from_verticals([_StubVertical(1, "up"), _StubVertical(3, "UP")])
+    assert c.positive == "up"
+    np.testing.assert_array_equal(c.levels, [1, 3])
+    ref = CLS.from_half_levels(A3, B3, levels=[1, 3], positive="up")
+    np.testing.assert_array_equal(c.ap, ref.ap)
+    np.testing.assert_array_equal(c.b_bnds, ref.b_bnds)
+
+    # None is "down"
+    assert CLS.from_verticals([_StubVertical(1, None)]).positive == "down"
+    assert CLS.from_verticals([_StubVertical(1, None), _StubVertical(2, "down")]).positive == "down"
+
+    # an explicit keyword must agree
+    assert CLS.from_verticals([_StubVertical(1, "up")], positive="up").positive == "up"
+    with pytest.raises(ValueError, match="positive"):
+        CLS.from_verticals([_StubVertical(1, "up")], positive="down")
+
+
+def test_cf_hybrid_from_verticals_positive_mismatch():
+    with pytest.raises(ValueError, match="different positive"):
+        CLS.from_verticals([_StubVertical(1, "up"), _StubVertical(2, "down")])
+    with pytest.raises(ValueError, match="different positive"):
+        CLS.from_verticals([_StubVertical(1, "down"), _vertical(2), _StubVertical(3, "up")])
+    with pytest.raises(ValueError, match="positive"):
+        CLS.from_verticals([_StubVertical(1, "sideways")])
+
+
 def test_cf_hybrid_from_verticals_single():
     c = CLS.from_verticals(_vertical(2), p0=1.0e5)
     np.testing.assert_array_equal(c.levels, [2])
@@ -403,6 +488,184 @@ def test_cf_hybrid_subset_cannot_rebuild(l137):
     p = c.pressure(101325.0)
     assert p.shape == (3,)
     assert np.all(np.diff(p) > 0)
+
+
+# ---------------------------------------------------------------------------
+# completeness rule and level_numbers
+# ---------------------------------------------------------------------------
+
+
+def _unknown_levels(model):
+    """Same levels and bounds with unknown level numbers (provisional numbering by array order)."""
+    return CLS(model.ap, model.b, ap_bnds=model.ap_bnds, b_bnds=model.b_bnds, positive=model.positive, p0=model.p0)
+
+
+def test_cf_hybrid_complete_known_and_unknown_levels(l137):
+    A, B = l137
+    for c in (CLS.from_half_levels(A, B), _unknown_levels(CLS.from_half_levels(A, B))):
+        assert c.can_rebuild_half_levels()
+        A1, B1 = c.to_level_parameters().coefficients()
+        np.testing.assert_array_equal(A1, A)
+        np.testing.assert_array_equal(B1, B)
+        np.testing.assert_array_equal(c.level_numbers(), np.arange(1, 138))
+        assert c.level_numbers().dtype.kind == "i"
+
+    # the provisional numbering is not a known level numbering
+    assert _unknown_levels(CLS.from_half_levels(A, B)).levels is None
+
+
+@pytest.mark.parametrize(
+    "levels,known_match,unknown_match",
+    [
+        # prefix: contiguous from the top, but the last half level is not the surface
+        ([1, 2], "surface", "surface"),
+        (list(range(1, 51)), "surface", "surface"),
+        # suffix: ends at the surface, but it is not the whole model
+        ([136, 137], "levels must be exactly", "zero pressure model top"),
+        (list(range(100, 138)), "levels must be exactly", "zero pressure model top"),
+        # interior
+        ([50, 51], "levels must be exactly", "surface"),
+        (list(range(50, 100)), "levels must be exactly", "surface"),
+    ],
+)
+def test_cf_hybrid_contiguous_subset_cannot_rebuild(l137, levels, known_match, unknown_match):
+    A, B = l137
+    known = CLS.from_half_levels(A, B, levels=levels)
+
+    # known levels
+    assert not known.can_rebuild_half_levels()
+    with pytest.raises(ValueError, match=known_match):
+        known.to_level_parameters()
+    with pytest.raises(ValueError):
+        known.to_vertical(levels[0])
+    # the known levels are always returned
+    np.testing.assert_array_equal(known.level_numbers(), levels)
+
+    # unknown levels: the numbering is not supported by the evidence
+    unknown = _unknown_levels(known)
+    assert unknown.levels is None
+    assert not unknown.can_rebuild_half_levels()
+    with pytest.raises(ValueError, match=unknown_match):
+        unknown.to_level_parameters()
+    with pytest.raises(ValueError):
+        unknown.to_vertical(1)
+    assert unknown.level_numbers() is None
+
+
+def test_cf_hybrid_prefix_known_levels_1_2_message(l137):
+    # levels [1, 2] are "exactly 1..N" for N=2, the surface check is what rejects them
+    c = CLS.from_half_levels(*l137, levels=[1, 2])
+    with pytest.raises(ValueError, match="not the surface"):
+        c.to_level_parameters()
+
+
+def test_cf_hybrid_non_contiguous_subset_cannot_rebuild(l137):
+    A, B = l137
+    known = CLS.from_half_levels(A, B, levels=[1, 50, 137])
+    assert not known.can_rebuild_half_levels()
+
+    unknown = _unknown_levels(known)
+    assert not unknown.can_rebuild_half_levels()
+    with pytest.raises(ValueError, match="not contiguous"):
+        unknown.to_level_parameters()
+    assert unknown.level_numbers() is None
+
+    # even with known levels 1..N, the bounds must be contiguous
+    ap_bnds = np.array([[0.0, 2000.0], [1000.0, 0.0]])
+    b_bnds = np.array([[0.0, 0.0], [0.5, 1.0]])
+    c = CLS([1000.0, 500.0], [0.0, 0.75], ap_bnds=ap_bnds, b_bnds=b_bnds, levels=[1, 2])
+    with pytest.raises(ValueError, match="not contiguous"):
+        c.to_level_parameters()
+
+
+def test_cf_hybrid_non_zero_top():
+    # a model whose top pressure is not zero
+    A = np.array([500.0, 2000.0, 1000.0, 0.0])
+    B = B3
+    known = CLS.from_half_levels(A, B)
+    assert known.can_rebuild_half_levels()
+    A1, B1 = known.to_level_parameters().coefficients()
+    np.testing.assert_array_equal(A1, A)
+    np.testing.assert_array_equal(B1, B)
+    np.testing.assert_array_equal(known.level_numbers(), [1, 2, 3])
+
+    unknown = _unknown_levels(known)
+    assert not unknown.can_rebuild_half_levels()
+    with pytest.raises(ValueError, match="zero pressure model top"):
+        unknown.to_level_parameters()
+    assert unknown.level_numbers() is None
+
+    # non-zero b at the top is not a zero pressure top either
+    B_top = np.array([0.1, 0.1, 0.5, 1.0])
+    unknown = _unknown_levels(CLS.from_half_levels(A3, B_top))
+    assert unknown.level_numbers() is None
+    assert CLS.from_half_levels(A3, B_top).can_rebuild_half_levels()
+
+
+@pytest.mark.parametrize(
+    "A,B",
+    [
+        (np.array([0.0, 2000.0, 1000.0, 1.0]), B3),  # ap not 0 at the surface
+        (np.array([0.0, 2000.0, 1000.0, 0.0]), np.array([0.0, 0.0, 0.5, 0.9])),  # b not 1 at the surface
+    ],
+)
+def test_cf_hybrid_surface_required(A, B):
+    known = CLS.from_half_levels(A, B)
+    assert not known.can_rebuild_half_levels()
+    with pytest.raises(ValueError, match="not the surface"):
+        known.to_level_parameters()
+    assert _unknown_levels(known).level_numbers() is None
+
+
+def test_cf_hybrid_surface_tolerance():
+    A = np.array([0.0, 2000.0, 1000.0, 1.0e-7])
+    B = np.array([0.0, 0.0, 0.5, 1.0 - 1.0e-10])
+    assert CLS.from_half_levels(A, B).can_rebuild_half_levels()
+    assert not CLS.from_half_levels(A + [0, 0, 0, 1.0e-5], B).can_rebuild_half_levels()
+    assert not CLS.from_half_levels(A, B - [0, 0, 0, 1.0e-8]).can_rebuild_half_levels()
+
+
+def test_cf_hybrid_positive_up_cannot_rebuild():
+    # level 1 at the surface
+    A = np.array([0.0, 0.0, 0.0])
+    B = np.array([1.0, 0.5, 0.0])
+    known = CLS.from_half_levels(A, B, positive="up")
+    unknown = _unknown_levels(known)
+
+    for c in (known, unknown):
+        assert not c.can_rebuild_half_levels()
+        with pytest.raises(ValueError, match="positive"):
+            c.to_level_parameters()
+        with pytest.raises(ValueError, match="positive"):
+            c.to_vertical(1)
+
+    # the complete model still has level numbers
+    np.testing.assert_array_equal(known.level_numbers(), [1, 2])
+    np.testing.assert_array_equal(unknown.level_numbers(), [1, 2])
+    assert unknown.levels is None
+
+    # the surface must be at the other end for "up"
+    wrong = _unknown_levels(CLS.from_half_levels(A3, B3, positive="up"))
+    assert wrong.level_numbers() is None
+
+
+def test_cf_hybrid_level_numbers_known_levels():
+    c = CLS.from_half_levels(A3, B3, levels=[3, 1])
+    np.testing.assert_array_equal(c.level_numbers(), [3, 1])
+    c = CLS.from_half_levels(A3, B3, levels=[3, 1], positive="up")
+    np.testing.assert_array_equal(c.level_numbers(), [3, 1])
+    # no bounds are needed for known levels
+    c = CLS([1.0, 2.0], [0.1, 0.2], levels=[2, 1])
+    np.testing.assert_array_equal(c.level_numbers(), [2, 1])
+    # unknown levels without bounds
+    assert CLS([1.0, 2.0], [0.1, 0.2]).level_numbers() is None
+
+
+def test_cf_hybrid_to_vertical_level_numbers():
+    c = _unknown_levels(CLS.from_half_levels(A3, B3))
+    assert c.to_vertical(2).level() == 2
+    with pytest.raises(ValueError, match="not one of the levels"):
+        c.to_vertical(0)
 
 
 # ---------------------------------------------------------------------------
