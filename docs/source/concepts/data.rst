@@ -64,10 +64,14 @@ When :func:`from_source` reads a file input (can be data on disk, URL or memory 
      - :py:class:`earthkit.data.data.shapefile.ShapeFileData`
    * - GeoTIFF
      - :py:class:`earthkit.data.data.geotiff.GeoTIFFData`
+   * - SQLite / GeoPackage
+     - :py:class:`earthkit.data.data.sql.SQLData`
    * - CovJSON
      - :py:class:`earthkit.data.data.covjson.CovJsonData`
    * - PP (UK Met Office)
      - :py:class:`earthkit.data.data.pp.PPData`
+   * - PCRaster
+     - :py:class:`earthkit.data.data.pcraster.PCRasterData`
    * - Text
      - :py:class:`earthkit.data.data.text.TextData`
    * - Unknown
