@@ -11,12 +11,13 @@ Tutorials
     grib/index.rst
     netcdf/index.rst
     bufr/index.rst
-    odb/index.rst
     covjson/index.rst
     geotiff/index.rst
     geojson/index.rst
+    odb/index.rst
     pcraster/index.rst
     shapefile/index.rst
+    sql/index.rst
     pp/index.rst
     dict/index.rst
     other/index.rst
