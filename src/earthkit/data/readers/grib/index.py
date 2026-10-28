@@ -7,579 +7,673 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
+"""SQLite index of the metadata of GRIB files.
+
+Schema
+------
+``meta(key, value)``
+    Key/value pairs. Currently only ``schema_version``.
+``paths(id, path, size, mtime, extra_keys)``
+    One row per indexed GRIB file. ``size`` and ``mtime`` (in nanoseconds) are the
+    values of the file when it was scanned; they are used to detect changed files.
+    ``extra_keys`` is a JSON list with the extra raw GRIB keys scanned for the file.
+``grib_index(_id, _path_id, _offset, _length, <dynamic columns>)``
+    One row per GRIB message with a unique index on ``(_path_id, _offset)``. The dynamic
+    columns are added on demand and are declared without a type, so that SQLite keeps
+    the native type of the stored value. They are:
+
+    - the flat ``"<component>.<key>"`` entries of the field indexer context (e.g.
+      ``parameter.variable``, ``time.step``, ``vertical.level``)
+    - the raw GRIB keys, stored as ``"metadata.<key>"`` (see :data:`DEFAULT_RAW_KEYS`)
+
+    A db can hold files with different sets of keys (e.g. with and without chemical
+    species) and different kinds of values in the same column (e.g. the unique grid id is
+    a str for some grids and a list for others), and it can be shared by several
+    connections. Therefore:
+
+    - A SQL NULL means that the key is absent for the message. It is not returned by
+      :meth:`GribIndex.rows`.
+    - ``int``, ``float`` and ``str`` values are stored natively. Any other value (None,
+      bool, datetime, date, timedelta, list, tuple, dict, bytes, NaN, ints that do not fit
+      in 64 bits) is stored as a BLOB with a kind tag and decoded value by value.
+    - The set of columns is never cached: it is read from the db when needed.
+"""
+
 import datetime
+import json
 import logging
 import os
-import pathlib
 import sqlite3
+from collections.abc import Iterable, Iterator
 from typing import Any
 
+import numpy as np
 import tqdm
 
 LOG = logging.getLogger(__name__)
 
+#: Version of the db schema. It is part of the key of the dbs in the earthkit-data cache.
+SCHEMA_VERSION = 2
 
-def create_grib_index(path: str, overwrite: bool = False) -> "GribIndex":
-    return GribIndex(path, overwrite=overwrite)
+#: Prefix of the columns holding raw GRIB keys.
+METADATA_PREFIX = "metadata."
+
+#: Raw GRIB keys stored for each message in addition to the keys of the ``mars`` namespace
+#: of the message. The list contains the commonly used MARS and metadata keys, and the raw
+#: keys used by the ``grib`` Xarray profile (``metadata.param``, ``metadata.number``,
+#: ``metadata.date``, ``metadata.time``, ``metadata.level``, ``metadata.typeOfLevel``).
+#: A key not defined in a message is not stored (NULL). Note that, as for the field metadata,
+#: ``param`` means the shortName (or the paramId when the shortName is "~").
+DEFAULT_RAW_KEYS = (
+    "shortName",
+    "paramId",
+    "param",
+    "name",
+    "units",
+    "typeOfLevel",
+    "level",
+    "levtype",
+    "levelist",
+    "date",
+    "time",
+    "step",
+    "stepRange",
+    "dataDate",
+    "dataTime",
+    "number",
+    "gridType",
+    "edition",
+    "centre",
+    "class",
+    "stream",
+    "type",
+    "expver",
+)
+
+_TAG_SEP = b"\x00"
+_INT64_MIN = -(2**63)
+_INT64_MAX = 2**63 - 1
+
+
+def _normalise(value: Any) -> Any:
+    """Convert numpy scalars/arrays to the equivalent Python objects."""
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    return value
+
+
+def _json_default(value: Any) -> Any:
+    """Called by json for objects it cannot serialise: only numpy objects are accepted."""
+    if isinstance(value, (np.generic, np.ndarray)):
+        return _normalise(value)
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serialisable")
+
+
+def _tagged(kind: str, payload: str | bytes = b"") -> bytes:
+    if isinstance(payload, str):
+        payload = payload.encode("utf-8")
+    return kind.encode("ascii") + _TAG_SEP + payload
+
+
+def _encode_json(kind: str, value: Any) -> bytes:
+    try:
+        return _tagged(kind, json.dumps(value, default=_json_default))
+    except TypeError as e:
+        raise ValueError(f"Cannot store value {value!r} in the GRIB index: {e}") from e
+
+
+def _encode_value(value: Any) -> int | float | str | bytes:
+    """Convert a Python value into the value stored in sqlite.
+
+    ``int`` (64 bit), ``float`` (not NaN) and ``str`` are stored as they are. Any other
+    value, including None, is stored as a BLOB made of a kind tag, a NUL byte and a payload,
+    so that each value can be decoded on its own and a column can hold values of different
+    kinds. A SQL NULL is never produced: it means that the key is absent (see :func:`_decode_value`).
+    """
+    value = _normalise(value)
+
+    if value is None:
+        return _tagged("none")
+    if isinstance(value, bool):
+        return _tagged("bool", "1" if value else "0")
+    if isinstance(value, int):
+        if _INT64_MIN <= value <= _INT64_MAX:
+            return value
+        return _tagged("bigint", str(value))
+    if isinstance(value, float):
+        if value != value:
+            return _tagged("float", "nan")
+        return value
+    if isinstance(value, str):
+        return value
+    if isinstance(value, bytes):
+        return _tagged("bytes", value)
+    if isinstance(value, datetime.datetime):
+        return _tagged("datetime", value.isoformat())
+    if isinstance(value, datetime.date):
+        return _tagged("date", value.isoformat())
+    if isinstance(value, datetime.timedelta):
+        # exact, unlike total_seconds()
+        return _tagged("timedelta", str((value.days * 86400 + value.seconds) * 1000000 + value.microseconds))
+    if isinstance(value, tuple):
+        return _encode_json("tuple", value)
+    if isinstance(value, dict):
+        return _encode_json("dict", value)
+    if isinstance(value, list):
+        return _encode_json("list", value)
+
+    raise ValueError(f"Cannot store value {value!r} of type {type(value).__name__} in the GRIB index")
+
+
+_DECODERS = {
+    "none": lambda p: None,
+    "bool": lambda p: p == b"1",
+    "bigint": lambda p: int(p),
+    "float": lambda p: float(p),
+    "bytes": lambda p: bytes(p),
+    "datetime": lambda p: datetime.datetime.fromisoformat(p.decode("utf-8")),
+    "date": lambda p: datetime.date.fromisoformat(p.decode("utf-8")),
+    "timedelta": lambda p: datetime.timedelta(microseconds=int(p)),
+    "list": lambda p: json.loads(p),
+    "tuple": lambda p: tuple(json.loads(p)),
+    "dict": lambda p: json.loads(p),
+}
+
+
+def _decode_value(value: Any) -> Any:
+    """Decode a stored sqlite value (not NULL) into the Python value that was encoded."""
+    if isinstance(value, bytes):
+        kind, _, payload = value.partition(_TAG_SEP)
+        return _DECODERS[kind.decode("ascii")](payload)
+    return value
+
+
+def _normalise_extra_keys(extra_keys: str | Iterable[str] | None) -> list[str]:
+    """Return the sorted unique extra raw GRIB keys (without the "metadata." prefix)."""
+    if extra_keys is None:
+        return []
+    if isinstance(extra_keys, str):
+        extra_keys = [extra_keys]
+
+    keys = set()
+    for k in extra_keys:
+        if k.startswith(METADATA_PREFIX):
+            k = k[len(METADATA_PREFIX) :]
+        keys.add(k)
+    return sorted(keys - set(DEFAULT_RAW_KEYS))
+
+
+def _normalise_path(path: str | os.PathLike) -> str:
+    return os.path.abspath(os.fspath(path))
+
+
+def _quote(name: str) -> str:
+    """Quote a column name for use in SQL."""
+    return '"' + name.replace('"', '""') + '"'
 
 
 class GribIndex:
-    def __init__(
-        self,
-        path: str,
-        *,
-        overwrite: bool = False,
-    ) -> None:
-        """Initialize the GribIndex object.
+    """SQLite index of the metadata of GRIB files.
 
-        Parameters
-        ----------
-        path : str
-            Path to the SQLite database file.
-        overwrite : bool, optional
-            Whether to overwrite the database if it exists, by default False.
-        """
+    Use :meth:`open` (or :meth:`find_in_cache`) to get an index; constructing the object
+    directly only opens (or creates) the db without scanning anything.
+
+    The object holds an open sqlite connection. Call :meth:`close` or use it as a context
+    manager.
+
+    Parameters
+    ----------
+    path : str or os.PathLike
+        Path to the SQLite database file. It is created if it does not exist.
+    overwrite : bool, optional
+        If True an existing database is removed first.
+
+    Raises
+    ------
+    ValueError
+        When the db exists but was created with an incompatible schema version.
+    """
+
+    def __init__(self, path: str | os.PathLike, *, overwrite: bool = False) -> None:
+        path = os.fspath(path)
+        if overwrite and os.path.exists(path):
+            os.remove(path)
+
         self.path = path
-        update = False
 
-        if overwrite:
-            if os.path.exists(path):
-                os.remove(path)
+        # autocommit mode: transactions are controlled explicitly
+        self.conn = sqlite3.connect(path, timeout=60, isolation_level=None)
+        try:
+            self._init_schema()
+        except BaseException:
+            self.conn.close()
+            raise
 
-        if not os.path.exists(path) or pathlib.Path(path).stat().st_size == 0:
-            # LOG.warning(f"Database {path} is empty, overwriting")
-            update = True
+    # ------------------------------------------------------------------ schema
 
-        self.conn = sqlite3.connect(path)
-        self.cursor = self.conn.cursor()
+    def _init_schema(self) -> None:
+        tables = {r[0] for r in self.conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
 
-        update = update or not self.is_empty()
+        if not tables:
+            self.conn.execute("BEGIN IMMEDIATE")
+            try:
+                self._create_tables()
+                self.conn.execute("COMMIT")
+            except BaseException:
+                self._rollback()
+                raise
+            return
 
-        self._columns = None
+        version = None
+        if "meta" in tables:
+            row = self.conn.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
+            version = row[0] if row else None
 
-        print("GribIndex update", update)
-
-        if update:
-            self._create_tables()
-
-    def _quote_column(self, column: str) -> str:
-        """Quote a column name for use in SQL queries."""
-        return f'"{column}"'
+        if version != str(SCHEMA_VERSION):
+            self.conn.close()
+            raise ValueError(
+                f"GRIB index db {self.path} has schema version {version!r}, expected {SCHEMA_VERSION}. "
+                "It was probably created by another version of earthkit-data. Remove the file to recreate it."
+            )
 
     def _create_tables(self) -> None:
-        """Create the necessary tables in the database."""
-        self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS paths (
-            id INTEGER PRIMARY KEY,
-            path TEXT not null
+        # Another process may have created the schema between our check and the lock.
+        if self.conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='meta'").fetchone():
+            return
+
+        self.conn.execute("CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+        self.conn.execute("INSERT INTO meta (key, value) VALUES ('schema_version', ?)", (str(SCHEMA_VERSION),))
+        self.conn.execute(
+            """
+            CREATE TABLE paths (
+                id INTEGER PRIMARY KEY,
+                path TEXT NOT NULL UNIQUE,
+                size INTEGER NOT NULL,
+                mtime INTEGER NOT NULL,
+                extra_keys TEXT NOT NULL
+            )
+            """
         )
-        """)
+        # The dynamic columns are added later without a declared type so that sqlite
+        # keeps the native type (int, float, text) of each value.
+        self.conn.execute(
+            """
+            CREATE TABLE grib_index (
+                _id INTEGER PRIMARY KEY,
+                _path_id INTEGER NOT NULL REFERENCES paths(id),
+                _offset INTEGER NOT NULL,
+                _length INTEGER NOT NULL
+            )
+            """
+        )
+        self.conn.execute("CREATE UNIQUE INDEX idx_grib_index_path_offset ON grib_index (_path_id, _offset)")
 
-        # columns = ("valid_datetime",)
-        # We don't use NULL as a default because NULL is considered a different value
-        # in UNIQUE INDEX constraints (https://www.sqlite.org/lang_createindex.html)
+    def _rollback(self) -> None:
+        if self.conn.in_transaction:
+            self.conn.execute("ROLLBACK")
 
-        self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS grib_index (
-            _id INTEGER PRIMARY KEY,
-            _path_id INTEGER not null,
-            _offset INTEGER not null,
-            _length INTEGER not null,
-            FOREIGN KEY(_path_id) REFERENCES paths(id))
-        """)  # ,
+    def _dynamic_columns(self) -> list[str]:
+        """Names of the dynamic columns of ``grib_index`` in creation order.
 
-        # {", ".join(f"{self._quote_column(key)} TEXT not null default ''" for key in columns)},
+        They are always read from the db because another connection may have added columns.
+        """
+        rows = self.conn.execute("PRAGMA table_info(grib_index)").fetchall()
+        return [r[1] for r in sorted(rows, key=lambda r: r[0]) if not r[1].startswith("_")]
 
-        self.cursor.execute("""
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_grib_index_path_offset
-        ON grib_index (_path_id, _offset)
-        """)
+    # ------------------------------------------------------------------ values
 
-        # self.cursor.execute(f"""
-        # CREATE UNIQUE INDEX IF NOT EXISTS idx_grib_index_all_keys
-        # ON grib_index ({", ".join(self._quote_column(col) for col in columns)})
-        # """)
+    def _ensure_columns(self, columns: Iterable[str], existing: set[str]) -> None:
+        """Add the missing columns. ``existing`` is updated; it must be read in the write transaction."""
+        for column in columns:
+            if column not in existing:
+                self.conn.execute(f"ALTER TABLE grib_index ADD COLUMN {_quote(column)}")
+                existing.add(column)
 
-        # for key in columns:
-        #     self.cursor.execute(f"""
-        #     CREATE INDEX IF NOT EXISTS idx_grib_index_{key.replace(":", "_")}
-        #     ON grib_index ({self._quote_column(key)})
-        #     """)
+    # ------------------------------------------------------------------ files
 
-        self._commit()
+    def _file_row(self, path: str):
+        return self.conn.execute("SELECT id, size, mtime, extra_keys FROM paths WHERE path = ?", (path,)).fetchone()
 
-    def _commit(self) -> None:
-        """Commit the current transaction to the database."""
-        self.conn.commit()
+    def _is_current(self, path: str, extra_keys: list[str]) -> bool:
+        """True when the file is indexed, unchanged and was scanned for all ``extra_keys``."""
+        row = self._file_row(path)
+        if row is None:
+            return False
+        st = os.stat(path)
+        if row[1] != st.st_size or row[2] != st.st_mtime_ns:
+            return False
+        return set(extra_keys) <= set(json.loads(row[3]))
 
-    # def _get_metadata_keys(self) -> list[str]:
-    #     """Retrieve the metadata keys from the database.
+    def has_path(self, path: str | os.PathLike) -> bool:
+        """Return True if the GRIB file is in the db."""
+        return self._file_row(_normalise_path(path)) is not None
 
-    #     Returns
-    #     -------
-    #     list[str]
-    #         A list of metadata keys stored in the database.
-    #     """
-    #     self.cursor.execute("SELECT key FROM metadata_keys")
-    #     return [row[0] for row in self.cursor.fetchall()]
+    def extra_keys(self, path: str | os.PathLike) -> list[str]:
+        """Return the extra raw GRIB keys (without the "metadata." prefix) scanned for a file.
 
-    def has_path(self, path: str) -> bool:
-        """Check if a path exists in the database.
+        Together with :data:`DEFAULT_RAW_KEYS` these are the keys for which a NULL
+        ``metadata.<key>`` value means that the message does not have the key.
+
+        Raises
+        ------
+        ValueError
+            When ``path`` is not in the db.
+        """
+        row = self._file_row(_normalise_path(path))
+        if row is None:
+            raise ValueError(f"Path {path} does not exist in the database")
+        return list(json.loads(row[3]))
+
+    def paths(self) -> list[str]:
+        """Return the paths of the GRIB files in the db, in the order they were added."""
+        return [r[0] for r in self.conn.execute("SELECT path FROM paths ORDER BY id")]
+
+    def add_file(self, path: str | os.PathLike, extra_keys: str | Iterable[str] | None = None) -> bool:
+        """Make sure a GRIB file is indexed.
+
+        A file that is not in the db is scanned and added. A file that is in the db with
+        the same size and modification time, and was scanned for all of ``extra_keys``,
+        is reused: nothing is scanned or written. Otherwise (the file changed or some of
+        ``extra_keys`` were not scanned for it) its rows are removed and it is scanned
+        again. The rows and the ``paths`` entry of a file are written in one transaction,
+        so a failure leaves the db as it was.
 
         Parameters
         ----------
-        path : str
-            The file path to check.
+        path : str or os.PathLike
+            The GRIB file.
+        extra_keys : str or list of str, optional
+            Raw GRIB keys to store in addition to :data:`DEFAULT_RAW_KEYS`, as
+            ``metadata.<key>`` columns.
 
         Returns
         -------
         bool
-            True if the path exists in the database, False otherwise.
+            True if the file was scanned, False if the existing entry was reused.
         """
-        return self._path_id(path, insert=False) is not None
+        path = _normalise_path(path)
+        extra_keys = _normalise_extra_keys(extra_keys)
 
-    def paths(self) -> list[str]:
-        """Retrieve all paths stored in the database.
+        if self._is_current(path, extra_keys):
+            return False
 
-        Returns
-        -------
-        list[str]
-            A list of paths stored in the paths table.
-        """
-        self.cursor.execute("SELECT path FROM paths")
-        return [row[0] for row in self.cursor.fetchall()]
-
-    def _path_id(self, path: str, insert: bool = True) -> int:
-        """Get the id of a path in the database.
-
-        Parameters
-        ----------
-        path : str
-            The file path to retrieve or insert.
-        insert : bool, optional
-            Whether to insert the path if it does not exist, by default True.
-
-        Returns
-        -------
-        int
-            The ID of the path in the database.
-        """
-        self.cursor.execute("SELECT id FROM paths WHERE path = ?", (path,))
-        row = self.cursor.fetchone()
-        if row is None:
-            if insert:
-                self.cursor.execute("INSERT INTO paths (path) VALUES (?)", (path,))
-                self._commit()
-                return self.cursor.lastrowid
-            else:
-                return None
-        return row[0]
-
-    def _add_grib(self, **kwargs: Any) -> None:
-        """Add a GRIB record to the database.
-
-        Parameters
-        ----------
-        **kwargs : Any
-            Key-value pairs representing the GRIB record fields.
-        """
-        # print(f"Adding grib record: {kwargs}")
-
+        self.conn.execute("BEGIN IMMEDIATE")
         try:
-            self.cursor.execute(
-                f"""
-            INSERT INTO grib_index ({", ".join(self._quote_column(k) for k in kwargs.keys())})
-            VALUES ({", ".join("?" for _ in kwargs)})
-            """,
-                tuple(kwargs.values()),
-            )
+            # check again now that we hold the write lock: another process may have done it
+            if self._is_current(path, extra_keys):
+                self._rollback()
+                return False
 
-        except sqlite3.IntegrityError:
-            LOG.error(f"Error adding grib record: {kwargs}")
-            LOG.error("Record already exists")
-            LOG.info(f"Path: {self._get_path(kwargs['_path_id'])}")
-            for n in ("_path_id", "_offset", "_length"):
-                kwargs.pop(n)
-            self.cursor.execute(
-                "SELECT * FROM grib_index WHERE "
-                + " AND ".join(f"{self._quote_column(key)} = ?" for key in kwargs.keys()),
-                tuple(kwargs.values()),
-            )
-            existing_record = self.cursor.fetchone()
-            if existing_record:
-                LOG.info(f"Existing record found: {existing_record}")
-                LOG.info(f"Path: {self._get_path(existing_record[1])}")
+            old = self._file_row(path)
+            if old is not None:
+                # also keep the keys scanned before when only some keys are missing
+                extra_keys = sorted(set(extra_keys) | set(json.loads(old[3])))
+                self.conn.execute("DELETE FROM grib_index WHERE _path_id = ?", (old[0],))
+                self.conn.execute("DELETE FROM paths WHERE id = ?", (old[0],))
+
+            st = os.stat(path)
+            path_id = self.conn.execute(
+                "INSERT INTO paths (path, size, mtime, extra_keys) VALUES (?, ?, ?, ?)",
+                (path, st.st_size, st.st_mtime_ns, json.dumps(extra_keys)),
+            ).lastrowid
+
+            # We hold the write lock, so the columns cannot change under us until the commit
+            existing = set(self._dynamic_columns())
+            for offset, length, row in self._scan(path, extra_keys):
+                row = {k: _encode_value(v) for k, v in row.items()}
+                self._ensure_columns(row, existing)
+                columns = ["_path_id", "_offset", "_length", *row]
+                self.conn.execute(
+                    f"INSERT INTO grib_index ({', '.join(_quote(c) for c in columns)}) "
+                    f"VALUES ({', '.join('?' for _ in columns)})",
+                    [path_id, offset, length, *row.values()],
+                )
+
+            self.conn.execute("COMMIT")
+        except BaseException:
+            self._rollback()
             raise
+        return True
 
-    def _all_columns(self) -> list[str]:
-        """Retrieve all column names from the grib_index table.
+    @staticmethod
+    def _raw_keys(handle, extra_keys: list[str]) -> dict[str, Any]:
+        """Read the raw GRIB keys of a message with their native types.
 
-        Returns
-        -------
-        list[str]
-            A list of column names.
+        Keys that are missing in the message are left out (they are stored as NULL).
         """
-        if self._columns is not None:
-            return self._columns
+        from earthkit.data.field.grib.metadata import GribMetadata
 
-        self.cursor.execute("PRAGMA table_info(grib_index)")
-        columns = {row[1] for row in self.cursor.fetchall()}
-        self._columns = [col for col in columns if not col.startswith("_")]
-        return self._columns
+        # the same key semantics as the metadata of the fields (e.g. for "param")
+        metadata = GribMetadata(handle)
+        keys = dict.fromkeys([*handle.keys(namespace="mars"), *DEFAULT_RAW_KEYS, *extra_keys])
+        r = {}
+        for k in keys:
+            v = metadata.get(k)
+            if v is not None:
+                r[METADATA_PREFIX + k] = v
+        return r
 
-    def _ensure_columns(self, columns: list[str]) -> None:
-        """Add missing columns to the grib_index table.
-
-        Parameters
-        ----------
-        columns : list[str]
-            list of column names to ensure in the table.
-        """
-        existing_columns = self._all_columns()
-        new_columns = [column for column in columns if column not in existing_columns]
-
-        if not new_columns:
-            return
-
-        self._columns = None
-
-        for column in new_columns:
-            self.cursor.execute(
-                f"ALTER TABLE grib_index ADD COLUMN {self._quote_column(column)} TEXT not null default ''"
-            )
-
-        self.cursor.execute("""DROP INDEX IF EXISTS idx_grib_index_all_keys""")
-        self._all_columns()
-
-        # self.cursor.execute(f"""
-        # CREATE UNIQUE INDEX IF NOT EXISTS idx_grib_index_all_keys
-        # ON grib_index ({', '.join(self._quote_column(col) for col in all_columns)})
-        # """)
-
-        # for key in all_columns:
-        #     self.cursor.execute(f"""
-        #     CREATE INDEX IF NOT EXISTS idx_grib_index_{key.replace(':', '_')}
-        #     ON grib_index ({self._quote_column(key)})
-        #     """)
-
-    def add_grib_file(self, path: str) -> None:
-        """Add a GRIB file to the database.
-
-        Parameters
-        ----------
-        path : str
-            Path to the GRIB file to add.
-        """
-        path_id = self._path_id(path, insert=False)
-        if path_id is None:
-            path_id = self._path_id(path, insert=True)
-        else:
-            raise ValueError(f"Path {path} already exists in the database with path_id {path_id}")
-
-        import datetime
-
+    def _scan(self, path: str, extra_keys: list[str]) -> Iterator[tuple[int, int, dict[str, Any]]]:
+        """Yield ``(offset, length, flat dict)`` for each message of a GRIB file."""
         from earthkit.data.field.grib.context import GribIndexerContext
         from earthkit.data.field.grib.create import create_grib_field
 
         from .scan import GribHandleScanner
 
-        print(f"Adding GRIB file {path} to index with path_id {path_id}")
-
-        for _, (handle, offset, length) in enumerate(tqdm.tqdm(GribHandleScanner(path).scan(), leave=False)):
+        for handle, offset, length in tqdm.tqdm(GribHandleScanner(path).scan(), leave=False):
             ctx = GribIndexerContext()
-            # Field._get_grib_indexer_context(handle, ctx)
-            field = create_grib_field(handle)
-            field._get_grib_context(ctx)
+            create_grib_field(handle)._get_grib_context(ctx)
             ctx.pop("handle", None)
 
-            def _convert(data):
-                r = {}
-                for k, v in data.items():
-                    if isinstance(v, datetime.datetime):
-                        v = v.isoformat()
-                    elif isinstance(v, datetime.timedelta):
-                        v = v.total_seconds()
-                    r[k] = v
-                return r
+            row = dict(ctx)
+            row.update(self._raw_keys(handle, extra_keys))
+            yield offset, length, row
 
-            keys = _convert(ctx)
+    # ------------------------------------------------------------------ reading
 
-            print(keys)
+    def count(self, path: str | os.PathLike | None = None) -> int:
+        """Return the number of messages in the db, or in one GRIB file if ``path`` is given.
 
-            self._ensure_columns(keys)
-
-            self._add_grib(
-                _path_id=path_id,
-                _offset=offset,
-                _length=length,
-                **keys,
-            )
-
-        self._commit()
-
-    def add_fieldlist(self, fieldlist: Any) -> None:
-        """Add a FieldList to the database.
-
-        Parameters
-        ----------
-        fieldlist : FieldList
-            FieldList object containing GRIB fields to add.
+        A ``path`` that is not in the db has 0 messages.
         """
-        for field in tqdm.tqdm(fieldlist, leave=False):
-            g = field._get_grib(strict=False)
-            if g is None:
-                raise ValueError(f"Field {field} does not have a GRIB handle")
-            handle = g.handle
+        if path is None:
+            return self.conn.execute("SELECT count(*) FROM grib_index").fetchone()[0]
 
-            path = handle.path
-            if path is None:
-                raise ValueError(f"Field {field} does not have a path")
+        row = self._file_row(_normalise_path(path))
+        if row is None:
+            return 0
+        return self.conn.execute("SELECT count(*) FROM grib_index WHERE _path_id = ?", (row[0],)).fetchone()[0]
 
-            path_id = self._get_path(path)
-            offset = handle.offset
-            length = handle.length
-            ctx = {}
-            field._get_grib_indexer_context(handle, ctx)
-            keys = ctx
+    def rows(self, path: str | os.PathLike) -> Iterator[dict[str, Any]]:
+        """Iterate over the decoded rows of a GRIB file ordered by offset.
 
-            self._ensure_columns(keys)
-
-            self._add_grib(
-                _path_id=path_id,
-                _offset=offset,
-                _length=length,
-                **keys,
-            )
-
-        self._commit()
-
-    def _get_path(self, path_id: int) -> str:
-        """Retrieve the path corresponding to a given path_id.
-
-        Parameters
-        ----------
-        path_id : int
-            The ID of the path to retrieve.
-
-        Returns
-        -------
-        str
-            The path corresponding to the given path_id.
+        Each row is a dict with ``_offset``, ``_length``, the flat ``"<component>.<key>"``
+        entries and the ``"metadata.<key>"`` entries. The values have the Python types that
+        were stored (a stored None is returned as None). Keys that are absent for the
+        message (stored as NULL, e.g. columns that only exist because of other files in the
+        db) are not in the dict.
 
         Raises
         ------
         ValueError
-            If the path_id does not exist in the database.
+            When ``path`` is not in the db.
         """
-        self.cursor.execute("SELECT path FROM paths WHERE id = ?", (path_id,))
-        row = self.cursor.fetchone()
-        if row is None:
-            raise ValueError(f"No path found for path_id {path_id}")
-        return row[0]
+        file_row = self._file_row(_normalise_path(path))
+        if file_row is None:
+            raise ValueError(f"Path {path} does not exist in the database")
 
-    # def _dump(self, matcher=lambda x: True):
-    #     # result = []
-    #     with self.conn as db:
-    #         for d in db.execute("SELECT * FROM grib_index"):
-    #             print(d)
-    #             # n = dict(d)
-    #             # # for k in ("args", "owner_data"):
-    #             # #     if n[k] is not None:
-    #             # #         n[k] = json.loads(n[k])
-    #             # if matcher(n):
-    #             #     result.append(n)
-    #     # return result
+        # SELECT * so that the columns added by other connections are always seen
+        cursor = self.conn.execute("SELECT * FROM grib_index WHERE _path_id = ? ORDER BY _offset", (file_row[0],))
+        names = [d[0] for d in cursor.description]
+        skip = {"_id", "_path_id"}
+        for values in cursor:
+            yield {
+                name: (value if name in ("_offset", "_length") else _decode_value(value))
+                for name, value in zip(names, values)
+                if value is not None and name not in skip
+            }
 
-    def __iter__(self):
-        # with self.cursor as db:
-        # print("description", self.cursor.description)
-        keys = (
-            self._quote_column("_offset")
-            + ", "
-            + self._quote_column("_length")
-            + ", "
-            + ", ".join([self._quote_column(c) for c in self._all_columns()])
-        )
-        for d in self.cursor.execute(f"SELECT {keys} FROM grib_index"):
-            # print("d", d)
-            # print("description", self.cursor.description)
-            # print("type(d)", type(d))
+    # ------------------------------------------------------------------ lifecycle
 
-            yield d
+    def close(self) -> None:
+        """Close the sqlite connection. It is safe to call it more than once."""
+        self.conn.close()
 
-    def _iterate(self, path: str | None = None):
-        # with self.cursor as db:
-        # print("description", self.cursor.description)
+    def __enter__(self) -> "GribIndex":
+        return self
 
-        where = ""
-        if path is not None:
-            path_id = self._path_id(path, insert=False)
-            if path_id is None:
-                raise ValueError(f"Path {path} does not exist in the database")
-            where = f"WHERE _path_id = {path_id}"
+    def __exit__(self, *args) -> None:
+        self.close()
 
-        keys = ["_offset", "_length"] + self._all_columns()
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.path!r})"
 
-        keys_str = ", ".join([self._quote_column(k) for k in keys])
+    # ------------------------------------------------------------------ entry points
 
-        # keys = (
-        #     self._quote_column("_offset")
-        #     + ", "
-        #     + self._quote_column("_length")
-        #     + ", "
-        #     + ", ".join([self._quote_column(c) for c in self._all_columns()])
-        # )
+    @classmethod
+    def open(
+        cls,
+        path: str | os.PathLike | Iterable[str | os.PathLike],
+        db_path: str | os.PathLike | None = None,
+        extra_keys: str | Iterable[str] | None = None,
+    ) -> "GribIndex":
+        """Open a db and make sure the GRIB file(s) are indexed in it.
 
-        for d in self.cursor.execute(f"SELECT {keys_str} FROM grib_index {where}"):
-            # print("d", d)
-            # print("description", self.cursor.description)
-            # print("type(d)", type(d))
-            def _convert(data):
-                r = []
-                for k, v in zip(keys, data):
-                    # print(f"{k=}")
-                    if k.endswith("_datetime"):
-                        v = datetime.datetime.fromisoformat(v)
-                    elif k == "time.step":
-                        v = datetime.timedelta(seconds=float(v))
-                    r.append(v)
+        For each file see :meth:`add_file`: new files are scanned, unchanged files are
+        reused and changed files, or files lacking some of ``extra_keys``, are scanned
+        again. The caller must close the returned object.
 
-                return r
+        Parameters
+        ----------
+        path : str, os.PathLike or list of them
+            The GRIB file(s). The paths are made absolute.
+        db_path : str or os.PathLike, optional
+            The db file, created if needed. It can hold any number of GRIB files. When None
+            the db is in the earthkit-data cache and holds a single GRIB file; see
+            :meth:`cache_db_path`.
+        extra_keys : str or list of str, optional
+            Raw GRIB keys to store in addition to :data:`DEFAULT_RAW_KEYS`.
 
-            yield _convert(d)
+        Raises
+        ------
+        ValueError
+            When ``db_path`` is None and the cache-policy is not "user" or "temporary", or
+            more than one file is given.
+        """
+        if isinstance(path, (str, os.PathLike)):
+            paths = [path]
+        else:
+            paths = list(path)
 
-    def count(self) -> int:
-        self.cursor.execute("SELECT count(*) FROM grib_index")
-        return self.cursor.fetchone()[0]
+        extra_keys = _normalise_extra_keys(extra_keys)
 
-    def is_empty(self) -> bool:
+        if db_path is None:
+            if len(paths) != 1:
+                raise ValueError("Without db_path the index is stored in the cache and can only hold a single file")
+            db_path = cls.cache_db_path(paths[0], extra_keys, create=True)
+
+        db = cls(db_path)
         try:
-            self.cursor.execute("SELECT EXISTS(SELECT 1 FROM grib_index LIMIT 1)")
-            return self.cursor.fetchone()[0] == 0
-        except Exception:
-            return True
+            for p in paths:
+                db.add_file(p, extra_keys)
+        except BaseException:
+            db.close()
+            raise
+        return db
 
     @classmethod
     def from_file(
         cls,
-        path: str,
-        db_path: str | None = None,
-        keys: str | list | tuple | None = None,
-        extra_keys: str | list | None = None,
-        overwrite: bool = False,
+        path: str | os.PathLike,
+        db_path: str | os.PathLike | None = None,
+        extra_keys: str | Iterable[str] | None = None,
     ) -> "GribIndex":
-        # The db is stored in the earthkit-data cache if db_path is not provided.
-        if not db_path:
-            from earthkit.data.core.caching import CACHE
-
-            if not CACHE.policy.managed():
-                raise ValueError(
-                    (
-                        "Cannot create GribIndex from file when cache is not managed. Please provide"
-                        "  a db_path or change the  'cache-policy' setting to 'user' or 'temporary'."
-                    )
-                )
-
-            from earthkit.data.core.caching import auxiliary_cache_file
-
-            if keys is None:
-                keys = "field"
-
-            if extra_keys is not None:
-                if isinstance(extra_keys, str):
-                    extra_keys = [extra_keys]
-                    sorted(extra_keys)
-                keys = list(keys) + list(extra_keys)
-
-            # This will create an empty file if it does not exist.
-            # It also invalidates the cache field if the source file is modified or the keys changed.
-            db_path = auxiliary_cache_file(
-                "grib-index",
-                path,
-                content=None,
-                extension=".sqlite",
-                extra=keys,
-            )
-
-        if overwrite:
-            db = cls(db_path, overwrite=True)
-            db.add_grib_file(path)
-            return db
-        else:
-            if os.path.exists(db_path) and pathlib.Path(db_path).stat().st_size > 0:
-                db = cls(db_path)
-                if not db.is_empty():
-                    if db._path_id(path) is None:
-                        db.add_grib_file(path)
-                    return db
-
-        db = cls(db_path, overwrite=True)
-        db.add_grib_file(path)
-        return db
+        """Index a single GRIB file. A thin wrapper around :meth:`open`."""
+        return cls.open(path, db_path=db_path, extra_keys=extra_keys)
 
     @classmethod
-    def from_fieldlist(cls, fieldlist, db_path: str | None = None) -> "GribIndex":
-        """Create a GribIndex from a fieldlist.
+    def cache_db_path(
+        cls,
+        path: str | os.PathLike,
+        extra_keys: str | Iterable[str] | None = None,
+        create: bool = False,
+    ) -> str:
+        """Return the path of the db in the earthkit-data cache for a GRIB file.
+
+        The path depends on the identity of the file (path, ctime, mtime, size), the sorted
+        extra keys and the schema version. It is used both to create and to look up the db.
 
         Parameters
         ----------
-        fieldlist : FieldList
-            The fieldlist to create the GribIndex from.
-        db_path : str, optional
-            Path to the SQLite database file. If it is not provided, it will be created in the earthkit-data cache
-            directory. But this is not possible if the fieldlist is built from multiple files or has no path. In
-            that case, a valid ``db_path`` must be provided.
+        path : str or os.PathLike
+            The GRIB file. It must exist.
+        extra_keys : str or list of str, optional
+            The extra raw GRIB keys.
+        create : bool, optional
+            When False (default) nothing is created and the db may not exist. When True an
+            empty file is created in (and registered with) the cache if it does not exist.
+
+        Raises
+        ------
+        ValueError
+            When the cache-policy is not managed ("off").
         """
-        if hasattr(fieldlist, "path"):
-            path = fieldlist.path
-            return cls.from_file(path, db_path=db_path)
-        else:
-            if not db_path:
-                raise ValueError(
-                    (
-                        "db_path must be provided when creating GribIndex from fieldlist built from "
-                        "multiple files or having no path"
-                    )
-                )
+        from earthkit.data.core.caching import auxiliary_cache_file, auxiliary_cache_path
 
-            grib_index = None
-            if os.path.exists(db_path) and pathlib.Path(db_path).stat().st_size > 0:
-                grib_index = cls(db_path)
-                return grib_index
+        path = _normalise_path(path)
+        kwargs = dict(
+            extension=".sqlite",
+            extra={"grib-index-schema": SCHEMA_VERSION, "extra_keys": _normalise_extra_keys(extra_keys)},
+        )
 
-            else:
-                grib_index = cls(db_path, overwrite=True)
-                grib_index.add_fieldlist(fieldlist)
-                return grib_index
+        db_path = auxiliary_cache_path("grib-index", path, **kwargs)
+        if db_path is None:
+            raise ValueError(
+                "Cannot use the earthkit-data cache for the GRIB index when the cache-policy is 'off'. "
+                "Set the cache-policy to 'user' or 'temporary' with "
+                "earthkit.data.config.set('cache-policy', 'user'), or provide a db path."
+            )
 
-        return None
+        if create:
+            created = auxiliary_cache_file("grib-index", path, **kwargs)
+            assert created == db_path, (created, db_path)
 
-    @staticmethod
-    def _find_db_in_cache(path: str) -> str | None:
-        """Find the database file in the cache for a given path.
+        return db_path
 
-        Parameters
-        ----------
-        path : str
-            The path to find the database for.
+    @classmethod
+    def find_in_cache(
+        cls,
+        path: str | os.PathLike,
+        extra_keys: str | Iterable[str] | None = None,
+    ) -> "GribIndex | None":
+        """Find the up-to-date db of a GRIB file in the earthkit-data cache.
+
+        Nothing is created or written. The caller must close the returned object.
 
         Returns
         -------
-        str | None
-            The path to the database file if found, otherwise None.
-        """
-        from earthkit.data.core.caching import CACHE
+        GribIndex or None
+            None if there is no db for the file, or it does not hold an up-to-date index of
+            the file with all ``extra_keys``.
 
-        if not CACHE.policy.managed():
+        Raises
+        ------
+        ValueError
+            When the cache-policy is not managed ("off").
+        """
+        extra_keys = _normalise_extra_keys(extra_keys)
+        db_path = cls.cache_db_path(path, extra_keys)
+        if not os.path.isfile(db_path) or os.path.getsize(db_path) == 0:
             return None
 
-        from earthkit.data.core.caching import auxiliary_cache_file
-
-        db_path = auxiliary_cache_file(
-            "grib-index",
-            path,
-            content=None,
-            extension=".sqlite",
-        )
-
-        return GribIndex(db_path)
+        db = cls(db_path)
+        try:
+            if db._is_current(_normalise_path(path), extra_keys):
+                return db
+        except BaseException:
+            db.close()
+            raise
+        db.close()
+        return None

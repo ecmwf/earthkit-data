@@ -828,7 +828,21 @@ class MeshedLatLonGeography(LatLonGeography):
 
 
 class GridsSpecBasedGeography(GeographyBase):
-    def __init__(self, grid_or_grid_spec) -> None:
+    """Geography built from a grid specification using eckit-geo.
+
+    Parameters
+    ----------
+    grid_or_grid_spec: eckit.geo.Grid, str, dict or list
+        The grid or the grid specification.
+    shape: tuple, optional
+        When specified, it is returned by :meth:`shape` instead of the shape
+        computed from the grid.
+    unique_grid_id: str, optional
+        When specified, it is returned by :meth:`unique_grid_id` instead of the
+        uid computed from the grid.
+    """
+
+    def __init__(self, grid_or_grid_spec, shape=None, unique_grid_id=None) -> None:
         from eckit.geo import Grid
 
         if isinstance(grid_or_grid_spec, Grid):
@@ -837,6 +851,9 @@ class GridsSpecBasedGeography(GeographyBase):
         else:
             self._grid = Grid(grid_or_grid_spec)
             self._grid_spec_in = grid_or_grid_spec
+
+        self._shape_override = tuple(shape) if shape is not None else None
+        self._uid_override = unique_grid_id
 
     def latitudes(self, dtype=None) -> np.ndarray:
         r"""Return the latitudes of the field.
@@ -912,6 +929,9 @@ class GridsSpecBasedGeography(GeographyBase):
         -------
         tuple
         """
+        if self._shape_override is not None:
+            return self._shape_override
+
         grid_type = self._grid.type
         # temporary fix for ORCA grids, which are returned Grid as (Ni, Nj) instead of (Nj, Ni)
         if grid_type and "ORCA" in grid_type:
@@ -922,6 +942,8 @@ class GridsSpecBasedGeography(GeographyBase):
         return self._grid.shape
 
     def unique_grid_id(self) -> str:
+        if self._uid_override is not None:
+            return self._uid_override
         return self._grid.uid
 
     def projection(self) -> Projection:

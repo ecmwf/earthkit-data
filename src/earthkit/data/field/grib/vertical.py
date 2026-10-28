@@ -19,7 +19,7 @@ from earthkit.data.field.component.level_type import (
     LevelTypes,
 )
 
-from .collector import GribEncoderCollector, GribIndexerCollector, GribIndexerFieldKeysCollector, MultiCollector
+from .collector import GribEncoderCollector, GribIndexerFieldKeysCollector, MultiCollector
 from .core import GribFieldComponentHandler
 
 
@@ -389,8 +389,6 @@ class GribVerticalBuilder:
 
 
 class GribVerticalEncoderCollector(GribEncoderCollector):
-    # _ALL_INDEXER_KEYS = ["typeOfLevel", "level", "topLevel", "bottomLevel", "NV"]
-
     @staticmethod
     def _collect(handler, context):
         component = handler.component
@@ -410,20 +408,6 @@ class GribVerticalEncoderCollector(GribEncoderCollector):
         r = grib_level_type.to_grib(component, handle)
         context.update(r)
 
-    # @staticmethod
-    # def collect_for_indexer(handler, context):
-    #     keys = GribVerticalContextCollector.indexer_keys(handler)
-    #     GribContextCollector._collect_keys(keys, handler, context)
-
-    # @staticmethod
-    # def indexer_keys(handler):
-    #     return ["typeOfLevel", "level", "topLevel", "bottomLevel", "NV"]
-
-    # @staticmethod
-    # @property
-    # def all_indexer_keys():
-    #     return GribVerticalContextCollector._ALL_INDEXER_KEYS
-
 
 class GribVerticalIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
     @staticmethod
@@ -435,19 +419,64 @@ class GribVerticalIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
                 context[f"vertical.{k}"] = v
 
 
-class GribVerticalIndexerCollector(GribIndexerCollector):
-    @staticmethod
-    def _collect(handle, context):
-        keys = GribVerticalIndexerCollector.indexer_keys()
-        GribIndexerCollector._collect_keys(keys, handle, context)
-
-    @staticmethod
-    def indexer_keys():
-        return ["typeOfLevel", "level", "topLevel", "bottomLevel", "NV"]
-
-
 COLLECTOR = MultiCollector(encoder=GribVerticalEncoderCollector(), indexer=GribVerticalIndexerFieldKeysCollector())
-VERTICAL_INDEXER_COLLECTOR = GribVerticalIndexerCollector()
+
+
+class _IndexedHybridLevelParameters(GribHybridLevelParameters):
+    """Hybrid level parameters of a message rebuilt from the index.
+
+    The number of levels is the value stored in the index, so it does not need the
+    GRIB message. The coefficients are not stored in the index: they are read from the
+    (lazy) handle on request.
+    """
+
+    def __init__(self, handle, number_of_levels=None):
+        super().__init__(handle)
+        self._number_of_levels = number_of_levels
+
+    def number_of_levels(self):
+        if self._number_of_levels is not None:
+            return self._number_of_levels
+        return super().number_of_levels()
+
+
+def create_vertical_from_index(d, handle=None):
+    """Create the vertical component of a field from the flat keys stored in the index.
+
+    Parameters
+    ----------
+    d: dict
+        The vertical keys without the ``vertical.`` prefix, as stored by the indexer:
+        ``level``, ``layer``, ``level_type`` and, for parametric level types,
+        ``number_of_levels``.
+    handle: GribHandle, None
+        The lazy GRIB handle of the message. It is only used for the level definition
+        coefficients of parametric level types (e.g. ``hybrid``), which are not stored in
+        the index, and only when they are requested.
+
+    Returns
+    -------
+    VerticalFieldComponentHandler, dict
+        - For a parametric level type (``hybrid``) when ``handle`` is available, a vertical
+          component that answers the stored keys without the ``handle`` and reads the
+          coefficients from it on first use.
+        - Otherwise ``d`` without ``number_of_levels``, to be used to create a plain vertical
+          component.
+    """
+    from earthkit.data.field.component.level_type import get_level_type
+    from earthkit.data.field.component.vertical import ParametricVertical
+    from earthkit.data.field.handler.vertical import VerticalFieldComponentHandler
+
+    d = dict(d)
+    number_of_levels = d.pop("number_of_levels", None)
+    level_type = d.get("level_type")
+
+    if handle is not None and level_type is not None and get_level_type(level_type) == LevelTypes.HYBRID.value:
+        d["level_type"] = get_level_type(level_type)
+        d["coefficients"] = _IndexedHybridLevelParameters(handle, number_of_levels=number_of_levels)
+        return VerticalFieldComponentHandler.from_component(ParametricVertical(**d))
+
+    return d
 
 
 class GribVertical(GribFieldComponentHandler):

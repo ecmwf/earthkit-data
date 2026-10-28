@@ -13,10 +13,15 @@ import logging
 from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.field.component.component import _normalise_set_kwargs
-from earthkit.data.field.component.geography import GeographyBase, _create_geography_from_dict
+from earthkit.data.field.component.geography import (
+    EmptyGeography,
+    GeographyBase,
+    GridsSpecBasedGeography,
+    _create_geography_from_dict,
+)
 from earthkit.data.utils.grid import ECKIT_GRID_SUPPORT
 
-from .collector import GribEncoderCollector, GribIndexerCollector, GribIndexerFieldKeysCollector, MultiCollector
+from .collector import GribEncoderCollector, GribIndexerFieldKeysCollector, MultiCollector
 from .core import GribFieldComponentHandler
 
 LOG = logging.getLogger(__name__)
@@ -270,7 +275,7 @@ class GribGeographyBuilder:
 
                 component = GridsSpecBasedGeography(grid_spec)
             else:
-                grid_name = handle.get("gridName", None)
+                grid_name = handle.get("gridName", default=None)
                 # this is the case for user defined grids with a custom set of lats/lons
                 if grid_name == "undefined":
                     from earthkit.data.field.component.geography import EmptyGeography
@@ -293,8 +298,6 @@ class GribGeographyBuilder:
 
 
 class GribGeographyEncoderCollector(GribEncoderCollector):
-    # _ALL_INDEXER_KEYS = ["gridSpec"]
-
     @staticmethod
     def _collect(handler, context):
         component = handler.component
@@ -314,96 +317,185 @@ class GribGeographyEncoderCollector(GribEncoderCollector):
                 ("GribGeographyEncoderCollector: cannot collect context for a geography without a valid grid_spec")
             )
 
-    # @staticmethod
-    # def collect_for_indexer(handler, context):
-    #     component = handler.component
-    #     if (grid_spec := component.grid_spec()) is not None:
-    #         if isinstance(grid_spec, dict):
-    #             import json
-
-    #             grid_spec = json.dumps(grid_spec)
-
-    #         r = {
-    #             "gridSpec": grid_spec,
-    #         }
-    #         context.update(r)
-    #         return
-    #     else:
-    #         keys = [
-    #             "gridType",
-    #             "latitudeOfFirstGridPointInDegrees",
-    #             "latitudeOfLastGridPointInDegrees",
-    #             "longitudeOfFirstGridPointInDegrees",
-    #             "longitudeOfLastGridPointInDegrees",
-    #             "Ni",
-    #             "Nj",
-    #             "numberOfDataPoints",
-    #             "md5GridSection",
-    #         ]
-    #         GribContextCollector._collect_keys(keys, handler, context)
-
-    # @staticmethod
-    # def indexer_keys(handler):
-    #     return []
-
-    # @staticmethod
-    # @property
-    # def all_indexer_keys():
-    #     return GribGeographyContextCollector._ALL_INDEXER_KEYS
-
 
 class GribGeographyIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
+    """Collect the geography keys stored in the index.
+
+    The keys are:
+
+    - ``geography.shape``: list of int, the shape of the field
+    - ``geography.unique_grid_id``: the unique grid id of the field
+    - ``geography.grid_spec``: JSON str, only when the grid has a grid spec
+
+    These keys are enough to rebuild the geography with :func:`create_geography_from_index`.
+    """
+
     @staticmethod
     def _collect(handler, context):
         component = handler.component
-        if (grid_spec := component.grid_spec()) is not None:
-            if isinstance(grid_spec, dict):
-                import json
+        r = {}
 
+        shape = component.shape()
+        if shape is not None and all(x is not None for x in shape):
+            r["geography.shape"] = [int(x) for x in shape]
+
+        uid = component.unique_grid_id()
+        if isinstance(uid, (tuple, list)):
+            uid = [x if isinstance(x, (int, float, str)) else str(x) for x in uid]
+        elif uid is not None and not isinstance(uid, (int, float, str)):
+            uid = str(uid)
+        if uid is not None:
+            r["geography.unique_grid_id"] = uid
+
+        try:
+            grid_spec = component.grid_spec()
+        except Exception:
+            LOG.debug("Could not get grid_spec for indexing", exc_info=True)
+            grid_spec = None
+
+        if grid_spec is not None:
+            if not isinstance(grid_spec, str):
                 grid_spec = json.dumps(grid_spec)
+            r["geography.grid_spec"] = grid_spec
 
-            r = {
-                "geography.grid_spec": grid_spec,
-            }
-            context.update(r)
-            return
-
-    # component = handler.component
-    #     d = component.to_dict()
-    #     for k, v in d.items():
-    #         if v is not None:
-    #             context[f"geography.{k}"] = v
-
-
-class GribGeographyIndexerCollector(GribIndexerCollector):
-    @staticmethod
-    def _collect(handle, context):
-        if (grid_spec := handle.get("gridSpec", default=None)) is not None:
-            r = {
-                "gridSpec": grid_spec,
-            }
-            context.update(r)
-            return
-        else:
-            _ALL_INDEXER_KEYS = [
-                "gridType",
-                "latitudeOfFirstGridPointInDegrees",
-                "latitudeOfLastGridPointInDegrees",
-                "longitudeOfFirstGridPointInDegrees",
-                "longitudeOfLastGridPointInDegrees",
-                "Ni",
-                "Nj",
-                "numberOfDataPoints",
-                "md5GridSection",
-            ]
-
-            context["gridSpec"] = None
-            keys = _ALL_INDEXER_KEYS
-            GribIndexerCollector._collect_keys(keys, handle, context)
+        context.update(r)
 
 
 COLLECTOR = MultiCollector(encoder=GribGeographyEncoderCollector(), indexer=GribGeographyIndexerFieldKeysCollector())
-GEOGRAPHY_INDEXER_COLLECTOR = GribGeographyIndexerCollector()
+
+
+class _LazyGribGeography(GeographyBase):
+    """Geography of a GRIB field rebuilt from index keys and a lazy GRIB handle.
+
+    :meth:`shape` and :meth:`unique_grid_id` are answered from the values stored in
+    the index. Every other method builds the normal GRIB geography from the handle on
+    first use (so the GRIB message is only read then) and delegates to it.
+
+    Parameters
+    ----------
+    handle: GribHandle, None
+        The (lazy) GRIB handle of the message. When it is None and a method needs it
+        an :class:`EmptyGeography` with the stored shape is used instead.
+    shape: tuple, None
+        The stored shape. When it is None the shape is taken from the handle.
+    unique_grid_id: str, tuple, None
+        The stored unique grid id. When it is None it is taken from the handle.
+    """
+
+    def __init__(self, handle, shape=None, unique_grid_id=None):
+        self._handle = handle
+        self._shape = tuple(shape) if shape is not None else None
+        self._uid = unique_grid_id
+
+    @thread_safe_cached_property
+    def _resolved(self):
+        if self._handle is None:
+            return EmptyGeography(shape=self._shape)
+        return GribGeographyBuilder.build(self._handle).component
+
+    def latitudes(self, dtype=None):
+        return self._resolved.latitudes(dtype=dtype)
+
+    def longitudes(self, dtype=None):
+        return self._resolved.longitudes(dtype=dtype)
+
+    def distinct_latitudes(self, dtype=None):
+        return self._resolved.distinct_latitudes(dtype=dtype)
+
+    def distinct_longitudes(self, dtype=None):
+        return self._resolved.distinct_longitudes(dtype=dtype)
+
+    def x(self, dtype=None):
+        return self._resolved.x(dtype=dtype)
+
+    def y(self, dtype=None):
+        return self._resolved.y(dtype=dtype)
+
+    def shape(self):
+        if self._shape is not None:
+            return self._shape
+        return self._resolved.shape()
+
+    def projection(self):
+        return self._resolved.projection()
+
+    def bounding_box(self):
+        return self._resolved.bounding_box()
+
+    def area(self):
+        return self._resolved.area()
+
+    def grid(self):
+        return self._resolved.grid()
+
+    def unique_grid_id(self):
+        if self._uid is not None:
+            return self._uid
+        return self._resolved.unique_grid_id()
+
+    def grid_spec(self):
+        return self._resolved.grid_spec()
+
+    def grid_type(self):
+        return self._resolved.grid_type()
+
+    def __getstate__(self):
+        return {"handle": self._handle, "shape": self._shape, "unique_grid_id": self._uid}
+
+    def __setstate__(self, state):
+        self.__init__(state["handle"], shape=state["shape"], unique_grid_id=state["unique_grid_id"])
+
+
+def create_geography_from_index(d, handle=None):
+    """Create the geography of a field from the flat keys stored in the index.
+
+    Parameters
+    ----------
+    d: dict
+        The geography keys without the ``geography.`` prefix, as stored by the
+        indexer: ``shape`` (list of int), ``unique_grid_id`` and ``grid_spec`` (JSON str).
+        Missing keys can be absent or None.
+    handle: GribHandle, None
+        The lazy GRIB handle of the message. It is only used when the geography
+        cannot be built from ``d``, and only when something other than
+        :meth:`shape` and :meth:`unique_grid_id` is requested.
+
+    Returns
+    -------
+    GeographyFieldComponentHandler, None
+        - When ``d`` has a ``grid_spec`` (and eckit-geo grid support is available) the geography
+          is built from it and ``handle`` is never used. ``shape()`` and ``unique_grid_id()``
+          return the stored values.
+        - Otherwise a lazy geography is created, which answers ``shape()`` and
+          ``unique_grid_id()`` from the stored keys and builds the normal GRIB geography
+          from ``handle`` on first use of any other method.
+        - A lazy geography without stored shape when ``d`` has no usable value but a
+          ``handle`` is given.
+        - None, when ``d`` has no usable value and there is no ``handle``.
+    """
+    from earthkit.data.field.handler.geography import GeographyFieldComponentHandler
+
+    grid_spec = d.get("grid_spec")
+    shape = d.get("shape")
+    uid = d.get("unique_grid_id")
+
+    if grid_spec is None and shape is None and uid is None:
+        if handle is None:
+            return None
+        # nothing is stored (the geography could not be indexed): build it from the handle on demand
+        return GeographyFieldComponentHandler.from_component(_LazyGribGeography(handle))
+
+    if shape is not None:
+        shape = tuple(shape)
+    if isinstance(uid, list):
+        uid = tuple(uid)
+
+    if grid_spec is not None and ECKIT_GRID_SUPPORT.has_grid:
+        component = GridsSpecBasedGeography(grid_spec, shape=shape, unique_grid_id=uid)
+    else:
+        component = _LazyGribGeography(handle, shape=shape, unique_grid_id=uid)
+
+    return GeographyFieldComponentHandler.from_component(component)
 
 
 class GribGeographyHandler(GribFieldComponentHandler):

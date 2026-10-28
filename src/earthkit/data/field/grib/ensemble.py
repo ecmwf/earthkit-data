@@ -8,7 +8,7 @@
 #
 
 
-from .collector import GribEncoderCollector, GribIndexerCollector, GribIndexerFieldKeysCollector, MultiCollector
+from .collector import GribEncoderCollector, GribIndexerFieldKeysCollector, MultiCollector
 from .core import GribFieldComponentHandler
 
 
@@ -38,8 +38,6 @@ class GribEnsembleBuilder:
 
 
 class GribEnsembleEncoderCollector(GribEncoderCollector):
-    # _ALL_INDEXER_KEYS = ["perturbationNumber"]
-
     @staticmethod
     def _collect(handler, context):
         component = handler.component
@@ -47,25 +45,6 @@ class GribEnsembleEncoderCollector(GribEncoderCollector):
             "perturbationNumber": component.member(),
         }
         context.update(r)
-
-    # @staticmethod
-    # def collect_for_indexer(handler, context):
-    #     keys = GribEnsembleContextCollector.indexer_keys(handler)
-    #     GribContextCollector._collect_keys(keys, handler, context)
-
-    # @staticmethod
-    # def collect_for_indexer_from_handle(context):
-    #     keys = GribEnsembleContextCollector._ALL_INDEXER_KEYS
-    #     GribContextCollector._collect_keys(keys, context)
-
-    # @staticmethod
-    # def indexer_keys(handler):
-    #     return GribEnsembleContextCollector._ALL_INDEXER_KEYS
-
-    # @staticmethod
-    # @property
-    # def all_indexer_keys():
-    #     return GribEnsembleContextCollector._ALL_INDEXER_KEYS
 
 
 class GribEnsembleIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
@@ -75,19 +54,7 @@ class GribEnsembleIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
         context["ensemble.member"] = component.member()
 
 
-class GribEnsembleIndexerCollector(GribIndexerCollector):
-    @staticmethod
-    def _collect(handle, context):
-        keys = GribEnsembleIndexerCollector.indexer_keys()
-        GribIndexerCollector._collect_keys(keys, handle, context)
-
-    @staticmethod
-    def indexer_keys():
-        return ["perturbationNumber"]
-
-
 COLLECTOR = MultiCollector(encoder=GribEnsembleEncoderCollector(), indexer=GribEnsembleIndexerFieldKeysCollector())
-ENSEMBLE_INDEXER_COLLECTOR = GribEnsembleIndexerCollector()
 
 
 class GribEnsemble(GribFieldComponentHandler):

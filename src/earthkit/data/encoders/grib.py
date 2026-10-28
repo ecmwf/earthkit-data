@@ -737,7 +737,9 @@ class GribEncoder(Encoder):
     ):
         # check if the field is already encoded in the desired format
 
-        r = {}
+        from earthkit.data.field.grib.context import GribEncoderContext
+
+        r = GribEncoderContext()
         field._get_grib_context(r)
 
         handle = r.pop("handle", None)

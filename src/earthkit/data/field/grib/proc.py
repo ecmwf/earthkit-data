@@ -11,7 +11,7 @@ from earthkit.data.field.component.time_span import TimeMethods
 from earthkit.data.field.grib.time import ZERO_TIMEDELTA
 from earthkit.data.utils.dates import step_to_grib, to_timedelta
 
-from .collector import GribEncoderCollector, GribIndexerCollector, GribIndexerFieldKeysCollector, MultiCollector
+from .collector import GribEncoderCollector, GribIndexerFieldKeysCollector, MultiCollector
 from .core import GribFieldComponentHandler
 
 _GRIB_TO_METHOD = {
@@ -84,20 +84,6 @@ class GribProcEncoderCollector(GribEncoderCollector):
             if time_item.method != TimeMethods.INSTANT:
                 context["stepRange"] = step_to_grib(time_item.value)
 
-    # @staticmethod
-    # def collect_for_indexer(handler, context):
-    #     keys = GribProcContextCollector.indexer_keys(handler)
-    #     GribContextCollector._collect_keys(keys, handler, context)
-
-    # @staticmethod
-    # def indexer_keys(handler):
-    #     return ["stepType", "stepRange"]
-
-    # @staticmethod
-    # @property
-    # def all_indexer_keys():
-    #     return ["stepType", "stepRange"]
-
 
 class GribProcIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
     @staticmethod
@@ -109,19 +95,7 @@ class GribProcIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
                 context[f"proc.{k}"] = v
 
 
-class GribProcIndexerCollector(GribIndexerCollector):
-    @staticmethod
-    def _collect(handle, context):
-        keys = GribProcIndexerCollector.indexer_keys()
-        GribIndexerCollector._collect_keys(keys, handle, context)
-
-    @staticmethod
-    def indexer_keys():
-        return ["stepType", "stepRange"]
-
-
 COLLECTOR = MultiCollector(encoder=GribProcEncoderCollector(), indexer=GribProcIndexerFieldKeysCollector())
-PROC_INDEXER_COLLECTOR = GribProcIndexerCollector()
 
 
 class GribProc(GribFieldComponentHandler):

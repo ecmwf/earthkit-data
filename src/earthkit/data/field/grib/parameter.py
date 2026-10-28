@@ -7,11 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
-
 from earthkit.data.field.component.parameter import create_parameter
 from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
 
-from .collector import GribEncoderCollector, GribIndexerCollector, GribIndexerFieldKeysCollector, MultiCollector
+from .collector import GribEncoderCollector, GribIndexerFieldKeysCollector, MultiCollector
 from .core import GribFieldComponentHandler
 
 
@@ -183,28 +182,11 @@ class GribParameterBuilder:
 
 
 class GribParameterEncoderCollector(GribEncoderCollector):
-    """Collector for extracting GRIB context keys from parameter components."""
+    """Collector for extracting GRIB context keys from parameter components.
 
-    # _ALL_INDEXER_KEYS = [
-    #     "shortName",
-    #     "units",
-    #     "cfName",
-    #     "chemShortName",
-    #     "parameter.chemShortName",
-    #     "chemName",
-    #     "mars.wavelength",
-    #     "mars.firstWavelength",
-    #     "mars.secondWavelength",
-    #     "directionNumber",
-    #     "numberOfDirections",
-    #     "directionScalingFactor",
-    #     "scaledDirections",
-    #     "frequencyNumber",
-    #     "numberOfFrequencies",
-    #     "frequencyScalingFactor",
-    #     "scaledFrequencies",
-    #     "edition",
-    # ]
+    Collects the "shortName" key from the parameter component's variable for use
+    in GRIB encoding context.
+    """
 
     @staticmethod
     def _collect(handler, context):
@@ -240,38 +222,6 @@ class GribParameterEncoderCollector(GribEncoderCollector):
 
         context.update(r)
 
-    # @staticmethod
-    # def collect_for_indexer(handler, context):
-    #     keys = GribParameterContextCollector.indexer_keys(handler)
-    #     GribContextCollector._collect_keys(keys, handler, context)
-
-    # @staticmethod
-    # def indexer_keys(handler):
-    #     component = handler.component
-    #     keys = []
-
-    #     keys.extend(["shortName", "units", "cfName", "edition"])
-
-    #     chem = component.chem()
-    #     if chem:
-    #         keys.extend(["chemShortName", "parameter.chemShortName", "chemName"])
-
-    #     if component.wavelength_bounds(units="m") is not None:
-    #         keys.extend(["mars.wavelength", "mars.firstWavelength", "mars.secondWavelength"])
-
-    #     if component.wave_direction_index() is not None:
-    #         keys.extend(["directionNumber", "numberOfDirections", "directionScalingFactor", "scaledDirections"])
-
-    #     if component.wave_frequency_index() is not None:
-    #         keys.extend(["frequencyNumber", "numberOfFrequencies", "frequencyScalingFactor", "scaledFrequencies"])
-
-    #     return keys
-
-    # @staticmethod
-    # @property
-    # def all_indexer_keys():
-    #     return GribParameterContextCollector.ALL_INDEXER_KEYS
-
 
 class GribParameterIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
     @staticmethod
@@ -283,36 +233,7 @@ class GribParameterIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
                 context[f"parameter.{k}"] = v
 
 
-class GribParameterIndexerCollector(GribIndexerCollector):
-    @staticmethod
-    def _collect(handle, result):
-        keys = ["shortName", "name", "units", "cfName", "edition"]
-
-        chem_id = handle.get("chemId", default=None)
-        if chem_id is not None and chem_id != -1:
-            result["chemId"] = chem_id
-            keys.extend(["chemShortName", "parameter.chemShortName", "chemName"])
-
-        wavelength = handle.get("mars.wavelength", default=None)
-        if wavelength is not None:
-            result["mars.wavelength"] = wavelength
-            keys.extend(["mars.firstWavelength", "mars.secondWavelength"])
-
-        direction_number = handle.get("directionNumber", default=None)
-        if direction_number is not None:
-            result["directionNumber"] = direction_number
-            keys.extend(["numberOfDirections", "directionScalingFactor", "scaledDirections"])
-
-        frequency_number = handle.get("frequencyNumber", default=None)
-        if frequency_number is not None:
-            result["frequencyNumber"] = frequency_number
-            keys.extend(["numberOfFrequencies", "frequencyScalingFactor", "scaledFrequencies"])
-
-        GribIndexerCollector._collect_keys(keys, handle, result)
-
-
 COLLECTOR = MultiCollector(encoder=GribParameterEncoderCollector(), indexer=GribParameterIndexerFieldKeysCollector())
-PARAMETER_INDEXER_COLLECTOR = GribParameterIndexerCollector()
 
 
 class GribParameter(GribFieldComponentHandler):

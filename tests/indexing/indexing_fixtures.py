@@ -72,6 +72,44 @@ def unique_grib_dir():
 #     ]
 
 
+def install_handle_counter(monkeypatch):
+    """Count the eccodes handles created from files or messages.
+
+    Returns a dict whose ``"n"`` item is the number of handles created so far.
+    """
+    import eccodes
+
+    counter = {"n": 0}
+
+    def _wrap(name):
+        orig = getattr(eccodes, name)
+
+        def _new(*args, **kwargs):
+            counter["n"] += 1
+            return orig(*args, **kwargs)
+
+        monkeypatch.setattr(eccodes, name, _new)
+
+    _wrap("codes_new_from_file")
+    _wrap("codes_new_from_message")
+    return counter
+
+
+def install_scan_counter(monkeypatch):
+    """Record the base names of the GRIB files scanned by the index."""
+    from earthkit.data.readers.grib.index import GribIndex
+
+    scanned = []
+    orig = GribIndex._scan
+
+    def _scan(self, path, extra_keys):
+        scanned.append(os.path.basename(path))
+        return orig(self, path, extra_keys)
+
+    monkeypatch.setattr(GribIndex, "_scan", _scan)
+    return scanned
+
+
 def get_tmp_fixture(input_mode):
     tmp = {
         "directory": unique_grib_dir,

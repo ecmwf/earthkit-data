@@ -9,7 +9,7 @@
 
 from earthkit.data.utils.dates import datetime_from_grib, datetime_to_grib, step_to_grib, to_timedelta
 
-from .collector import GribEncoderCollector, GribIndexerCollector, GribIndexerFieldKeysCollector, MultiCollector
+from .collector import GribEncoderCollector, GribIndexerFieldKeysCollector, MultiCollector
 from .core import GribFieldComponentHandler
 
 ZERO_TIMEDELTA = to_timedelta(0)
@@ -66,8 +66,6 @@ class GribTimeBuilder:
 
 
 class GribTimeEncoderCollector(GribEncoderCollector):
-    # _ALL_INDEXER_KEYS = ["dataDate", "dataTime", "step", "endStep", "forecastMonth", "indexingDate", "indexingTime"]
-
     @staticmethod
     def _collect(handler, context):
         component = handler.component
@@ -88,34 +86,11 @@ class GribTimeEncoderCollector(GribEncoderCollector):
 
         context.update(r)
 
-    # @staticmethod
-    # def collect_for_indexer(handler, context):
-    #     keys = GribTimeContextCollector.indexer_keys(handler)
-    #     GribContextCollector._collect_keys(keys, handler, context)
-
-    # @staticmethod
-    # def indexer_keys(handler):
-    #     component = handler.component
-
-    #     keys = ["dataDate", "dataTime", "step", "endStep"]
-    #     if component.forecast_month() is not None:
-    #         keys.extend(["forecastMonth"])
-    #         if component.indexing_datetime() is not None:
-    #             keys.extend(["indexingDate", "indexingTime"])
-
-    #     return keys
-
-    # @staticmethod
-    # @property
-    # def all_indexer_keys():
-    #     return GribTimeContextCollector._ALL_INDEXER_KEYS
-
 
 class GribTimeIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
     @staticmethod
     def _collect(handler, context):
         component = handler.component
-        r = {}
 
         for key in [
             "base_datetime",
@@ -127,22 +102,8 @@ class GribTimeIndexerFieldKeysCollector(GribIndexerFieldKeysCollector):
             if v is not None:
                 context[f"time.{key}"] = v
 
-        context.update(r)
-
-
-class GribTimeIndexerCollector(GribIndexerCollector):
-    @staticmethod
-    def _collect(handle, context):
-        keys = GribTimeIndexerCollector.indexer_keys()
-        GribIndexerCollector._collect_keys(keys, handle, context)
-
-    @staticmethod
-    def indexer_keys():
-        return ["dataDate", "dataTime", "step", "endStep", "forecastMonth", "indexingDate", "indexingTime"]
-
 
 COLLECTOR = MultiCollector(encoder=GribTimeEncoderCollector(), indexer=GribTimeIndexerFieldKeysCollector())
-TIME_INDEXER_COLLECTOR = GribTimeIndexerCollector()
 
 
 class GribTime(GribFieldComponentHandler):

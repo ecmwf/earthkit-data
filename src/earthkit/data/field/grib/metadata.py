@@ -62,8 +62,6 @@ class MetadataCacheHandler:
                 cache_id = (key, default, astype, raise_on_missing)
                 if cache_id in self._cache:
                     return self._cache[cache_id]
-                elif key in self._cache:
-                    return self._cache[key]
 
                 v = func(self, key, default=default, astype=astype, raise_on_missing=raise_on_missing)
                 self._cache[cache_id] = v
@@ -154,12 +152,6 @@ class GribMetadata:
             return self.message()
         elif key == "handle":
             return self._handle
-
-        print(f"GribMetadata.get: key={key}, astype={astype}, kwargs={_kwargs}")
-        # print(f"{self._cache=}")
-        # raise AssertionError("Debugging GribMetadata.get")
-
-        # print(f"GribMetadata.get: key={key}, astype={astype}, kwargs={_kwargs}")
 
         v = self._handle.get(key, ktype=astype, **_kwargs)
 
@@ -272,15 +264,64 @@ class GribMetadata:
     def __setstate__(self, state):
         self.__init__(state["handle"])
 
-    # TODO: temporary method
-    def is_defined(self, key):
-        return key in self._cache
-
 
 class IndexedGribMetadata(GribMetadata):
-    def __init__(self, handle, extra_keys=None, cache=None):
+    """GRIB metadata of a field built from the GRIB index (see :class:`~earthkit.data.readers.grib.index.GribIndex`).
+
+    The raw GRIB keys stored in the index are served from the stored values, without
+    creating an ecCodes handle. Any other key is read from the (lazy) GRIB handle.
+
+    Parameters
+    ----------
+    handle : GribHandle
+        The lazy GRIB handle of the message.
+    raw : dict
+        The raw GRIB keys stored in the index for the message (key names without the
+        ``"metadata."`` prefix). Keys that the message does not have are not in the dict.
+    known_keys : iterable of str
+        The keys that were scanned for the file of the message. For these keys a key that
+        is not in ``raw`` means that the message does not have the key, and it behaves
+        exactly like a missing key of :class:`GribMetadata`. Any other key that is not in
+        ``raw`` is "unknown" and the value is read from the handle.
+    """
+
+    def __init__(self, handle, raw, known_keys=(), extra_keys=None, cache=None):
         super().__init__(handle, extra_keys=extra_keys, cache=cache)
-        self._handle = handle.as_indexed()
+        self._raw = raw
+        self._known_keys = frozenset(known_keys)
+
+    @MetadataCacheHandler.cache_get
+    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
+        name = key
+        if name == "param":
+            name = "shortName"
+        elif name == "_param_id":
+            name = "paramId"
+
+        if name in self._raw:
+            v = self._raw[name]
+            # the stored value has the native type, so only the identity cast is
+            # served from the index
+            if astype is None or type(v) is astype:
+                return v
+        elif name in self._known_keys:
+            # the key was scanned for the file but is not stored: the message does not have it
+            if raise_on_missing:
+                raise KeyError(name)
+            return default
+
+        return GribMetadata.get.__wrapped__(
+            self, key, default=default, astype=astype, raise_on_missing=raise_on_missing
+        )
+
+    def __getstate__(self):
+        state = super().__getstate__()
+        state["raw"] = self._raw
+        state["known_keys"] = self._known_keys
+        return state
+
+    def __setstate__(self, state):
+        self.__init__(state["handle"], state["raw"], state["known_keys"])
 
 
 # class GribLabels(SimpleLabels):

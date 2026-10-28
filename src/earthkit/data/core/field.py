@@ -456,7 +456,24 @@ class Field(Base):
         # return cls(**components, labels=labels)
 
     @classmethod
-    def _from_flat_dict(cls, d):
+    def _from_flat_dict(cls, d, handle=None, data=None):
+        """Create a Field from a flat dict with ``"component.key"`` entries.
+
+        Parameters
+        ----------
+        d : dict
+            The flat dictionary, e.g. as stored by the GRIB indexer.
+        handle : GribHandle, optional
+            The lazy GRIB handle of the message. It is only used to build the geography
+            when the geography keys in ``d`` do not contain a ``grid_spec``, and only when
+            something other than the shape and the unique grid id is requested. It is also
+            used for the level definition coefficients of parametric (``hybrid``) vertical
+            levels, which are not stored, and only when they are requested.
+        data : DataFieldComponentHandler, optional
+            The data component of the field. It is set as it is, without accessing
+            the values, so it can be lazy (e.g. :class:`~earthkit.data.field.grib.data.GribData`
+            on a lazy handle).
+        """
         d_c = {}
         for k, v in d.items():
             if "." in k:
@@ -465,7 +482,28 @@ class Field(Base):
                     d_c[c] = {}
                 d_c[c][n] = v
 
-        return cls.from_dict(d_c)
+        geography = d_c.pop(_GEOGRAPHY, None)
+        if geography is None and handle is not None:
+            # no geography keys were stored for the message
+            geography = {}
+        if geography is not None:
+            from earthkit.data.field.grib.geography import create_geography_from_index
+
+            geography = create_geography_from_index(geography, handle)
+            if geography is not None:
+                d_c[_GEOGRAPHY] = geography
+
+        vertical = d_c.get(_VERTICAL)
+        if vertical is not None:
+            from earthkit.data.field.grib.vertical import create_vertical_from_index
+
+            d_c[_VERTICAL] = create_vertical_from_index(vertical, handle)
+
+        r = cls.from_dict(d_c)
+        if data is not None:
+            # not passed to from_components() because it would read the values to get a shape hint
+            r._components[_DATA] = data
+        return r
 
     @classmethod
     def from_components(
@@ -1955,12 +1993,6 @@ class Field(Base):
 
         for m in self._components.values():
             m.get_grib_context(context)
-
-    @staticmethod
-    def _get_grib_indexer_context(handle, context):
-        from earthkit.data.field.grib.keys import collect
-
-        collect(handle, context)
 
     def _set_metadata(self, md):
         """Helper method to set raw metadata in the field."""

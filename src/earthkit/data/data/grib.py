@@ -19,6 +19,8 @@ from typing import (
 from .source import SourceData
 
 if TYPE_CHECKING:
+    import os
+
     import numpy  # type: ignore[import]
     import pandas  # type: ignore[import]
     import xarray  # type: ignore[import]
@@ -73,15 +75,60 @@ class GribData(SourceData):
     def _repr_html_(self) -> str:
         return self.describe()._repr_html_()
 
-    def to_fieldlist(self, **kwargs) -> "FieldList":
+    def to_fieldlist(
+        self,
+        index: "bool | str | os.PathLike | None" = None,
+        index_extra_keys: "list[str] | None" = None,
+        **kwargs,
+    ) -> "FieldList":
         """Convert into a FieldList.
+
+        The GRIB data can be a single file, a list of files or a directory.
+
+        Parameters
+        ----------
+        index : None, bool, str or os.PathLike, optional
+            Controls the use of a sqlite metadata index of the GRIB files:
+
+            - None or False (default): no index, the GRIB files are scanned in the usual way.
+            - True: each GRIB file has its own index db in the earthkit-data cache. It
+              requires the cache-policy to be "user" or "temporary".
+            - str or os.PathLike: path to a single index db holding all the GRIB files
+              of the data.
+
+            A db is only created when it does not exist yet. An existing db is reused as
+            long as the GRIB files have not changed (checked by size and modification
+            time); a changed or new file is scanned again. When an index is used, the
+            fieldlist is built from the db without opening the GRIB files; they are only
+            read when the values or a metadata key not stored in the db is needed.
+        index_extra_keys : list of str, optional
+            Extra raw GRIB keys to store in the index as ``metadata.<key>``, in addition
+            to the default keys. The stored keys can be queried without reading the GRIB
+            files. Only used when ``index`` is set.
+        **kwargs
+            Passed to the fieldlist constructor.
 
         Returns
         -------
         :py:class:`earthkit.data.core.fieldlist.FieldList`
             A FieldList containing the GRIB data.
+
+        Raises
+        ------
+        TypeError
+            When ``index`` is not None, a bool, a str or an os.PathLike.
+        ValueError
+            When ``index`` is True and the cache-policy is "off" (the default).
+
+        Examples
+        --------
+        >>> import earthkit.data as ekd
+        >>> ds = ekd.from_source("file", "test.grib")
+        >>> ekd.config.set("cache-policy", "user")
+        >>> fl = ds.to_fieldlist(index=True)
+        >>> fl = ds.to_fieldlist(index="/path/to/index.sqlite", index_extra_keys=["bitsPerValue"])
         """
-        return self._reader.to_fieldlist(**kwargs)
+        return self._reader.to_fieldlist(index=index, index_extra_keys=index_extra_keys, **kwargs)
 
     def to_xarray(self, **kwargs) -> "xarray.Dataset":
         """Convert into an Xarray dataset.

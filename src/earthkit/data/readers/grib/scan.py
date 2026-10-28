@@ -103,15 +103,15 @@ class GribHandleScanner:
                 if handle is None:
                     break
 
-                offset = handle.get("offset")
-                length = handle.get("totalLength")
+                offset = int(handle.get("offset"))
+                length = int(handle.get("totalLength"))
 
                 yield handle, offset, length
 
                 if self.max_count is not None:
+                    cnt += 1
                     if cnt >= self.max_count:
                         break
-                    cnt += 1
 
     def _scan_parts(self):
         from .handle import GribCodesHandle
@@ -120,20 +120,19 @@ class GribHandleScanner:
         with open(self.path, "rb") as fp:
             for part in self.parts:
                 offset = part[0]
-                # end_pos = part[0] + part[1] if part[1] > 0 else -1
 
-                if os.lseek(fp, offset, os.SEEK_SET) != offset:
+                if fp.seek(offset, os.SEEK_SET) != offset:
                     break
 
                 handle = GribCodesHandle._from_file(fp)
                 if handle is None:
                     break
 
-                length = handle.get("totalLength")
+                length = int(handle.get("totalLength"))
 
                 yield handle, offset, length
 
                 if self.max_count is not None:
+                    cnt += 1
                     if cnt >= self.max_count:
                         break
-                    cnt += 1

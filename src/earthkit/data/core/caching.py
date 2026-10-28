@@ -975,6 +975,25 @@ class Cache:
 CACHE = Cache()
 
 
+def _managed_cache_file_path(owner, args, hash_extra, extension):
+    """Compute the path of a cache file in the cache directory (no side effects)."""
+    m = hashlib.sha256()
+    m.update(owner.encode("utf-8"))
+
+    m.update(json.dumps(args, sort_keys=True, default=default_serialiser).encode("utf-8"))
+    m.update(json.dumps(hash_extra, sort_keys=True).encode("utf-8"))
+    m.update(json.dumps(extension, sort_keys=True).encode("utf-8"))
+
+    return os.path.join(
+        CACHE.directory(),
+        "{}-{}{}".format(
+            owner.lower(),
+            m.hexdigest(),
+            extension,
+        ),
+    )
+
+
 def cache_file(
     owner: str,
     create,
@@ -1023,26 +1042,12 @@ def cache_file(
     managed = CACHE.policy.managed() and CACHE.directory() is not None
 
     if managed:
-        m = hashlib.sha256()
-        m.update(owner.encode("utf-8"))
-
-        m.update(json.dumps(args, sort_keys=True, default=default_serialiser).encode("utf-8"))
-        m.update(json.dumps(hash_extra, sort_keys=True).encode("utf-8"))
-        m.update(json.dumps(extension, sort_keys=True).encode("utf-8"))
-
         if replace is not None:
             # Don't replace files that are not in the cache
             if not CACHE.policy.file_in_cache_directory(replace):
                 replace = None
 
-        path = os.path.join(
-            CACHE.directory(),
-            "{}-{}{}".format(
-                owner.lower(),
-                m.hexdigest(),
-                extension,
-            ),
-        )
+        path = _managed_cache_file_path(owner, args, hash_extra, extension)
 
         record = CACHE._register_cache_file(path, owner, args)
         if os.path.exists(path):
@@ -1115,9 +1120,9 @@ def auxiliary_cache_file(
     r"""Create an auxiliary cache file.
 
     It can be used for example to cache an index for a message based format
-    such as GRIB. It is invalidated if ``path`` is changed.
+    such as GRIB. It is invalidated if ``path`` is changed. The optional ``extra``
+    (anything JSON serialisable) is added to the cache key.
     """
-    stat = os.stat(path)
 
     def create(target, args):
         # Simply touch the file
@@ -1128,16 +1133,40 @@ def auxiliary_cache_file(
     return cache_file(
         owner,
         create,
-        (
-            path,
-            stat.st_ctime,
-            stat.st_mtime,
-            stat.st_size,
-            index,
-            extra,
-        ),
+        _auxiliary_cache_args(path, index, extra),
         extension=extension,
     )
+
+
+def _auxiliary_cache_args(path, index, extra):
+    stat = os.stat(path)
+    args = (path, stat.st_ctime, stat.st_mtime, stat.st_size, index)
+    if extra is not None:
+        args += (extra,)
+    return args
+
+
+def auxiliary_cache_path(
+    owner,
+    path,
+    index=0,
+    extension=".cache",
+    extra=None,
+):
+    r"""Compute the path :func:`auxiliary_cache_file` would use, without creating it.
+
+    Nothing is created or registered in the cache.
+
+    Returns
+    -------
+    str or None
+        The path of the auxiliary cache file. None when the cache-policy is not managed
+        (i.e. not "user" or "temporary"), because the file names are then random.
+    """
+    if not (CACHE.policy.managed() and CACHE.directory() is not None):
+        return None
+
+    return _managed_cache_file_path(owner, _auxiliary_cache_args(path, index, extra), None, extension)
 
 
 # housekeeping()
