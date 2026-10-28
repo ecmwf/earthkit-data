@@ -12,6 +12,8 @@ When **caching is enabled** this directory will also serve as a **cache**. It me
 
 Please note that the earthkit-data cache configuration is managed through the :doc:`config`.
 
+See also :ref:`grib-index` for the GRIB metadata index stored in the cache.
+
 .. warning::
 
   By default the caching is disabled, i.e. the :ref:`cache-policy <cache_policies>` is :ref:`off <off_cache_policy>`.
