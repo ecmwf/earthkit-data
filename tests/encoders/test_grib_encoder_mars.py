@@ -111,8 +111,7 @@ def test_grib_encoder_mars_pl():
 
     assert f_r.get("metadata.date") == 20010101
     assert f_r.get("metadata.edition") == 2
-    # TODO: with the current pymetkit we get 8. Change this once pymetkit is updated.
-    # assert f_r.get("metadata.level") == 850
+    assert f_r.get("metadata.level") == 850
     assert f_r.get("metadata.levtype") == "pl"
     assert f_r.get("metadata.shortName") == "t"
     # assert f_r.get("metadata.generatingProcessIdentifier") == 255
