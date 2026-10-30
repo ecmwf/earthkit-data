@@ -40,7 +40,6 @@ LOG = logging.getLogger(__name__)
 
 
 CONNECTION = None
-CACHE = None
 
 
 class DiskUsage:
@@ -187,6 +186,8 @@ class CacheManager(threading.Thread):
     def _config_changed(self, policy):
         LOG.debug("Config changed")
         self._policy = policy
+        if self._connection is not None:
+            self._connection.close()
         self._connection = None  # The user may have changed the cache directory
         self._check_cache_size()
 
@@ -1010,12 +1011,12 @@ def cache_file(
     The behaviour depends on the cache policy:
 
     - If the cache-policy is ``user`` or ``temporary`` the file is created in the
-    cache-directory and the relevant entries are added to the cache database
-    using :py:meth:`Cache._register_cache_file`.
+      cache-directory and the relevant entries are added to the cache database
+      using :py:meth:`Cache._register_cache_file`.
 
     - If the cache-policy is ``off`` the file is created in the temporary directory.
-    No cache database and monitoring is available. The cache directory is merely
-    serving as a temporary space.
+      No cache database and monitoring is available. The cache directory is merely
+      serving as a temporary space.
 
     """
     managed = CACHE.policy.managed() and CACHE.directory() is not None

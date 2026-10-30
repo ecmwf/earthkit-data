@@ -126,7 +126,7 @@ Each component has its own set of high-level metadata keys and methods. There ar
     # use the key method on the component
     f.time.base_datetime()
 
-These metadata keys can be used in :meth:`~earthkit.data.core.fieldlist.FieldList.sel` and :meth:`~earthkit.data.core.fieldlist.FieldList.order_by` to select and sort fields. See the :doc:`keys` page for a complete list of all available component metadata keys.
+These metadata keys can be used in :meth:`~earthkit.data.core.fieldlist.FieldList.sel` and :meth:`~earthkit.data.core.fieldlist.FieldList.order_by` to select and sort fields. See the :doc:`/concepts/field/keys` page for a complete list of all available component metadata keys.
 
 .. code-block:: python
 

@@ -11,7 +11,7 @@ New features
 
 - added new source :ref:`data-sources-eod` to retrieve ECMWF open data. See the :ref:`/tutorials/source/ecmwf_open_data.ipynb` notebook example.
 - added new method :func:`from_object` to use a objects like numpy arrays or xarray datasets as an input. See the :ref:`/tutorials/other/from_object.ipynb` notebook example.
-- redesigned :ref:`bufr` handling. :ref:`bufr` data is now represented by a :class:`BUFRList <data.readers.bufr.bufr.BUFRList>` made up of :class:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>` objects. In many aspects it behaves similarly to a :obj:`FieldList <earthkit.data.core.fieldlist.FieldList>` offering iteration, slicing, selection and message dump. For details see :ref:`here <bufr>` and also check the notebook examples:
+- redesigned BUFR handling. BUFR data is now represented by a :class:`BUFRList <data.readers.bufr.bufr.BUFRList>` made up of :class:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>` objects. In many aspects it behaves similarly to a :obj:`FieldList <earthkit.data.core.fieldlist.FieldList>` offering iteration, slicing, selection and message dump. For details see :ref:`here <bufr_examples>` and also check the notebook examples:
 
      - :ref:`/tutorials/bufr/bufr_temp.ipynb`
      - :ref:`/tutorials/bufr/bufr_synop.ipynb`
@@ -28,12 +28,12 @@ New features
      - when all the fields have the same grid geometry in the FieldList they return the value of the same function called on the first field
      - otherwise an exception is raised
 
-- added new :ref:`settings` option ``reader-type-check-bytes`` to control the number of bytes read from the beginning of a source to identify its type. The default value is 64 and the allowed value range is [8, 4096]. (`#126 <https://github.com/ecmwf/earthkit-data/pull/126>`_)
+- added new :ref:`config` option ``reader-type-check-bytes`` to control the number of bytes read from the beginning of a source to identify its type. The default value is 64 and the allowed value range is [8, 4096]. (`#126 <https://github.com/ecmwf/earthkit-data/pull/126>`_)
 - changed the return type of :meth:`FieldList.bounding_box() <earthkit.data.core.fieldlist.FieldList.bounding_box>`, which now returns a list of bounding boxes (one per field). (`#122 <https://github.com/ecmwf/earthkit-data/issues/122>`_)
 - removed options ``print`` and ``html`` from methods :meth:`FieldList.ls() <earthkit.data.core.fieldlist.FieldList.ls>`, :meth:`FieldList.describe() <earthkit.data.core.fieldlist.FieldList.describe>` and :meth:`GribField.dump() <data.readers.grib.codes.GribField.dump>`. Printing the resulting object can be simply done by using the Python ``print()`` method. (`#118 <https://github.com/ecmwf/earthkit-data/issues/118>`_)
 
 Fixes
 ++++++
 
-- fixed issue when :ref:`grib`, :ref:`bufr` or :ref:`odb` data contained extra bytes at the beginning :func:`from_source` could not identify their type. (`#123 <https://github.com/ecmwf/earthkit-data/issues/123>`_)
-- fixed issue when not specifying the ``filter`` option in :func:`to_pandas` on :ref:`bufr` data caused a crash
+- fixed issue when GRIB, BUFR or ODB data contained extra bytes at the beginning :func:`from_source` could not identify their type. (`#123 <https://github.com/ecmwf/earthkit-data/issues/123>`_)
+- fixed issue when not specifying the ``filter`` option in :func:`to_pandas` on BUFR data caused a crash

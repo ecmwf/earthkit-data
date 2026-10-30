@@ -63,6 +63,14 @@ class XarrayGrid:
             proj = self.xy_grid.projection
             return Projection.from_cf_grid_mapping(**proj)
 
+    @property
+    def grid_type(self) -> str:
+        """str: Get the eckit-geo grid type."""
+        if self.latlon_grid is not None:
+            return self.latlon_grid.grid_type
+        else:
+            return None
+
 
 class Grid(ABC):
     """Abstract base class for grid structures."""
@@ -80,6 +88,12 @@ class Grid(ABC):
     @abstractmethod
     def xys(self) -> Tuple[Any, Any]:
         """Get the grid points."""
+        pass
+
+    @property
+    @abstractmethod
+    def grid_type(self) -> str:
+        """str: Get the eckit-geo grid type."""
         pass
 
 
@@ -125,6 +139,10 @@ class XYGrid(Grid):
         self.x = x
         self.y = y
 
+    @property
+    def grid_type(self):
+        return None
+
 
 class MeshedGrid(LatLonGrid):
     """Grid class for meshed latitude and longitude coordinates."""
@@ -147,6 +165,10 @@ class MeshedGrid(LatLonGrid):
             raise NotImplementedError(f"MeshedGrid.grid_points: unrecognised variable_dims {self.variable_dims}")
 
         return lat.flatten(), lon.flatten()
+
+    @property
+    def grid_type(self):
+        return "regular-ll"
 
 
 class UnstructuredGrid(LatLonGrid):
@@ -192,6 +214,10 @@ class UnstructuredGrid(LatLonGrid):
         lon = self.lon.variable.values.transpose().flatten()
 
         return lat, lon
+
+    @property
+    def grid_type(self):
+        return "unstructured"
 
 
 class RawXYGrid(XYGrid):

@@ -1,6 +1,25 @@
 Deprecations
 =============
 
+.. _deprecated-1.1.1:
+
+Version 1.1.1
+-----------------
+
+.. _deprecated-wekeocds:
+
+The ``wekecds`` source has been renamed to ``wekeo-cds``
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+This ``wekeocds`` source has been renamed to ``wekeo-cds``. The old name is still available for backward compatibility but will be removed in a future release. Users are encouraged to migrate the code to use the new name instead. See :ref:`here <data-sources-wekeo-cds>` for details on how to use the new source.
+
+.. _deprecated-fdb-userconfig:
+
+The ``userconfig`` option of the ``fdb`` source has been renamed to ``user_config``
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The ``userconfig`` kwarg of the ``fdb`` source has been renamed to ``user_config``. The old kwarg is still available for backward compatibility but is deprecated and will be removed in a future release. Users are encouraged to update their code to avoid using this kwarg. See :ref:`here <data-sources-fdb>` for details on how to use the new kwarg.
+
 
 .. _deprecated-1.1.0:
 
@@ -35,7 +54,7 @@ Version 0.15.0
 The "ens" dimension role has been renamed to "number"
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The name of the ensemble member :ref:`dimension role <_xr_dim_roles>` changed to "number" from "ens" in the ``dim_roles`` option of :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray`. The old name is still available for backward compatibility but will be removed in a future release.
+The name of the ensemble member :ref:`dimension role <xr_dim_roles>` changed to "number" from "ens" in the ``dim_roles`` option of :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray`. The old name is still available for backward compatibility but will be removed in a future release.
 
 .. list-table::
    :header-rows: 0
@@ -248,7 +267,7 @@ Its functionality is replaced by the :ref:`targets <targets>` instead. For detai
 :py:class:`GribCoder` is deprecated
 ++++++++++++++++++++++++++++++++++++++++++++
 
-Its functionality is replaced by the :ref:`encoders <data-endoders>`. For details see :ref:`migrating new_grib_coder() <deprecated-new-grib-coder>`.
+Its functionality is replaced by the :ref:`encoders <encoders>`. For details see :ref:`migrating new_grib_coder() <deprecated-new-grib-coder>`.
 
 
 .. _deprecated-0.19.0:

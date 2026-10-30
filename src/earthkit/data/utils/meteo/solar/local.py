@@ -71,6 +71,12 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
         [Hogan_and_Hirahara2015]_. See also:
         http://answers.google.com/answers/threadview/id/782886.html
 
+    References
+    ----------
+    .. [Hogan_and_Hirahara2015] Hogan, R. J. and Hirahara, S. (2016): Effect of solar zenith angle
+       specification in models on mean shortwave fluxes and stratospheric temperatures.
+       Geophys. Res. Lett., 43, 482-488, doi:10.1002/2015GL066868.
+
     """
     xp = array_namespace(latitudes, longitudes)
     latitudes = xp.asarray(latitudes)
@@ -93,7 +99,8 @@ def cos_solar_zenith_angle(date, latitudes, longitudes):
 
     # solar hour angle [h.deg]
     # TODO: deg2rad() is not part of the array API standard
-    solar_angle = xp.deg2rad((date.hour - 12) * 15 + longitudes + time_correction)
+    hours = date.hour + date.minute / 60.0 + date.second / 3600.0 + date.microsecond / 3.6e9
+    solar_angle = xp.deg2rad((hours - 12) * 15 + longitudes + time_correction)
     zenith_angle = sindec_sinlat + cosdec_coslat * xp.cos(solar_angle)
 
     # Clip negative values

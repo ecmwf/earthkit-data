@@ -26,7 +26,7 @@ class TextData(SourceData):
     @property
     def available_types(self):
         """list[str] or None: Return the list of available types that this data object can be converted to."""
-        return None
+        return []
 
     def describe(self) -> Any:
         """Provide a description of the Text data.
@@ -39,13 +39,6 @@ class TextData(SourceData):
         from earthkit.data.utils.summary import DataDescriber
 
         return DataDescriber(title="Text file", path=self.path, types=self.available_types)
-
-    @property
-    def path(self) -> str | list[str] | None:
-        try:
-            return self._reader.path
-        except Exception:
-            return None
 
     def __repr__(self) -> str:
         return f"TextData(path={self.path})"

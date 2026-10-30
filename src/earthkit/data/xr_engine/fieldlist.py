@@ -9,6 +9,7 @@
 
 import datetime
 import logging
+import numbers
 from collections import defaultdict
 
 from earthkit.data.core.index import Selection, normalise_selection
@@ -173,7 +174,7 @@ class XArrayInputFieldList(IndexFieldListBase):
             for k, v in vals.items():
                 v = [x for x in v if x is not None]
                 if (
-                    all(isinstance(x, (int, float)) for x in v)
+                    all(isinstance(x, numbers.Number) for x in v)
                     or all(isinstance(x, datetime.date) for x in v)
                     or all(isinstance(x, datetime.time) for x in v)
                     or all(isinstance(x, datetime.timedelta) for x in v)

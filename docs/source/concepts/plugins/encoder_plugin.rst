@@ -1,3 +1,5 @@
+:orphan:
+
 .. _encoder_plugin:
 
 Encoders plugins
@@ -9,8 +11,8 @@ What is an encoder?
 -------------------
 
 A :class:`Encoder` is a Python class in earthkit-data that can write/add data
-to a given location. There are several built-in :ref:`encoder <data-encoders>`, the most
-common being the :ref:`file <data-encoders-file>` encoder.
+to a given location. There are several built-in :ref:`encoder <encoders>`, the most
+advanced being the :ref:`GRIB <grib_encoder>` encoder.
 
 Adding a new encoder as a pip plugin
 -------------------------------------

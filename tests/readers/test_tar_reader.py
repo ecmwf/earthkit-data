@@ -11,9 +11,12 @@
 
 
 import mimetypes
+import tarfile
 
+import numpy as np
 import pytest
 
+from earthkit.data import from_source
 from earthkit.data.utils.testing import check_unsafe_archives
 
 
@@ -28,6 +31,18 @@ def test_tar_mimetypes():
 
     assert mimetypes.guess_type("x.tar.gz") == ("application/x-tar", "gzip")
     assert mimetypes.guess_type("x.tar.bz2") == ("application/x-tar", "bzip2")
+
+
+@pytest.mark.parametrize("name", ["data.tar", "data"])
+def test_tar_reader(tmp_path, name):
+    expected = np.array([[1, 2], [3, 4]])
+    np.save(tmp_path / "data.npy", expected)
+
+    path = tmp_path / name
+    with tarfile.open(path, "w") as archive:
+        archive.add(tmp_path / "data.npy", arcname="data.npy")
+
+    np.testing.assert_array_equal(from_source("file", path).to_numpy(), expected)
 
 
 if __name__ == "__main__":

@@ -406,6 +406,10 @@ def from_source(
 
 
 @overload
+def from_source(name: Literal["sql"], url: str, sql: str) -> "Data": ...
+
+
+@overload
 def from_source(
     name: Literal["wekeo"],
     dataset: str,
@@ -479,6 +483,20 @@ def _from_source_internal(name: str, *args, lazily=False, **kwargs) -> Source:
         src = src.mutate()
 
     return src
+
+
+def _from_source_instance(src: Source) -> "Data":
+    prev = None
+    while src is not prev:
+        prev = src
+        src = src.mutate()
+
+    if hasattr(src, "to_data_object"):
+        data = src.to_data_object()
+        if data is not None:
+            return data
+
+    raise ValueError(f"Source {src} cannot be converted into a data object")
 
 
 def from_source_lazily(name, *args, **kwargs):

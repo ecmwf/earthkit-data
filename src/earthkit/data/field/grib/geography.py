@@ -156,6 +156,14 @@ class GribGeography(GeographyBase):
     @thread_safe_cached_property
     def _get_grid_spec_from_handle(self):
         if ECKIT_GRID_SUPPORT.has_ecc_grid_spec and ECKIT_GRID_SUPPORT.has_grid:
+            grid_type = self.handle.get("gridType", default=None)
+            # For certain gridTypes the grid specification is not available and when we try to access it a
+            # lot of errors are logged/printed from the supporting libraries (eccodes/eckit), so we skip
+            # them here.
+            # TODO: remove this check once the supporting libraries handle all grid types correctly
+            if grid_type in ["lambert", "polar_stereographic", "mercator", "lambert_azimuthal_equal_area"]:
+                return None
+
             # Try to get the gridspec from the handle
             grid_spec = self.handle.get("gridSpec", default=None)
             if isinstance(grid_spec, str) and grid_spec != "":
@@ -167,7 +175,9 @@ class GribGeography(GeographyBase):
             if not isinstance(grid_spec, dict):
                 grid_spec = None
 
-        return grid_spec
+            return grid_spec
+
+        return None
 
     def area(self):
         north = self.handle.get("latitudeOfFirstGridPointInDegrees")
@@ -199,6 +209,21 @@ class GribGeography(GeographyBase):
         self.__init__(state["handle"])
 
 
+def _has_zero_grid_uid(handle):
+    """Return True if the ``uuidOfHGrid`` of the message is available and all zeros."""
+    try:
+        uid = handle.get("uuidOfHGrid", default=None)
+    except Exception:
+        return False
+
+    if isinstance(uid, bytes):
+        uid = uid.hex()
+    if isinstance(uid, str):
+        uid = uid.strip()
+        return uid != "" and set(uid) == {"0"}
+    return False
+
+
 class GribGeographyBuilder:
     @staticmethod
     def build(handle):
@@ -224,18 +249,37 @@ class GribGeographyBuilder:
                         " grid support is not available in ecCodes"
                     )
                 )
-            from earthkit.data.field.component.geography import GridsSpecBasedGeography
+            # An all-zero uuidOfHGrid means the grid is not registered anywhere. Asking ecCodes for the
+            # gridSpec would make ecCodes/eckit print "GridUnknownError" to stderr, so we skip it.
+            if _has_zero_grid_uid(handle):
+                grid_spec = None
+            else:
+                try:
+                    grid_spec = handle.get("gridSpec", default=None)
+                except Exception:
+                    grid_spec = None
 
-            grid_spec = handle.get("gridSpec", default=None)
             if isinstance(grid_spec, str) and grid_spec != "":
+                from earthkit.data.field.component.geography import GridsSpecBasedGeography
+
                 component = GridsSpecBasedGeography(grid_spec)
             else:
-                raise ValueError(
-                    (
-                        "GribGeographyBuilder: cannot use unstructured grid because gridSpec"
-                        "  is not available in the handle"
+                grid_name = handle.get("gridName", None)
+                # this is the case for user defined grids with a custom set of lats/lons
+                if grid_name == "undefined":
+                    from earthkit.data.field.component.geography import EmptyGeography
+
+                    shape = (handle.get("numberOfDataPoints", None),)
+                    component = EmptyGeography(shape=shape, grid_type=grid_type)
+                # for a named grid the the grid spec should exist, otherwise we cannot handle it
+                else:
+                    raise ValueError(
+                        (
+                            "GribGeographyBuilder: cannot handle unstructured grid with gridName="
+                            f"{grid_name}. No gridSpec available"
+                        )
                     )
-                )
+
         # Other gridded data is handled with ecCodes
         else:
             component = GribGeography(handle)

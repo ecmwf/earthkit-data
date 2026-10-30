@@ -76,7 +76,8 @@ class FilePatternTarget(SimpleTarget):
     def flush(self):
         """Flush all the files.
 
-        -------
+        Raises
+        ------
         ValueError: If the target is already closed.
         """
         for f in self._files.values():

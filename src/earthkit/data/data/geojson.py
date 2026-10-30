@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     import xarray  # type: ignore[import]
 
 
-class GeoJsonData(SourceData):
+class GeoJSONData(SourceData):
     """Represent GeoJSON data.
 
     GeoJSON is a format for encoding a variety of geographic data structures using JSON. This class provides
@@ -55,13 +55,6 @@ class GeoJsonData(SourceData):
         from earthkit.data.utils.summary import DataDescriber
 
         return DataDescriber(title="GeoJSON file", path=self.path, types=self.available_types)
-
-    @property
-    def path(self) -> str | list[str] | None:
-        try:
-            return self._reader.path
-        except Exception:
-            return None
 
     def __repr__(self) -> str:
         return f"GeoJSONData(path={self.path})"
@@ -121,7 +114,7 @@ class GeoJsonData(SourceData):
 
         Returns
         -------
-        :py:class:`earthkit.data.readers.geojson.file.GeoJsonList`
-            A GeoJsonList containing the GeoJSON data.
+        :py:class:`earthkit.data.readers.geojson.file.GeoJSONList`
+            A GeoJSONList containing the GeoJSON data.
         """
         return self._reader.to_featurelist()

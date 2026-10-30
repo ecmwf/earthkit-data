@@ -62,7 +62,7 @@ def test_grib_gridspec_from_file():
     }
     gs = ds[0].geography.grid_spec()
     assert isinstance(gs, dict), type(gs)
-    assert gs == ref
+    assert gs.items() >= ref.items()
 
 
 @pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")

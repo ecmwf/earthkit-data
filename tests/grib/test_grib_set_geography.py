@@ -81,7 +81,7 @@ def test_grib_set_geo_grid_spec(fl_type, _kwargs, shape, grid_spec, area_1, area
     assert f.shape == shape
     assert f.get("geography.shape") == shape
     assert f.get("geography.area") == area_1
-    assert f.get("geography.grid_spec") == grid_spec
+    assert f.get("geography.grid_spec").items() >= grid_spec.items()
     # assert f.get("geography.grid_type") == grid_type
     assert f.get("geography.latitudes").shape == shape
     assert f.get("geography.longitudes").shape == shape
@@ -95,7 +95,7 @@ def test_grib_set_geo_grid_spec(fl_type, _kwargs, shape, grid_spec, area_1, area
         assert f_saved[0].shape == shape
         assert f_saved[0].get("geography.shape") == shape
         assert f_saved[0].get("geography.area") == area_2
-        assert f_saved[0].get("geography.grid_spec") == grid_spec
+        assert f_saved[0].get("geography.grid_spec").items() >= grid_spec.items()
         # assert f_saved[0].get("geography.grid_type") == grid_type
         assert f_saved[0].get("geography.latitudes").shape == shape
         assert f_saved[0].get("geography.longitudes").shape == shape

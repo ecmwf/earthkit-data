@@ -260,6 +260,22 @@ def test_mars_grib_area_str():
     assert len(s) == 1
 
 
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_MARS, reason="No access to MARS")
+@pytest.mark.parametrize("relative_date", [-1, "-1"])
+def test_mars_grib_relative_date(relative_date):
+    s = from_source(
+        "mars",
+        param=["2t"],
+        levtype="sfc",
+        grid=[10, 10],
+        prompt=False,
+        date=relative_date,
+    ).to_fieldlist()
+    assert len(s) == 1
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

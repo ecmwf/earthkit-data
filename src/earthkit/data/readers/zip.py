@@ -43,8 +43,8 @@ class InfoWrapper:
 
 
 class ZIPReader(ArchiveReader):
-    def __init__(self, source, path):
-        super().__init__(source, path)
+    def __init__(self, source, path, **kwargs):
+        super().__init__(source, path, **kwargs)
 
         self._mutate = None
 
@@ -56,9 +56,6 @@ class ZIPReader(ArchiveReader):
                 if ext in (".csv",):
                     self._mutate = CSVReader(source, path, compression="zip")
                     return  # Pandas can read zipped files directly
-
-            if ".zattrs" in members:
-                return  # Zarr can read zipped files directly
 
             self.expand(zip, members)
 
@@ -83,13 +80,11 @@ EXTENSIONS_TO_SKIP = (".npz",)  # Numpy arrays
 
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
-    if magic is None:  # Bypass check and force
-        return ZIPReader(source, path)
+    if magic is not None:
+        _, extension = os.path.splitext(path)
 
-    _, extension = os.path.splitext(path)
-
-    if magic[:4] == b"PK\x03\x04" and extension not in EXTENSIONS_TO_SKIP:
-        return ZIPReader(source, path)
+        if magic[:4] == b"PK\x03\x04" and extension not in EXTENSIONS_TO_SKIP:
+            return ZIPReader(source, path, **kwargs)
 
 
 READER = reader
