@@ -67,8 +67,9 @@ class Zenodo(Source):
     ----------
     identifier : int | str
         Record ID, Zenodo URL or DOI. A DOI may also be given as a doi.org URL.
-    filter : str | Sequence[str] | None, optional
-        File selection with a glob string or an explicit list of file names.
+    filter : str | Callable | Sequence[str] | None, optional
+        File selection with a glob string, a callable or an explicit list of file names.
+        A callable is called with each file name in the record and must return a bool.
         By default, all files are selected.
     **kwargs
         Additional keyword arguments forwarded to the URL source.
@@ -108,6 +109,12 @@ class Zenodo(Source):
             matched = fnmatch.filter(record_files.keys(), filter)
             if not matched:
                 raise ValueError(f"no files in record {self.record_id} match the pattern: {filter!r}")
+            self._file_urls = {name: record_files[name] for name in matched}
+        # Select filenames with provided predicate
+        elif callable(filter):
+            matched = [name for name in record_files if filter(name)]
+            if not matched:
+                raise ValueError(f"no files in record {self.record_id} match the filter")
             self._file_urls = {name: record_files[name] for name in matched}
         # Select filenames based on provided list
         else:

@@ -176,6 +176,7 @@ class TestZenodoSourceOffline:
             (None, set(FILES)),
             ("c.nc", {"c.nc"}),
             ("*.grib", {"a.grib", "b.grib"}),
+            (lambda name: name.endswith(".grib"), {"a.grib", "b.grib"}),
             (FILES, FILES),
             (FILES[::-1], FILES[::-1]),  # maintains order
             (["a.grib", "a.grib", "b.grib"], ["a.grib", "b.grib"]),  # ignores duplicates
@@ -237,6 +238,7 @@ class TestZenodoSourceOffline:
             ["A.GRIB"],  # case sensitive
             ["*.grib"],  # list entry does not trigger pattern matching
             [],
+            lambda name: False,
         ],
     )
     def test_invalid_filter(self, zenodo, filter):

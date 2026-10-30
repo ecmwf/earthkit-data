@@ -1403,8 +1403,8 @@ zenodo
 
   :param identifier: a record ID, URL or DOI.
   :type identifier: int, str
-  :param filter: the files to select from the record. Accepts a glob pattern that is matched against the file names in the record or an explicit list of file names to select. By default, all files in the record are selected.
-  :type filter: str, sequence of str, None
+  :param filter: the files to select from the record. Accepts a glob pattern that is matched against the file names in the record, a callable or an explicit list of file names to select. A callable is called with each file name in the record and should return a boolean. By default, all files in the record are selected.
+  :type filter: str, callable, sequence of str, None
   :param dict **kwargs: other keyword arguments passed to the :ref:`url <data-sources-url>` source.
 
 
