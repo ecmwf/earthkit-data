@@ -92,6 +92,23 @@ def test_zenodo_source_is_registered():
     assert get_source._lookup("zenodo") is not None
 
 
+@pytest.mark.long_test
+@pytest.mark.download
+def test_zenodo_source_online_from_doi():
+    d = from_source(
+        "zenodo", identifier="10.5281/zenodo.13918054", filter=["cat_ens_20240520_pf.grb", "cat_ens_20240521_pf.grb"]
+    )
+    assert len(d.path) == 2  # two files
+    assert len(d.to_fieldlist()) == 900
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+def test_zenodo_source_online_from_record_id():
+    d = from_source("zenodo", identifier=13918054, filter="*_20240520_*")
+    assert len(d.to_fieldlist()) == 450
+
+
 class TestZenodoSourceOffline:
     """Offline test for the Zenodo source.
 
