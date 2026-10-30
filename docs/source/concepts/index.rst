@@ -7,6 +7,7 @@ Concepts
 
    inputs/index.rst
    data
+   data_formats/index.rst
    encoders/index.rst
    targets/index.rst
    streams

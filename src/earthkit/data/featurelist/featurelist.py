@@ -383,7 +383,7 @@ class FeatureList(Source, Encodable):
             ds.sel({parameter.variable: ["u", "v"]})
 
         - slice of values (defines a closed interval, so treated as inclusive of both the start
-        and stop values, unlike normal Python indexing)::
+          and stop values, unlike normal Python indexing)::
 
             # filter levels between 300 and 500 inclusively
             ds.sel({vertical.level: slice(300, 500)})
