@@ -19,6 +19,7 @@ from earthkit.data.core.index import MultiIndex
 from earthkit.data.indexing.indexed import IndexFieldListBase
 
 # from .field import EmptyFieldList
+from .coordinates import decode_hybrid_levels
 from .flavour import CoordinateGuesser
 from .patch import patch_dataset
 from .time import Time
@@ -185,6 +186,8 @@ class XArrayFieldList(IndexFieldListBase):
 
         LOG.debug("Xarray data_vars: %s", ds.data_vars)
 
+        hybrid_levels: Dict[str, Any] = {}
+
         # Select only geographical variables
         for name in ds.data_vars:
             if name in skip:
@@ -240,6 +243,9 @@ class XArrayFieldList(IndexFieldListBase):
                                 break
 
             _check_values_geo()
+
+            # decode the CF hybrid levels once per dataset and coordinate
+            decode_hybrid_levels(ds, coordinates, hybrid_levels)
 
             v = Variable(
                 ds=ds,

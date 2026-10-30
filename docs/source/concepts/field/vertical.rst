@@ -448,6 +448,31 @@ levels the vertical component exposes the following additional methods:
 - :meth:`~earthkit.data.field.component.vertical.VerticalBase.number_of_levels` – total number of
   model levels
 
+Reading CF hybrid levels
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Fields read from CF-netCDF or xarray (e.g. with ``from_source("file", "x.nc")`` or
+``from_object(xarray_dataset)``) get a hybrid vertical when the level coordinate has
+``standard_name="atmosphere_hybrid_sigma_pressure_coordinate"`` and a ``formula_terms`` attribute.
+For writing such coordinates with the xarray engine see :ref:`xr_hybrid_level_cf`.
+
+- ``vertical.level`` is the model level number whenever it can be determined: from a
+  ``model_level_number`` coordinate, from integer coordinate values or from a complete set of levels.
+  In strict-CF files whose coordinate holds dimensionless values such as ``ap/p0 + b``, these values
+  are therefore replaced by level numbers when possible.
+- ``vertical.coefficients()`` returns the half-level ``(A, B)`` (as a ``ParametricVertical``) only when
+  the whole model is present, i.e. all levels 1..N with bounds. Otherwise it is ``None``, e.g. for a
+  subset of levels written by ``to_xarray()`` such as model levels 1, 5, ..., 137.
+- The completeness check is conservative: the lowest half level must be the surface (``b = 1``,
+  ``ap = 0``). When the level numbers are not known, the top must also be at zero pressure, so a model
+  with a non-zero top pressure and no level numbers gets no coefficients.
+- The orientation is taken from the ``positive`` attribute of the coordinate (``"down"`` when it is
+  missing). For ``positive="up"`` the levels are read but no coefficients are attached, because the
+  earthkit hybrid level type is positive down.
+- Hybrid coordinates without ``formula_terms`` (e.g. cfgrib output) are read as before, without
+  coefficients.
+
+
 List of vertical metadata keys
 --------------------------------
 
