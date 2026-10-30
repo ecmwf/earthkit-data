@@ -51,7 +51,7 @@ New Xarray engine
 - Added new Xarray engine called ``"earthkit"``. This is the new default when calling :meth:`~earthkit.data.core.fieldlist.FieldList.to_xarray`. The ``"cfgrib"`` engine is still available and can be used by passing ``engine="cfgrib"`` to :meth:`~earthkit.data.core.fieldlist.FieldList.to_xarray`. For details see:
 
   - :ref:`xr_engine`
-  - :ref:`examples_xr_engine` (notebook examples)
+  - :ref:`xr_engine_examples` (notebook examples)
 
 API changes
 +++++++++++++
@@ -92,11 +92,12 @@ Changes
 
 - Added :meth:`~earthkit.data.core.fieldlist.Field.clone` and :py:meth:`~earthkit.data.core.fieldlist.Field.copy` to alter field metadata and values (:pr:`493`, :pr:`496`, :pr:`522`). See the notebook examples:
 
-  - :ref:`/tutorials/legacy/grib_modification.ipynb`
+  - :ref:`/tutorials/grib/grib_modify_values.ipynb`
+  - :ref:`/tutorials/grib/grib_modify_metadata.ipynb`
 
 - Reimplemented and documented the :ref:`data-sources-lod` source, which is now generating a :py:class:`SimpleFieldList` and is not bound to GRIB specific metadata (:pr:`461`, :pr:`511`). See the notebook examples:
 
-  - :ref:`examples_lod`
+  - :ref:`dict_examples`
 
 - Added serialisation to GRIB fieldlists and Metadata (:pr:`463`, :pr:`474`)
 - Improved in-memory GRIB field implementation (:pr:`492`)

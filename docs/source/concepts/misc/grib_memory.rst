@@ -1,3 +1,5 @@
+:orphan:
+
 .. _grib-memory:
 
 GRIB field memory management

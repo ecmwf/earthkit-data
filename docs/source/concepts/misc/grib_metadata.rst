@@ -1,3 +1,5 @@
+:orphan:
+
 .. _grib-metadata-cache:
 
 GRIB field metadata caching

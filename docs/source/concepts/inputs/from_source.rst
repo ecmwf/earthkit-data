@@ -17,8 +17,8 @@ from_source
   Read data from a source.
 
   :param str name: The source (see below)
-  :param tuple *args: Specifies the data location and additional parameters to access the data
-  :param dict **kwargs: Provides **additional functionalities** including caching, filtering, sorting and indexing
+  :param tuple \*args: Specifies the data location and additional parameters to access the data
+  :param dict \*\*kwargs: Provides **additional functionalities** including caching, filtering, sorting and indexing
   :return: a :ref:`data object <data-object>` containing the data read from the source
 
   **earthkit-data** has the following built-in sources:
@@ -172,15 +172,15 @@ file-pattern
 
   :param pattern: Input path pattern using ``{}`` brackets to define parameters that can be substituted. See :ref:`patterns <patterns>` for details.
   :type pattern: str
-  :param tuple *args: Specify the values to substitute into the parameters ``pattern``. Each parameter can be a list/tuple or a single value.
+  :param tuple \*args: Specify the values to substitute into the parameters ``pattern``. Each parameter can be a list/tuple or a single value.
   :param hive_partitioning: Control how the ``pattern`` is interpreted. See details below.
   :type hive_partitioning: bool
-  :param dict **kwargs: Other keyword arguments specifying the parameter values
+  :param dict \*\*kwargs: Other keyword arguments specifying the parameter values
 
   The actual behaviour and the type of the returned object depend on ``hive_partitioning``:
 
 hive_partitioning=False
-////////////////////////////
+============================
 
   When ``hive_partitioning`` is ``False``, first, the pattern parameters are substituted with the values specified by the ``*args`` and ``**kwargs``, see :ref:`patterns <patterns>` for details. For this, all the possible values must be specified for each pattern parameter. Next, the paths are constructed by taking the Cartesian product of the substituted values. Finally, the resulting paths are read and :ref:`from_source <data-sources-file-pattern>` returns a single object (for GRIB data it will be a :py:class:`Fieldlist`).
 
@@ -210,8 +210,8 @@ hive_partitioning=False
 
 .. _file-pattern-hive-partitioning:
 
-hive_partioning=True
-/////////////////////////////
+hive_partitioning=True
+==============================
 
     When ``hive_partitioning`` is ``True``, the ``pattern`` defines a Hive partitioning with each pattern parameter interpreted as a metadata key. The returned object is a :py:class:`~earthkit.data.data.hive.HiveFilePatternData` and has a limited scope, we need to call its :py:func:`~earthkit.data.data.hive.HiveFilePatternData.to_fieldlist` method with the filter conditions to extract the data as a fieldlist.
 
@@ -299,7 +299,7 @@ url
   :param filter: A filter passed to the underlying :ref:`file source <data-sources-file>` that reads the downloaded data.
   :param merger: A merger passed to the underlying :ref:`file source <data-sources-file>` that reads the downloaded data.
   :param bool split: If ``True`` and multiple URLs are provided, each URL is downloaded into its own target file instead of merging all the URLs into a single target file. Has no effect when a single URL is given. Cannot be used together with ``stream=True``. Default is ``False``. *New in version 1.3.0*
-  :param dict **kwargs: Other keyword arguments.
+  :param dict \*\*kwargs: Other keyword arguments.
 
   .. code-block:: python
 
@@ -354,7 +354,7 @@ url-pattern
   for the *file* and *url* data sources above.
 
   :param bool sort_urls: Whether to sort the generated URLs before downloading. Defaults to ``False``.
-  :param dict **kwargs: Other keyword arguments passed to the underlying :ref:`url <data-sources-url>` source.
+  :param dict \*\*kwargs: Other keyword arguments passed to the underlying :ref:`url <data-sources-url>` source.
 
   .. code-block:: python
 
@@ -543,7 +543,7 @@ forcings
   :type source_or_dataset: Source, FieldList or None
   :param request: Specify the request
   :type request: dict
-  :param dict **kwargs: Other keyword arguments specifying the request
+  :param dict \*\*kwargs: Other keyword arguments specifying the request
 
 
 .. _data-sources-lod:
@@ -577,10 +577,10 @@ multi
   .. note::
     The ``multi`` source is primarily used internally. To concatenate multiple Data objects, use function :ref:`concat <concat>` instead if no custom merger is needed.
 
-  :param tuple *data_or_sources: :ref:`Data <data-object>` objects and/or sources.
+  :param tuple \*data_or_sources: :ref:`Data <data-object>` objects and/or sources.
   :param merger: When None, an attempt is made to merge the items in ``data_or_sources`` by their classes (using the nearest common class). When False, no merging is attempted (available from *version 1.3*). Otherwise ``merger`` specifies a custom merger (see details :ref:`here <mergers-details>`), which is used in a lazy way when conversion to fieldlst, Xarray or pandas is requested. For further details about the merging process consult the :ref:`mergers` section.
   :type merger: None, False, object, callable, str, or tuple
-  :param dict **kwargs: Other keyword arguments
+  :param dict \*\*kwargs: Other keyword arguments
 
 
 .. note::
@@ -600,15 +600,15 @@ ads
   The retrieval is performed using the cdsapi_ package.
 
   :param str dataset: The name of the ADS dataset
-  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
+  :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
   :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
-  :param dict **kwargs: Other keyword arguments specifying the request
+  :param dict \*\*kwargs: Other keyword arguments specifying the request
 
   .. note::
 
-    .. include:: misc/request_args.rst
+    .. include:: ../misc/request_args.rst
 
 
   The requests can contain GRIB post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction, respectively. They can
@@ -660,7 +660,7 @@ cds
   The retrieval is performed using the cdsapi_ package.
 
   :param str dataset: The name of the CDS dataset
-  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
+  :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
   :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
@@ -669,11 +669,11 @@ cds
     - no cdsapi_ RC file exists at the default location ``~/.cdsapirc``
     - no cdsapi_ RC file exists at the location specified via the ``CDSAPI_RC`` environment variable
     - no credentials specified via the ``CDSAPI_URL`` and ``CDSAPI_KEY`` environment variables
-  :param dict **kwargs: Other keyword arguments specifying the request
+  :param dict \*\*kwargs: Other keyword arguments specifying the request
 
   .. note::
 
-    .. include:: misc/request_args.rst
+    .. include:: ../misc/request_args.rst
 
   The requests can contain GRIB post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction, respectively. They can
   also contain the earthkit-data specific :ref:`split_on <split_on>` parameter.
@@ -718,7 +718,7 @@ ecfs
     This service is only available at ECMWF.
 
   :param str path: The path to read. It must start with ``ec:`` followed by the path to the file to retrieve.
-  :param dict **kwargs: Other keyword arguments passed to the underlying :ref:`file source <data-sources-file>` that reads the retrieved data.
+  :param dict \*\*kwargs: Other keyword arguments passed to the underlying :ref:`file source <data-sources-file>` that reads the retrieved data.
 
 
 .. _data-sources-eod:
@@ -733,17 +733,17 @@ ecmwf-open-data
 
   `ECMWF open data`_ is a subset of ECMWF real-time forecast data made available to the public free of charge.  It uses the `ecmwf-opendata <https://github.com/ecmwf/ecmwf-opendata>`_ package.
 
-  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
+  :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
   :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param str source: Either the name of the server to contact or a fully qualified URL. Possible values are "ecmwf" to access ECMWF's servers, or "azure" to access data hosted on Microsoft's Azure. Default is "ecmwf".
   :param str model: Name of the model that produced the data. Use "ifs" for the physics-driven model and "aifs" for the data-driven model. Please note that "aifs" is currently experimental and only produces a small subset of fields. Default is "ifs".
-  :param dict **kwargs: Other keyword arguments specifying the request
+  :param dict \*\*kwargs: Other keyword arguments specifying the request
 
   .. note::
 
-    .. include:: misc/request_args.rst
+    .. include:: ../misc/request_args.rst
 
   Details about the request format can be found `here <https://github.com/ecmwf/ecmwf-opendata>`__.
 
@@ -778,7 +778,7 @@ fdb
 
   ``FDB`` is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. Earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
 
-  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
+  :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries, but current only one request is supported.
   :param dict,str config: The FDB configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 0.11.0*
   :param dict,str user_config: The FDB user configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 1.2.0*
@@ -795,11 +795,11 @@ fdb
     - the resulting :py:class:`FieldList` always retrieves one GRIB field as a reference and stores it in memory throughout the lifetime of the :py:class:`FieldList`. This is managed internally.
 
     When ``lazy=True`` the ``stream`` option is ignored. Please note that this is an **experimental** feature. *New in version 0.14.0*
-  :param dict **kwargs: Other keyword arguments specifying the request
+  :param dict \*\*kwargs: Other keyword arguments specifying the request
 
   .. note::
 
-    .. include:: misc/request_args.rst
+    .. include:: ../misc/request_args.rst
 
   The following example retrieves analysis GRIB data for 3 surface parameters as stream.
   By default we will consume one message at a time and ``ds`` can only be used as an iterator:
@@ -957,7 +957,7 @@ mars
 
   Retrieve data from the ECMWF `MARS <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_ (Meteorological Archival and Retrieval System)  archive.
 
-  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
+  :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
   :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
@@ -993,9 +993,9 @@ mars
       - dict specifying the "stdout" or/and the "stderr" kwargs for Pythons's ``subrocess.run()`` method
 
   :type log: str, None, callable, dict
-  :param dict **kwargs: Other keyword arguments specifying the request
+  :param dict \*\*kwargs: Other keyword arguments specifying the request
 
-  .. include:: misc/request_args.rst
+  .. include:: ../misc/request_args.rst
 
   The requests can contain GRIB post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction, respectively. They can
   also contain the earthkit-data specific :ref:`split_on <split_on>` parameter.
@@ -1062,14 +1062,14 @@ polytope
   The retrieval is performed using the polytope-client_ package.
 
   :param str collection: The name of the polytope collection
-  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or a list/tuple of dictionaries
+  :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or a list/tuple of dictionaries
   :param str address: Specify the address of the polytope service
   :param str user_email: Specify the user email credential. Must be used together with ``user_key``. This is an alternative to using the ``POLYTOPE_USER_EMAIL`` environment variable. *New in version 0.7.0*
   :param str user_key: Specify the user key credential. Must be used together with ``user_email``. This is an alternative to using the ``POLYTOPE_USER_KEY`` environment variable. *New in version 0.7.0*
   :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for GRIB, BUFR and CoverageJson data. See details about streams :ref:`here <streams>`.
-  :param dict **kwargs: Other keyword arguments, these can include options passed to the polytope-client_
+  :param dict \*\*kwargs: Other keyword arguments, these can include options passed to the polytope-client_
 
   The following logic is applied to build the **requests**:
 
@@ -1124,7 +1124,7 @@ s3
 
   Retrieve data from `Amazon S3 <https://aws.amazon.com/s3/>`_ buckets.
 
-  :param tuple *args: Positional arguments specifying the request(s). Each request is represented by a dict. See detailed description below. A sequence of dicts can also be used to specify multiple requests.
+  :param tuple \*args: Positional arguments specifying the request(s). Each request is represented by a dict. See detailed description below. A sequence of dicts can also be used to specify multiple requests.
   :param bool anon: If ``True`` use anonymous access, this will only work for public buckets. If ``False``, use the ``aws_access_key``, ``aws_secret_access_key`` and ``aws_token`` credentials. These can also be specified as part of the request (request values override the kwargs). If no credentials provided use :xref:`botocore` to load the `aws credentials`_ from:
 
     - `environment variables <https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html#using-environment-variables>`_
@@ -1268,7 +1268,7 @@ wekeo
   `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeo`` source provides access to `WEkEO`_ using the WEkEO grammar. The retrieval is based on the hda_ Python API.
 
   :param str dataset: The name of the WEkEO dataset
-  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
+  :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
   :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
@@ -1277,9 +1277,9 @@ wekeo
     - no hda_ RC file exists at the default location ``~/.hdarc``
     - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
     - no credentials specified via the ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
-  :param dict **kwargs: Other keyword arguments specifying the request
+  :param dict \*\*kwargs: Other keyword arguments specifying the request
 
-  .. include:: misc/request_args.rst
+  .. include:: ../misc/request_args.rst
 
   The following example retrieves Normalized Difference Vegetation Index data derived from EO satellite imagery in NetCDF format:
 
@@ -1322,7 +1322,7 @@ wekeo-cds
   `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeo-cds`` source provides access to `Copernicus Climate Data Store`_ (CDS) datasets served on `WEkEO`_ using the `cdsapi`_ grammar. The retrieval is based on the hda_ Python API.
 
   :param str dataset: The name of the WEkEO dataset
-  :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
+  :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
   :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in  version 0.18.0*
   :type request: dict, list/tuple of dicts, None
@@ -1331,9 +1331,9 @@ wekeo-cds
     - no hda_ RC file exists at the default location ``~/.hdarc``
     - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
     - no credentials specified via the ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
-  :param dict **kwargs: Other keyword arguments specifying the request
+  :param dict \*\*kwargs: Other keyword arguments specifying the request
 
-  .. include:: misc/request_args.rst
+  .. include:: ../misc/request_args.rst
 
   The following example retrieves ERA5 surface data for multiple days in GRIB format:
 

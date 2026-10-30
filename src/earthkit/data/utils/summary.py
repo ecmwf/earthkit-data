@@ -151,6 +151,8 @@ def format_describe(attributes, *args, **kwargs):
 
 
 class NamespaceDump(dict):
+    """Namespace dump data keyed by title, with an HTML representation for notebooks."""
+
     def __init__(self, data, **kwargs):
         d = {item["title"]: item["data"] for item in data}
         super().__init__(d)

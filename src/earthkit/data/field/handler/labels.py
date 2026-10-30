@@ -79,6 +79,8 @@ class Labels(FieldComponentHandler):
 
 
 class SimpleLabels(dict, Labels):
+    """Labels implementation stored in a dictionary."""
+
     @classmethod
     def from_dict(cls, d: dict) -> "SimpleLabels":
         """Create a SimpleLabels object from a dictionary.
