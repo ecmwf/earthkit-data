@@ -11,9 +11,9 @@ to_target
   The function can be either invoked on a :ref:`data object <data-object>` or the :ref:`data object <data-object>` can be specified as ``data``.
 
   :param str name: the target (see below)
-  :param tuple *args: specify target parameters
+  :param tuple \*args: specify target parameters
   :param data: specify the :ref:`data object <data-object>` to write. Cannot be set when :func:`to_target` is called on a data object.
-  :param dict **kwargs: specify additional target parameters. Also specify the encoder parameters.
+  :param dict \*\*kwargs: specify additional target parameters. Also specify the encoder parameters.
 
 
 .. _built-in-targets:
@@ -41,7 +41,7 @@ Built in targets
       - add data to a `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
       - :py:class:`~data.targets.FDBTarget`
     * - :ref:`targets-zarr`
-      - add data to a `zarr <https://zarr.dev>`_ store
+      - add data to a `zarr <https://zarr.dev>`__ store
       - :py:class:`~data.targets.ZarrTarget`
 
 
@@ -67,7 +67,7 @@ file
   :type encoder: str, :py:class:`Encoder`, None
   :param template: The template to be used by the encoder.
   :type template: obj, None
-  :param dict **kwargs: other keyword arguments passed to the encoder
+  :param dict \*\*kwargs: other keyword arguments passed to the encoder
 
 
   .. code-block:: python
@@ -111,7 +111,7 @@ file-pattern
   :type encoder: str, :py:class:`Encoder`, None
   :param template: The template to be used by the encoder.
   :type template: obj, None
-  :param dict **kwargs: other keyword arguments passed to the encoder
+  :param dict \*\*kwargs: other keyword arguments passed to the encoder
 
 
   .. code-block:: python
@@ -152,7 +152,7 @@ fdb
   :type encoder: str, :py:class:`Encoder`, None
   :param template: The template to be used by the encoder.
   :type template: obj, None
-  :param dict **kwargs: other keyword arguments passed to the encoder
+  :param dict \*\*kwargs: other keyword arguments passed to the encoder
 
 
   .. code-block:: python

@@ -14,6 +14,8 @@ LOG = logging.getLogger(__name__)
 
 
 class Remapping(dict):
+    """Mapping of metadata key names to format strings used to build new keys."""
+
     # inherit from dict to make it serialisable
     def __init__(self, remapping):
         super().__init__(remapping)
@@ -100,6 +102,8 @@ def _build_remapping(mapping):
 
 
 class Patch(dict):
+    """Remapping wrapper that modifies the value of a single key."""
+
     # inherit from dict to make it serialisable
     def __init__(self, proc, name, patch):
         self.proc = proc

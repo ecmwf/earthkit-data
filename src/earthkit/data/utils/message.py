@@ -342,6 +342,8 @@ class CodesHandle(eccodes.Message):
 
 
 class ReaderLRUCache(dict):
+    """Cache of open file readers, evicting the least recently used when full."""
+
     def __init__(self, size):
         self.readers = dict()
         self.lock = threading.Lock()

@@ -1,3 +1,5 @@
+:orphan:
+
 .. _target_plugin:
 
 Targets plugins

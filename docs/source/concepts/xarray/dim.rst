@@ -16,11 +16,11 @@ By default, the following predefined dimensions are generated, in the following 
 
 - ensemble forecast member dimension
 - aerosol type, or atmospheric chemical or physical constituent type
-(discrete dimension, applicable for chemical parameters; see details :ref:`here <_xr_chem_optical_dims>`)
+  (discrete dimension, applicable for chemical parameters; see details :ref:`here <xr_chem_optical_dims>`)
 - optical depth or wavelength range or colour channel (applicable for optical parameters,
-simulated satellite images, etc.; see details :ref:`here <_xr_chem_optical_dims>`)
+  simulated satellite images, etc.; see details :ref:`here <xr_chem_optical_dims>`)
 - direction and frequency of sea waves (applicable for 2D wave spectra parameters;
-see details :ref:`here <_xr_wave_spectra_dims>`)
+  see details :ref:`here <xr_wave_spectra_dims>`)
 - temporal dimensions, controlled by ``time_dims``  (see details :ref:`here <xr_time_dims>`)
 - vertical dimensions, controlled by ``level_dim_mode`` (see details :ref:`here <xr_level_dim_modes>`)
 
