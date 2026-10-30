@@ -31,7 +31,6 @@ def download_url(name, record_id=RECORD_ID):
 
 
 def assert_selected(zenodo, files=set(FILES), record_id=RECORD_ID):
-    # Files ignores order of elements while list enforces it
     expected = type(files)(download_url(file, record_id) for file in files)
     assert type(files)(zenodo.urls) == expected
 
@@ -89,6 +88,10 @@ class MockRequests:
         return self.response
 
 
+def test_zenodo_source_is_registered():
+    assert get_source._lookup("zenodo") is not None
+
+
 class TestZenodoSourceOffline:
     """Offline test for the Zenodo source.
 
@@ -111,9 +114,6 @@ class TestZenodoSourceOffline:
         monkeypatch.setattr(zenodo_module, "requests", api)
         monkeypatch.setattr(zenodo_module, "MultiUrl", capture)
         return api
-
-    def test_zenodo_source_is_registered(self):
-        assert get_source._lookup("zenodo") is not None
 
     @pytest.mark.parametrize("identifier", [RECORD_ID, CONCEPT_ID])
     def test_valid_identifier_int(self, zenodo, identifier):
@@ -154,7 +154,7 @@ class TestZenodoSourceOffline:
         ],
     )
     @pytest.mark.parametrize(
-        "only,expected",
+        "filter,expected",
         [
             (None, set(FILES)),
             ("c.nc", {"c.nc"}),
@@ -164,8 +164,8 @@ class TestZenodoSourceOffline:
             (["a.grib", "a.grib", "b.grib"], ["a.grib", "b.grib"]),  # ignores duplicates
         ],
     )
-    def test_valid_identifier_str(self, zenodo, identifier, url, only, expected):
-        from_source("zenodo", url.format(id=identifier), only=only)
+    def test_valid_identifier_str(self, zenodo, identifier, url, filter, expected):
+        from_source("zenodo", url.format(id=identifier), filter=filter)
         assert_selected(zenodo, files=expected)
 
     def test_without_kwargs(self, zenodo):
@@ -173,7 +173,7 @@ class TestZenodoSourceOffline:
         assert zenodo.kwargs == {}
 
     def test_kwargs_forwarded(self, zenodo):
-        from_source("zenodo", RECORD_ID, only="a.grib", foo="bar", bar=False)
+        from_source("zenodo", RECORD_ID, filter="a.grib", foo="bar", bar=False)
         assert zenodo.kwargs == {"foo": "bar", "bar": False}
 
     # ValueErrors for input validation problems and invalid file selection
@@ -208,7 +208,7 @@ class TestZenodoSourceOffline:
             from_source("zenodo", identifier)
 
     @pytest.mark.parametrize(
-        "only",
+        "filter",
         [
             "",
             "*.zip",
@@ -222,9 +222,9 @@ class TestZenodoSourceOffline:
             [],
         ],
     )
-    def test_invalid_only(self, zenodo, only):
+    def test_invalid_filter(self, zenodo, filter):
         with pytest.raises(ValueError):
-            from_source("zenodo", RECORD_ID, only=only)
+            from_source("zenodo", RECORD_ID, filter=filter)
 
     # RuntimeErrors raised for problems with Zenodo API and response
 

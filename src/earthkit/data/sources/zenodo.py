@@ -67,14 +67,14 @@ class Zenodo(Source):
     ----------
     identifier : int | str
         Record ID, Zenodo URL or DOI. A DOI may also be given as a doi.org URL.
-    only : str | Sequence[str] | None, optional
+    filter : str | Sequence[str] | None, optional
         File selection with a glob string or an explicit list of file names.
         By default, all files are selected.
     **kwargs
         Additional keyword arguments forwarded to the URL source.
     """
 
-    def __init__(self, identifier, only=None, **kwargs):
+    def __init__(self, identifier, filter=None, **kwargs):
         super().__init__()
         self._kwargs = kwargs
 
@@ -101,22 +101,22 @@ class Zenodo(Source):
         record_files = _get_record_files(self.record_id)
 
         # No filenames specified -> select all
-        if only is None:
+        if filter is None:
             self._file_urls = record_files
         # Match filenames with provided pattern
-        elif isinstance(only, str):
-            matched = fnmatch.filter(record_files.keys(), only)
+        elif isinstance(filter, str):
+            matched = fnmatch.filter(record_files.keys(), filter)
             if not matched:
-                raise ValueError(f"no files in record {self.record_id} match the pattern: {only!r}")
+                raise ValueError(f"no files in record {self.record_id} match the pattern: {filter!r}")
             self._file_urls = {name: record_files[name] for name in matched}
         # Select filenames based on provided list
         else:
-            only = list(dict.fromkeys(only))  # deduplicate while preserving order
-            if not only:
+            filter = list(dict.fromkeys(filter))  # deduplicate while preserving order
+            if not filter:
                 raise ValueError(f"no files selected from record {self.record_id}")
-            self._file_urls = {name: record_files[name] for name in only if name in record_files}
-            if len(self._file_urls) != len(only):
-                missing = ", ".join(repr(name) for name in only if name not in record_files)
+            self._file_urls = {name: record_files[name] for name in filter if name in record_files}
+            if len(self._file_urls) != len(filter):
+                missing = ", ".join(repr(name) for name in filter if name not in record_files)
                 raise ValueError(f"file(s) not found in record {self.record_id}: " + missing)
 
         selected = ", ".join(self._file_urls.keys())

@@ -1395,7 +1395,7 @@ zarr
 zenodo
 --------
 
-.. py:function:: from_source("zenodo", identifier, only=None, **kwargs)
+.. py:function:: from_source("zenodo", identifier, filter=None, **kwargs)
   :noindex:
 
   `Zenodo <https://zenodo.org/>`_ is an open repository for research data and related information.
@@ -1403,8 +1403,8 @@ zenodo
 
   :param identifier: a record ID, URL or DOI.
   :type identifier: int, str
-  :param only: the files to select from the record. Accepts a glob pattern that is matched against the file names in the record or an explicit list of file names to select. By default, all files in the record are selected.
-  :type only: str, sequence of str, None
+  :param filter: the files to select from the record. Accepts a glob pattern that is matched against the file names in the record or an explicit list of file names to select. By default, all files in the record are selected.
+  :type filter: str, sequence of str, None
   :param dict **kwargs: other keyword arguments passed to the :ref:`url <data-sources-url>` source.
 
 
