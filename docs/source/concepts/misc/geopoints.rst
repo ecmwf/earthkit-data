@@ -248,10 +248,36 @@ as illustrated here:
 Here, four pieces of metadata are stored. Each ``key=value`` line is a separate item and the section runs
 until the ``#DATA`` line (or a ``#DB_INFO`` section, see below).
 
-.. note::
+The metadata does not appear in the DataFrame. It is available from the features of the featurelist
+generated with ``to_featurelist()``, see :ref:`geopoints-featurelist` below.
 
-    The metadata section is read when the file is parsed, but it is not exposed by *earthkit-data* yet. It
-    does not appear in the DataFrame.
+
+.. _geopoints-featurelist:
+
+Metadata in a featurelist
++++++++++++++++++++++++++
+
+:py:meth:`to_featurelist` converts the data into a featurelist, whose features give access to the metadata:
+
+- By default (``mode="block"``) there is one feature per geopoints block, so a geopoints file gives one
+  feature and a :ref:`geopointset <geopoints-geopointset>` gives one feature per block. The
+  ``metadata()`` of a feature is a dict with the ``key=value`` pairs of the ``#METADATA`` section of its block,
+  and nothing else. Values that are integers or floats are converted to numbers, the others are kept as
+  text. A block without ``#METADATA`` has empty metadata. For the example above:
+
+  .. code-block:: python
+
+      fl = ekd.from_source("file", "metadata.gpt").to_featurelist()
+      fl[0].metadata()
+      # {'param': 'temperature', 'date': 20130804, 'time': 1200, 'level': 0.2}
+
+- With ``mode="row"`` there is one feature per data point. The ``metadata()`` of a feature is the
+  ``#METADATA`` of its block plus the values of the columns of the row (as in the DataFrame, e.g.
+  ``latitude``, ``longitude``, ``level``, ``date`` and ``value``). If a name is in both, the value of the
+  row is used.
+
+The featurelist can be indexed and sliced, and it has ``sel()``, ``order_by()`` and ``ls()``. See the
+:ref:`/tutorials/geopoints/geopoints.ipynb` notebook for examples.
 
 
 Storing data origin information
@@ -366,6 +392,10 @@ columns missing from a block are filled with NaN. For the file above the result 
     5   55.0100     8.4100    0.0 2013-05-13 00:00:00  100949.18090
     6   54.3300     8.6200    0.0 2013-05-13 00:00:00  101027.91010
     7   53.7100     7.1500    0.0 2013-05-13 00:00:00  100846.61900
+
+The same applies when several geopoints files are read at once (a list of files, a glob pattern or a directory):
+the result is a single data object, :py:meth:`to_pandas` stacks the data of all the files, and the featurelist
+contains the features of all the files in order.
 
 
 Examples
