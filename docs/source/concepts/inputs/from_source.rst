@@ -156,6 +156,7 @@ file
     - :ref:`/tutorials/bufr/bufr_temp.ipynb`
     - :ref:`/tutorials/netcdf/netcdf.ipynb`
     - :ref:`/tutorials/odb/odb.ipynb`
+    - :ref:`/tutorials/geopoints/geopoints.ipynb`
     - :ref:`/tutorials/sql/sql.ipynb`
     - :ref:`/how-tos/read_file_list.ipynb`
 
