@@ -89,7 +89,7 @@ def test_geopoints_featurelist_invalid_mode(mode):
 
 def test_geopoints_featurelist_available_types():
     d = from_source("file", _data_file("traditional.gpt"))
-    assert d.available_types == ["pandas", "xarray", "featurelist"]
+    assert d.available_types == ["pandas", "xarray", "featurelist", "fieldlist"]
     assert GeopointsData._FEATURELIST == "featurelist"
 
 

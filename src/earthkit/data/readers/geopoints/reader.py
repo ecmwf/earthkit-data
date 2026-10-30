@@ -191,6 +191,51 @@ class GeopointsReader(GeopointsReaderBase, Reader):
 
         return make_featurelist(self.blocks, mode=mode)
 
+    def to_fieldlist(self, mode="block", group_by=None):
+        """Convert into a fieldlist of point fields.
+
+        Parameters
+        ----------
+        mode: str
+            - "block" (default): one field per geopoints block and value column. The values,
+              latitudes and longitudes of a field are the rows of the block. The time and the level
+              are taken from the first row of the block.
+            - "group": each block is split into groups of rows that share the same date/time and
+              level (or the same values in the ``group_by`` columns). There is one field per group
+              and value column, with the rows of the group as values, latitudes and longitudes. The
+              groups are in order of first appearance in the block, and the time and the level of a
+              field are taken from the first row of its group. Rows with a missing (NaT/NaN) key
+              form a group of their own, whose field has no time or no level. A block without
+              grouping columns is one group, so it gives the same fields as mode "block".
+
+            Any other mode raises ValueError.
+        group_by: list of str, optional
+            Only for mode "group" (ValueError with "block"): the columns of the block whose values
+            define the groups, instead of the default ``date`` and ``level`` columns (those that
+            exist). Any column can be used, e.g. ``["stnid"]`` or ``["elevation"]``; a single name
+            is accepted, too. The values of the keys other than ``date`` and ``level`` become labels
+            of the fields (e.g. ``labels.stnid``). An empty list means no grouping: one group per
+            block. A column the block does not have raises ValueError.
+
+        Returns
+        -------
+        :class:`~earthkit.data.indexing.simple.SimpleFieldList`
+            The fields of the blocks in order (block, then group, then value column). A geopointset
+            without blocks, a block without rows and a non-numeric value column give no field.
+
+        Notes
+        -----
+        The value columns are ``value`` (traditional and XYV), ``x-comp`` and ``y-comp``
+        (XY_VECTOR), ``magnitude`` and ``angle`` (POLAR_VECTOR), and all the columns other than
+        ``stnid``, ``latitude``, ``longitude``, ``level``, ``elevation``, ``date`` and ``time``
+        (NCOLS). The ``parameter.variable`` of a block with one value column is the ``param`` (or
+        ``shortName``) of the ``#METADATA``, if present, otherwise the column name; for several
+        columns it is the column name. The ``#METADATA`` pairs are the labels of the fields.
+        """
+        from .fieldlist import make_fieldlist
+
+        return make_fieldlist([(self.path, b) for b in self.blocks], mode=mode, group_by=group_by)
+
     def to_data_object(self):
         from earthkit.data.data.geopoints import GeopointsData
 
@@ -292,6 +337,22 @@ class MultiGeopointsReader(GeopointsReaderBase):
         from .featurelist import make_featurelist
 
         return make_featurelist(self.blocks, mode=mode)
+
+    def to_fieldlist(self, mode="block", group_by=None):
+        """Convert into a fieldlist holding the fields of all the files in order.
+
+        Parameters
+        ----------
+        mode: str
+            "block" (default) or "group". See :meth:`GeopointsReader.to_fieldlist`.
+        group_by: list of str, optional
+            The columns that define the groups in mode "group". See
+            :meth:`GeopointsReader.to_fieldlist`.
+        """
+        from .fieldlist import make_fieldlist
+
+        items = [(s.path, b) for s in self.sources for b in s.blocks]
+        return make_fieldlist(items, mode=mode, group_by=group_by)
 
     def to_data_object(self):
         from earthkit.data.data.geopoints import GeopointsData

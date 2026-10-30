@@ -33,13 +33,14 @@ class GeopointsData(SourceData):
     When several geopoints files are read at once (a list, a glob, a folder, or the "multi"
     source), the result is one :py:class:`GeopointsData` whose ``path`` is a list. The files are
     stacked in order by :py:func:`to_pandas` and :py:func:`to_xarray`, and the featurelist holds
-    the features of all the files in order.
+    the features of all the files in order. The same holds for the fieldlist.
 
     Geopoints data can be converted with the following methods:
 
     - :py:func:`to_pandas`
     - :py:func:`to_xarray`
     - :py:func:`to_featurelist`
+    - :py:func:`to_fieldlist`
 
     """
 
@@ -48,7 +49,7 @@ class GeopointsData(SourceData):
     @property
     def available_types(self):
         """list[str]: Return the list of available types that this data object can be converted to."""
-        return [self._PANDAS, self._XARRAY, self._FEATURELIST]
+        return [self._PANDAS, self._XARRAY, self._FEATURELIST, self._FIELDLIST]
 
     def describe(self) -> Any:
         """Provide a description of the geopoints data.
@@ -151,3 +152,52 @@ class GeopointsData(SourceData):
             "row". A geopointset without blocks gives an empty list.
         """
         return self._reader.to_featurelist(mode=mode)
+
+    def to_fieldlist(self, mode="block", group_by=None):
+        """Convert into a FieldList of point fields.
+
+        Parameters
+        ----------
+        mode: str
+            - "block" (default): one field per geopoints block and value column. The values,
+              latitudes and longitudes of a field are the rows of the block; the time and the
+              level are taken from the first row of the block.
+            - "group": each block is split into groups of rows that share the same date/time and
+              level (or the same values in the ``group_by`` columns). There is one field per group
+              and value column, with the rows of the group as values, latitudes and longitudes. The
+              groups are in order of first appearance in the block, and the time and the level of a
+              field are taken from the first row of its group. Rows with a missing (NaT/NaN) key
+              form a group of their own, whose field has no time or no level. A block without
+              grouping columns is one group, so it gives the same fields as mode "block".
+
+            Any other mode raises ValueError.
+        group_by: list of str, optional
+            Only for mode "group" (ValueError with "block"): the columns of the block whose values
+            define the groups, instead of the default ``date`` and ``level`` columns (those that
+            exist). Any column can be used, e.g. ``["stnid"]`` or ``["elevation"]``; a single name
+            is accepted, too. The values of the keys other than ``date`` and ``level`` become labels
+            of the fields (e.g. ``labels.stnid``). An empty list means no grouping: one group per
+            block. A column the block does not have raises ValueError.
+
+        Returns
+        -------
+        :py:class:`earthkit.data.indexing.simple.SimpleFieldList`
+            The fields of the geopoints data in order (block, then group, then value column). The
+            value columns are ``value``
+            (traditional and XYV), ``x-comp`` and ``y-comp`` (XY_VECTOR), ``magnitude`` and
+            ``angle`` (POLAR_VECTOR) and the non-coordinate columns of NCOLS. A block without rows
+            and a non-numeric value column give no field. The ``#METADATA`` pairs of the block are
+            the labels of its fields.
+
+        Notes
+        -----
+        The valid time of a field is the date/time of the first row of the block (or of the group
+        in mode "group"). If the
+        ``#METADATA`` has a ``step``, the base time is the valid time minus the step, otherwise the
+        step is 0. A block without ``date`` column uses the ``#METADATA`` ``date`` (YYYYMMDD) and
+        ``time`` (HHMM), if present. The level is the ``level`` of the first row, or the
+        ``#METADATA`` ``level``. ``#METADATA`` ``param`` (or ``shortName``), ``units`` and
+        ``levtype`` (or ``level_type``, ``typeOfLevel``) give ``parameter.variable``,
+        ``parameter.units`` and ``vertical.level_type``.
+        """
+        return self._reader.to_fieldlist(mode=mode, group_by=group_by)

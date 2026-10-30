@@ -84,7 +84,7 @@ def test_geopoints_reader_invalid_kwargs():
 
 def test_geopoints_reader_available_types():
     d = from_source("file", _data_file("traditional.gpt"))
-    assert d.available_types == ["pandas", "xarray", "featurelist"]
+    assert d.available_types == ["pandas", "xarray", "featurelist", "fieldlist"]
 
 
 def test_geopoints_reader_parse_error(tmp_path):
@@ -267,7 +267,7 @@ def test_geopoints_describe():
     d = from_source("file", path)
     desc = d.describe()
     assert desc.path == path
-    assert desc.types == ["pandas", "xarray", "featurelist"]
+    assert desc.types == ["pandas", "xarray", "featurelist", "fieldlist"]
     assert "Geopoints file" in desc.title
     assert "NCOLS" in desc.title
     s = str(desc)

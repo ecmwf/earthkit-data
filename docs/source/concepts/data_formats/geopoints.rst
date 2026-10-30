@@ -10,7 +10,7 @@ values of two parameters are stored they can be interpreted as the components of
 such as wind.
 
 *earthkit-data* can read geopoints files with :ref:`from_source() <data-sources-file>` and convert
-them into a Pandas DataFrame or an Xarray dataset. This page describes the file format, and for each
+them into a Pandas DataFrame, an Xarray dataset, a featurelist or a fieldlist. This page describes the file format, and for each
 variant of it the DataFrame that *earthkit-data* generates. The Metview documentation is the reference for
 the format itself, and the :ref:`/tutorials/geopoints/geopoints.ipynb` notebook shows the examples
 in action.
@@ -249,7 +249,8 @@ Here, four pieces of metadata are stored. Each ``key=value`` line is a separate 
 until the ``#DATA`` line (or a ``#DB_INFO`` section, see below).
 
 The metadata does not appear in the DataFrame. It is available from the features of the featurelist
-generated with ``to_featurelist()``, see :ref:`geopoints-featurelist` below.
+generated with ``to_featurelist()``, see :ref:`geopoints-featurelist` below. It is also stored in the labels of
+the fields generated with ``to_fieldlist()``, see :ref:`geopoints-fieldlist`.
 
 
 .. _geopoints-featurelist:
@@ -278,6 +279,64 @@ Metadata in a featurelist
 
 The featurelist can be indexed and sliced, and it has ``sel()``, ``order_by()`` and ``ls()``. See the
 :ref:`/tutorials/geopoints/geopoints.ipynb` notebook for examples.
+
+
+.. _geopoints-fieldlist:
+
+Geopoints as a fieldlist
+++++++++++++++++++++++++
+
+:py:meth:`to_fieldlist` converts the data into a fieldlist of point fields, so the data can be used with the
+field API (``sel()``, ``order_by()``, ``ls()``, ``get()``, ...). The geography of a field is a list of
+points: ``geography.latlons()`` returns the latitudes and longitudes as arrays of shape ``(n,)``.
+
+.. code-block:: python
+
+    fl = ekd.from_source("file", "metadata.gpt").to_fieldlist()
+    fl[0].values
+    fl[0].geography.latlons()
+
+The fields are built as follows:
+
+- **Value columns.** There is one field per value column. These are ``value`` in the standard and XYV formats,
+  ``x-comp`` and ``y-comp`` in XY_VECTOR, ``magnitude`` and ``angle`` in POLAR_VECTOR, and all the columns
+  that are not coordinate columns in NCOLS. A value column with text is skipped with a warning. A block
+  without data points gives no field. ``stnid`` and ``elevation`` are not stored in the fields (but see
+  ``group_by`` below).
+- **Time.** The date and time of the row is the valid time of the field (``time.valid_datetime``). If the
+  ``#METADATA`` has a ``step`` (a number of hours or text such as ``6h``) the base time is the valid time minus
+  the step, otherwise the step is 0. A block without a ``date`` column, e.g. XYV, uses the ``date`` and ``time``
+  of the ``#METADATA`` if present, otherwise the field has no time.
+- **Level.** The level is the value of the ``level`` column, or the ``level`` of the ``#METADATA`` if there is no
+  such column. The ``levtype`` of the ``#METADATA`` (e.g. ``pl``, ``sfc``, ``ml``) sets the level type
+  (``vertical.level_type``).
+- **Parameter.** If the block has a single value column, ``parameter.variable`` is the ``param`` (or ``shortName``)
+  of the ``#METADATA`` when present, otherwise the column name (e.g. ``value``). With several value columns it is
+  the column name. The ``units`` of the ``#METADATA`` sets ``parameter.units``.
+- **Labels.** All the ``key=value`` pairs of the ``#METADATA`` are stored in the labels of the field, e.g.
+  ``f.get("labels.param")``. See :ref:`labels_component` for details on labels.
+
+The ``mode`` option controls how the data is split into fields:
+
+- ``mode="block"`` (the default) gives one field per block (and value column). The time and the level are taken from the
+  **first row** of the block; no warning is given when the other rows have different values.
+- ``mode="group"`` splits each block into groups of rows with the same ``date`` and ``level`` columns and gives
+  one field per group (and value column), in the order the groups first appear in the block. The time and level of a field
+  are taken from its group. ``group_by`` replaces these columns by a list of other columns of the data, e.g.
+  ``to_fieldlist(mode="group", group_by=["stnid"])`` gives one field per station. The values of the group columns
+  other than ``date`` and ``level`` are stored in the labels. If a block has no grouping columns it is a
+  single group. ``group_by`` cannot be used with ``mode="block"``.
+
+The following limits apply:
+
+- The fields cannot be encoded to GRIB, because the points are not on a grid.
+- ``to_numpy()`` of the fieldlist needs the same number of points in all fields, but not the same coordinates.
+  The ``to_numpy()`` of a single field always works.
+- ``to_xarray()`` of the fieldlist needs all fields to share the same set of points; otherwise it fails with
+  "Fields do not have the same grid geometry".
+- The fields cannot be pickled or deep-copied.
+
+See the :ref:`/tutorials/geopoints/geopoints.ipynb` notebook for examples.
 
 
 Storing data origin information

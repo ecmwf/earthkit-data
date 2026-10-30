@@ -55,7 +55,7 @@ def _check_multi(ds, names):
     assert isinstance(ds.path, list)
     assert all(isinstance(p, str) for p in ds.path)
     assert [p.rsplit("/", 1)[-1] for p in ds.path] == list(names)
-    assert ds.available_types == ["pandas", "xarray", "featurelist"]
+    assert ds.available_types == ["pandas", "xarray", "featurelist", "fieldlist"]
 
     assert_frame_equal(ds.to_pandas(), _stacked(*names))
 
