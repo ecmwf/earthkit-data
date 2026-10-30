@@ -369,7 +369,7 @@ class BUFRFeatureListMixin:
             ds.sel(dataCategory=[1, 2])
 
         - **slice** of values (defines a **closed interval**, so treated as inclusive of both the start
-        and stop values, unlike normal Python indexing)::
+          and stop values, unlike normal Python indexing)::
 
             # filter dataCategory between 1 and 4 inclusively
             ds.sel(dataCategory=slice(1,4))
