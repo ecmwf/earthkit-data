@@ -726,7 +726,7 @@ ecfs
 ecmwf-open-data
 -------------------
 
-.. py:function:: from_source("ecmwf-open-data", *args, source="ecmwf", model="ifs", request=None,**kwargs)
+.. py:function:: from_source("ecmwf-open-data", *args, source="ecmwf", model="ifs", resol="0p25", request=None, **kwargs)
   :noindex:
 
   Retrieve data from the `ECMWF open data`_ service.
@@ -734,12 +734,15 @@ ecmwf-open-data
   `ECMWF open data`_ is a subset of ECMWF real-time forecast data made available to the public free of charge.  It uses the `ecmwf-opendata <https://github.com/ecmwf/ecmwf-opendata>`_ package.
 
   :param tuple *args: Positional arguments representing request dictionaries. Each item can be dictionary or
-          a list/tuple of dictionaries
-  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+          a list/tuple of dictionaries. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
+  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. This is the recommended way to specify the request. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param str source: Either the name of the server to contact or a fully qualified URL. Possible values are "ecmwf" to access ECMWF's servers, or "azure" to access data hosted on Microsoft's Azure. Default is "ecmwf".
   :param str model: Name of the model that produced the data. Use "ifs" for the physics-driven model and "aifs" for the data-driven model. Please note that "aifs" is currently experimental and only produces a small subset of fields. Default is "ifs".
-  :param dict **kwargs: Other keyword arguments specifying the request
+  :param str resol: The resolution of the data (e.g. "0p25"). It is passed to the ``ecmwf.opendata.Client``. It can also be specified in the request, in which case the value in the request overrides this value. Default is "0p25". *New in version 1.4.0*
+  :param dict **kwargs: Other keyword arguments. Keyword arguments whose names match the options of the ``ecmwf.opendata.Client`` constructor (e.g. ``maximum_retries``, ``retry_after``, ``use_server_retry_after``, ``verify``, ``beta``) are passed to the client. The ``source``, ``model`` and ``resol`` arguments are not affected by this, they remain separate arguments of ``from_source()``. Any other keyword arguments are still accepted as request keys, but this is discouraged and will be removed in a future version; please use ``request`` instead.
+
+  By default, earthkit-data passes ``preserve_request_order=True`` to the client, unless it is specified explicitly. The full list of client options and their meaning can be found in the `ecmwf-opendata documentation <https://github.com/ecmwf/ecmwf-opendata>`__. Please note that the retry options (``maximum_retries``, ``retry_after`` and ``use_server_retry_after``) require ecmwf-opendata 0.3.34 or later. By default, ecmwf-opendata retries failed requests up to 500 times, waiting 120 seconds between attempts (or the time suggested by the server), which can result in very long waits. These options can be used to change this behaviour.
 
   .. note::
 
@@ -756,6 +759,19 @@ ecmwf-open-data
       d = earthkit.data.from_source(
           "ecmwf-open-data",
           request=dict(param=["2t", "msl"], levtype="sfc", step=[0, 6, 12]),
+      )
+
+  The next example uses the same request, but also passes options to the ``ecmwf.opendata.Client`` to limit the number of retries and the waiting time between them:
+
+  .. code-block:: python
+
+      import earthkit.data
+
+      d = earthkit.data.from_source(
+          "ecmwf-open-data",
+          request=dict(param=["2t", "msl"], levtype="sfc", step=[0, 6, 12]),
+          maximum_retries=5,
+          retry_after=10,
       )
 
 
