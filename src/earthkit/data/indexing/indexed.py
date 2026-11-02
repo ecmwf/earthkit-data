@@ -105,8 +105,8 @@ class IndexForFieldList(Index):
                 fl.sel({parameter.variable: ["u", "v"]})
 
             - slice of values (defines a closed interval, so treated as inclusive of both the start
-            and stop values, unlike normal Python indexing). The following example filters the fields
-            with "vertical.level" between 300 and 500 inclusively::
+              and stop values, unlike normal Python indexing). The following example filters the fields
+              with "vertical.level" between 300 and 500 inclusively::
 
                 fl.sel({vertical.level: slice(300, 500)})
 

@@ -35,6 +35,7 @@ from earthkit.data.sources.helpers import (
     _from_wekeo,
     _from_wekeo_cds,
     _from_zarr,
+    _from_zenodo,
 )
 from earthkit.data.sources.helpers import (
     _from_dummy_source as _from_dummy_source,
@@ -83,6 +84,7 @@ POSSIBLE_SOURCES = {
     "wekeo": _from_wekeo,
     "wekeo-cds": _from_wekeo_cds,
     "zarr": _from_zarr,
+    "zenodo": _from_zenodo,
 }
 
 

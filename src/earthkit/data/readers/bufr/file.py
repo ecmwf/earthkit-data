@@ -231,7 +231,7 @@ class BUFRFeatureListMixin:
                 ]
 
         extra_keys: list of str, dict, None
-            List of additional keys to ``keys``s. To specify a column title for each key in the output
+            List of additional keys to the ``keys``. To specify a column title for each key in the output
             use a dict.
 
         Returns
@@ -369,7 +369,7 @@ class BUFRFeatureListMixin:
             ds.sel(dataCategory=[1, 2])
 
         - **slice** of values (defines a **closed interval**, so treated as inclusive of both the start
-        and stop values, unlike normal Python indexing)::
+          and stop values, unlike normal Python indexing)::
 
             # filter dataCategory between 1 and 4 inclusively
             ds.sel(dataCategory=slice(1,4))

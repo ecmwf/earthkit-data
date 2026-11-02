@@ -53,6 +53,8 @@ class CubeSelection(Selection):
 
 
 class CubeCoords(dict):
+    """Coordinate values of a data cube keyed by dimension name, with a readable text representation."""
+
     def __repr__(self):
         t = "Coordinates:\n"
         if len(self):

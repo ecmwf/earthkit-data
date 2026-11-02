@@ -547,3 +547,10 @@ def _from_sql(url: str, sql: str) -> Data:
     from earthkit.data.sources.sql import SQLSource
 
     return _to_data(SQLSource(url, sql), "sql")
+
+
+def _from_zenodo(identifier, filter=None, **kwargs) -> Data:
+
+    from earthkit.data.sources.zenodo import Zenodo
+
+    return _to_data(Zenodo(identifier, filter, **kwargs), "zenodo")

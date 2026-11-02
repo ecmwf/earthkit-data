@@ -54,7 +54,7 @@ Version 0.15.0
 The "ens" dimension role has been renamed to "number"
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The name of the ensemble member :ref:`dimension role <_xr_dim_roles>` changed to "number" from "ens" in the ``dim_roles`` option of :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray`. The old name is still available for backward compatibility but will be removed in a future release.
+The name of the ensemble member :ref:`dimension role <xr_dim_roles>` changed to "number" from "ens" in the ``dim_roles`` option of :py:meth:`~earthkit.data.indexing.xarray.XarrayMixIn.to_xarray`. The old name is still available for backward compatibility but will be removed in a future release.
 
 .. list-table::
    :header-rows: 0
@@ -267,7 +267,7 @@ Its functionality is replaced by the :ref:`targets <targets>` instead. For detai
 :py:class:`GribCoder` is deprecated
 ++++++++++++++++++++++++++++++++++++++++++++
 
-Its functionality is replaced by the :ref:`encoders <data-endoders>`. For details see :ref:`migrating new_grib_coder() <deprecated-new-grib-coder>`.
+Its functionality is replaced by the :ref:`encoders <encoders>`. For details see :ref:`migrating new_grib_coder() <deprecated-new-grib-coder>`.
 
 
 .. _deprecated-0.19.0:

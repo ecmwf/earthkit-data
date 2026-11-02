@@ -1,0 +1,23 @@
+#GEOPOINTSET
+#GEO
+# lat   lon height  date        time    value
+# Missing values represented by 3e+38 (not user-changeable)
+#DATA
+69.6523    18.9057 0   20130512    0   100869.8625
+63.4882    10.8795 0   20130512    0   100282.3392
+63.5657    10.694  0   20130512    0   100241.1666
+61.2928    5.0443  0   20130512    0   99852.18932
+#GEO
+# lat   lon height  date        time    value
+# Missing values represented by 3e+38 (not user-changeable)
+#METADATA
+param=geopotential
+#DATA
+60.82  23.5    0   20130512    600 101045.8
+#GEO
+# lat   lon height  date        time    value
+# Missing values represented by 3e+38 (not user-changeable)
+#DATA
+55.01  8.41    0   20130513    0   100949.1809
+54.33  8.62    0   20130513    0   101027.9101
+53.71  7.15    0   20130513    0   100846.619

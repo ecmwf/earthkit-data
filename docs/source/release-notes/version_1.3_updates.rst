@@ -3,6 +3,15 @@
 Version 1.3 Updates
 ///////////////////////
 
+Version 1.3.1
+==============
+
+Fixes
+++++++++++++
+
+- Fixed issue when the model and source were not included in the cache key in the :ref:`data-sources-eod` source (:pr:`1203`)
+- Fixed issue when building a field from GRIB data generated unwanted logs for unstructured grids with zero uid (:pr:`1211`)
+
 
 Version 1.3.0
 ==============
