@@ -14,7 +14,7 @@ import requests
 
 from earthkit.data import from_source
 from earthkit.data.sources import zenodo as zenodo_module
-from earthkit.data.sources.helpers import _from_empty
+from earthkit.data.sources.empty import EmptySource
 
 RECORD_ID = 123
 CONCEPT_ID = 678
@@ -121,7 +121,7 @@ class TestZenodoSourceOffline:
         def capture(urls, **kwargs):
             api.urls = list(urls)
             api.kwargs = kwargs
-            return _from_empty()
+            return EmptySource()
 
         # Patch the names bound in the zenodo module only
         monkeypatch.setattr(zenodo_module, "requests", api)
