@@ -75,7 +75,7 @@ The ``allow_missing_keys`` keyword argument was removed from :py:meth:`Patterns.
 New features
 +++++++++++++++++
 
-- Added the ``hive_partitioning`` option to the :ref:`data-sources-file-pattern` source to allow running :func:`sel` effectively on GRIB data stored in a :ref:`hive partitioning <file-pattern-hive-partioning>` structure (:pr:`659`).
+- Added the ``hive_partitioning`` option to the :ref:`data-sources-file-pattern` source to allow running :func:`sel` effectively on GRIB data stored in a :ref:`hive partitioning <file-pattern-hive-partitioning>` structure (:pr:`659`).
 - Added experimental support for lazy loading FDB data (:pr:`677`). See the ``lazy`` option in the :ref:`data-sources-fdb` source for details.
 - Added the ``flatten`` argument to the :func:`to_numpy` methods of the Xarray DataArray and Dataset wrapper classes (:pr:`685`).
 - Implemented the :func:`override` and :func:`dump` methods for :py:class:`UserMetadata` (:pr:`683`)

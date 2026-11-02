@@ -12,7 +12,6 @@ GRIB
     grib_lat_lon_value_rgg.ipynb
     grib_selection.ipynb
     grib_order_by.ipynb
-    grib_indexing.ipynb
     grib_modify_values.ipynb
     grib_modify_metadata.ipynb
     grib_missing.ipynb

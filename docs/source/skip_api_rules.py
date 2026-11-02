@@ -21,6 +21,19 @@ _SKIP = {
         "sources._from_source_internal",
         "sources.from_source_lazily",
         "sources.register",
+        # The "reader" factory function in these package __init__ files clashes with the
+        # "reader.py" submodule of the same package. Only the function is skipped, the
+        # module pages stay.
+        "readers.csv.reader",
+        "readers.covjson.reader",
+        "readers.geojson.reader",
+        "readers.geopoints.reader",
+        "readers.geotiff.reader",
+        "readers.netcdf.reader",
+        "readers.odb.reader",
+        "readers.pp.reader",
+        "readers.shapefile.reader",
+        "readers.zarr.reader",
     ],
     "class": [
         "sources.SourceLoader",
@@ -29,6 +42,12 @@ _SKIP = {
     "data": [
         "encoders.grib.encoder",
         "sources.get_source",
+        # clashes with the "cf.py" submodule of the vocabularies package
+        "vocabularies.cf",
+        # "X: TypeAlias = Any" aliases. autoapi renders them with ":canonical: Any", so
+        # more than one of them produces a duplicate object description for "Any".
+        "utils.meteo.lunar.local.ArrayNamespace",
+        "field.handler.core.FieldComponent",
     ],
     "method": [
         "core.fieldlist.FieldList.to_data_object",

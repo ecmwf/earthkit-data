@@ -1279,6 +1279,7 @@ class Field(Base):
             - list or "list": returns a list of values.
             - tuple or "tuple": returns a tuple of values.
             - dict or "dict": returns a dictionary with keys and their values.
+
             Other types are not supported.
         remapping: dict, optional
             Create new metadata keys from existing ones. E.g. to define a new
@@ -1744,7 +1745,6 @@ class Field(Base):
             have a special meaning:
 
             - :obj:`all`: all the available components will be used.
-
 
         **kwargs: dict, optional
             Other keyword arguments used for testing only

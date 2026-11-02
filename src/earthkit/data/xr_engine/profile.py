@@ -41,6 +41,8 @@ class RemappingBuilder:
 
 
 class AuxCoords(dict):
+    """Auxiliary coordinates mapping each coordinate label to a (key, dims) pair."""
+
     def __init__(self, aux_coords):
         super().__init__()
         for coord_label, key_dims in ensure_dict(aux_coords).items():

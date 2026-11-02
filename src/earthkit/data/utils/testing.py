@@ -169,14 +169,16 @@ except Exception as e:
     NO_ECCODES_GRID = True
 
 
-NO_ZARR = True
-try:
-    import zarr  # noqa
+def _has_zarr_v3() -> bool:
+    try:
+        import zarr  # noqa
 
-    if int(zarr.__version__.split(".")[0]) >= 3:
-        NO_ZARR = False
-except Exception:
-    pass
+        return int(zarr.__version__.split(".")[0]) >= 3
+    except Exception:
+        return False
+
+
+NO_ZARR = not _has_zarr_v3()
 
 NO_IRIS = not (modules_installed("iris") and modules_installed("ncdata"))
 

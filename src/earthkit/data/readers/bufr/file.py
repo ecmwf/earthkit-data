@@ -231,7 +231,7 @@ class BUFRFeatureListMixin:
                 ]
 
         extra_keys: list of str, dict, None
-            List of additional keys to ``keys``s. To specify a column title for each key in the output
+            List of additional keys to the ``keys``. To specify a column title for each key in the output
             use a dict.
 
         Returns
