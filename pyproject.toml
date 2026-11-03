@@ -94,7 +94,7 @@ optional-dependencies.test = [
   "nbconvert",
   "nbformat",
   "pyfakefs",
-  "pytest",
+  "pytest<9.2",
   "pytest-cov",
   "pytest-forked",
   "pytest-reraise",
