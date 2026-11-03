@@ -144,20 +144,20 @@ CONFIG_AND_HELP = {
     "user-cache-directory": _(
         os.path.join(tempfile.gettempdir(), "earthkit-data-%s" % (getpass.getuser(),)),
         """Cache directory used when ``cache-policy`` is ``user``.
-        See :doc:`/guide/caching` for more information.""",
+        See :ref:`caching` for more information.""",
         docs_default=os.path.join("TMP", "earthkit-data-%s" % (getpass.getuser(),)),
     ),
     "temporary-cache-directory-root": _(
         None,
         """Parent of the cache directory when ``cache-policy`` is ``temporary``.
-        See :doc:`/guide/caching` for more information.""",
+        See :ref:`caching` for more information.""",
         getter="_as_str",
         none_ok=True,
     ),
     "temporary-directory-root": _(
         None,
         """Parent of the temporary directory when ``cache-policy`` is ``off``.
-        See :doc:`/guide/caching` for more information.""",
+        See :ref:`caching` for more information.""",
         getter="_as_str",
         none_ok=True,
     ),
@@ -169,7 +169,7 @@ CONFIG_AND_HELP = {
     "cache-policy": _(
         "off",
         """Caching policy. {validator}
-        See :doc:`/guide/caching` for more information. """,
+        See :ref:`caching` for more information. """,
         validator=ListValidator(["off", "temporary", "user"]),
     ),
     "use-message-position-index-cache": _(
@@ -233,20 +233,20 @@ CONFIG_AND_HELP = {
     # "grib-field-policy": _(
     #     "persistent",
     #     """GRIB field management policy for fieldlists with data on disk.  {validator}
-    #     See :doc:`/guide/misc/grib_memory` for more information.""",
+    #     See :ref:`grib-memory` for more information.""",
     #     validator=ListValidator(["persistent", "temporary"]),
     # ),
     "grib-handle-policy": _(
         "cache",
         """GRIB handle management policy for fieldlists with data on disk.  {validator}
-        See :doc:`/guide/misc/grib_memory` for more information.""",
+        See :ref:`grib-memory` for more information.""",
         validator=ListValidator(["cache", "persistent", "temporary"]),
     ),
     "grib-handle-cache-size": _(
         1,
         """Maximum number of GRIB handles cached in memory per fieldlist with data on disk.
         Used when ``grib-handle-policy`` is ``cache``.
-        See :doc:`/guide/misc/grib_memory` for more information.""",
+        See :ref:`grib-memory` for more information.""",
         getter="_as_int",
         none_ok=True,
     ),
@@ -254,7 +254,7 @@ CONFIG_AND_HELP = {
         True,
         """Use in-memory cache kept in each field for GRIB metadata access in
         fieldlists with data on disk.
-        See :doc:`/guide/misc/grib_memory` for more information.""",
+        See :ref:`grib-memory` for more information.""",
     ),
     "grib-file-serialisation-policy": _(
         "path",

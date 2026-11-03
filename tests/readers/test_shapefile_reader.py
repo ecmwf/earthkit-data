@@ -69,7 +69,7 @@ def test_shapefile_bounding_box():
 
 def test_invalid_kwargs():
     with pytest.warns(UserWarning):
-        from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.shp.zip"), grib_handle_policy=None)
+        from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.shp.zip"), grib_handle_policy="cache")
 
 
 if __name__ == "__main__":

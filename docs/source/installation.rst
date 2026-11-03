@@ -1,3 +1,5 @@
+:orphan:
+
 .. _install:
 
 Installation
@@ -46,7 +48,7 @@ The following optional extras are available:
     - gribjump: provides access to the :ref:`data-sources-gribjump` source
     - iris: provides access to UK Met Office PP files (new in version *0.19.0*).
     - mars: provides access to the :ref:`data-sources-mars` source
-    - odb: provides full support for the :ref:`odb` data type
+    - odb: provides full support for the :xref:`odb` data type
     - projection: adds projection support
     - polytope: provides access to the :ref:`data-sources-polytope` source
     - s3: provides access to non-public :ref:`s3 <data-sources-s3>` buckets (new in version *0.11.0*)

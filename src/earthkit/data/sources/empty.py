@@ -29,6 +29,3 @@ class EmptySource(Source):
         from earthkit.data.data.empty import EmptyData
 
         return EmptyData()
-
-
-source = EmptySource

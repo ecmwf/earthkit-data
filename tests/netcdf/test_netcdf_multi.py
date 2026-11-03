@@ -17,6 +17,7 @@ import xarray as xr
 
 from earthkit.data import create_fieldlist, from_source
 from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.sources.helpers import _from_dummy_source
 from earthkit.data.utils.testing import earthkit_test_data_file
 
 # These functionalities are variations around
@@ -38,8 +39,7 @@ def assert_same_xarray(x, y):
 
 
 def _make_netcdf_data():
-    d1 = from_source(
-        "dummy-source",
+    d1 = _from_dummy_source(
         kind="netcdf",
         dims=["lat", "lon", "time"],
         variables=["a", "b"],
@@ -49,8 +49,7 @@ def _make_netcdf_data():
             "time": [datetime.datetime(2021, 3, 1, 12, 0), datetime.datetime(2021, 3, 2, 12, 0)],
         },
     )
-    d2 = from_source(
-        "dummy-source",
+    d2 = _from_dummy_source(
         kind="netcdf",
         dims=["lat", "lon", "time"],
         variables=["c", "d"],
@@ -252,16 +251,14 @@ def test_netcdf_multi_data_merge_callable():
 
 
 def _multi_fieldlist_merge_var_different_coords(kind1, kind2):
-    s1 = from_source(
-        "dummy-source",
+    s1 = _from_dummy_source(
         kind=kind1,
         dims=["lat", "lon"],
         variables=["a", "b"],
     ).to_fieldlist()
     ds1 = s1.to_xarray()
 
-    s2 = from_source(
-        "dummy-source",
+    s2 = _from_dummy_source(
         kind=kind2,
         dims=["lat", "time"],
         variables=["c", "d"],
@@ -320,8 +317,7 @@ def test_grib_nc_multi_fieldlist_merge_var_different_coords():
 
 @pytest.mark.parametrize("time", [[[1, 3], [2, 4]], [[2, 1], [3, 4]]])
 def test_netcdf_multi_data_merge_time_dim(time):
-    d1 = from_source(
-        "dummy-source",
+    d1 = _from_dummy_source(
         kind="netcdf",
         variables=["a"],
         dims=["lat", "lon", "time"],
@@ -329,8 +325,7 @@ def test_netcdf_multi_data_merge_time_dim(time):
     )
     ds1 = d1.to_xarray()
 
-    d2 = from_source(
-        "dummy-source",
+    d2 = _from_dummy_source(
         kind="netcdf",
         variables=["a"],
         dims=["lat", "lon", "time"],
@@ -406,8 +401,7 @@ def test_netcdf_multi_data_merge_time_dim(time):
 
 
 def test_netcdf_multi_merge_different_coords():
-    d1 = from_source(
-        "dummy-source",
+    d1 = _from_dummy_source(
         kind="netcdf",
         dims=["lat", "lon", "time"],
         variables=["a", "b"],
@@ -415,8 +409,7 @@ def test_netcdf_multi_merge_different_coords():
     )
     ds1 = d1.to_xarray()
 
-    d2 = from_source(
-        "dummy-source",
+    d2 = _from_dummy_source(
         kind="netcdf",
         dims=["lat", "time"],
         variables=["a", "b"],
@@ -436,29 +429,25 @@ def test_netcdf_multi_merge_different_coords():
 
 
 def _get_hierarchy():
-    d_a1 = from_source(
-        "dummy-source",
+    d_a1 = _from_dummy_source(
         kind="netcdf",
         dims=["lat", "lon", "forecast_time"],
         variables=["a"],
         coord_values=dict(forecast_time=[1, 3]),
     )
-    d_a2 = from_source(
-        "dummy-source",
+    d_a2 = _from_dummy_source(
         kind="netcdf",
         dims=["lat", "lon", "forecast_time"],
         variables=["a"],
         coord_values=dict(forecast_time=[2, 4]),
     )
-    d_b1 = from_source(
-        "dummy-source",
+    d_b1 = _from_dummy_source(
         kind="netcdf",
         dims=["lat", "lon", "forecast_time"],
         variables=["b"],
         coord_values=dict(forecast_time=[1, 3]),
     )
-    d_b2 = from_source(
-        "dummy-source",
+    d_b2 = _from_dummy_source(
         kind="netcdf",
         dims=["lat", "lon", "forecast_time"],
         variables=["b"],
@@ -496,29 +485,25 @@ def test_netcdf_multi_fieldlist_merge_complex_11():
 
 
 def get_hierarchy():
-    a1 = from_source(
-        "dummy-source",
+    a1 = _from_dummy_source(
         kind="netcdf",
         dims=["lat", "lon", "forecast_time"],
         variables=["a"],
         coord_values=dict(forecast_time=[1, 3]),
     ).to_fieldlist()
-    a2 = from_source(
-        "dummy-source",
+    a2 = _from_dummy_source(
         kind="netcdf",
         dims=["lat", "lon", "forecast_time"],
         variables=["a"],
         coord_values=dict(forecast_time=[2, 4]),
     ).to_fieldlist()
-    b1 = from_source(
-        "dummy-source",
+    b1 = _from_dummy_source(
         kind="netcdf",
         dims=["lat", "lon", "forecast_time"],
         variables=["b"],
         coord_values=dict(forecast_time=[1, 3]),
     ).to_fieldlist()
-    b2 = from_source(
-        "dummy-source",
+    b2 = _from_dummy_source(
         kind="netcdf",
         dims=["lat", "lon", "forecast_time"],
         variables=["b"],

@@ -565,6 +565,31 @@ def test_grib_custom_unstructured_grid(fl_type):
     assert np.allclose(f_gs.values, ref_vals)
 
 
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+def test_grib_custom_unstructured_grid_no_grid_uid_error(fl_type, capfd):
+    # The GRIB message has an all-zero uuidOfHGrid. Asking ecCodes for the gridSpec
+    # makes ecCodes/eckit print errors to stderr, so we must not do it.
+    ds, _ = load_grib_data("unstructured_6_points.grib2", fl_type, folder="data")
+
+    lats = np.array([40.0, 40.0, 40.0, 30.0, 30.0, 30.0])
+    lons = np.array([10.0, 20.0, 30.0, 5.0, 25.0, 35.0])
+    points_num = len(lats)
+
+    capfd.readouterr()
+
+    f = ds[0]
+    assert f.geography.shape() == (points_num,)
+    assert f.geography.to_dict()["shape"] == (points_num,)
+
+    f_gs = f.set({"geography.grid_spec": {"latitudes": lats, "longitudes": lons}})
+    assert f_gs.geography.shape() == (points_num,)
+    assert f_gs.geography.to_dict()["shape"] == (points_num,)
+
+    captured = capfd.readouterr()
+    assert "GridUnknownError" not in captured.err
+    assert "GridSpec: geo::Exception" not in captured.err
+
+
 if __name__ == "__main__":
     from earthkit.data.utils.testing import main
 

@@ -1,0 +1,7 @@
+#GEO
+#FORMAT POLAR_VECTOR
+# lat        lon     height      date        time        speed   direction
+#DATA
+ 50.97       6.05        0       20030614        1200        4   90
+ 41.97       21.65       0       20030614        1200        5   330
+ 35.85       14.48       0       20030614        1200        11  170

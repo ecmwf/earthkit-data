@@ -69,7 +69,7 @@ Version 0.12.0
 Changes
 ++++++++
 
-- Enabled using environment variables to control the :ref:`settings <settings>` (:pr:`565`). See the notebook example:
+- Enabled using environment variables to control the :ref:`settings <config>` (:pr:`565`). See the notebook example:
 
   - :ref:`/tutorials/misc/config_env_vars.ipynb`
 
@@ -85,4 +85,4 @@ Fixes
 +++++
 
 - Fixed issue when ``sel()`` failed on Xarray generated with the earthkit engine from a single GRIB field (:pr:`564`)
-- Fixed issue when could not correctly update the :ref:`settings <settings>` config file from concurrent processes (:pr:`559`)
+- Fixed issue when could not correctly update the :ref:`settings <config>` config file from concurrent processes (:pr:`559`)

@@ -1,0 +1,9 @@
+#GEO
+#FORMAT NCOLS
+#COLUMNS
+stnid     latitude time  longitude level date
+#DATA
+heathrow  32.55 0600  35.85   10   20120218 273.9  29  7
+oxford    31.72 1800  35.98   20   20120218 274.9  28  1
+texas     51.93 1200  8.32    30   20140218 278.9  27  6
+aberdeen  41.1  1200  20.82   11   20150218 279.9  26  0.5
