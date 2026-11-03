@@ -72,6 +72,3 @@ class EODRetriever(FileSource):
             "preserve_request_order": self.client.preserve_request_order,
         }
         return self._cache_file(retrieve, request, hash_extra=hash_extra)
-
-
-source = EODRetriever

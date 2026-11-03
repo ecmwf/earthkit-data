@@ -226,6 +226,3 @@ class VirtualFieldListInFilesWithSqlIndex(FieldListInFilesWithSqlIndex):
 
 class VirtualDirectorySource(DirectorySource):
     INDEX_CLASS = VirtualFieldListInFilesWithSqlIndex
-
-
-source = VirtualDirectorySource

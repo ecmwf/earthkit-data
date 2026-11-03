@@ -132,6 +132,3 @@ class Zenodo(Source):
     def mutate(self):
         urls = list(self._file_urls.values())
         return MultiUrl(urls, **self._kwargs)
-
-
-source = Zenodo

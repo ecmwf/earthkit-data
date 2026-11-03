@@ -100,6 +100,3 @@ class MARSRetriever(ECMWFAPI):
                     raise
 
         return ecmwfapi.ECMWFService("mars", **kwargs)
-
-
-source = MARSRetriever

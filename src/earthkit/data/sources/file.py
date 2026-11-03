@@ -15,9 +15,10 @@ import os
 from earthkit.data.core import Encodable
 from earthkit.data.core.caching import CACHE
 from earthkit.data.readers import reader
+from earthkit.data.sources import Source
 from earthkit.data.utils.parts import PathAndParts
 
-from . import Source, _from_source_internal
+from .utils import _mutate_source
 
 LOG = logging.getLogger(__name__)
 
@@ -66,14 +67,17 @@ class FileSource(Source, Encodable, os.PathLike):
             if len(self.path) == 1:
                 self.path = self.path[0]
             else:
-                return _from_source_internal(
-                    "multi",
-                    [
-                        _from_source_internal("file", p, parts=part, filter=self.filter, **self._kwargs)
-                        for p, part in zip(self.path, self.parts)
-                    ],
-                    filter=self.filter,
-                    merger=self.merger,
+                from .multi import MultiSource
+
+                return _mutate_source(
+                    MultiSource(
+                        [
+                            _mutate_source(File(p, parts=part, filter=self.filter, **self._kwargs))
+                            for p, part in zip(self.path, self.parts)
+                        ],
+                        filter=self.filter,
+                        merger=self.merger,
+                    )
                 )
 
         # Give a chance to directories and zip files
@@ -239,14 +243,17 @@ class StreamFileSource(FileSource):
             if len(self.path) == 1:
                 self.path = self.path[0]
             else:
-                return _from_source_internal(
-                    "multi",
-                    [
-                        _from_source_internal("file", p, parts=part, filter=self.filter, stream=True, **self._kwargs)
-                        for p, part in zip(self.path, self.parts)
-                    ],
-                    filter=self.filter,
-                    merger=self.merger,
+                from .multi import MultiSource
+
+                return _mutate_source(
+                    MultiSource(
+                        [
+                            _mutate_source(File(p, parts=part, filter=self.filter, stream=True, **self._kwargs))
+                            for p, part in zip(self.path, self.parts)
+                        ],
+                        filter=self.filter,
+                        merger=self.merger,
+                    )
                 )
 
         # here we must have a file or a directory
@@ -323,6 +330,3 @@ class File(FileSource):
                     path = sorted(matches)
 
         super().__init__(path, filter, merger, stream=stream, parts=parts, **kwargs)
-
-
-source = File

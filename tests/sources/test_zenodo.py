@@ -13,8 +13,8 @@ import pytest
 import requests
 
 from earthkit.data import from_source
-from earthkit.data.sources import _from_source_internal, get_source
 from earthkit.data.sources import zenodo as zenodo_module
+from earthkit.data.sources.empty import EmptySource
 
 RECORD_ID = 123
 CONCEPT_ID = 678
@@ -88,10 +88,6 @@ class MockRequests:
         return self.response
 
 
-def test_zenodo_source_is_registered():
-    assert get_source._lookup("zenodo") is not None
-
-
 @pytest.mark.long_test
 @pytest.mark.download
 def test_zenodo_source_online_from_doi():
@@ -125,7 +121,7 @@ class TestZenodoSourceOffline:
         def capture(urls, **kwargs):
             api.urls = list(urls)
             api.kwargs = kwargs
-            return _from_source_internal("empty")
+            return EmptySource()
 
         # Patch the names bound in the zenodo module only
         monkeypatch.setattr(zenodo_module, "requests", api)
