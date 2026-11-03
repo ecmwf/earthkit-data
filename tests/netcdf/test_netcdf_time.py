@@ -14,6 +14,7 @@ import datetime
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.sources.helpers import _from_dummy_source
 from earthkit.data.utils.testing import earthkit_examples_file, earthkit_remote_test_data_file
 
 
@@ -37,8 +38,7 @@ def test_netcdf_time_1():
 
 
 def test_netcdf_time_2():
-    ds = from_source(
-        "dummy-source",
+    ds = _from_dummy_source(
         kind="netcdf",
         dims=["lat", "lon", "time"],
         variables=["a", "b"],

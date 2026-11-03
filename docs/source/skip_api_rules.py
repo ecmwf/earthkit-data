@@ -18,9 +18,6 @@ def _ends_with_any(name, suffixes):
 _SKIP = {
     "function": [
         "sources.from_source",
-        "sources._from_source_internal",
-        "sources.from_source_lazily",
-        "sources.register",
         # The "reader" factory function in these package __init__ files clashes with the
         # "reader.py" submodule of the same package. Only the function is skipped, the
         # module pages stay.
@@ -35,13 +32,9 @@ _SKIP = {
         "readers.shapefile.reader",
         "readers.zarr.reader",
     ],
-    "class": [
-        "sources.SourceLoader",
-        "sources.SourceMaker",
-    ],
+    "class": [],
     "data": [
         "encoders.grib.encoder",
-        "sources.get_source",
         # clashes with the "cf.py" submodule of the vocabularies package
         "vocabularies.cf",
         # "X: TypeAlias = Any" aliases. autoapi renders them with ":canonical: Any", so

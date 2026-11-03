@@ -14,9 +14,9 @@ try:
 except ImportError:
     raise ImportError("Polytope access requires 'polytope-client' to be installed")
 
+from earthkit.data.sources import Source
 from earthkit.data.utils.request import RequestBuilder
 
-from . import Source
 from .file import File
 from .prompt import APIKeyPrompt
 from .url import Url, download_to_target
@@ -174,6 +174,3 @@ class Polytope(Source):
         src = File(path)
         src.content_type = content_type
         return src
-
-
-source = Polytope

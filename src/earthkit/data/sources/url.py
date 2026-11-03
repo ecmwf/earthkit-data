@@ -27,7 +27,7 @@ def _ignore(*args, **kwargs):
     pass
 
 
-SCHEME_TO_SOURCE = {"ec:": "ecfs", "ecfs:": "ecfs"}
+ECFS_SCHEMES = ("ec:", "ecfs:")
 
 
 def download_and_cache(
@@ -263,13 +263,11 @@ class Url(UrlBase):
 
         super().__init__(url, **kwargs)
 
-        self.other_source = None
+        self.ecfs_source = None
 
-        if isinstance(url, str):
-            for scheme, source in SCHEME_TO_SOURCE.items():
-                if url.startswith(scheme):
-                    self.other_source = (source, url, kwargs)
-                    return
+        if isinstance(url, str) and url.startswith(ECFS_SCHEMES):
+            self.ecfs_source = (url, kwargs)
+            return
 
         self.update_if_out_of_date = update_if_out_of_date
         self.force = force
@@ -283,11 +281,12 @@ class Url(UrlBase):
             self._download()
 
     def mutate(self):
-        if self.other_source:
-            from earthkit.data.sources import _from_source_internal
+        if self.ecfs_source:
+            from earthkit.data.sources.ecfs import ECFSRetriever
+            from earthkit.data.sources.utils import _mutate_source
 
-            source, url, kwargs = self.other_source
-            return _from_source_internal(source, url, **kwargs)
+            url, kwargs = self.ecfs_source
+            return _mutate_source(ECFSRetriever(url, **kwargs))
 
         if self.split and len(self.url_spec) > 1:
             from .multi_url import MultiUrl
@@ -404,11 +403,6 @@ class SingleUrlStream(UrlBase):
         if o.scheme not in ("http", "https"):
             raise NotImplementedError(f"Streams are not supported for scheme={o.scheme} urls")
 
-    def mutate(self):
-        from .stream import _from_source_internal
-
-        return _from_source_internal(self, **self._kwargs)
-
     def to_stream(self):
         from earthkit.data.utils.stream import RequestIterStreamer
 
@@ -437,6 +431,3 @@ class SingleUrlStream(UrlBase):
 
         stream = downloader.make_stream()
         return RequestIterStreamer(stream(chunk_size=self.url_spec[0].kwargs["chunk_size"]))
-
-
-source = Url
