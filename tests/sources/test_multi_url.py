@@ -14,8 +14,8 @@ import sys
 
 import pytest
 
-from earthkit.data.sources import _from_source_instance
 from earthkit.data.sources.multi_url import MultiUrl
+from earthkit.data.sources.utils import _from_source_instance
 from earthkit.data.utils.testing import (
     earthkit_examples_file,
     earthkit_remote_examples_file,

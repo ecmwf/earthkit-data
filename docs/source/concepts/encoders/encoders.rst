@@ -104,7 +104,7 @@ selected automatically from the file extension:
 
 
 Available encoders
------------------
+------------------
 
 .. list-table::
    :header-rows: 1

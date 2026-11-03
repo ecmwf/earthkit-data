@@ -74,5 +74,5 @@ Create a new target :py:class:`Target` object.
   Create a new target :py:class:`Target` object.
 
   :param str name: the target (see :ref:`built-in-targets`)
-  :param tuple *args: specify target parameters
-  :param dict **kwargs: specify additional target parameters. Also specify the encoder parameters.
+  :param tuple \*args: specify target parameters
+  :param dict \*\*kwargs: specify additional target parameters. Also specify the encoder parameters.

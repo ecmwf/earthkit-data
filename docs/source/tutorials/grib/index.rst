@@ -14,7 +14,6 @@ See also :ref:`grib-index` for an explanation of the GRIB metadata index.
     grib_lat_lon_value_rgg.ipynb
     grib_selection.ipynb
     grib_order_by.ipynb
-    grib_indexing.ipynb
     grib_metadata_index.ipynb
     grib_modify_values.ipynb
     grib_modify_metadata.ipynb

@@ -427,9 +427,9 @@ class Vertical(VerticalBase):
             - "layer": The layer information.
             - "level_type": The level type.
 
-        The "level_type" key can be specified as a LevelType object or as a string. If
-        specified as a string, it will be converted to a LevelType object using
-        the :func:`get_level_type` function.
+            The "level_type" key can be specified as a LevelType object or as a string. If
+            specified as a string, it will be converted to a LevelType object using
+            the :func:`get_level_type` function.
 
         Returns
         -------

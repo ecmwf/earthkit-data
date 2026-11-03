@@ -12,9 +12,8 @@ import datetime
 import logging
 import threading
 
-from earthkit.data.readers.grib.index import GribFieldList
-
 from earthkit.data import from_source
+from earthkit.data.readers.grib.index import GribFieldList
 from earthkit.data.utils.serialise import register_serialisation
 
 LOG = logging.getLogger(__name__)
@@ -153,6 +152,3 @@ class Virtual(GribFieldList):
 
 
 register_serialisation(Virtual, lambda x: None, lambda x: Virtual())
-
-
-source = Virtual

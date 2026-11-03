@@ -37,6 +37,7 @@ dependencies = [
   "pandas",
   "pdbufr>=0.13",
   "pyyaml",
+  "requests",
   "tqdm>=4.63",
   "xarray>=0.19"
 ]
@@ -75,7 +76,7 @@ optional-dependencies.docs = [
   "tqdm",
   "xarray"
 ]
-optional-dependencies.ecmwf-opendata = ["ecmwf-opendata>=0.3.3"]
+optional-dependencies.ecmwf-opendata = ["ecmwf-opendata>=0.3.34"]
 optional-dependencies.fdb = ["pyfdb>=5.21,<6.0"]
 optional-dependencies.geopandas = ["geopandas"]
 optional-dependencies.geotiff = ["pyproj", "rasterio", "rioxarray"]
@@ -93,7 +94,7 @@ optional-dependencies.test = [
   "nbconvert",
   "nbformat",
   "pyfakefs",
-  "pytest",
+  "pytest<9.2",
   "pytest-cov",
   "pytest-forked",
   "pytest-reraise",
