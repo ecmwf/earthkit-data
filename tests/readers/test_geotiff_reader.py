@@ -81,7 +81,7 @@ def test_geotiff_immutable_values():
 
 def test_invalid_kwargs():
     with pytest.warns(UserWarning):
-        from_source("file", earthkit_test_data_file("dgm50hs_col_32_368_5616_nw.tif"), grib_handle_policy=None)
+        from_source("file", earthkit_test_data_file("dgm50hs_col_32_368_5616_nw.tif"), grib_handle_policy="cache")
 
 
 if __name__ == "__main__":

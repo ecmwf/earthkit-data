@@ -15,11 +15,6 @@ from earthkit.data.utils.humanize import did_you_mean
 
 LOG = logging.getLogger(__name__)
 
-SYNONYMS = (
-    (("mars", "2t"), ("cf", "t2m")),
-    (("mars", "ci"), ("cf", "siconc")),
-)
-
 VOCABULARIES = {}
 
 SYNONYMS = (

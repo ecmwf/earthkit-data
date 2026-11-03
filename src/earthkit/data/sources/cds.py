@@ -127,6 +127,3 @@ class CDSRetriever(FileSource):
 
     def client(self):
         return client(self.prompt)
-
-
-source = CDSRetriever

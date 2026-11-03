@@ -27,3 +27,4 @@ Data sources
     data_from_stream.ipynb
     tar_files.ipynb
     wekeo.ipynb
+    zenodo.ipynb

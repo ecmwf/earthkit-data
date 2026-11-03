@@ -27,6 +27,8 @@ def deep_update(old, new):
 
 
 class Kwargs(dict):
+    """Keyword arguments merged from user, default and forced values."""
+
     def __init__(
         self,
         user,
