@@ -242,7 +242,8 @@ class GeopointsReader(GeopointsReaderBase, Reader):
         return GeopointsData(self)
 
     def _encode_default(self, encoder, *args, **kwargs):
-        return None
+        # the file cannot be copied as it is, write the blocks back
+        return encoder._encode_featurelist(self.to_featurelist(mode="block"), *args, **kwargs)
 
 
 class MultiGeopointsReader(GeopointsReaderBase):
@@ -363,7 +364,8 @@ class MultiGeopointsReader(GeopointsReaderBase):
         return f"{self.__class__.__name__}({self.sources})"
 
     def _encode(self, encoder, hints=None, **kwargs):
-        return self._encode_default(encoder, hints=hints, **kwargs)
+        # several files cannot be copied as they are, they are always written back
+        return self._encode_default(encoder, **kwargs)
 
     def _encode_default(self, encoder, *args, **kwargs):
-        return None
+        return encoder._encode_featurelist(self.to_featurelist(mode="block"), *args, **kwargs)

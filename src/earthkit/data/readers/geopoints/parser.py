@@ -365,12 +365,28 @@ class _BlockBuilder:
                 dtype=dtypes,
                 na_filter=False,
                 quoting=csv.QUOTE_NONE,
-                float_precision="round_trip",
                 engine="c",
+                **_float_precision_kwargs(pd),
             )
         except (ValueError, TypeError) as e:
             raise self._error(f"cannot read the data values ({e})") from e
         return [df[i].to_numpy() for i in range(n_tokens)]
+
+
+def _float_precision_kwargs(pd):
+    """Extra keyword arguments selecting an exact float parser for ``read_csv``.
+
+    Up to pandas 3.0 the default C float parser is off by 1 ULP for some values, which
+    breaks the exact comparison against ``MISSING_VALUE`` in :func:`_numeric`; those
+    versions need ``float_precision="round_trip"``. From pandas 3.1 the default parser
+    is round-trip exact and the argument itself is deprecated (Pandas4Warning), so it
+    must not be passed.
+    """
+    try:
+        version = tuple(int(part) for part in pd.__version__.split(".")[:2])
+    except ValueError:  # unversioned build: assume a recent pandas
+        return {}
+    return {"float_precision": "round_trip"} if version < (3, 1) else {}
 
 
 def _token_counts(lines):
@@ -418,7 +434,23 @@ def _assemble(columns, raw, n, text_value):
         else:
             data[name] = _numeric(col, n)
 
-    return pd.DataFrame(data, columns=list(data), index=pd.RangeIndex(n))
+    return pd.DataFrame(_as_object_series(data), columns=list(data), index=pd.RangeIndex(n))
+
+
+def _as_object_series(data):
+    """Pass the object columns of ``data`` in as Series, leave the others alone.
+
+    pandas >= 3 infers the new ``str`` dtype for columns holding only strings and
+    missing values (it also turns the ``None`` of a decoded ``stnid`` column into
+    NaN). An object-dtype Series is taken as it is, so the columns stay as the
+    parser built them.
+    """
+    import pandas as pd
+
+    return {
+        name: pd.Series(col, index=pd.RangeIndex(len(col)), dtype=object) if col.dtype == object else col
+        for name, col in data.items()
+    }
 
 
 def _numeric(col, n):
@@ -471,7 +503,8 @@ def _decode_stnid(col):
 
     s = pd.Series(col, dtype=object)
     s = s.str.replace("\\32\\", " ", regex=False).str.replace("\\9\\", "\t", regex=False)
-    out = s.to_numpy(dtype=object)
+    # with copy-on-write (pandas >= 3) to_numpy() may return a read-only view
+    out = s.to_numpy(dtype=object).copy()
     out[out == "?"] = None
     return out
 
