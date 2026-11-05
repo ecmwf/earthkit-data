@@ -10,7 +10,8 @@ values of two parameters are stored they can be interpreted as the components of
 such as wind.
 
 *earthkit-data* can read geopoints files with :ref:`from_source() <data-sources-file>` and convert
-them into a Pandas DataFrame, an Xarray dataset, a featurelist or a fieldlist. This page describes the file format, and for each
+them into a Pandas DataFrame, an Xarray dataset, a featurelist or a fieldlist. It can also write
+geopoints files with :py:meth:`to_target`, see :ref:`geopoints-writing`. This page describes the file format, and for each
 variant of it the DataFrame that *earthkit-data* generates. The Metview documentation is the reference for
 the format itself, and the :ref:`/tutorials/geopoints/geopoints.ipynb` notebook shows the examples
 in action.
@@ -308,8 +309,8 @@ The fields are built as follows:
   the step, otherwise the step is 0. A block without a ``date`` column, e.g. XYV, uses the ``date`` and ``time``
   of the ``#METADATA`` if present, otherwise the field has no time.
 - **Level.** The level is the value of the ``level`` column, or the ``level`` of the ``#METADATA`` if there is no
-  such column. The ``levtype`` of the ``#METADATA`` (e.g. ``pl``, ``sfc``, ``ml``) sets the level type
-  (``vertical.level_type``).
+  such column. The ``levtype`` or ``level_type`` of the ``#METADATA`` (e.g. ``pl``, ``sfc``, ``ml`` or
+  ``pressure``) sets the level type (``vertical.level_type``).
 - **Parameter.** If the block has a single value column, ``parameter.variable`` is the ``param`` (or ``shortName``)
   of the ``#METADATA`` when present, otherwise the column name (e.g. ``value``). With several value columns it is
   the column name. The ``units`` of the ``#METADATA`` sets ``parameter.units``.
@@ -455,6 +456,61 @@ columns missing from a block are filled with NaN. For the file above the result 
 The same applies when several geopoints files are read at once (a list of files, a glob pattern or a directory):
 the result is a single data object, :py:meth:`to_pandas` stacks the data of all the files, and the featurelist
 contains the features of all the files in order.
+
+
+.. _geopoints-writing:
+
+Writing geopoints
+-----------------
+
+Geopoints files are written with :py:meth:`to_target`. When the name of a file target ends in
+``.gpt`` the geopoints encoder is selected automatically (see :ref:`encoders`). The encoder writes:
+
+- a file read by the geopoints reader, which is copied to the target as it is, without being
+  parsed;
+- a featurelist or one of its subsets, written block by block, keeping the format, the columns
+  and the ``#METADATA`` section of every block (consecutive rows coming from the same block are
+  merged into one block);
+- a field or a fieldlist, written in the standard (TRADITIONAL) format with one block per field. The
+  ``#METADATA`` section of each block contains the ``param`` and, when it is known, the level type as
+  ``level_type`` (e.g. ``level_type=pressure``). The reader uses it to set ``vertical.level_type``
+  when the file is converted back into a fieldlist;
+- missing values (NaN, NaT) as ``3e38``, the missing value of the format, which the reader turns
+  back into NaN.
+
+A result with more than one block is a :ref:`geopointset <geopoints-geopointset>`, a result with
+exactly one block is a plain geopoints file. Whatever it was generated from, the written file can
+always be read back with :py:func:`from_source`.
+
+.. code-block:: python
+
+    import earthkit.data as ekd
+
+    ds = ekd.from_source("file", "obs.gpt")
+
+    # write the file as it is
+    ds.to_target("file", "out.gpt")
+
+    # write a subset: the first three data points
+    ds.to_featurelist(mode="row")[:3].to_target("file", "subset.gpt")
+
+Assuming ``obs.gpt`` holds the data of the `Standard (6-column) geopoints`_ example above, the
+second call writes a new block with the selected rows (the ``PARAMETER`` line of the original
+header is not ``#METADATA``, so it is not kept):
+
+.. code-block:: none
+
+    #GEO
+    #DATA
+    36.15 -5.35 0 19970810 1200 300.9
+    34.58 32.98 0 19970810 1200 301.6
+    41.97 21.65 0 19970810 1200 299.4
+
+Fields and fieldlists read from other formats can be written as geopoints too, e.g.
+``grib_ds.to_fieldlist().to_target("file", "points.gpt")`` writes one TRADITIONAL block per
+field, taking the ``latitude``, ``longitude`` and ``value`` columns from the geography and the
+values of the field, the ``level``, ``date`` and ``time`` from its metadata and the name of the
+parameter as the ``param`` entry of ``#METADATA``.
 
 
 Examples

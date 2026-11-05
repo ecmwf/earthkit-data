@@ -22,6 +22,7 @@ _SUFFIXES = {
     (".tiff", ".tif"): "geotiff",
     (".bufr",): "bufr",
     (".odb",): "odb",
+    (".gpt",): "geopoints",
 }
 
 

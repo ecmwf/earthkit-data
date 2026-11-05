@@ -8,6 +8,7 @@ Targets and encoders
 
     file_target.ipynb
     grib_to_file_target.ipynb
+    grib_to_geopoints.ipynb
     grib_to_file_pattern_target.ipynb
     grib_to_fdb_target.ipynb
     grib_to_geotiff.ipynb
