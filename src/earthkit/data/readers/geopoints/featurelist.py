@@ -200,7 +200,7 @@ class _GeopointsFeatureBase:
         return self.to_pandas().to_xarray(**kwargs)
 
     def _default_encoder(self):
-        return None
+        return "geopoints"
 
 
 class GeopointsFeature(_GeopointsFeatureBase):
@@ -224,6 +224,11 @@ class GeopointsFeature(_GeopointsFeatureBase):
     def __init__(self, block):
         self._block = block
         self._metadata = dict(block.metadata)
+
+    @property
+    def block(self):
+        """:class:`~earthkit.data.readers.geopoints.parser.GeopointsBlock`: The parsed block."""
+        return self._block
 
     @property
     def format(self):
@@ -338,6 +343,11 @@ class GeopointsRowFeature(_GeopointsFeatureBase):
                 row += n
         self._source = _source
         self._row = row
+
+    @property
+    def block(self):
+        """:class:`~earthkit.data.readers.geopoints.parser.GeopointsBlock`: The block the row belongs to."""
+        return self._source.block
 
     @property
     def format(self):
@@ -561,7 +571,7 @@ class GeopointsFeatureListMixin:
         return FeatureListData(self)
 
     def _default_encoder(self):
-        return None
+        return "geopoints"
 
     def __repr__(self):
         return f"{self.__class__.__name__}(len={len(self)})"

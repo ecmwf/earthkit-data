@@ -101,6 +101,8 @@ selected automatically from the file extension:
      - ``bufr``
    * - ``.odb``
      - ``odb``
+   * - ``.gpt``
+     - ``geopoints``
 
 
 Available encoders
@@ -143,6 +145,11 @@ Available encoders
    * - ``geojson``
      - Encode data as GeoJSON.
      - :py:class:`~earthkit.data.encoders.geojson.GeoJsonEncoder`
+   * - ``geopoints``
+     - Encode data as Metview geopoints. Accepts geopoints files (copied as they are),
+       featurelists (written block by block) and Fields/FieldLists (written in the
+       TRADITIONAL format, one block per field). See :ref:`geopoints-writing`.
+     - :py:class:`~earthkit.data.encoders.geopoints.GeopointsEncoder`
    * - ``pp``
      - Encode data as Met Office PP (UM binary) format.
      - :py:class:`~earthkit.data.encoders.pp.PPEncoder`

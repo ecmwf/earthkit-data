@@ -280,7 +280,7 @@ def test_geopoints_feature_repr():
 
 def test_geopoints_feature_internal_access():
     f = _featurelist("metadata.gpt")[0]
-    assert f._default_encoder() is None
+    assert f._default_encoder() == "geopoints"
     assert f.default_ls_keys == ["param", "date", "time", "level"]
 
     assert f._get_single("param") == "temperature"
@@ -1143,7 +1143,7 @@ def test_geopoints_row_feature_metadata_is_copy():
 
 def test_geopoints_row_feature_internal_access():
     f = _rows("metadata.gpt")[1]
-    assert f._default_encoder() is None
+    assert f._default_encoder() == "geopoints"
     assert f.default_ls_keys == ["param", "date", "time", "level", "latitude", "longitude", "value"]
     assert f.format == "TRADITIONAL"
     assert f.row == 1
