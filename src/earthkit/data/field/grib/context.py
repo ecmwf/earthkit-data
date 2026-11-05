@@ -9,8 +9,12 @@
 
 
 class GribEncoderContext(dict):
+    """A dictionary of context values gathered when a field is encoded to GRIB."""
+
     _MODE = "encoder"
 
 
 class GribIndexerContext(dict):
+    """A dictionary of context values gathered when a GRIB file is indexed."""
+
     _MODE = "indexer"
