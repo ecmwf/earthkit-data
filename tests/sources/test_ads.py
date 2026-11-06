@@ -10,12 +10,97 @@
 #
 
 import os
+from unittest.mock import MagicMock
 
 import pytest
+import yaml
 
 from earthkit.data import from_source
+from earthkit.data.sources import ads as ads_module
+from earthkit.data.sources.ads import ADSAPIKeyPrompt, ADSRetriever, client
 
 NO_ADS = not os.path.exists(os.path.expanduser("~/.adsapirc"))
+
+RC_CONTENT = {
+    "url": "https://ads.atmosphere.copernicus.eu/api",
+    "key": "abcdef01-0000-1111-2222-0123456789ab",
+}
+
+
+@pytest.fixture
+def tmp_rcfile(monkeypatch, tmp_path):
+    """Point ADSAPIKeyPrompt.rcfile at a (non-existing) temporary file.
+
+    Ensures the offline tests never read or write the real ~/.adsapirc.
+    """
+    rcfile = tmp_path / ".adsapirc"
+    monkeypatch.setattr(ADSAPIKeyPrompt, "rcfile", str(rcfile))
+    return rcfile
+
+
+def test_ads_client_prompt_false_without_rcfile(tmp_rcfile, monkeypatch):
+    # prompt=False must never ask the user and raise an error naming the rc file
+    assert not tmp_rcfile.exists()
+    ask = MagicMock(name="ask_user_and_save")
+    monkeypatch.setattr(ADSAPIKeyPrompt, "ask_user_and_save", ask)
+    fake_client = MagicMock(name="cdsapi.Client")
+    monkeypatch.setattr(ads_module.cdsapi, "Client", fake_client)
+
+    with pytest.raises(FileNotFoundError) as ei:
+        client(False)
+
+    assert str(tmp_rcfile) in str(ei.value)
+    assert "adsapirc" in str(ei.value)
+    ask.assert_not_called()
+    fake_client.assert_not_called()
+
+
+def test_ads_client_prompt_true_without_rcfile_asks(tmp_rcfile, monkeypatch):
+    def write_rc():
+        with open(tmp_rcfile, "w") as f:
+            yaml.dump(RC_CONTENT, f)
+
+    ask = MagicMock(name="ask_user_and_save", side_effect=write_rc)
+    monkeypatch.setattr(ADSAPIKeyPrompt, "ask_user_and_save", ask)
+    fake_client = MagicMock(name="cdsapi.Client")
+    monkeypatch.setattr(ads_module.cdsapi, "Client", fake_client)
+
+    c = client(True)
+
+    ask.assert_called_once_with()
+    fake_client.assert_called_once_with(url=RC_CONTENT["url"], key=RC_CONTENT["key"])
+    assert c is fake_client.return_value
+
+
+@pytest.mark.parametrize("use_prompt", [True, False])
+def test_ads_client_with_rcfile(tmp_rcfile, monkeypatch, use_prompt):
+    with open(tmp_rcfile, "w") as f:
+        yaml.dump(RC_CONTENT, f)
+
+    ask = MagicMock(name="ask_user_and_save")
+    monkeypatch.setattr(ADSAPIKeyPrompt, "ask_user_and_save", ask)
+    fake_client = MagicMock(name="cdsapi.Client")
+    monkeypatch.setattr(ads_module.cdsapi, "Client", fake_client)
+
+    c = client(use_prompt)
+
+    fake_client.assert_called_once_with(url=RC_CONTENT["url"], key=RC_CONTENT["key"])
+    ask.assert_not_called()
+    assert c is fake_client.return_value
+
+
+def test_ads_retriever_client_forwards_prompt(monkeypatch):
+    seen = []
+    monkeypatch.setattr(ads_module, "client", lambda use_prompt: seen.append(use_prompt) or "client")
+
+    # constructed with __new__ to avoid triggering a retrieval; the test only
+    # checks that client() forwards self.prompt to the module level client()
+    for prompt in (True, False):
+        s = ADSRetriever.__new__(ADSRetriever)
+        s.prompt = prompt
+        assert s.client() == "client"
+
+    assert seen == [True, False]
 
 
 @pytest.mark.long_test

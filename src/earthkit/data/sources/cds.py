@@ -108,10 +108,14 @@ class CDSRetriever(FileSource):
             self.source_filename = cds_result.location.split("/")[-1]
             cds_result.download(target=target)
 
+        # New style CDS/ADS/EWDS requests use "data_format" instead of "format".
+        # When both are present "format" takes precedence.
+        request_format = request.get("format") or request.get("data_format")
+
         return_object = self._cache_file(
             retrieve,
             (dataset, request),
-            extension=EXTENSIONS.get(request.get("format"), ".cache"),
+            extension=EXTENSIONS.get(request_format, ".cache"),
         )
         return return_object
 
