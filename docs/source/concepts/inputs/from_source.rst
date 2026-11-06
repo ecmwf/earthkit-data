@@ -57,6 +57,8 @@ from_source
       - retrieve data from the ECMWF `ECFS File Storage system <https://confluence.ecmwf.int/display/UDOC/ECFS+user+documentation>`_
     * - :ref:`data-sources-eod`
       - retrieve `ECMWF open data <https://www.ecmwf.int/en/forecasts/datasets/open-data>`_
+    * - :ref:`data-sources-ewds`
+      - retrieve data from the `CEMS Early Warning Data Store <https://ewds.climate.copernicus.eu/>`_ (EWDS)
     * - :ref:`data-sources-fdb`
       - retrieve data from the `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
     * - :ref:`data-sources-gribjump`
@@ -594,7 +596,7 @@ multi
 ads
 ---
 
-.. py:function:: from_source("ads", dataset, *args, request=None, **kwargs)
+.. py:function:: from_source("ads", dataset, *args, request=None, prompt=True, **kwargs)
   :noindex:
 
   Retrieve data from the `Copernicus Atmosphere Data Store`_ (ADS).
@@ -603,10 +605,11 @@ ads
 
   :param str dataset: The name of the ADS dataset
   :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
-          a list/tuple of dictionaries
-  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+          a list/tuple of dictionaries. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
+  :param request: Specify the request as a dictionary or a list/tuple of dicts. As opposed to using ``*args`` or ``**kwargs``, this is the recommended way to specify the request. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
-  :param dict \*\*kwargs: Other keyword arguments specifying the request
+  :param bool prompt: If ``True`` (default), a prompt is offered to specify the credentials for cdsapi_ when the RC file ``~/.adsapirc`` does not exist and the answers are written into this file. If ``False``, no prompt is issued and a ``FileNotFoundError`` is raised when ``~/.adsapirc`` does not exist.
+  :param dict \*\*kwargs: Other keyword arguments specifying the request. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
 
   .. note::
 
@@ -618,9 +621,12 @@ ads
 
   .. note::
 
-    Currently, for accessing ADS earthkit-data requires the credentials for cdsapi_ to be stored in the RC file ``~/.adsapirc``.
+    The credentials used to access ADS are stored in the RC file ``~/.adsapirc``. This file name is an earthkit-data convention used to keep the ADS configuration apart from the one stored in ``~/.cdsapirc``: the default RC file of cdsapi_ can hold only a single service definition (one ``url`` and ``key``). Otherwise ``~/.adsapirc`` has the same content format as ``~/.cdsapirc``. However, cdsapi_ itself does not know this file name, so the ADS source neither reads ``~/.cdsapirc`` nor uses the environment variables of cdsapi_ (``CDSAPI_RC``, ``CDSAPI_URL`` and ``CDSAPI_KEY``).
 
-    When no ``~/.adsapirc`` RC file exists a prompt will appear to specify the credentials for cdsapi_ and write them into ``~/.adsapirc``.
+  .. note::
+
+    Before downloading data from a dataset you have to accept its Terms of Use on the dataset's ADS web page.
+    Retrievals for datasets with an unaccepted licence are rejected.
 
 
   The following example retrieves CAMS global reanalysis GRIB data for 2 parameters:
@@ -663,15 +669,15 @@ cds
 
   :param str dataset: The name of the CDS dataset
   :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
-          a list/tuple of dictionaries
-  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+          a list/tuple of dictionaries. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
+  :param request: Specify the request as a dictionary or a list/tuple of dicts. As opposed to using ``*args`` or ``**kwargs``, this is the recommended way to specify the request. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param bool prompt: If ``True``, it can offer a prompt to specify the credentials for cdsapi_ and write them into the default RC file ``~/.cdsapirc``. The prompt only appears when:
 
     - no cdsapi_ RC file exists at the default location ``~/.cdsapirc``
     - no cdsapi_ RC file exists at the location specified via the ``CDSAPI_RC`` environment variable
     - no credentials specified via the ``CDSAPI_URL`` and ``CDSAPI_KEY`` environment variables
-  :param dict \*\*kwargs: Other keyword arguments specifying the request
+  :param dict \*\*kwargs: Other keyword arguments specifying the request. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
 
   .. note::
 
@@ -737,7 +743,7 @@ ecmwf-open-data
 
   :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
-  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. This is the recommended way to specify the request. *New in version 0.18.0*
+  :param request: Specify the request as a dictionary or a list/tuple of dicts. As opposed to using ``*args`` or ``**kwargs``, this is the recommended way to specify the request. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param str source: Either the name of the server to contact or a fully qualified URL. Possible values are "ecmwf" to access ECMWF's servers, or "azure" to access data hosted on Microsoft's Azure. Default is "ecmwf".
   :param str model: Name of the model that produced the data. Use "ifs" for the physics-driven model and "aifs" for the data-driven model. Please note that "aifs" is currently experimental and only produces a small subset of fields. Default is "ifs".
@@ -784,6 +790,67 @@ ecmwf-open-data
       - :ref:`/tutorials/source/ecmwf_open_data.ipynb`
 
 
+.. _data-sources-ewds:
+
+ewds
+----
+
+.. py:function:: from_source("ewds", dataset, *, request, prompt=True)
+  :noindex:
+
+  *New in version 1.4.0*
+
+  Retrieve data from the `CEMS Early Warning Data Store`_ (EWDS).
+
+  The retrieval is performed using the cdsapi_ package.
+
+  :param str dataset: The name of the EWDS dataset
+  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. It may contain the :ref:`split_on <split_on>` key. This argument is required and can only be specified by keyword, i.e. the request cannot be given as positional arguments or as separate keyword arguments.
+  :type request: dict, list/tuple of dicts
+  :param bool prompt: If ``True`` (default), a prompt is offered to specify the credentials for cdsapi_ when the RC file ``~/.ewdsapirc`` does not exist and the answers are written into this file. If ``False``, no prompt is issued and a ``FileNotFoundError`` is raised when ``~/.ewdsapirc`` does not exist.
+
+  The requests can contain GRIB post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction, respectively. They can
+  also contain the earthkit-data specific :ref:`split_on <split_on>` parameter. Note that the output format is
+  specified with the ``data_format`` request key instead of ``format``.
+
+  .. note::
+
+    The credentials used to access EWDS are stored in the RC file ``~/.ewdsapirc``. This file name is an earthkit-data convention used to keep the EWDS configuration apart from the one stored in ``~/.cdsapirc``: the default RC file of cdsapi_ can hold only a single service definition (one ``url`` and ``key``). Otherwise ``~/.ewdsapirc`` has the same content format as ``~/.cdsapirc``. However, cdsapi_ itself does not know this file name, so the EWDS source neither reads ``~/.cdsapirc`` nor uses the environment variables of cdsapi_ (``CDSAPI_RC``, ``CDSAPI_URL`` and ``CDSAPI_KEY``).
+
+  .. note::
+
+    Before downloading data from a dataset you have to accept its Terms of Use on the dataset's EWDS web page.
+    Retrievals for datasets with an unaccepted licence are rejected.
+
+  The following example retrieves fire weather index data from the ``cems-fire-seasonal`` dataset in GRIB format:
+
+  .. code-block:: python
+
+      import earthkit.data as ekd
+
+      d = ekd.from_source(
+          "ewds",
+          "cems-fire-seasonal",
+          request=dict(
+              variable="fire_weather_index",
+              release_version="5",
+              year="1991",
+              month="09",
+              day="01",
+              leadtime_hour="12",
+              data_format="grib",
+          ),
+      )
+
+  Data downloaded from the EWDS is stored in the :ref:`cache <caching>`.
+
+  To access data from the EWDS, you will need to register and retrieve an access token. The process is described `here <https://ewds.climate.copernicus.eu/how-to-api>`__.
+
+  Further examples:
+
+      - :ref:`/tutorials/source/ewds.ipynb`
+
+
 .. _data-sources-fdb:
 
 fdb
@@ -797,11 +864,11 @@ fdb
   ``FDB`` is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. Earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
 
   :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
-          a list/tuple of dictionaries, but current only one request is supported.
+          a list/tuple of dictionaries, but current only one request is supported. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
   :param dict,str config: The FDB configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 0.11.0*
   :param dict,str user_config: The FDB user configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 1.2.0*
   :param dict,str userconfig: Deprecated alias for ``user_config`` and will be removed in a future release. When both ``user_config`` and ``userconfig`` are provided a ValueError is raised. *Deprecated in version 1.2.0*
-  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests, but current only one request is supported. *New in version 0.18.0*
+  :param request: Specify the request as a dictionary or a list/tuple of dicts, but current only one request is supported. Specifying the request this way is the recommended approach. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for GRIB, BUFR and CoverageJson data. See details about streams :ref:`here <streams>`.
   :param bool lazy: If ``True``, the data is read in a lazy way. This means the following:
@@ -813,7 +880,7 @@ fdb
     - the resulting :py:class:`FieldList` always retrieves one GRIB field as a reference and stores it in memory throughout the lifetime of the :py:class:`FieldList`. This is managed internally.
 
     When ``lazy=True`` the ``stream`` option is ignored. Please note that this is an **experimental** feature. *New in version 0.14.0*
-  :param dict \*\*kwargs: Other keyword arguments specifying the request
+  :param dict \*\*kwargs: Other keyword arguments specifying the request. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
 
   .. note::
 
@@ -976,8 +1043,8 @@ mars
   Retrieve data from the ECMWF `MARS <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_ (Meteorological Archival and Retrieval System)  archive.
 
   :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
-          a list/tuple of dictionaries
-  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+          a list/tuple of dictionaries. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
+  :param request: Specify the request as a dictionary or a list/tuple of dicts. This is the recommended way to specify the request. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param bool prompt: If ``True``, it can offer a prompt to specify the credentials for `web API`_ and write them into the default RC file ``~/.ecmwfapirc``. The prompt only appears when:
 
@@ -1011,7 +1078,7 @@ mars
       - dict specifying the "stdout" or/and the "stderr" kwargs for Pythons's ``subrocess.run()`` method
 
   :type log: str, None, callable, dict
-  :param dict \*\*kwargs: Other keyword arguments specifying the request
+  :param dict \*\*kwargs: Other keyword arguments specifying the request. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
 
   .. include:: ../misc/request_args.rst
 
@@ -1080,14 +1147,14 @@ polytope
   The retrieval is performed using the polytope-client_ package.
 
   :param str collection: The name of the polytope collection
-  :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or a list/tuple of dictionaries
+  :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or a list/tuple of dictionaries. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
   :param str address: Specify the address of the polytope service
   :param str user_email: Specify the user email credential. Must be used together with ``user_key``. This is an alternative to using the ``POLYTOPE_USER_EMAIL`` environment variable. *New in version 0.7.0*
   :param str user_key: Specify the user key credential. Must be used together with ``user_email``. This is an alternative to using the ``POLYTOPE_USER_KEY`` environment variable. *New in version 0.7.0*
-  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+  :param request: Specify the request as a dictionary or a list/tuple of dicts. Specifying the request this way is the recommended approach. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param bool stream: If ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for GRIB, BUFR and CoverageJson data. See details about streams :ref:`here <streams>`.
-  :param dict \*\*kwargs: Other keyword arguments, these can include options passed to the polytope-client_
+  :param dict \*\*kwargs: Other keyword arguments, these can include options passed to the polytope-client_. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
 
   The following logic is applied to build the **requests**:
 
@@ -1287,15 +1354,15 @@ wekeo
 
   :param str dataset: The name of the WEkEO dataset
   :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
-          a list/tuple of dictionaries
-  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+          a list/tuple of dictionaries. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
+  :param request: Specify the request as a dictionary or a list/tuple of dicts. This is the recommended way to specify the request. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param bool prompt: If ``True``, it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
 
     - no hda_ RC file exists at the default location ``~/.hdarc``
     - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
     - no credentials specified via the ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
-  :param dict \*\*kwargs: Other keyword arguments specifying the request
+  :param dict \*\*kwargs: Other keyword arguments specifying the request. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
 
   .. include:: ../misc/request_args.rst
 
@@ -1341,15 +1408,15 @@ wekeo-cds
 
   :param str dataset: The name of the WEkEO dataset
   :param tuple \*args: Positional arguments representing request dictionaries. Each item can be dictionary or
-          a list/tuple of dictionaries
-  :param request: Specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in  version 0.18.0*
+          a list/tuple of dictionaries. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
+  :param request: Specify the request as a dictionary or a list/tuple of dicts. This is the recommended way to specify the request. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param bool prompt: If ``True``, it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
 
     - no hda_ RC file exists at the default location ``~/.hdarc``
     - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
     - no credentials specified via the ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
-  :param dict \*\*kwargs: Other keyword arguments specifying the request
+  :param dict \*\*kwargs: Other keyword arguments specifying the request. Specifying the request this way is still accepted but is discouraged, use ``request`` instead.
 
   .. include:: ../misc/request_args.rst
 
@@ -1414,6 +1481,8 @@ zenodo
 .. py:function:: from_source("zenodo", identifier, filter=None, **kwargs)
   :noindex:
 
+  *New in version 1.4.0*
+
   `Zenodo <https://zenodo.org/>`_ is an open repository for research data and related information.
   The ``zenodo`` source provides access to files attached to a Zenodo record via the Zenodo API.
 
@@ -1421,7 +1490,7 @@ zenodo
   :type identifier: int, str
   :param filter: the files to select from the record. Accepts a glob pattern that is matched against the file names in the record, a callable or an explicit list of file names to select. A callable is called with each file name in the record and should return a boolean. By default, all files in the record are selected.
   :type filter: str, callable, sequence of str, None
-  :param dict **kwargs: other keyword arguments passed to the :ref:`url <data-sources-url>` source.
+  :param dict \*\*kwargs: other keyword arguments passed to the :ref:`url <data-sources-url>` source.
 
 
 .. _MARS catalog: https://apps.ecmwf.int/archive-catalogue/
@@ -1430,6 +1499,7 @@ zenodo
 
 .. _Copernicus Climate Data Store: https://cds.climate.copernicus.eu/
 .. _Copernicus Atmosphere Data Store: https://ads.atmosphere.copernicus.eu/
+.. _CEMS Early Warning Data Store: https://ewds.climate.copernicus.eu/
 .. _cdsapi: https://pypi.org/project/cdsapi/
 .. _CDS_knowledge base: https://confluence.ecmwf.int/pages/viewpage.action?pageId=151530614
 .. _ADS_knowledge base: https://confluence.ecmwf.int/pages/viewpage.action?pageId=151530675

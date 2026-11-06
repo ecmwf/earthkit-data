@@ -51,9 +51,20 @@ class ADSAPIKeyPrompt(APIKeyPrompt):
         return yaml.safe_load(file.read())
 
 
-def client():
+def client(use_prompt):
     prompt = ADSAPIKeyPrompt()
-    rc = prompt.check(load=True)
+    if use_prompt:
+        rc = prompt.check(load=True)
+    else:
+        rcfile = prompt.existing_rcfile_path()
+        if rcfile is None:
+            raise FileNotFoundError(
+                f"Cannot find the ADS credentials file '{prompt.rcfile}'. Create it with your "
+                "API url and key, or call the source with prompt=True to be guided "
+                "through the process."
+            )
+        with open(rcfile) as f:
+            rc = prompt.load(f)
     return cdsapi.Client(**rc)
 
 
@@ -64,9 +75,20 @@ EXTENSIONS = {
 
 
 class ADSRetriever(CDSRetriever):
+    """Retrieve data from the Copernicus Atmosphere Data Store (ADS).
+
+    Parameters
+    ----------
+    prompt : bool
+        When True (default) and ``~/.adsapirc`` is missing, the user is asked
+        for the credentials and they are saved to that file. When False no
+        prompt is issued and a ``FileNotFoundError`` is raised if
+        ``~/.adsapirc`` does not exist.
+    """
+
     sphinxdoc = """
     ADSRetriever
     """
 
     def client(self):
-        return client()
+        return client(self.prompt)

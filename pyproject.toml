@@ -50,7 +50,7 @@ name = "earthkit-data"
 optional-dependencies.all = [
   "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geopandas,gribjump,iris,mars,odb,polytope,projection,s3,sql,wekeo]"
 ]
-optional-dependencies.cds = ["cdsapi>=0.7.2"]
+optional-dependencies.cds = ["cdsapi>=0.7.7"]
 optional-dependencies.ci = ["numpy"]
 optional-dependencies.covjsonkit = ["covjsonkit>=0.2.2"]
 optional-dependencies.dev = [

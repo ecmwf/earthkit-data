@@ -28,6 +28,7 @@ SKIP = [
     "cds.ipynb",
     "demo_source_plugin.ipynb",
     "ecmwf_open_data.ipynb",
+    "ewds.ipynb",
     "fdb.ipynb",
     "grib_fdb_lazy.ipynb",
     "grib_fdb_write.ipynb",
@@ -47,6 +48,7 @@ SKIP = [
     "wekeo.ipynb",
     "xarray_cupy.ipynb",
     "xarray_engine_chunks_on_dask_cluster.ipynb",
+    "zenodo.ipynb",
 ]
 
 if NO_TORCH:
