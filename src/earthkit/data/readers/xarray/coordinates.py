@@ -312,6 +312,137 @@ class StepCoordinate(Coordinate):
     mars_names = ("step",)
 
 
+class HybridLevels:
+    """Decoded CF ``atmosphere_hybrid_sigma_pressure_coordinate`` of a dataset.
+
+    The coordinate is decoded once per dataset and shared by all the fields (and all the
+    reduced copies of the level coordinate) that use it. For a field only the level lookup
+    (:meth:`level_number`) is needed.
+
+    Parameters
+    ----------
+    name : str
+        Name of the level coordinate.
+    values : list
+        The values of the level coordinate in the order of the dataset.
+    level_numbers : list of int or None
+        The model level number of each coordinate value, or None when they are not known.
+    coefficients : tuple or None
+        The ``(A, B)`` half level coefficients of the whole model, or None when they cannot be
+        rebuilt. The same arrays are shared by all the fields.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        values: list,
+        level_numbers: Optional[list],
+        coefficients: Optional[Tuple[Any, Any]],
+    ) -> None:
+        self.name = name
+        self.level_numbers = level_numbers
+        self.coefficients = coefficients
+        self._index: Dict[Any, int] = {}
+        for i, v in enumerate(values):
+            self._index.setdefault(v, i)
+
+    def __repr__(self) -> str:
+        return "%s[name=%s,level_numbers=%s,coefficients=%s]" % (
+            self.__class__.__name__,
+            self.name,
+            self.level_numbers is not None,
+            self.coefficients is not None,
+        )
+
+    def level_number(self, value: Any) -> Optional[int]:
+        """Return the model level number of a coordinate value.
+
+        Parameters
+        ----------
+        value : Any
+            A value of the level coordinate (exact match).
+
+        Returns
+        -------
+        int or None
+            The model level number, or None when it is not known.
+        """
+        if self.level_numbers is None:
+            return None
+        i = self._index.get(value)
+        if i is None:
+            return None
+        return self.level_numbers[i]
+
+    @classmethod
+    def from_dataset(cls, ds: xr.Dataset, name: str) -> Optional["HybridLevels"]:
+        """Decode the level coordinate ``name`` of ``ds``.
+
+        Returns
+        -------
+        HybridLevels or None
+            None when the coordinate cannot be decoded. A decoding error is logged as a warning, it
+            never fails the read.
+        """
+        try:
+            from earthkit.data.field.cf import decode_parametric_vertical
+
+            model = decode_parametric_vertical(ds, name)
+
+            level_numbers = model.level_numbers()
+            if level_numbers is not None:
+                level_numbers = [int(x) for x in level_numbers]
+
+            coefficients = None
+            try:
+                A, B = model.to_level_parameters().coefficients()
+                # The arrays are shared by all the fields. Copy them once (they may be views
+                # of arrays owned by the model) and make them read-only, so that changing the
+                # coefficients of one field cannot silently change those of all the others.
+                A = np.array(A, dtype=np.float64)
+                B = np.array(B, dtype=np.float64)
+                A.setflags(write=False)
+                B.setflags(write=False)
+                coefficients = (A, B)
+            except ValueError as e:
+                LOG.debug("Hybrid coordinate %s: no half level coefficients: %s", name, e)
+
+            return cls(name, ds[name].values.tolist(), level_numbers, coefficients)
+        except Exception as e:
+            LOG.warning("Cannot decode the hybrid level coordinate %s: %s", name, e)
+            return None
+
+
+def decode_hybrid_levels(ds: xr.Dataset, coordinates: list, cache: Dict[str, Optional[HybridLevels]]) -> None:
+    """Attach the decoded hybrid levels to the level coordinates that carry ``formula_terms``.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        The dataset.
+    coordinates : list
+        The coordinates of a variable.
+    cache : dict
+        The decoded coordinates (or None for those that could not be decoded) by name. It makes
+        sure that a coordinate is decoded once per dataset.
+    """
+    from earthkit.data.field.cf.parametric_vertical import get_cf_attribute
+
+    for c in coordinates:
+        if not isinstance(c, LevelCoordinate) or c.levtype != "ml" or c.hybrid is not None:
+            continue
+
+        name = c.name
+        if name not in cache:
+            hybrid = None
+            if c.variable.ndim == 1 and get_cf_attribute(c.variable, "formula_terms") is not None:
+                hybrid = HybridLevels.from_dataset(ds, name)
+            cache[name] = hybrid
+
+        if cache[name] is not None:
+            c.set_hybrid(cache[name])
+
+
 class LevelCoordinate(Coordinate):
     """Coordinate class for level.
 
@@ -321,11 +452,14 @@ class LevelCoordinate(Coordinate):
         The variable representing the coordinate.
     levtype : str
         The type of level.
+    hybrid : HybridLevels, optional
+        The decoded CF hybrid sigma pressure coordinate. Only available for hybrid levels
+        with ``formula_terms``.
     """
 
     mars_names = ("level", "levelist")
 
-    def __init__(self, variable: Any, levtype: str) -> None:
+    def __init__(self, variable: Any, levtype: str, hybrid: Optional[HybridLevels] = None) -> None:
         """Initialize the level coordinate.
 
         Parameters
@@ -334,11 +468,21 @@ class LevelCoordinate(Coordinate):
             The variable representing the coordinate.
         levtype : str
             The type of level.
+        hybrid : HybridLevels, optional
+            The decoded CF hybrid sigma pressure coordinate.
         """
         super().__init__(variable)
         self.levtype = levtype
+        self.hybrid = None
         # kwargs is used when creating a new coordinate (reduced method)
         self.kwargs = {"levtype": levtype}
+        if hybrid is not None:
+            self.set_hybrid(hybrid)
+
+    def set_hybrid(self, hybrid: HybridLevels) -> None:
+        """Set the decoded hybrid levels. They are kept by the coordinates created by ``reduced``."""
+        self.hybrid = hybrid
+        self.kwargs["hybrid"] = hybrid
 
     def normalise(self, value: Any) -> Any:
         """Normalize the value for the level coordinate.

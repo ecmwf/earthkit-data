@@ -19,6 +19,7 @@ import xarray.core.indexing as indexing
 from earthkit.data.utils import ensure_dict, ensure_iterable
 
 from .dim import LevelPerTypeDim
+from .parametric import add_hybrid_coordinates, collect_level_dims
 from .profile import Profile
 
 LOG = logging.getLogger(__name__)
@@ -411,6 +412,9 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         xr_coords = self.coords()
 
+        # read the hybrid level coefficients now, building the variables may release the source fields
+        hybrid_level_dims = collect_level_dims(var_builders, self.tensor_coords, self.profile.variable.rename)
+
         # build variables
         xr_vars = {
             self.profile.variable.rename(k): v.build(add_earthkit_attrs=self.profile.add_earthkit_attrs)
@@ -421,6 +425,9 @@ class BackendDataBuilder(metaclass=ABCMeta):
         dataset = xarray.Dataset(xr_vars, coords=xr_coords, attrs=xr_attrs)
 
         dataset = self.profile.rename_dataset_dims(dataset)
+
+        # CF hybrid sigma-pressure coordinate, added with the final names
+        dataset = add_hybrid_coordinates(dataset, hybrid_level_dims, self.profile)
 
         if "source" not in dataset.encoding:
             dataset.encoding["source"] = None

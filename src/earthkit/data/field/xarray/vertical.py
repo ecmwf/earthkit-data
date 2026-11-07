@@ -33,16 +33,21 @@ for t in _TYPES:
         _XR_TYPES[k] = t
 
 
-def get_level(coord, selection):
-    if coord is None:
-        return None
+def get_raw_level(coord, selection):
     name = coord.name
 
     v = selection[name].values
     if len(v.shape) == 0:
-        return coord.normalise(v.item())
+        return v.item()
     else:
-        return coord.normalise(v[0])
+        return v[0]
+
+
+def get_level(coord, selection):
+    if coord is None:
+        return None
+
+    return coord.normalise(get_raw_level(coord, selection))
 
 
 def get_level_type(coord):
@@ -58,14 +63,31 @@ def from_xarray(owner, selection):
     from earthkit.data.readers.xarray.coordinates import LevelCoordinate
 
     coord = None
+    hybrid_coord = None
     for c in owner.coordinates:
         if isinstance(c, LevelCoordinate):
             coord = c
+            if c.hybrid is not None:
+                hybrid_coord = c
+
+    # the hybrid coordinate decoded from its formula_terms takes precedence over any other level
+    # coordinate (e.g. an auxiliary model_level_number), whatever the order of the coordinates
+    if hybrid_coord is not None:
+        coord = hybrid_coord
 
     level = get_level(coord, selection)
     level_type = get_level_type(coord)
+    d = dict(level=level, level_type=level_type)
 
-    return dict(level=level, level_type=level_type)
+    if hybrid_coord is not None:
+        # the model level number of the field, when it is known, and the A/B of the whole model
+        number = hybrid_coord.hybrid.level_number(get_raw_level(hybrid_coord, selection))
+        if number is not None:
+            d["level"] = number
+            if hybrid_coord.hybrid.coefficients is not None:
+                d["coefficients"] = hybrid_coord.hybrid.coefficients
+
+    return d
 
 
 class XArrayVertical(VerticalFieldComponentHandler):
