@@ -79,7 +79,7 @@ with:
     - ``**kwargs`` : dict. Keyword arguments representing request parameters.
     - ``request`` : dict or list of dict. A single request dictionary or a list/tuple of request dictionaries.
 
-The logic applied to build the requests is described :doc:`here </concepts/misc/request_args>`.
+The logic applied to build the requests is described in the documentation of each of the sources listed below.
 
 This is implemented for the following sources: :ref:`data-sources-ads`, :ref:`data-sources-cds`, :ref:`data-sources-fdb`, :ref:`data-sources-mars`, :ref:`data-sources-eod`, :ref:`data-sources-polytope`, :ref:`data-sources-wekeo`, and :ref:`data-sources-wekeo-cds`.
 

@@ -35,7 +35,7 @@ New features
       datetime.datetime(2020, 5, 13, 12, 0)
 
 - implemented FieldList for NetCDF data. See the :ref:`/tutorials/netcdf/netcdf_fieldlist.ipynb` example.
-- added experimental Metadata handling. See the :ref:`/tutorials/legacy/metadata.ipynb` example.
+- added experimental Metadata handling.
 - added experimental input transformer tools for earthkit subpackages. It uses type-setting, or explicit mapping, to try to ensure that the inputs passed to a function are converted to the appropriate type for that method. This means that earthkit users do not have to worry about the format of their data.
 
 

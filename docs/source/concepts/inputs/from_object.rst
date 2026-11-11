@@ -8,8 +8,8 @@ from_object
   Return a :ref:`data object <data-object>` from the Python object ``obj``.
 
   :param any obj: the input Python object to be converted into a earthkit data object
-  :param tuple *args: additional positional arguments
-  :param dict **kwargs: additional keyword arguments
+  :param tuple \*args: additional positional arguments
+  :param dict \*\*kwargs: additional keyword arguments
 
 
 Examples:

@@ -209,6 +209,21 @@ class GribGeography(GeographyBase):
         self.__init__(state["handle"])
 
 
+def _has_zero_grid_uid(handle):
+    """Return True if the ``uuidOfHGrid`` of the message is available and all zeros."""
+    try:
+        uid = handle.get("uuidOfHGrid", default=None)
+    except Exception:
+        return False
+
+    if isinstance(uid, bytes):
+        uid = uid.hex()
+    if isinstance(uid, str):
+        uid = uid.strip()
+        return uid != "" and set(uid) == {"0"}
+    return False
+
+
 class GribGeographyBuilder:
     @staticmethod
     def build(handle):
@@ -234,10 +249,15 @@ class GribGeographyBuilder:
                         " grid support is not available in ecCodes"
                     )
                 )
-            try:
-                grid_spec = handle.get("gridSpec", default=None)
-            except Exception:
+            # An all-zero uuidOfHGrid means the grid is not registered anywhere. Asking ecCodes for the
+            # gridSpec would make ecCodes/eckit print "GridUnknownError" to stderr, so we skip it.
+            if _has_zero_grid_uid(handle):
                 grid_spec = None
+            else:
+                try:
+                    grid_spec = handle.get("gridSpec", default=None)
+                except Exception:
+                    grid_spec = None
 
             if isinstance(grid_spec, str) and grid_spec != "":
                 from earthkit.data.field.component.geography import GridsSpecBasedGeography

@@ -100,6 +100,14 @@ def format_ls(attributes, column_names=None):
 
     df = pd.DataFrame.from_records(attributes)
 
+    # pandas >= 3 infers the new str dtype for a column that only holds strings and
+    # missing values, which turns the None of a missing metadata key into NaN. Undo
+    # the inference so the values are kept as they were (as pandas < 3 stored them).
+    for col in df.columns:
+        if isinstance(df[col].dtype, pd.StringDtype):
+            values = [None if pd.isna(v) else v for v in df[col].to_numpy(dtype=object)]
+            df[col] = pd.Series(values, index=df.index, dtype=object)
+
     if df is not None and column_names is not None:
         df = df.rename(columns=column_names)
 
@@ -151,6 +159,8 @@ def format_describe(attributes, *args, **kwargs):
 
 
 class NamespaceDump(dict):
+    """Namespace dump data keyed by title, with an HTML representation for notebooks."""
+
     def __init__(self, data, **kwargs):
         d = {item["title"]: item["data"] for item in data}
         super().__init__(d)

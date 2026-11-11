@@ -16,6 +16,12 @@ LOG = logging.getLogger(__name__)
 
 
 class EarthkitBackendEntrypoint(BackendEntrypoint):
+    """The xarray backend engine "earthkit".
+
+    It opens earthkit-data sources as xarray datasets with :func:`xarray.open_dataset`
+    when ``engine="earthkit"`` is specified.
+    """
+
     def open_dataset(
         self,
         filename_or_obj,

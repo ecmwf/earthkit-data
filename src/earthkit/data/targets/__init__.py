@@ -20,6 +20,9 @@ class Target(metaclass=ABCMeta):
     """
     Represent a target.
 
+    The :class:`Target` is used to write data to a specific location. The target can be
+    a file, a database, a remote server, etc.
+
     Parameters
     ----------
     encoder: str, Encoder, None
@@ -31,9 +34,6 @@ class Target(metaclass=ABCMeta):
         The template to use to encode the data. Can be overridden in the :obj:`write` method.
     metadata: dict, None
         Metadata to pass to the encoder.
-
-    The :class:`Target` is used to write data to a specific location. The target can be
-    a file, a database, a remote server, etc.
     """
 
     _name = None
