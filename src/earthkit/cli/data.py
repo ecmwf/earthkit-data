@@ -29,6 +29,7 @@ from earthkit.cli.standard_args import (
     SOURCE_HELP,
     TARGET_HELP,
     add_options,
+    parse_index,
     profile_option,
     source_options,
     split_csv,
@@ -81,7 +82,19 @@ def _ls_cubes(df):
             click.echo(f"{key:<{w}s}  {vals}")
 
 
-@earthkit.command()
+@earthkit.command(
+    help=f"""List the contents of SOURCE as a metadata summary table.
+
+--keys replaces the default set of metadata keys shown, --extra-keys adds to it.
+
+SOURCE: {SOURCE_HELP}
+
+\b
+Example:
+    earthkit ls input.grib --keys parameter.variable,vertical.level
+    cat input.grib | earthkit ls - --num 5
+""",
+)
 @add_options([source_options(positional=True)])
 @click.option(
     "--num",
@@ -107,13 +120,9 @@ def _ls_cubes(df):
     help="Group items into hypercubes.",
 )
 def ls(source, num, keys, extra_keys, cubes):
-    """List the contents of SOURCE as a metadata summary table.
-
-    --keys replaces the default set of metadata keys shown, --extra-keys adds to it.
-    """
     import pandas as pd
 
-    ds = _listable(source, None)
+    ds = _listable(source, "SOURCE", stream=_is_stream(source))
 
     kwargs = {}
     if num is not None:
@@ -199,10 +208,20 @@ def _listable(ds, filename, method="ls", stream=False):
     raise click.ClickException(f"{method!r} is not supported for {filename!r} ({type(ds).__name__})")
 
 
-@earthkit.command()
+@earthkit.command(
+    help=f"""Convert SOURCE to Xarray using the given profile(s) and write the result to TARGET.
+
+SOURCE: {SOURCE_HELP}
+
+TARGET: {TARGET_HELP}
+
+\b
+Example:
+    earthkit convert input.grib output.nc --profile earthkit
+""",
+)
 @add_options([source_options(positional=True), target_options(positional=True), profile_option])
 def convert(source, target, profile):
-    """Convert a data file to xarray format using the specified profile(s)."""
     out_data = source.to_xarray(profile=profile)
     target.to_target(data=out_data)
 
@@ -312,8 +331,18 @@ class _SelectionCommand(click.Command):
         ctx.params["conditions"] = conditions
         return result
 
+    #: Name of the condition values in the usage line.
+    value_metavar = "VALUE"
+
     def collect_usage_pieces(self, ctx: click.Context) -> list[str]:
-        return [*super().collect_usage_pieces(ctx), "--KEY VALUE [--KEY VALUE]..."]
+        value = self.value_metavar
+        return [*super().collect_usage_pieces(ctx), f"--KEY {value} [--KEY {value}]..."]
+
+
+class _PositionCommand(_SelectionCommand):
+    """A :class:`_SelectionCommand` whose conditions are positions, given as ``--KEY INDEX``."""
+
+    value_metavar = "INDEX"
 
 
 @earthkit.command(
@@ -427,6 +456,102 @@ def _sel_netcdf(dataset, selection):
         else:
             indexers[key] = coordinate.dtype.type(value)
     return dataset.sel(indexers)
+
+
+@earthkit.command(
+    cls=_PositionCommand,
+    help=f"""Select GRIB fields, BUFR messages or NetCDF coordinates by position with --KEY INDEX conditions.
+
+\b
+INDEX can be:
+- an integer, e.g. --vertical.level 0, or --vertical.level -1 for the last one
+- a comma-separated list, e.g. --vertical.level 0,2
+- a slice START:STOP[:STEP], which excludes STOP as in Python, e.g. --vertical.level 1:3 or --time ::2
+
+Indexes start at 0. For GRIB and BUFR, INDEX is the position in the sorted unique values of the metadata KEY,
+which is the order of the dimension in Xarray. For NetCDF, KEY is a dimension name and INDEX the position along
+it, in the order of the file. Conditions on different keys are combined with AND.
+
+SOURCE: {SOURCE_HELP}
+
+TARGET: {TARGET_HELP}
+
+\b
+Example:
+    earthkit isel input.grib output.grib --vertical.level 1:3
+    earthkit isel input.nc output.nc --time -1
+""",
+)
+@add_options([source_options(positional=True), target_options(positional=True)])
+def isel(source, target, conditions: dict[str, str]) -> None:
+    from earthkit.data.data.netcdf import NetCDFData
+
+    if not conditions:
+        raise click.UsageError("At least one --KEY INDEX condition is required")
+    selection = {}
+    for key, value in conditions.items():
+        try:
+            selection[key] = parse_index(value)
+        except click.BadParameter as error:
+            raise click.BadParameter(error.message, param_hint=f"'--{key}'") from error
+
+    _check_different_files(source, target)
+
+    if isinstance(source, NetCDFData):
+        selected = _isel_netcdf(source.to_xarray(), selection)
+        if _is_stdout(target):
+            target.to_target(selected, encoder="netcdf")
+        else:
+            target.to_target(selected)
+        return
+
+    selected = _isel_list(_listable(source, "SOURCE", method="sel", stream=_is_stream(source)), selection)
+    try:
+        target.to_target(selected)
+    except Exception as error:
+        raise click.ClickException(f"Could not select: {error}") from error
+
+
+def _positions(key: str, length: int, index: int | list[int] | slice) -> list[int]:
+    """Return the positions selected by INDEX among LENGTH values, raising a usage error if any is out of range."""
+    if isinstance(index, slice):
+        positions = list(range(length))[index]
+    else:
+        positions = index if isinstance(index, list) else [index]
+        for position in positions:
+            if not -length <= position < length:
+                raise click.BadParameter(
+                    f"Index {position} is out of range for {length} values", param_hint=f"'--{key}'"
+                )
+    if not positions:
+        raise click.BadParameter("The index selects no values", param_hint=f"'--{key}'")
+    return positions
+
+
+def _isel_list(items, selection):
+    """Select from a FieldList or FeatureList by position in the sorted unique values of each key."""
+    for key, index in selection.items():
+        values = items.unique(key, sort=True, unwrap_single=True)
+        if not values:
+            raise click.BadParameter(f"No values found for metadata key {key!r}", param_hint=f"'--{key}'")
+        chosen = [values[position] for position in _positions(key, len(values), index)]
+        items = items.sel({key: chosen})
+    return items
+
+
+def _isel_netcdf(dataset, selection):
+    """Select DATASET by position along its dimensions; an integer INDEX drops the dimension, as in Xarray."""
+    for key in selection:
+        if key not in dataset.dims:
+            raise click.BadParameter(
+                f"{key!r} is not a dimension, expected one of {', '.join(map(str, dataset.dims))}",
+                param_hint=f"'--{key}'",
+            )
+    indexers = {}
+    for key, index in selection.items():
+        positions = _positions(key, dataset.sizes[key], index)
+        indexers[key] = index if isinstance(index, (int, slice)) else positions
+    return dataset.isel(indexers)
 
 
 def _ordering(ctx: click.Context, param: click.Parameter, keys: tuple[str, ...]) -> dict[str, str | list[str]]:

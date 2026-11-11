@@ -11,12 +11,13 @@ The following commands select or reorder data and write the result to a target:
    :maxdepth: 1
 
    sel
+   isel
    order_by
 
 Sources and targets
 -------------------
 
-Both commands take a ``SOURCE`` and a ``TARGET``, given in the same way as for the
+The commands take a ``SOURCE`` and a ``TARGET``, given in the same way as for the
 other ``earthkit`` commands, as ``[NAME:]VALUE``:
 
 * A file path, e.g. ``input.grib``, is the same as ``file:input.grib``. Glob

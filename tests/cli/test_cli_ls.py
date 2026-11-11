@@ -37,3 +37,20 @@ def test_cli_ls_usage():
     assert "--keys" in result.output
     for flag in ("-k,", "-n,", "-e,"):
         assert flag not in result.output
+
+
+def test_cli_ls_stdin():
+    with open(earthkit_examples_file("tuv_pl.grib"), "rb") as f:
+        data = f.read()
+    result = CliRunner().invoke(ls, ["-", "--num", "2", "--keys", "parameter.variable,vertical.level"], input=data)
+    assert result.exit_code == 0, result.output
+    header, *rows = result.output.splitlines()
+    assert header.split() == ["parameter.variable", "vertical.level"]
+    assert len(rows) == 2
+
+
+def test_cli_ls_and_convert_help_describe_source():
+    for command in ("ls", "convert"):
+        result = CliRunner().invoke(earthkit, [command, "--help"])
+        assert result.exit_code == 0
+        assert "SOURCE: The earthkit-data source to read" in result.output
