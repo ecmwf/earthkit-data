@@ -117,8 +117,9 @@ Available encoders
      - Class
    * - ``grib``
      - Encode data as GRIB. Supports Fields, FieldLists, and NumPy arrays. Requires a
-       template or sufficient metadata to construct a valid GRIB message.
-     - :py:class:`~earthkit.data.encoders.grib.GribEncoder`
+       template or sufficient metadata to construct a valid GRIB message. See
+       :ref:`grib_encoder` for details.
+     - :py:class:`~earthkit.data.encoders.grib.encoder.GribEncoder`
    * - ``netcdf``
      - Encode data as NetCDF via xarray. Accepts Fields, FieldLists, and xarray
        Datasets/DataArrays.

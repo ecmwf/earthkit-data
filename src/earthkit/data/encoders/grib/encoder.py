@@ -114,26 +114,31 @@ class GribEncoder(Encoder):
     template: Field, GribCodesHandle, bytes, str, int, None
         A preset template to use for encoding when :meth:`encode` is called without a template.
         It can be a :py:class:`~earthkit.data.core.field.Field`,
-        a :py:class:`~earthkit.data.reader.grib.GribCodesHandle`, a GRIB message as
+        a :py:class:`~earthkit.data.readers.grib.handle.GribCodesHandle`, a GRIB message as
         bytes, an ecCodes GRIB sample name as string, a raw ecCodes handle as an integer, or None.
-        See :meth:`encode` for more details on how the template is used.
+        See :meth:`encode` for more details on how the template is used. Cannot be specified
+        together with ``mars_metadata``.
     metadata: dict
         A preset metadata to encode. The keys must be ecCodes GRIB keys, optionally prefixed with "metadata.".
         This metadata is used as default when :meth:`encode` is called without metadata. If metadata is provided
         in the :meth:`encode` method, it is merged with this preset metadata, with the metadata provided
         in the :meth:`encode` method taking precedence.
     mars_metadata: dict, optional
-        A preset of MARS metadata keys/values used as default when :meth:`encode` is called without
-        ``mars_metadata``. If ``mars_metadata`` is provided in the :meth:`encode` method, it is merged with
-        this preset, with the ``mars_metadata`` provided in the :meth:`encode` method taking precedence.
-        Cannot be specified together with ``template``.
+        Experimental feature, new in version 1.4.0. A preset of MARS metadata keys/values used as default
+        when :meth:`encode` is called without ``mars_metadata``. If ``mars_metadata`` is provided in the
+        :meth:`encode` method, it is merged with this preset, with the ``mars_metadata`` provided in the
+        :meth:`encode` method taking precedence.
+        When used, a new GRIB message is built from these keys and the ``values`` passed to
+        :meth:`encode`; the ``values`` argument is mandatory in this case. Cannot be specified
+        together with ``template`` (:exc:`NotImplementedError` is raised). See :ref:`grib_encoder_mars`
+        for more details.
     kwargs: dict
         Additional keyword arguments interpreted as metadata to encode. The keys must be ecCodes GRIB keys,
         optionally prefixed with "metadata.".
 
     Examples
     --------
-    See the howto examples for more details and examples of encoding GRIB data with :class:`GribEncoder`.
+    See :ref:`grib_encoder` and the howto examples for more details and examples of encoding GRIB data.
 
     - :ref:`/tutorials/target/grib_encoder.ipynb`
     - :ref:`/tutorials/target/grib_encoder_mars.ipynb`
@@ -151,24 +156,25 @@ class GribEncoder(Encoder):
     >>> f = d.to_field()
     >>> f.get("parameter.variable")
     'msl'
-    >>> f.get("parameter.shortName")
+    >>> f.get("metadata.shortName")
     'msl'
-    >>> f.get("parameter.units")
-    'hPa'
-    >>> f.get("step")
+    >>> f.get("metadata.units")
+    'Pa'
+    >>> f.get("metadata.step")
     6
 
-    Using without preset template and metadata:
+    Using without preset template and metadata (both are passed to :meth:`encode`):
+
     >>> encoder = GribEncoder()
-    >>> d = encoder.encode(values=template.values + 1.0, metadata={"shortName": "msl"}, step=6)
+    >>> d = encoder.encode(values=template.values + 1.0, template=template, metadata={"shortName": "msl"}, step=6)
     >>> f = d.to_field()
     >>> f.get("parameter.variable")
     'msl'
-    >>> f.get("parameter.shortName")
+    >>> f.get("metadata.shortName")
     'msl'
-    >>> f.get("parameter.units")
-    'hPa'
-    >>> f.get("step")
+    >>> f.get("metadata.units")
+    'Pa'
+    >>> f.get("metadata.step")
     6
     """
 
@@ -225,50 +231,58 @@ class GribEncoder(Encoder):
         target=None,
         **kwargs,
     ):
-        """
-        Encode new GRIB message(s).
+        """Encode new GRIB message(s).
 
         Parameters
         ----------
         data: Field, FieldList, Numpy array, or None
             The data to encode. Can be a :py:class:`~earthkit.data.core.field.Field`, a
             :py:class:`~earthkit.data.core.fieldlist.FieldList`, a Numpy array, or None.
-            If None, the new GRIB message(s) will be created from the ``values``, ``metadata`` and
-            ``template``. Cannot be specified together with ``values`` and ``template``.
+            If None, the new GRIB message(s) will be created from ``values``, ``metadata`` and
+            ``template``, or from ``mars_metadata`` and ``values``. Cannot be specified together
+            with ``mars_metadata``, or together with both ``values`` and ``template``.
             When ``template`` is also provided, it will be used as a basis for encoding,
             but the values will be taken from ``data``.
         values: numpy.ndarray or None
             The values to encode. If None, the values will be taken from the ``data`` or
             ``template``. Takes precedence over the values in ``data`` or ``template``
             if any of them are provided. If the values contain NaNs, they will be replaced with the
-            ``missing_value`` provided. Cannot be specified together with ``data`` and ``template``.
+            ``missing_value`` provided. Cannot be specified together with both ``data`` and
+            ``template``. It is mandatory when ``mars_metadata`` is used.
         check_nans: bool
             Check for NaNs in the values and replace them with ``missing_value``.
         metadata: dict
-            Metadata to encode. The keys can be ecCodes GRIB keys, optionally prefixed with "metadata."
+            Metadata to encode. The keys can be ecCodes GRIB keys, optionally prefixed with "metadata.".
             The format independent keys from :py:class:`~earthkit.data.core.field.Field` metadata are also
             accepted. If format independent keys are provided, they are applied first to create a new handle,
             then if ecCodes GRIB keys are provided too, they are applied on top of the handle.
         mars_metadata: dict, optional
-            MARS metadata keys/values (e.g. ``class``, ``stream``, ``type``, ``expver``, ``date``, ``time``,
-            ``step``, ``param``, ``levtype``, ``grid``, etc.) used to build a new GRIB message directly from
+            Experimental feature, new in version 1.4.0. MARS metadata keys/values (e.g. ``class``,
+            ``stream``, ``type``, ``expver``, ``date``, ``time``, ``step``, ``param``, ``levtype``,
+            ``grid``, etc.) used to build a new GRIB message directly from
             ``values``, without a ``template`` or ``data``. Internally, this uses the `metkit
             <https://github.com/ecmwf/metkit>`_ package to turn the MARS-style request into a GRIB message.
-            ``values`` is mandatory when ``mars_metadata`` is used. Cannot be specified together with
-            ``template`` or ``data``, since ``mars_metadata`` builds the message from scratch. Can be combined
-            with ``metadata``, in which case the GRIB message is first created from ``mars_metadata`` and
-            ``values``, then the keys in ``metadata`` are set on top of it. This is useful for GRIB keys that
-            are not part of the MARS vocabulary, such as ``bitsPerValue``. If a preset ``mars_metadata`` was
-            given to :obj:`GribEncoder`, it is merged with the ``mars_metadata`` provided here, with the
-            latter taking precedence.
+            The ``values`` argument is mandatory; a :exc:`ValueError` is raised if it is not provided. Cannot be
+            specified together with ``template`` or ``data``, since ``mars_metadata`` builds the message
+            from scratch; a :exc:`ValueError` is raised if they are combined. The ``edition`` key must not
+            be included. The ``date`` key may be a :py:class:`datetime.date` or
+            :py:class:`datetime.datetime` object, in which case it is converted to YYYYMMDD format. Can be
+            combined with ``metadata``, in which case the GRIB message is first created from
+            ``mars_metadata`` and ``values``, then the keys in ``metadata`` are set on top of it. This is
+            useful for GRIB keys that are not part of the MARS vocabulary, such as ``bitsPerValue``. If a
+            preset ``mars_metadata`` was given to the encoder constructor, it is merged with the
+            ``mars_metadata`` provided here, with the latter taking precedence. If the GRIB message cannot
+            be built, a :exc:`RuntimeError` is raised. See :ref:`grib_encoder_mars` for more details.
         template: Field, GribCodesHandle, bytes, str, int, None
             A template to use for encoding. It can be a :py:class:`~earthkit.data.core.field.Field`,
-            a :py:class:`~earthkit.data.reader.grib.GribCodesHandle`, a GRIB message as
-            bytes, an ecCodes GRIB sample name as string, a raw ecCodes handle as an integer, or None. If None, a
-            the :obj:`GribEncoder.template` will be used if provided. Otherwise a new handle will be
-            created from the ``data``, ``values`` and ``metadata``. Takes precedence over the
-            ``data`` in forming the new GRIB message, but values are taken from the ``data`` if no
-            provided directly. Cannot be specified together with ``data`` and ``values``.
+            a :py:class:`~earthkit.data.readers.grib.handle.GribCodesHandle`, a GRIB message as
+            bytes, an ecCodes GRIB sample name as string, a raw ecCodes handle as an integer, or None.
+            If None, the :obj:`GribEncoder.template` preset will be used if provided. Otherwise a new
+            handle will be created from the ``data``, ``values`` and ``metadata``, or from
+            ``mars_metadata`` and ``values``. Takes precedence over the ``data`` in forming the new
+            GRIB message, but the values are taken from the ``data`` if none are provided directly.
+            Cannot be specified together with ``mars_metadata``, or together with both
+            ``data`` and ``values``.
         missing_value: float
             The value to use for NaNs. Default is 9999, which is the default missing value used by ecCodes
             when encoding with a template that does not have a valid "bitsPerValue" key.
@@ -284,19 +298,20 @@ class GribEncoder(Encoder):
 
         Notes
         -----
-        ``data``, ``values`` and ``template`` cannot be specified together. If more than one of them
-        are provided, the following rules applied:
+        ``data``, ``values`` and ``template`` cannot all be specified together. If two of them are
+        provided, the following rules apply:
 
-        - ``data``, ``value``:  The values will be taken from the ``values`` argument.
+        - ``data``, ``values``: The values will be taken from the ``values`` argument.
         - ``data``, ``template``: The ``template`` will be used as a basis for encoding, but
             the values will be taken from the ``data`` argument.
         - ``values``, ``template``: The ``template`` will be used as a basis for encoding, but
             the values will be taken from the ``values`` argument.
 
-        When no ``data`` and ``template`` are provided, a new GRIB message will be created either from
+        When neither ``data`` nor ``template`` is provided, a new GRIB message will be created either from
         ``mars_metadata`` or from ``values`` and ``metadata``:
 
-        - If ``mars_metadata`` is given, it is used together with ``values`` to build the message via
+        - If ``mars_metadata`` is given (experimental feature, new in version 1.4.0), it is used together
+          with ``values`` to build the message via
           `metkit <https://github.com/ecmwf/metkit>`_. Any ``metadata`` provided is then applied on
           top of the resulting message.
         - Otherwise, the message is created from ``values`` and ``metadata`` alone. This is an experimental
@@ -305,7 +320,7 @@ class GribEncoder(Encoder):
 
         Examples
         --------
-        See the howto examples for more details and examples of encoding GRIB data with :class:`GribEncoder`.
+        See :ref:`grib_encoder` and the howto examples for more details and examples of encoding GRIB data.
 
         - :ref:`/tutorials/target/grib_encoder.ipynb`
         - :ref:`/tutorials/target/grib_encoder_mars.ipynb`
