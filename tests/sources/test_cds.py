@@ -13,8 +13,9 @@ import os
 
 import pytest
 
-from earthkit.data import from_source
+from earthkit.data import config, from_source
 from earthkit.data.core.temporary import temp_directory, temp_file
+from earthkit.data.sources.cds import CDSRetriever
 from earthkit.data.utils.testing import NO_CDS, preserve_cwd
 
 CDS_TIMEOUT = pytest.CDS_TIMEOUT
@@ -467,6 +468,48 @@ def test_cds_netcdf_to_pandas_xarray():
 
     # TODO: implement to_dataframe
     # assert data_cds.to_pandas().equals(data_file.to_pandas())
+
+
+class FakeCDSResult:
+    location = "https://cds.climate.copernicus.eu/api/v2/resources/abcdef01-0000-1111-2222-0123456789ab"
+
+    def download(self, target=None):
+        with open(target, "wb") as f:
+            f.write(b"fake cds payload")
+
+
+class FakeCDSClient:
+    def retrieve(self, dataset, request):
+        return FakeCDSResult()
+
+
+@pytest.mark.parametrize(
+    "extra_request,expected_extension",
+    [
+        (dict(data_format="netcdf"), ".nc"),
+        (dict(format="grib"), ".grib"),
+        (dict(format="grib", data_format="netcdf"), ".grib"),
+        (dict(), ".cache"),
+    ],
+)
+def test_cds_cache_file_extension(monkeypatch, tmp_path, extra_request, expected_extension):
+    # Offline test: the cdsapi client is mocked so no credentials or network
+    # access are needed. The cache is isolated in a temporary directory.
+    monkeypatch.setattr(CDSRetriever, "client", lambda self: FakeCDSClient())
+
+    with config.temporary({"cache-policy": "user", "user-cache-directory": str(tmp_path / "cache")}):
+        s = CDSRetriever(
+            "reanalysis-era5-single-levels",
+            variable="2t",
+            product_type="reanalysis",
+            date="2012-12-12",
+            **extra_request,
+        )
+        # a single request: self.path is still a one-element list here
+        # (the one-element collapse happens in FileSource.mutate())
+        path = s.path[0] if isinstance(s.path, (list, tuple)) else s.path
+        assert path.endswith(expected_extension)
+        assert os.path.isfile(path)
 
 
 if __name__ == "__main__":

@@ -330,6 +330,18 @@ def _from_ads(
     return _to_data(src, "ads")
 
 
+def _from_ewds(
+    dataset: str,
+    *,
+    request: Request,
+    prompt: bool = True,
+) -> Data:
+    from earthkit.data.sources.ewds import EWDSRetriever
+
+    src = EWDSRetriever(dataset, request=request, prompt=prompt)
+    return _to_data(src, "ewds")
+
+
 def _from_cds(
     dataset: str,
     *args: Request,

@@ -8,6 +8,7 @@ The majority of the request-based retrieval **sources**  supports the ``split_on
 - :ref:`data-sources-ads`
 - :ref:`data-sources-cds`
 - :ref:`data-sources-eod`
+- :ref:`data-sources-ewds`
 - :ref:`data-sources-mars`
 - :ref:`data-sources-polytope`
 - :ref:`data-sources-wekeo`

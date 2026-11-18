@@ -17,6 +17,7 @@ Data sources
     ads.ipynb
     cds.ipynb
     ecmwf_open_data.ipynb
+    ewds.ipynb
     fdb.ipynb
     mars.ipynb
     netcdf_opendap.ipynb
