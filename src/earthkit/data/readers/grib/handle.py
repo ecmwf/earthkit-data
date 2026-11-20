@@ -150,7 +150,19 @@ class GribCodesHandle(CodesHandle):
     def get_values(self, dtype=None):
         eccodes.codes_set(self._handle, "missingValue", CodesHandle.MISSING_VALUE)
         vals = VALUE_ACCESSOR.get(self._handle, dtype=dtype)
-        if self.get_long("bitmapPresent"):
+        has_missing = None
+        if self.get_string("packingType") in ("grid_simple", "grid_ccsds"):
+            # these packings can only mark missing values with a bitmap, and
+            # ecCodes counts them cheaply. The count is not available for
+            # GRIB1 dummy fields (all values missing), which use the check below.
+            n_missing = self.get("numberOfMissing", ktype=int, default=None)
+            if n_missing is not None:
+                has_missing = n_missing > 0
+        if has_missing is None:
+            # missing values can be present without a bitmap (e.g. complex
+            # packing); the max check avoids a full comparison when there are none
+            has_missing = vals.size > 0 and (self.get_long("bitmapPresent") or vals.max() >= CodesHandle.MISSING_VALUE)
+        if has_missing:
             vals[vals == CodesHandle.MISSING_VALUE] = np.nan
         return vals
 
