@@ -756,6 +756,93 @@ def test_grib_values_missing_no_bitmap_roundtrip(fl_type, tmp_path):
     assert np.allclose(v_r[~mask_expected], expected[~mask_expected], atol=0.01)
 
 
+def _check_values_with_nan(message, expected):
+    mask_expected = np.isnan(expected)
+    f = from_source("memory", message).to_fieldlist()
+    for dtype in (None, "float32"):
+        v = f[0].to_numpy(flatten=True, dtype=dtype)
+        assert np.array_equal(np.isnan(v), mask_expected)
+        assert np.allclose(v[~mask_expected], expected[~mask_expected], atol=0.01)
+
+
+@pytest.mark.parametrize(
+    "sample,packing",
+    [("GRIB1", "grid_simple"), ("GRIB2", "grid_simple"), ("GRIB2", "grid_ccsds")],
+)
+@pytest.mark.parametrize(
+    "case",
+    ["no_missing", "missing", "constant_with_missing", "all_missing"],
+)
+def test_grib_values_missing_bitmap_packing(sample, packing, case):
+    """Simple and CCSDS packing use numberOfMissing to detect missing values."""
+    h = eccodes.codes_grib_new_from_samples(sample)
+    try:
+        eccodes.codes_set(h, "packingType", packing)
+        n = eccodes.codes_get(h, "numberOfValues")
+
+        if case == "constant_with_missing":
+            expected = np.full(n, 250.0)
+        else:
+            expected = np.linspace(200, 300, n)
+
+        if case == "all_missing":
+            missing_idx = list(range(n))
+        elif case == "no_missing":
+            missing_idx = []
+        else:
+            missing_idx = [0, 5, n // 4, n // 2, n - 1]
+
+        values = expected.copy()
+        values[missing_idx] = 9999
+        expected[missing_idx] = np.nan
+
+        eccodes.codes_set(h, "missingValue", 9999)
+        eccodes.codes_set(h, "bitmapPresent", 0 if case == "no_missing" else 1)
+        eccodes.codes_set(h, "bitsPerValue", 16)
+        eccodes.codes_set_values(h, values)
+
+        assert eccodes.codes_get(h, "packingType") == packing
+        assert eccodes.codes_get(h, "numberOfMissing") == len(missing_idx)
+        if case == "constant_with_missing":
+            assert eccodes.codes_get(h, "bitsPerValue") == 0
+        message = eccodes.codes_get_message(h)
+    finally:
+        eccodes.codes_release(h)
+
+    _check_values_with_nan(message, expected)
+
+
+def test_grib_values_missing_grib1_dummy_field():
+    """A GRIB1 dummy field (binaryScaleFactor=-32767) has all values missing
+    without a bitmap, and ecCodes gives no numberOfMissing for it.
+    """
+    h = eccodes.codes_grib_new_from_samples("GRIB1")
+    try:
+        n = eccodes.codes_get(h, "numberOfValues")
+        eccodes.codes_set_values(h, np.linspace(200, 300, n))
+        offset = eccodes.codes_get(h, "offsetSection4")
+        message = bytearray(eccodes.codes_get_message(h))
+    finally:
+        eccodes.codes_release(h)
+
+    # binaryScaleFactor is read-only, so set it in the binary data section
+    # (octets 5-6 of section 4) to -32767
+    message[offset + 4] = 0xFF
+    message[offset + 5] = 0xFF
+    message = bytes(message)
+
+    h = eccodes.codes_new_from_message(message)
+    try:
+        assert eccodes.codes_get(h, "binaryScaleFactor") == -32767
+        assert eccodes.codes_get(h, "packingType") == "grid_simple"
+        assert eccodes.codes_get(h, "bitmapPresent") == 0
+        assert not eccodes.codes_is_defined(h, "numberOfMissing")
+    finally:
+        eccodes.codes_release(h)
+
+    _check_values_with_nan(message, np.full(n, np.nan))
+
+
 def test_grib_immutable_values():
     fl = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
