@@ -115,6 +115,12 @@ The ``dtype`` argument controls the output array type:
     >>> lat.dtype
     dtype('float32')
 
+For geographies where coordinates are not available (e.g. spectral fields),
+:meth:`~earthkit.data.field.component.geography.GeographyBase.latitudes` and
+:meth:`~earthkit.data.field.component.geography.GeographyBase.longitudes` return ``None`` and
+:meth:`~earthkit.data.field.component.geography.GeographyBase.latlons` returns ``(None, None)``,
+regardless of the ``flatten`` and ``dtype`` arguments.
+
 
 List of geography metadata keys
 --------------------------------

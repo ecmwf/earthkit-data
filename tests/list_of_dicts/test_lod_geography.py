@@ -135,10 +135,13 @@ def test_lod_geo_invalid(
 
 @pytest.mark.parametrize("data", ["lod_no_latlon"])
 @pytest.mark.parametrize("mode", ["list-of-dicts", "loop"])
+@pytest.mark.parametrize("flatten,dtype", [(False, None), (True, None), (False, "float32"), (True, "float32")])
 def test_lod_no_latlon(
     request,
     data,
     mode,
+    flatten,
+    dtype,
 ):
     ds = build_lod_fieldlist(request.getfixturevalue(data), mode)
 
@@ -151,6 +154,32 @@ def test_lod_no_latlon(
     #     ds[0].geography.latlons()
 
     assert ds[0].geography.latlons() == (None, None)
+    assert ds[0].geography.latlons(flatten=flatten, dtype=dtype) == (None, None)
+
+
+@pytest.mark.parametrize("missing", ["latitudes", "longitudes"])
+@pytest.mark.parametrize("flatten,dtype", [(False, None), (True, None), (False, "float32"), (True, "float32")])
+def test_latlons_one_coordinate_missing(missing, flatten, dtype):
+    # Test that latlons() returns (None, None) when only one of the coordinates
+    # is missing. Such a geography cannot be created through the public API so a
+    # subclass of EmptyGeography is used to emulate it.
+    from earthkit.data.field.component.geography import EmptyGeography
+
+    class HalfGeography(EmptyGeography):
+        def latitudes(self, dtype=None):
+            if missing == "latitudes":
+                return None
+            return np.array([10.0, 20.0, 30.0])
+
+        def longitudes(self, dtype=None):
+            if missing == "longitudes":
+                return None
+            return np.array([100.0, 110.0, 120.0])
+
+    geo = HalfGeography(shape=(3,))
+    assert getattr(geo, missing)() is None
+
+    assert geo.latlons(flatten=flatten, dtype=dtype) == (None, None)
 
 
 def test_lod_geo_set_on_nongeo_1():
