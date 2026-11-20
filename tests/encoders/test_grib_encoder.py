@@ -10,12 +10,18 @@
 #
 
 import datetime
+import json
 
 import numpy as np
 import pytest
 
 from earthkit.data import create_encoder, from_source
-from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import (
+    NO_ECCODES_GRID,
+    NO_ECKIT_GRID,
+    earthkit_examples_file,
+    earthkit_test_data_file,
+)
 
 _LABELS = {"my_label": "my_val"}
 _LABELS_SET_ARGS = {"labels.my_label": "my_val"}
@@ -815,3 +821,102 @@ def test_grib_encoder_deflate():
     f_r = r.to_field()
 
     assert f_r.get("parameter.variable") == "2t"
+
+
+#
+# A new grid is defined by a gridSpec, but ecCodes applies it on top of the scanning mode
+# of the template, which is not part of the spec. The samples below all have a non zero
+# scanning mode: "mercator.grib" (GRIB2, 80), "polar_stereographic_12x10.grib1" and
+# "lambert_12x10.grib1" (GRIB1, 64).
+#
+
+_GRIDSPEC_TEMPLATES = ["mercator.grib", "polar_stereographic_12x10.grib1", "lambert_12x10.grib1"]
+
+# target grid spec and the number of values it needs
+_GRIDSPEC_TARGETS = [({"grid": "O32"}, 5248), ({"grid": [10, 10]}, 684)]
+
+
+def _grid_spec_field(name):
+    f = from_source("file", earthkit_test_data_file(name)).to_fieldlist()[0]
+    # the template must be a projected grid with a scanning mode to inherit
+    assert f.get("metadata.scanningMode") != 0
+    return f
+
+
+def _check_grid_spec(encoded, spec):
+    # re-read the encoded message and check the grid it describes
+    f = from_source("memory", encoded.to_bytes()).to_fieldlist()[0]
+
+    assert f.get("metadata.scanningMode") == 0
+
+    gs = f.geography.grid_spec()
+    # the earth figure is inherited from the template, it is not part of the grid spec
+    assert {k: v for k, v in gs.items() if k != "figure"} == spec
+
+
+@pytest.mark.skipif(NO_ECCODES_GRID or NO_ECKIT_GRID, reason="No eckit-geo grid support in eccodes")
+@pytest.mark.parametrize("template", _GRIDSPEC_TEMPLATES)
+@pytest.mark.parametrize("spec,n", _GRIDSPEC_TARGETS)
+def test_grib_encoder_grid_spec_resets_scanning_mode(template, spec, n):
+    # encoding a field whose geography was changed with field.set()
+    f = _grid_spec_field(template)
+
+    encoder = create_encoder("grib")
+    r = encoder.encode(f.set({"values": np.ones(n), "geography.grid_spec": spec}))
+
+    _check_grid_spec(r, spec)
+
+
+@pytest.mark.skipif(NO_ECCODES_GRID or NO_ECKIT_GRID, reason="No eckit-geo grid support in eccodes")
+@pytest.mark.parametrize("template", _GRIDSPEC_TEMPLATES)
+@pytest.mark.parametrize("spec,n", _GRIDSPEC_TARGETS)
+def test_grib_encoder_grid_spec_resets_scanning_mode_metadata(template, spec, n):
+    # encoding with the gridSpec ecCodes key given in the metadata (as a JSON string)
+    f = _grid_spec_field(template)
+
+    encoder = create_encoder("grib")
+    r = encoder.encode(values=np.ones(n), template=f, metadata={"gridSpec": json.dumps(spec)})
+
+    _check_grid_spec(r, spec)
+
+
+@pytest.mark.skipif(NO_ECCODES_GRID or NO_ECKIT_GRID, reason="No eckit-geo grid support in eccodes")
+@pytest.mark.parametrize("path", ["set", "metadata"])
+def test_grib_encoder_grid_spec_order(path):
+    # the order in a grid spec is applied on top of the reset scanning mode
+    spec = {"grid": [10, 10], "order": "i+j+"}
+    f = _grid_spec_field("mercator.grib")
+
+    encoder = create_encoder("grib")
+    if path == "set":
+        r = encoder.encode(f.set({"values": np.ones(684), "geography.grid_spec": spec}))
+    else:
+        r = encoder.encode(values=np.ones(684), template=f, metadata={"gridSpec": json.dumps(spec)})
+
+    f_r = from_source("memory", r.to_bytes()).to_fieldlist()[0]
+    assert f_r.get("metadata.scanningMode") == 64
+    assert f_r.get("metadata.jScansPositively") == 1
+    assert f_r.geography.grid_spec() == spec
+
+
+@pytest.mark.skipif(NO_ECCODES_GRID or NO_ECKIT_GRID, reason="No eckit-geo grid support in eccodes")
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        {"scanningMode": 16, "gridSpec": json.dumps({"grid": [10, 10]})},
+        {"gridSpec": json.dumps({"grid": [10, 10]}), "scanningMode": 16},
+    ],
+    ids=["scanningMode-first", "gridSpec-first"],
+)
+def test_grib_encoder_grid_spec_explicit_scanning_mode(metadata):
+    # a scanning mode set by the caller is not reset
+    f = _grid_spec_field("mercator.grib")
+
+    encoder = create_encoder("grib")
+    r = encoder.encode(values=np.ones(684), template=f, metadata=dict(metadata))
+
+    f_r = from_source("memory", r.to_bytes()).to_fieldlist()[0]
+    assert f_r.get("metadata.scanningMode") == 16
+    # 16 only holds the point ordering bit, which ecCodes keeps when it applies
+    # a grid spec with no order, whichever way round the two keys are given
+    assert f_r.geography.grid_spec() == {"grid": [10, 10], "order": "i+-j-"}
