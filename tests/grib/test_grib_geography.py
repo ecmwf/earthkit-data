@@ -25,6 +25,7 @@ from earthkit.data.utils import projections
 from earthkit.data.utils.testing import (
     IN_GITHUB,
     NO_ECCODES_GRID,
+    NO_ECKIT_GRID,
     NO_GEO,
     check_array,
     check_array_type,
@@ -516,6 +517,139 @@ def test_grib_grid_points_rotated_rgg():
     assert np.allclose(res[1][:4], ref1[1])
     assert np.allclose(res[0][-4:], ref2[0])
     assert np.allclose(res[1][-4:], ref2[1])
+
+
+# Projected grids. For each file the grid specification ecCodes generates for it is listed
+# together with the tolerance the latitudes/longitudes computed from it have to match the
+# ones ecCodes generates for the field.
+#
+# A projected specification is only usable when it names the shape of the earth of its
+# projection (the "figure" key). This is the case for all the specifications below, and
+# their positions match the ecCodes ones exactly (the largest measured difference of the
+# two computations for these samples is 0.0 deg; the tolerance allows for some freedom in
+# the arithmetic).
+#
+# The "lambert_12x10.grib1", "polar_stereographic_12x10.grib1" and
+# "lambert_azimuthal_equal_area_12x10.grib2" samples were made from production messages by
+# only reducing the extent of the grid (Ni, Nj), so their grid definition keys, projection
+# and values are the ones of the original first sub-block.
+PROJECTED_GRID_SPECS = [
+    (
+        "mercator.grib",
+        "mercator",
+        (225, 339),
+        {
+            "false": [7108383.475, -1800563.621],
+            "order": "i+-j+",
+            "projection": {"figure": "wgs84_sphere", "lat_ts": 20, "reverse": True, "type": "merc"},
+            "x": [0, 422500, 1250],
+            "y": [0, 280000, 1250],
+        },
+        1e-9,
+    ),
+    (
+        "lambert_12x10.grib1",
+        "lambert",
+        (10, 12),
+        {
+            "false": [289299.535, 207955.983],
+            "order": "i+j+",
+            "projection": {
+                "figure": "iau1965",
+                "lat_0": 49.833,
+                "lat_1": 49.833,
+                "lat_2": 51.167,
+                "lon_0": 4.359,
+                "reverse": True,
+                "type": "lcc",
+            },
+            "x": [0, 11000, 1000],
+            "y": [0, 9000, 1000],
+        },
+        1e-9,
+    ),
+    (
+        "lambert_azimuthal_equal_area_12x10.grib2",
+        "lambert_azimuthal_equal_area",
+        (10, 12),
+        {
+            "false": [1818500.021, -2287499.955],
+            "projection": {"figure": "grs80", "lat_0": 52, "lon_0": 10, "reverse": True, "type": "laea"},
+            "x": [0, 55000, 5000],
+            "y": [0, -45000, -5000],
+        },
+        1e-9,
+    ),
+]
+
+# Projected grids whose specification has no earth figure: GRIB1 messages with a custom
+# radiusOfTheEarth (shapeOfTheEarth = 0), which ecCodes cannot name. eckit.geo.Grid() would
+# build them on its own default figure and shift the positions against the field by about
+# 6e-4 in a relative way, up to 0.031 deg for the sample below, so grid_spec() reports these
+# grids as unspecified although ecCodes does generate a (figureless) specification for them.
+# The rule looks at the figure alone: a figureless grid is reported as unspecified even when
+# the default figure happens to be the right one for it.
+PROJECTED_GRID_SPECS_NO_FIGURE = [
+    ("polar_stereographic_12x10.grib1", "polar_stereographic", (10, 12)),
+]
+
+
+@pytest.mark.skipif(NO_ECCODES_GRID or NO_ECKIT_GRID, reason="No eckit-geo grid support in eccodes")
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("filename,grid_type,shape,expected_spec,atol", PROJECTED_GRID_SPECS)
+def test_grib_grid_spec_projected(fl_type, filename, grid_type, shape, expected_spec, atol, capfd):
+    r"""Test that the grid specification of a projected grid is returned and usable."""
+    from eckit.geo import Grid
+
+    ds, _ = load_grib_data(filename, fl_type, folder="data")
+    f = ds[0]
+
+    assert f.geography.grid_type() == grid_type
+    assert f.geography.shape() == shape
+
+    capfd.readouterr()
+
+    spec = f.geography.grid_spec()
+    assert isinstance(spec, dict), type(spec)
+    assert spec == expected_spec
+
+    # the specification must describe the grid of the field
+    grid = Grid(spec)
+    assert grid.type == "regular_xy"
+    assert grid.shape == shape
+    lat, lon = f.geography.latlons()
+    lat = array_convert(lat, array_namespace="numpy")
+    lon = array_convert(lon, array_namespace="numpy")
+    grid_lat, grid_lon = (np.asarray(v).reshape(shape) for v in grid.to_latlons())
+    assert np.allclose(grid_lat, lat, rtol=0, atol=atol)
+    dlon = np.abs((grid_lon - lon + 180) % 360 - 180)
+    assert dlon.max() <= atol
+
+    # reading the grid specification must not make eccodes/eckit print errors
+    captured = capfd.readouterr()
+    assert "ECCODES ERROR" not in captured.err
+    assert "GridSpec: geo::Exception" not in captured.err
+
+
+@pytest.mark.skipif(NO_ECCODES_GRID or NO_ECKIT_GRID, reason="No eckit-geo grid support in eccodes")
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("filename,grid_type,shape", PROJECTED_GRID_SPECS_NO_FIGURE)
+def test_grib_grid_spec_projected_no_figure(fl_type, filename, grid_type, shape, capfd):
+    r"""Test that a projected grid whose specification has no earth figure is reported as unspecified."""
+    ds, _ = load_grib_data(filename, fl_type, folder="data")
+    f = ds[0]
+
+    assert f.geography.grid_type() == grid_type
+    assert f.geography.shape() == shape
+
+    capfd.readouterr()
+
+    assert f.geography.grid_spec() is None
+
+    # asking for the grid specification must not make eccodes/eckit print errors
+    captured = capfd.readouterr()
+    assert "ECCODES ERROR" not in captured.err
+    assert "GridSpec: geo::Exception" not in captured.err
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
