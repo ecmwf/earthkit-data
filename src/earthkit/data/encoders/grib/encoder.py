@@ -607,6 +607,18 @@ class GribEncoder(Encoder):
         r.update(metadata)
         metadata = r
 
+        # ecCodes applies a new gridSpec on top of the template's scanning mode: the
+        # scanning mode is not part of the spec, so the inherited bits can corrupt the
+        # new grid. Reset it just before the gridSpec, because eccodes keys are order
+        # dependent; a scanning mode set by the caller is kept.
+        if "gridSpec" in metadata and "scanningMode" not in metadata:
+            r = {}
+            for k, v in metadata.items():
+                if k == "gridSpec":
+                    r["scanningMode"] = 0
+                r[k] = v
+            metadata = r
+
         if check_nans and values is not None:
             import numpy as np
 
