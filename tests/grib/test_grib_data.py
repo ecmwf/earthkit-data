@@ -10,6 +10,7 @@
 #
 
 
+import eccodes
 import numpy as np
 import pytest
 from earthkit.utils.array import convert as array_convert
@@ -21,7 +22,7 @@ from grib_fixtures import (
     load_grib_data,  # noqa: E402
 )
 
-from earthkit.data import from_source
+from earthkit.data import create_encoder, from_source
 from earthkit.data.utils.testing import check_array, check_array_type, earthkit_examples_file
 
 
@@ -649,6 +650,110 @@ def test_grib_values_with_missing(fl_type):
     m = v[mask]
     assert len(m) == 38
     assert xp.count_nonzero(xp.isnan(m)) == 38
+
+
+def _make_complex_missing_message():
+    """Build an in-memory GRIB2 message with missing values but no bitmap.
+
+    The message uses complex packing with missing value management
+    (``missingValueManagementUsed=1``, ``bitmapPresent=0``). Returns the
+    message bytes and the expected values with NaN at the missing points.
+    """
+    h = eccodes.codes_grib_new_from_samples("GRIB2")
+    try:
+        eccodes.codes_set(h, "packingType", "grid_complex")
+        n = eccodes.codes_get(h, "numberOfValues")
+        missing_idx = [0, 5, n // 4, n // 2, n - 1]
+
+        values = np.linspace(200, 300, n)
+        values[missing_idx] = 9999  # the missing value stored in the message
+
+        eccodes.codes_set(h, "missingValue", 9999)
+        eccodes.codes_set(h, "missingValueManagementUsed", 1)
+        eccodes.codes_set(h, "bitmapPresent", 0)
+        # set explicitly: with complex packing chosen before the values, the
+        # sample's bitsPerValue can stay 0 and the values would be lost
+        eccodes.codes_set(h, "bitsPerValue", 16)
+        eccodes.codes_set_values(h, values)
+
+        message = eccodes.codes_get_message(h)
+    finally:
+        eccodes.codes_release(h)
+
+    expected = np.linspace(200, 300, n)
+    expected[missing_idx] = np.nan
+
+    return message, expected
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+def test_grib_values_missing_no_bitmap(fl_type, tmp_path):
+    message, expected = _make_complex_missing_message()
+
+    # the serialised message stores missing values without a bitmap
+    h = eccodes.codes_new_from_message(message)
+    try:
+        assert eccodes.codes_get(h, "bitmapPresent") == 0
+        assert eccodes.codes_get(h, "missingValueManagementUsed") == 1
+        assert eccodes.codes_get(h, "numberOfMissing") == np.count_nonzero(np.isnan(expected))
+    finally:
+        eccodes.codes_release(h)
+
+    path = tmp_path / "test_missing_no_bitmap.grib"
+    path.write_bytes(message)
+
+    f, array_backend = load_grib_data(str(path), fl_type, folder="data")
+
+    xp = array_backend.array_namespace
+    dtype = array_backend.dtype
+
+    v = f[0].values
+    check_array_type(v, xp, dtype=dtype)
+
+    mask_expected = np.isnan(expected)
+    assert xp.count_nonzero(xp.isnan(v)) == len(np.flatnonzero(mask_expected))
+
+    v1 = array_convert(v, array_namespace="numpy").flatten()
+    assert v1.shape == expected.shape
+    assert np.array_equal(np.isnan(v1), mask_expected)
+    assert np.allclose(v1[~mask_expected], expected[~mask_expected], atol=0.01)
+
+    # reading with a memory source gives the same result
+    fm = from_source("memory", message).to_fieldlist()
+    vm = array_convert(fm[0].values, array_namespace="numpy").flatten()
+    assert np.array_equal(np.isnan(vm), mask_expected)
+    assert np.allclose(vm[~mask_expected], expected[~mask_expected], atol=0.01)
+
+    # also with float32
+    v32 = array_convert(f[0].to_numpy(flatten=True, dtype="float32"), array_namespace="numpy")
+    assert v32.dtype == np.float32
+    assert np.array_equal(np.isnan(v32), mask_expected)
+    assert np.allclose(v32[~mask_expected], expected[~mask_expected], atol=0.01)
+
+
+@pytest.mark.parametrize("fl_type", FL_FILE)
+def test_grib_values_missing_no_bitmap_roundtrip(fl_type, tmp_path):
+    message, expected = _make_complex_missing_message()
+
+    path = tmp_path / "test_missing_no_bitmap.grib"
+    path.write_bytes(message)
+
+    f, array_backend = load_grib_data(str(path), fl_type, folder="data")
+    xp = array_backend.array_namespace
+
+    # re-encode the values using the field as template
+    v = f[0].values
+    mask_expected = np.isnan(expected)
+    assert xp.count_nonzero(xp.isnan(v)) == len(np.flatnonzero(mask_expected))
+
+    encoder = create_encoder("grib")
+    r = encoder.encode(values=v, template=f[0], check_nans=True, missing_value=9999)
+
+    # re-read: the missing points must still be NaN
+    f_r = r.to_field()
+    v_r = array_convert(f_r.values, array_namespace="numpy").flatten()
+    assert np.array_equal(np.isnan(v_r), mask_expected)
+    assert np.allclose(v_r[~mask_expected], expected[~mask_expected], atol=0.01)
 
 
 def test_grib_immutable_values():

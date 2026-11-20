@@ -150,8 +150,7 @@ class GribCodesHandle(CodesHandle):
     def get_values(self, dtype=None):
         eccodes.codes_set(self._handle, "missingValue", CodesHandle.MISSING_VALUE)
         vals = VALUE_ACCESSOR.get(self._handle, dtype=dtype)
-        if self.get_long("bitmapPresent"):
-            vals[vals == CodesHandle.MISSING_VALUE] = np.nan
+        vals[vals == CodesHandle.MISSING_VALUE] = np.nan
         return vals
 
     def get_latitudes(self, dtype=None):
