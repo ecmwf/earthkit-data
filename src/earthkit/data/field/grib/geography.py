@@ -22,8 +22,28 @@ from .core import GribFieldComponentHandler
 LOG = logging.getLogger(__name__)
 
 
+# The gridTypes whose specification describes a map projection
+PROJECTED_GRID_TYPES = ["lambert", "polar_stereographic", "mercator", "lambert_azimuthal_equal_area"]
+
+
 def missing_is_none(x):
     return None if x == 2147483647 else x
+
+
+def _has_earth_figure(spec):
+    """Whether the grid specification ``spec`` names the shape of the earth.
+
+    ecCodes stores the figure of the earth in the "figure" key of the projection (e.g.
+    "wgs84_sphere"). The search covers the whole specification so that a figure stored
+    at another level is also found.
+    """
+    if isinstance(spec, dict):
+        if "figure" in spec:
+            return True
+        return any(_has_earth_figure(v) for v in spec.values())
+    if isinstance(spec, list):
+        return any(_has_earth_figure(v) for v in spec)
+    return False
 
 
 class GribGeography(GeographyBase):
@@ -157,15 +177,10 @@ class GribGeography(GeographyBase):
     def _get_grid_spec_from_handle(self):
         if ECKIT_GRID_SUPPORT.has_ecc_grid_spec and ECKIT_GRID_SUPPORT.has_grid:
             grid_type = self.handle.get("gridType", default=None)
-            # For certain gridTypes the grid specification is not available and when we try to access it a
-            # lot of errors are logged/printed from the supporting libraries (eccodes/eckit), so we skip
-            # them here.
-            # TODO: remove this check once the supporting libraries handle all grid types correctly
-            if grid_type in ["lambert", "polar_stereographic", "mercator", "lambert_azimuthal_equal_area"]:
-                return None
 
             # Try to get the gridspec from the handle
             grid_spec = self.handle.get("gridSpec", default=None)
+
             if isinstance(grid_spec, str) and grid_spec != "":
                 try:
                     grid_spec = json.loads(grid_spec)
@@ -174,6 +189,22 @@ class GribGeography(GeographyBase):
 
             if not isinstance(grid_spec, dict):
                 grid_spec = None
+
+            if grid_spec is not None and grid_type in PROJECTED_GRID_TYPES:
+                # A projected grid specification without a "figure" cannot be used. The figure
+                # names the shape of the earth the projection is built on and GRIB1 messages
+                # with a custom radiusOfTheEarth (shapeOfTheEarth = 0) do not name it, so
+                # ecCodes leaves the figure out of the specification they generate. Building a
+                # grid from such a specification makes eckit.geo.Grid() assume its own default
+                # figure, which shifts the computed positions against the ones of the field by
+                # up to about 0.03-0.07 degrees (measured with ecCodes 2.49.0 and eckit
+                # 2.5.0.49), so these messages are reported as having no specification, as
+                # projected grids were before the specification was returned at all.
+                # TODO: remove this check once ecCodes includes the figure in the grid
+                # specifications it generates.
+                if not _has_earth_figure(grid_spec):
+                    LOG.debug(f'The gridSpec of the projected grid "{grid_type}" has no earth figure: not used')
+                    return None
 
             return grid_spec
 
