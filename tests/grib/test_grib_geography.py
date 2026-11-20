@@ -699,6 +699,22 @@ def test_grib_custom_unstructured_grid(fl_type):
     assert np.allclose(f_gs.values, ref_vals)
 
 
+@pytest.mark.skipif(IN_GITHUB, reason="Skipping test on GitHub CI")
+@pytest.mark.parametrize("flatten,dtype", [(False, None), (True, None), (False, "float32"), (True, "float32")])
+def test_grib_spectral_no_latlons(flatten, dtype):
+    # Spectral grids have no coordinates. latlons() must return (None, None)
+    # independently of "flatten" and "dtype".
+    ds = earthkit.data.from_source(
+        "url", earthkit_remote_test_data_file("xr_engine", "grid", "sh_t32.grib1")
+    ).to_fieldlist()
+
+    f = ds[0]
+    assert f.geography.shape() == (1122,)
+    assert f.geography.latitudes() is None
+    assert f.geography.longitudes() is None
+    assert f.geography.latlons(flatten=flatten, dtype=dtype) == (None, None)
+
+
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_custom_unstructured_grid_no_grid_uid_error(fl_type, capfd):
     # The GRIB message has an all-zero uuidOfHGrid. Asking ecCodes for the gridSpec
