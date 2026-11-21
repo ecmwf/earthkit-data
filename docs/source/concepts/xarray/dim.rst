@@ -152,6 +152,96 @@ The following example demonstrates the vertical dimensions modes:
 - :ref:`/tutorials/xr_engine/xarray_engine_level.ipynb`
 
 
+.. _xr_hybrid_level_cf:
+
+Hybrid levels and the CF vertical coordinate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When the vertical dimension is made of hybrid (model) levels and the fields carry the hybrid
+A/B coefficients (e.g. the ``pv`` array in GRIB), the Xarray dataset also describes the vertical coordinate
+following the CF convention for the ``atmosphere_hybrid_sigma_pressure_coordinate``. This is always
+done, there is no option to switch it off. It applies to:
+
+- the ``"level"`` dimension when ``level_dim_mode="level"``
+- the ``"hybrid"`` dimension when ``level_dim_mode="level_per_type"``
+
+It is not applied
+
+- when ``level_dim_mode="level_and_type"``
+- when a single hybrid level is squeezed away (see :ref:`xr_squeeze_and_ensure_dims`)
+- when the fields have no hybrid coefficients
+- when the variables on the dimension have different A/B coefficients. In this case a warning is logged.
+
+The values of the level coordinate are still the model level numbers, so selections such as ``ds.sel(level=137)``
+keep working and the dataset stays compatible with cfgrib. Note that CF strictly defines the values of this coordinate as
+``ap/p0 + b``. The level coordinate gets the following attributes:
+
+.. code-block:: python
+
+    {
+        "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate",
+        "long_name": "hybrid level",
+        "units": "1",
+        "positive": "down",
+        "axis": "Z",
+        "computed_standard_name": "air_pressure",
+        "formula_terms": "ap: ap b: b ps: ps p0: p0",
+        "bounds": "level_bnds",
+    }
+
+The terms of the formula are added to the dataset as coordinates (not as data variables):
+
+.. list-table:: Coordinates added for hybrid levels
+   :header-rows: 1
+
+   * - Coordinate
+     - Dimensions
+     - Description
+   * - ``ap``
+     - ``level``
+     - Pressure coefficient in Pa on the full levels (mean of the values on the two adjacent half levels)
+   * - ``b``
+     - ``level``
+     - Dimensionless coefficient on the full levels (mean of the values on the two adjacent half levels)
+   * - ``p0``
+     - scalar
+     - Reference pressure, 100000 Pa
+       (``standard_name="reference_air_pressure_for_atmosphere_vertical_coordinate"``)
+   * - ``ap_bnds``, ``b_bnds``
+     - ``level``, ``bnds``
+     - ``ap`` and ``b`` on the half levels, i.e. the bounds of the full levels
+   * - ``level_bnds``
+     - ``level``, ``bnds``
+     - Bounds of the level coordinate, with its own
+       ``formula_terms="ap: ap_bnds b: b_bnds ps: ps p0: p0"``
+   * - ``ps``
+     - horizontal dimensions only (e.g. ``latitude``, ``longitude`` or ``values``)
+     - Surface pressure in Pa (``standard_name="surface_air_pressure"``). It is a placeholder filled with NaN.
+
+A field knows the A/B coefficients but not the surface pressure, so earthkit-data does not fill ``ps``.
+Assign it to compute the pressure, ``p = ap + b * ps``, for example from the logarithm of the surface pressure:
+
+.. code-block:: python
+
+    import numpy as np
+
+    ds = ds.assign_coords(ps=np.exp(lnsp))  # lnsp: a DataArray on the same horizontal grid
+    p = ds["ap"] + ds["b"] * ds["ps"]
+
+The coordinates are written as variables when the dataset is saved to netCDF, so the file describes the hybrid
+coordinate following CF, with two exceptions: the level coordinate holds model level numbers instead of
+the strict CF values ``ap/p0 + b`` (see above), and ``ps`` is NaN until it is filled.
+
+The names above are resolved against the final dataset, after any renaming of the variables and dimensions. When a name is already
+taken, the existing variable is reused if it is identical to the new one, otherwise the new variable is renamed
+``<name>_1``, ``<name>_2``, etc. (e.g. ``ps_1``) and ``formula_terms`` and ``bounds`` are updated accordingly.
+
+.. note::
+
+    The A/B coefficients are taken from the first field of each variable on the vertical dimension. A change of A/B
+    within a single variable is not detected.
+
+
 .. _xr_chem_optical_dims:
 
 Chemical and optical dimensions
