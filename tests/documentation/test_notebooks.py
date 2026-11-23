@@ -26,6 +26,7 @@ EXAMPLES = earthkit_file("docs", "source", "tutorials")
 SKIP = [
     "ads.ipynb",
     "cds.ipynb",
+    "cmems.ipynb",
     "demo_source_plugin.ipynb",
     "ecmwf_open_data.ipynb",
     "ewds.ipynb",

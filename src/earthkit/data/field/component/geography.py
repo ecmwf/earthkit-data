@@ -534,8 +534,10 @@ class GeographyBase(SimpleFieldComponent):
 
         Returns
         -------
-        array-like, array-like
-            Tuple of latitudes and longitudes.
+        array-like, array-like or None, None
+            Tuple of latitudes and longitudes. When the coordinates are not available
+            (:meth:`latitudes` or :meth:`longitudes` return :obj:`None`) the tuple
+            :obj:`(None, None)` is returned.
 
         See Also
         --------
@@ -544,6 +546,10 @@ class GeographyBase(SimpleFieldComponent):
         """
         lat = self.latitudes()
         lon = self.longitudes()
+
+        if lat is None or lon is None:
+            return None, None
+
         lat = adjust_array(lat, flatten=flatten, dtype=dtype)
         lon = adjust_array(lon, flatten=flatten, dtype=dtype)
 

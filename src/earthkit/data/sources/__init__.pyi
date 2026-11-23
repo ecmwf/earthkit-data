@@ -174,6 +174,14 @@ def from_source(
 ) -> Data: ...
 @overload
 def from_source(
+    name: Literal["cmems"],
+    dataset: str,
+    *,
+    request: Request,
+    prompt: bool = True,
+) -> Data: ...
+@overload
+def from_source(
     name: Literal["ecfs"],
     url: str,
     *,

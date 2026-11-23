@@ -32,7 +32,10 @@ _SKIP = {
         "readers.shapefile.reader",
         "readers.zarr.reader",
     ],
-    "class": [],
+    "class": [
+        # internal helper class
+        "encoders.grib.encoder.Combined",
+    ],
     "data": [
         "encoders.grib.encoder",
         # clashes with the "cf.py" submodule of the vocabularies package
