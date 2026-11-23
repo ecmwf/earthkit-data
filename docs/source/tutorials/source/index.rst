@@ -16,6 +16,7 @@ Data sources
     url_stream.ipynb
     ads.ipynb
     cds.ipynb
+    cmems.ipynb
     ecmwf_open_data.ipynb
     ewds.ipynb
     fdb.ipynb

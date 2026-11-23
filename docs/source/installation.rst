@@ -40,6 +40,7 @@ Installing individual optional packages
 The following optional extras are available:
 
     - cds: provides access to the :ref:`data-sources-cds`, :ref:`data-sources-ads` and :ref:`data-sources-ewds` sources
+    - cmems: provides access to the :ref:`data-sources-cmems` source
     - covjsonkit: provides access to CoverageJSON data served by the :ref:`data-sources-polytope` source
     - ecmwf-opendata: provides access to the :ref:`data-sources-eod`
     - fdb: provides access to the :ref:`data-sources-fdb` source

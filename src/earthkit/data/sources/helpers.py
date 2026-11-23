@@ -355,6 +355,18 @@ def _from_cds(
     return _to_data(src, "cds")
 
 
+def _from_cmems(
+    dataset: str,
+    *,
+    request: Request,
+    prompt: bool = True,
+) -> Data:
+    from earthkit.data.sources.cmems import CMEMSRetriever
+
+    src = CMEMSRetriever(dataset, request=request, prompt=prompt)
+    return _to_data(src, "cmems")
+
+
 def _from_ecfs(
     url: str,
     *,

@@ -53,6 +53,8 @@ from_source
       - retrieve data from the `Copernicus Atmosphere Data Store <https://ads.atmosphere.copernicus.eu/>`_ (ADS)
     * - :ref:`data-sources-cds`
       - retrieve data from the `Copernicus Climate Data Store <https://cds.climate.copernicus.eu/>`_ (CDS)
+    * - :ref:`data-sources-cmems`
+      - retrieve data from the `Copernicus Marine Service <https://marine.copernicus.eu/>`_ (CMEMS)
     * - :ref:`data-sources-ecfs`
       - retrieve data from the ECMWF `ECFS File Storage system <https://confluence.ecmwf.int/display/UDOC/ECFS+user+documentation>`_
     * - :ref:`data-sources-eod`
@@ -710,6 +712,82 @@ cds
   Further examples:
 
       - :ref:`/tutorials/source/cds.ipynb`
+
+
+.. _data-sources-cmems:
+
+cmems
+-----
+
+.. py:function:: from_source("cmems", dataset, *, request, prompt=True)
+  :noindex:
+
+  Retrieve data from the `Copernicus Marine Service`_ (CMEMS).
+
+  The retrieval is performed using the copernicusmarine_ package. Only dataset subsetting is supported: the requested
+  subset is retrieved as a NetCDF (default) or CSV file and stored in the :ref:`cache <caching>`.
+
+  :param str dataset: The ID of the Copernicus Marine dataset.
+  :param request: Specify the request as a dictionary or a list/tuple of dicts. It contains the subsetting options
+          and the ``file_format`` option, which controls the format of the retrieved data (see below).
+  :type request: dict, list/tuple of dicts
+  :param bool prompt: when True (default), ask the user to provide the credentials when they are not available. See
+          the credentials note below.
+
+  The request is passed to the ``subset`` function of the copernicusmarine_ package. The full list of options can be
+  found in the `Copernicus Marine Toolbox documentation`_.
+
+  The format of the retrieved data is selected by the ``file_format`` option of the request. It can be ``"netcdf"``
+  (default) or ``"csv"``. NetCDF data can be loaded into Xarray with ``to_xarray()``, while CSV data can be loaded
+  into Pandas with ``to_pandas()``. It is part of the request, so the same request in a different format is cached
+  separately. Credentials are never stored in the cache.
+
+  The example below retrieves the potential water temperature (``thetao``) for a small area of the IBI
+  (Iberia-Biscay-Ireland) Multiyear reanalysis dataset, containing monthly mean physical variables. The retrieved
+  NetCDF data can be converted to an :py:class:`xarray.Dataset` with ``to_xarray()``:
+
+  .. code-block:: python
+
+      import earthkit.data as ekd
+
+      request = dict(
+          variables=["thetao"],
+          minimum_longitude=-10,
+          maximum_longitude=-9,
+          minimum_latitude=40,
+          maximum_latitude=41,
+          start_datetime="2020-01-01",
+          end_datetime="2020-01-01T23:59:59",
+          minimum_depth=0,
+          maximum_depth=1,
+      )
+
+      d = ekd.from_source("cmems", "cmems_mod_ibi_phy-temp_my_0.027deg_P1M-m", request=request)
+      ds = d.to_xarray()
+
+  The same request in CSV format, using the ``file_format`` option of the request. The retrieved CSV data can be
+  loaded into a :py:class:`pandas.DataFrame` with ``to_pandas()``:
+
+  .. code-block:: python
+
+      d = ekd.from_source(
+          "cmems",
+          "cmems_mod_ibi_phy-temp_my_0.027deg_P1M-m",
+          request=dict(request, file_format="csv"),
+      )
+      df = d.to_pandas()
+
+  Data retrieved from the CMEMS is stored in the :ref:`cache <caching>`.
+
+  .. note::
+
+    Accessing Copernicus Marine data requires a (free) account. The credentials must be available in the ``COPERNICUSMARINE_SERVICE_USERNAME`` and ``COPERNICUSMARINE_SERVICE_PASSWORD`` environment variables or in the default credentials file ``~/.copernicusmarine/.copernicusmarine-credentials``, which can be created with the ``copernicusmarine login`` command. When they cannot be found and ``prompt`` is True (default), the user is asked for the username and password, which are then stored in the default credentials file. With ``prompt=False`` no question is asked and an error is raised. Credentials are never stored in the cache.
+
+  To access data from the CMEMS you will need to register. The process is described `here <https://help.marine.copernicus.eu/en/>`__. For more information, see the `Copernicus Marine Service`_ website.
+
+  Further examples:
+
+      - :ref:`/tutorials/source/cmems.ipynb`
 
 
 .. _data-sources-ecfs:
@@ -1501,6 +1579,9 @@ zenodo
 .. _Copernicus Atmosphere Data Store: https://ads.atmosphere.copernicus.eu/
 .. _CEMS Early Warning Data Store: https://ewds.climate.copernicus.eu/
 .. _cdsapi: https://pypi.org/project/cdsapi/
+.. _Copernicus Marine Service: https://marine.copernicus.eu/
+.. _copernicusmarine: https://pypi.org/project/copernicusmarine/
+.. _Copernicus Marine Toolbox documentation: https://copernicusmarine.readthedocs.io/
 .. _CDS_knowledge base: https://confluence.ecmwf.int/pages/viewpage.action?pageId=151530614
 .. _ADS_knowledge base: https://confluence.ecmwf.int/pages/viewpage.action?pageId=151530675
 

@@ -114,6 +114,23 @@ NO_MARS = NO_MARS_API and NO_MARS_DIRECT
 
 NO_CDS = not os.path.exists(os.path.expanduser("~/.cdsapirc"))
 NO_HDA = not os.path.exists(os.path.expanduser("~/.hdarc"))
+
+
+def _has_cmems_credentials() -> bool:
+    """Check that Copernicus Marine credentials can be found.
+
+    Only the existence of the credentials file is checked, its content is
+    never read.
+    """
+    directory = os.environ.get("COPERNICUSMARINE_CREDENTIALS_DIRECTORY") or os.path.join("~", ".copernicusmarine")
+    if os.path.isfile(os.path.join(os.path.expanduser(directory), ".copernicusmarine-credentials")):
+        return True
+    return bool(
+        os.environ.get("COPERNICUSMARINE_SERVICE_USERNAME") and os.environ.get("COPERNICUSMARINE_SERVICE_PASSWORD")
+    )
+
+
+NO_CMEMS = not modules_installed("copernicusmarine") or not _has_cmems_credentials()
 IN_GITHUB = os.environ.get("GITHUB_WORKFLOW") is not None
 try:
     import ecmwf.opendata  # noqa

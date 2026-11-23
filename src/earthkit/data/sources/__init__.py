@@ -13,6 +13,7 @@ from earthkit.data.sources.base import Source as Source
 from earthkit.data.sources.helpers import (
     _from_ads,
     _from_cds,
+    _from_cmems,
     _from_ecfs,
     _from_ecmwf_open_data,
     _from_ewds,
@@ -74,6 +75,7 @@ POSSIBLE_SOURCES = {
     "ads": _from_ads,
     "ewds": _from_ewds,
     "cds": _from_cds,
+    "cmems": _from_cmems,
     "ecfs": _from_ecfs,
     "ecmwf-open-data": _from_ecmwf_open_data,
     "fdb": _from_fdb,
