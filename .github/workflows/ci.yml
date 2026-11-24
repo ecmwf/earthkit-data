@@ -10,7 +10,7 @@ on:
     types: [opened, reopened, synchronize]
   workflow_dispatch:
   schedule:
-    - cron: "22 4 * * *"
+    - cron: "28 4 * * *"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
