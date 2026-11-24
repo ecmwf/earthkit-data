@@ -9,14 +9,16 @@
 # nor does it submit to any jurisdiction.
 #
 
+import logging
 import os
+import zipfile
 
 import pytest
 
 from earthkit.data import config, from_source
 from earthkit.data.core.temporary import temp_directory, temp_file
 from earthkit.data.sources.cds import CDSRetriever
-from earthkit.data.utils.testing import NO_CDS, preserve_cwd
+from earthkit.data.utils.testing import NO_CDS, earthkit_test_data_file, preserve_cwd
 
 CDS_TIMEOUT = pytest.CDS_TIMEOUT
 
@@ -510,6 +512,47 @@ def test_cds_cache_file_extension(monkeypatch, tmp_path, extra_request, expected
         path = s.path[0] if isinstance(s.path, (list, tuple)) else s.path
         assert path.endswith(expected_extension)
         assert os.path.isfile(path)
+
+
+class FakeCDSZipResult(FakeCDSResult):
+    # Like the CMIP6 datasets: the NetCDF data with the provenance files next to it
+    def download(self, target=None):
+        with zipfile.ZipFile(target, "w") as zf:
+            zf.write(earthkit_test_data_file("era5_2t_1.nc"), "tas_day_20800101-20801231.nc")
+            zf.writestr("provenance.json", '{"provenance": []}')
+            zf.writestr("provenance.png", b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
+
+
+class FakeCDSZipClient:
+    def retrieve(self, dataset, request):
+        return FakeCDSZipResult()
+
+
+@pytest.mark.parametrize(
+    "extra_request,warns",
+    [
+        (dict(format="netcdf"), False),
+        (dict(data_format="netcdf"), False),
+        (dict(), True),
+    ],
+)
+def test_cds_zip_with_provenance_files(monkeypatch, tmp_path, caplog, extra_request, warns):
+    # Offline test for #781: with the format in the request, the provenance files
+    # in the zip are skipped without an "Unknown file type" warning.
+    monkeypatch.setattr(CDSRetriever, "client", lambda self: FakeCDSZipClient())
+
+    with config.temporary({"cache-policy": "user", "user-cache-directory": str(tmp_path / "cache")}):
+        with caplog.at_level(logging.WARNING, logger="earthkit.data"):
+            ds = from_source(
+                "cds",
+                "projections-cmip6",
+                variable="daily_maximum_near_surface_air_temperature",
+                **extra_request,
+            )
+            assert "t2m" in ds.to_xarray()
+
+    unknown = [r for r in caplog.records if "Unknown file type" in r.getMessage()]
+    assert bool(unknown) == warns
 
 
 if __name__ == "__main__":
