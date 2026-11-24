@@ -22,6 +22,7 @@ dependencies = [
   "cfgrib>=0.9.10.1",
   "dask",
   "deprecation",
+  "earthkit-geo",
   "earthkit-utils>=1.0.3",
   "eccodes>=2.48.0",
   "eccodeslib>=2.50.0.32",
