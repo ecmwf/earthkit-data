@@ -1,109 +1,72 @@
-[package]
-name = "earthkit-data"
-repo = "ecmwf/earthkit-data"
-visibility = "public"
-fork-pull-requests = false
-compiler-inputs = []
-ci-pre-commit = false
-full-history = true
-
 [[deps]]
-repo = "ecmwf/cfgrib"
+compiler-inputs = []
 package = "cfgrib"
-ref = "master"
-compiler-inputs = []
 python-version-input = "python-version"
+ref = "master"
+repo = "ecmwf/cfgrib"
 
 [[deps]]
-repo = "ecmwf/pdbufr"
+compiler-inputs = []
 package = "pdbufr"
-ref = "develop"
-compiler-inputs = []
 python-version-input = "python-version"
+ref = "develop"
+repo = "ecmwf/pdbufr"
 
 [[deps]]
-repo = "ecmwf/pyodc"
+compiler-inputs = []
 package = "pyodc"
+python-version-input = "python-version"
 ref = "master"
-compiler-inputs = []
-python-version-input = "python-version"
+repo = "ecmwf/pyodc"
 
 [[deps]]
-repo = "ecmwf/fdb"
+compiler-inputs = ["cxx-compiler"]
 package = "pyfdb"
-ref = "develop"
-compiler-inputs = ["cxx-compiler"]
 python-version-input = "python-version"
+ref = "develop"
+repo = "ecmwf/fdb"
 
 [[deps]]
-repo = "ecmwf/metkit"
-package = "pymetkit"
-ref = "develop"
 compiler-inputs = ["cxx-compiler"]
+package = "pymetkit"
 python-version-input = "python-version"
+ref = "develop"
+repo = "ecmwf/metkit"
 
 # Pure-Python upstreams, built on the GitHub runner rather than in this container.
 [[deps]]
-repo = "ecmwf/multiurl"
-package = "multiurl"
-ref = "develop"
-compiler-inputs = []
-python-version-input = "python-version"
-platform-input = "python-platform"
 build-type-input = "python-build-type"
+compiler-inputs = []
+package = "multiurl"
+platform-input = "python-platform"
+python-version-input = "python-version"
+ref = "develop"
+repo = "ecmwf/multiurl"
 
 [[deps]]
-repo = "ecmwf/earthkit-utils"
-package = "earthkit-utils"
-ref = "develop"
-compiler-inputs = []
-python-version-input = "python-version"
-platform-input = "python-platform"
 build-type-input = "python-build-type"
-
-[[trigger-downstream]]
-repo = "ecmwf/earthkit-transforms"
+compiler-inputs = []
+package = "earthkit-utils"
+platform-input = "python-platform"
+python-version-input = "python-version"
 ref = "develop"
-
-[[trigger-downstream]]
-repo = "ecmwf/earthkit-workflows"
-ref = "main"
-
-[[trigger-downstream]]
-repo = "ecmwf/earthkit-hydro"
-ref = "develop"
-
-[[trigger-downstream]]
-repo = "ecmwf/earthkit-geo"
-ref = "develop"
-
-[[trigger-downstream]]
-repo = "ecmwf/earthkit-meteo"
-ref = "develop"
-
-[[trigger-downstream]]
-repo = "ecmwf/earthkit-plots"
-ref = "develop"
-
-[[trigger-downstream]]
-repo = "ecmwf/earthkit"
-ref = "develop"
+repo = "ecmwf/earthkit-utils"
 
 [matrix.test]
 triggers = ["upstream-change", "rebuild-request"]
 
 # The container and compiler of the eccodes, odc, and fdb builds, whose libraries the tests load.
 [matrix.test.defaults]
-job-script = "./.ci/test.sh.j2"
-runs-on = "ubuntu-latest"
-container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-gcc13-gfortran13"
-platform = "ubuntu-24.04"
-cxx-compiler = "g++-13"
-c-compiler = "gcc-13"
 build-type = "RelWithDebInfo"
-python-platform = "gh-ubuntu-26.04"
-python-build-type = "Release"
+c-compiler = "gcc-13"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-gcc13-gfortran13"
+cxx-compiler = "g++-13"
 extras = "all,test,ci"
+job-script = "./.ci/test.sh.j2"
+platform = "ubuntu-24.04"
+python-build-type = "Release"
+python-platform = "gh-ubuntu-26.04"
+runs-on = "ubuntu-latest"
 
 [[matrix.test.include]]
 python-version = "3.11"
@@ -113,3 +76,40 @@ python-version = "3.12"
 
 [[matrix.test.include]]
 python-version = "3.13"
+
+[package]
+ci-pre-commit = false
+compiler-inputs = []
+fork-pull-requests = false
+full-history = true
+name = "earthkit-data"
+repo = "ecmwf/earthkit-data"
+visibility = "public"
+
+[[trigger-downstream]]
+ref = "develop"
+repo = "ecmwf/earthkit-transforms"
+
+[[trigger-downstream]]
+ref = "main"
+repo = "ecmwf/earthkit-workflows"
+
+[[trigger-downstream]]
+ref = "develop"
+repo = "ecmwf/earthkit-hydro"
+
+[[trigger-downstream]]
+ref = "develop"
+repo = "ecmwf/earthkit-geo"
+
+[[trigger-downstream]]
+ref = "develop"
+repo = "ecmwf/earthkit-meteo"
+
+[[trigger-downstream]]
+ref = "develop"
+repo = "ecmwf/earthkit-plots"
+
+[[trigger-downstream]]
+ref = "develop"
+repo = "ecmwf/earthkit"
