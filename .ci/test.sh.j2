@@ -1,0 +1,29 @@
+{% extends "ci-infrastructure/python-runner.sh.j2" %}
+{% block set_environment %}
+# findlibs finds eccodes, odc, metkit, and fdb from their *_HOME; each dep has its own prefix.
+IFS=';:' read -ra dep_prefixes <<<"${CMAKE_PREFIX_PATH:-}"
+for prefix in ${dep_prefixes[@]+"${dep_prefixes[@]}"}; do
+  if compgen -G "$prefix/lib*/libeccodes.*" >/dev/null; then
+    export ECCODES_HOME="$prefix"
+    export ECCODES_DEFINITION_PATH="$prefix/share/eccodes/definitions"
+    export ECCODES_SAMPLES_PATH="$prefix/share/eccodes/samples"
+  fi
+  if compgen -G "$prefix/lib*/libodccore.*" >/dev/null; then
+    export ODC_HOME="$prefix"
+  fi
+  if compgen -G "$prefix/lib*/libmetkit.*" >/dev/null; then
+    export METKIT_HOME="$prefix"
+  fi
+  if compgen -G "$prefix/lib*/libfdb5.*" >/dev/null; then
+    export FDB5_HOME="$prefix"
+  fi
+done
+export FINDLIBS_DISABLE_PACKAGE=yes
+{% endblock %}
+{% block test %}
+cd "$CI_SOURCE_DIR"
+python -m pytest -vv -m 'not notebook and not no_cache_init' -k 'not netcdf' --cov=. --cov-report=xml
+python -m pytest -v -m 'notebook'
+python -m pytest --forked -vv -m 'no_cache_init' -k 'not netcdf'
+python -m coverage report
+{% endblock %}

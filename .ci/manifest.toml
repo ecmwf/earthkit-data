@@ -1,0 +1,115 @@
+[package]
+name = "earthkit-data"
+repo = "ecmwf/earthkit-data"
+visibility = "public"
+fork-pull-requests = false
+compiler-inputs = []
+ci-pre-commit = false
+full-history = true
+
+[[deps]]
+repo = "ecmwf/cfgrib"
+package = "cfgrib"
+ref = "master"
+compiler-inputs = []
+python-version-input = "python-version"
+
+[[deps]]
+repo = "ecmwf/pdbufr"
+package = "pdbufr"
+ref = "develop"
+compiler-inputs = []
+python-version-input = "python-version"
+
+[[deps]]
+repo = "ecmwf/pyodc"
+package = "pyodc"
+ref = "master"
+compiler-inputs = []
+python-version-input = "python-version"
+
+[[deps]]
+repo = "ecmwf/fdb"
+package = "pyfdb"
+ref = "develop"
+compiler-inputs = ["cxx-compiler"]
+python-version-input = "python-version"
+
+[[deps]]
+repo = "ecmwf/metkit"
+package = "pymetkit"
+ref = "develop"
+compiler-inputs = ["cxx-compiler"]
+python-version-input = "python-version"
+
+# Pure-Python upstreams, built on the GitHub runner rather than in this container.
+[[deps]]
+repo = "ecmwf/multiurl"
+package = "multiurl"
+ref = "develop"
+compiler-inputs = []
+python-version-input = "python-version"
+platform-input = "python-platform"
+build-type-input = "python-build-type"
+
+[[deps]]
+repo = "ecmwf/earthkit-utils"
+package = "earthkit-utils"
+ref = "develop"
+compiler-inputs = []
+python-version-input = "python-version"
+platform-input = "python-platform"
+build-type-input = "python-build-type"
+
+[[trigger-downstream]]
+repo = "ecmwf/earthkit-transforms"
+ref = "develop"
+
+[[trigger-downstream]]
+repo = "ecmwf/earthkit-workflows"
+ref = "main"
+
+[[trigger-downstream]]
+repo = "ecmwf/earthkit-hydro"
+ref = "develop"
+
+[[trigger-downstream]]
+repo = "ecmwf/earthkit-geo"
+ref = "develop"
+
+[[trigger-downstream]]
+repo = "ecmwf/earthkit-meteo"
+ref = "develop"
+
+[[trigger-downstream]]
+repo = "ecmwf/earthkit-plots"
+ref = "develop"
+
+[[trigger-downstream]]
+repo = "ecmwf/earthkit"
+ref = "develop"
+
+[matrix.test]
+triggers = ["upstream-change", "rebuild-request"]
+
+# The container and compiler of the eccodes, odc, and fdb builds, whose libraries the tests load.
+[matrix.test.defaults]
+job-script = "./.ci/test.sh.j2"
+runs-on = "ubuntu-latest"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-gcc13-gfortran13"
+platform = "ubuntu-24.04"
+cxx-compiler = "g++-13"
+c-compiler = "gcc-13"
+build-type = "RelWithDebInfo"
+python-platform = "gh-ubuntu-26.04"
+python-build-type = "Release"
+extras = "all,test,ci"
+
+[[matrix.test.include]]
+python-version = "3.11"
+
+[[matrix.test.include]]
+python-version = "3.12"
+
+[[matrix.test.include]]
+python-version = "3.13"
