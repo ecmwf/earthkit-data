@@ -33,6 +33,28 @@ python-version-input = "python-version"
 ref = "develop"
 repo = "ecmwf/metkit"
 
+# From PyPI these would pull in the PyPI eckit, mir, and gribjump libraries.
+[[deps]]
+compiler-inputs = ["cxx-compiler"]
+package = "eckit-python"
+python-version-input = "python-version"
+ref = "develop"
+repo = "ecmwf/eckit"
+
+[[deps]]
+compiler-inputs = ["cxx-compiler"]
+package = "mir-python"
+python-version-input = "python-version"
+ref = "develop"
+repo = "ecmwf/mir"
+
+[[deps]]
+compiler-inputs = ["cxx-compiler"]
+package = "pygribjump"
+python-version-input = "python-version"
+ref = "develop"
+repo = "ecmwf/gribjump"
+
 # Pure-Python upstreams, built on the GitHub runner rather than in this container.
 [[deps]]
 build-type-input = "python-build-type"
@@ -68,9 +90,7 @@ python-build-type = "Release"
 python-platform = "gh-ubuntu-26.04"
 runs-on = "ubuntu-latest"
 
-[[matrix.test.include]]
-python-version = "3.11"
-
+# No 3.11: gribjump builds no pygribjump for it.
 [[matrix.test.include]]
 python-version = "3.12"
 
