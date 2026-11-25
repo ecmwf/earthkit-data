@@ -16,7 +16,7 @@ repo = "ecmwf/pdbufr"
 compiler-inputs = []
 package = "pyodc"
 python-version-input = "python-version"
-ref = "master"
+ref = "develop"
 repo = "ecmwf/pyodc"
 
 [[deps]]
