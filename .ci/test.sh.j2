@@ -10,6 +10,9 @@ for prefix in ${dep_prefixes[@]+"${dep_prefixes[@]}"}; do
   fi
 done
 export FINDLIBS_DISABLE_PACKAGE=yes
+# The PyPI wheels bundling those libraries are unused here, and their exact pins clash.
+printf '%s\n' eckitlib eccodeslib metkitlib odclib fdb5lib >"${TMPDIR:-/tmp}/ci-excludes.txt"
+export UV_EXCLUDE="${TMPDIR:-/tmp}/ci-excludes.txt"
 {% endblock %}
 {% block test %}
 cd "$CI_SOURCE_DIR"
