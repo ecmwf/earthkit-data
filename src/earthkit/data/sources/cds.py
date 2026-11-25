@@ -82,6 +82,12 @@ EXTENSIONS = {
 }
 
 
+def _request_format(request):
+    # New style CDS/ADS/EWDS requests use "data_format" instead of "format".
+    # When both are present "format" takes precedence.
+    return request.get("format") or request.get("data_format")
+
+
 class CDSRetriever(FileSource):
     sphinxdoc = """
     CDSRetriever
@@ -98,6 +104,12 @@ class CDSRetriever(FileSource):
         request_builder = RequestBuilder(self, *args, request=request, normaliser=self._normalise_request, **kwargs)
         self.request = request_builder.requests
 
+        # A request that names its format can come back as a zip that also holds
+        # files no reader handles, e.g. provenance.json and provenance.png next to
+        # the NetCDF data. They are skipped either way, so don't warn about them.
+        if any(_request_format(r) for r in self.request):
+            self._kwargs.setdefault("skip_warning", True)
+
         # Download each request in parallel when the config allows it
         retriever = FileRequestRetriever(self, retriever=self._retrieve_one)
         self.path = retriever.retrieve(self.request, self.dataset)
@@ -108,9 +120,7 @@ class CDSRetriever(FileSource):
             self.source_filename = cds_result.location.split("/")[-1]
             cds_result.download(target=target)
 
-        # New style CDS/ADS/EWDS requests use "data_format" instead of "format".
-        # When both are present "format" takes precedence.
-        request_format = request.get("format") or request.get("data_format")
+        request_format = _request_format(request)
 
         return_object = self._cache_file(
             retrieve,
